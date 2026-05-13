@@ -1,10 +1,14 @@
 import Navbar from "../Components/Common/Navbar";
 import brainImage from "../assets/brain.png";
+import "../styles/home.css";
+import Logo from "../assets/Logo.png";
+import AuthModal from "../Components/Auth/AuthModal";
+import { useState } from "react";
+
 export default function Home() {
     return (
         <>
 
-            <Navbar />
 
             {/* HERO SECTION */}
 
@@ -407,6 +411,155 @@ export default function Home() {
   </div>
 
 </section>
+
+<section className="cta-section">
+
+  <div className="cta-box">
+
+    <h2>
+      Ready to land the offer?
+    </h2>
+
+    <p>
+      Join students preparing smarter — not harder.
+    </p>
+
+    <button>
+      Get started for free →
+    </button>
+
+  </div>
+
+</section>
+
+{/* FOOTER */}
+
+<footer className="footer-section">
+
+  <div className="footer-container">
+
+    {/* LEFT */}
+
+    <div className="footer-brand">
+
+      <div className="footer-logo">
+
+        <img
+   src={Logo}
+   alt="Samprepix Logo"
+   className="footer-logo-img"
+/>
+
+      </div>
+
+      <h2>
+        Samprepix
+      </h2>
+
+      <p>
+        AI-powered interview & placement
+        preparation for students and teams.
+      </p>
+
+    </div>
+
+    {/* LINKS */}
+
+    <div className="footer-links-wrapper">
+
+      {/* PRODUCT */}
+
+      <div className="footer-column">
+
+        <h4>
+          Product
+        </h4>
+
+        <a href="#">
+          Features
+        </a>
+
+        <a href="#">
+          Pricing
+        </a>
+
+        <a href="#">
+          Changelog
+        </a>
+
+        <a href="#">
+          Roadmap
+        </a>
+
+      </div>
+
+      {/* RESOURCES */}
+
+      <div className="footer-column">
+
+        <h4>
+          Resources
+        </h4>
+
+        <a href="#">
+          Docs
+        </a>
+
+        <a href="#">
+          Blog
+        </a>
+
+        <a href="#">
+          Guides
+        </a>
+
+        <a href="#">
+          Community
+        </a>
+
+      </div>
+
+      {/* COMPANY */}
+
+      <div className="footer-column">
+
+        <h4>
+          Company
+        </h4>
+
+        <a href="#">
+          About
+        </a>
+
+        <a href="#">
+          Careers
+        </a>
+
+        <a href="#">
+          Contact
+        </a>
+
+        <a href="#">
+          Legal
+        </a>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  {/* BOTTOM */}
+
+  <div className="footer-bottom">
+
+    © 2026 Samprepix. Crafted for ambitious learners.
+
+  </div>
+
+</footer>
+
+
 
         </>
     );

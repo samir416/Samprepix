@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Moon } from "lucide-react";
-
+import logo from "../../assets/Logo.png";
 import "../../styles/home.css";
 
 function Navbar() {
@@ -16,11 +16,15 @@ function Navbar() {
         <div className="logo-section">
 
           <div className="logo-box">
-            ✨
+            <img
+        src={logo}
+        alt="Samprepix Logo"
+        className="navbar-logo"
+    />
           </div>
 
           <h2 className="logo-text">
-            Prepwise
+            Samprepix
           </h2>
 
         </div>

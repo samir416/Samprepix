@@ -5,6 +5,7 @@ import Register from "../Pages/Register";
 import Dashboard from "../Pages/Dashboard";
 import CodingArena from "../Pages/CodingArena";
 import MockInterview from "../Pages/MockInterview";
+import AuthModal from "../Components/Auth/AuthModal";
 
 export default function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ export default function AppRoutes() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/coding-arena" element={<CodingArena />} />
             <Route path="/mock-interview" element={<MockInterview />} />
+            <Route path="/auth" element={<AuthModal />} />
         </Routes>
   )
 };
