@@ -1309,6 +1309,8 @@
 
     border:none;
 
+    cursor: no-drop;
+
     box-shadow:none;
 
     padding:0;
@@ -1464,6 +1466,8 @@
     }
 
     .navbar-logo{
+
+        cursor: no-drop;
 
         width:42px;
 

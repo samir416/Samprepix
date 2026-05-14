@@ -1,176 +1,167 @@
-import React, { useEffect } from "react";
+import Navbar from "../Common/Navbar";
 import "../../styles/authmodal.css";
+import Logo from "../../assets/Logo.png";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-const AuthModal = ({ isOpen, onClose }) => {
+export default function AuthModal() {
 
-    useEffect(() => {
-
-        const handleEsc = (e) => {
-
-            if (e.key === "Escape") {
-                onClose();
-            }
-        };
-
-        document.addEventListener("keydown", handleEsc);
-
-        return () => {
-            document.removeEventListener("keydown", handleEsc);
-        };
-
-    }, [onClose]);
-
-    if (!isOpen) return null;
+    const navigate = useNavigate();
 
     return (
 
-        <div
-            className="auth-overlay"
-            onClick={onClose}
-        >
+        <>
 
-            <div
-                className="auth-modal"
-                onClick={(e) => e.stopPropagation()}
-            >
+            <Navbar />
 
-                {/* LOGO */}
+            <section className="auth-page">
 
-                <div className="auth-logo">
+                <div className="auth-modal">
 
-                    <img
-                        src="/Logo.png"
-                        alt="logo"
-                    />
+                    {/* LOGO */}
 
-                </div>
+                    <div className="auth-logo">
 
-                {/* TITLE */}
+                        <img
+                            src={Logo}
+                            alt="logo"
+                        />
 
-                <h2>
-                    Create your account
-                </h2>
+                    </div>
 
-                <p className="auth-subtitle">
-                    Start your free 14-day pro trial
-                </p>
+                    {/* TITLE */}
 
-                {/* SOCIAL BUTTONS */}
+                    <h2>
+                        Create your account
+                    </h2>
 
-                <div className="auth-socials">
-
-                    <button>
-
-                        <span>
-                            ⌘
-                        </span>
-
-                        GitHub
-
-                    </button>
-
-                    <button>
-
-                        <span>
-                            ✉
-                        </span>
-
-                        Google
-
-                    </button>
-
-                </div>
-
-                {/* DIVIDER */}
-
-                <div className="auth-divider">
-
-                    <span></span>
-
-                    <p>
-                        or continue with email
+                    <p className="auth-subtitle">
+                        Start your free 14-day pro trial
                     </p>
 
-                    <span></span>
+                    {/* SOCIAL BUTTONS */}
+
+                    <div className="auth-socials">
+
+                        <button>
+
+                            <span>
+                                ⌘
+                            </span>
+
+                            GitHub
+
+                        </button>
+
+                        <button>
+
+                            <span>
+                                ✉
+                            </span>
+
+                            Google
+
+                        </button>
+
+                    </div>
+
+                    {/* DIVIDER */}
+
+                    <div className="auth-divider">
+
+                        <span></span>
+
+                        <p>
+                            or continue with email
+                        </p>
+
+                        <span></span>
+
+                    </div>
+
+                    {/* FORM */}
+
+                    <form
+                        className="auth-form"
+                        onSubmit={(e) => {
+
+                            e.preventDefault();
+
+                            navigate("/dashboard");
+                        }}
+                    >
+                        <div className="auth-input-group">
+
+                            <label>
+                                Full name
+                            </label>
+
+                            <input
+                                type="text"
+                                placeholder="Aarav Mehta"
+                            />
+
+                        </div>
+
+                        <div className="auth-input-group">
+
+                            <label>
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                placeholder="you@university.edu"
+                            />
+
+                        </div>
+
+                        <div className="auth-input-group">
+
+                            <label>
+                                Password
+                            </label>
+
+                            <input
+                                type="password"
+                                placeholder="••••••••"
+                            />
+
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="auth-submit-btn"
+                        >
+
+                            Create account
+
+                        </button>
+
+                    </form>
+
+                    {/* FOOTER */}
+
+                    <p className="auth-bottom-text">
+
+                        Already have an account?
+
+                        <Link to="/login" className="auth-login-link">
+                            Sign in
+                        </Link>
+
+                    </p>
+
+                    <p className="auth-security">
+
+                        Secured with JWT • 256-bit encryption
+
+                    </p>
 
                 </div>
 
-                {/* FORM */}
+            </section>
 
-                <form className="auth-form">
-
-                    <div className="auth-input-group">
-
-                        <label>
-                            Full name
-                        </label>
-
-                        <input
-                            type="text"
-                            placeholder="Aarav Mehta"
-                        />
-
-                    </div>
-
-                    <div className="auth-input-group">
-
-                        <label>
-                            Email
-                        </label>
-
-                        <input
-                            type="email"
-                            placeholder="you@university.edu"
-                        />
-
-                    </div>
-
-                    <div className="auth-input-group">
-
-                        <label>
-                            Password
-                        </label>
-
-                        <input
-                            type="password"
-                            placeholder="••••••••"
-                        />
-
-                    </div>
-
-                    <button
-                        type="submit"
-                        className="auth-submit-btn"
-                    >
-
-                        Create account
-
-                    </button>
-
-                </form>
-
-                {/* FOOTER */}
-
-                <p className="auth-bottom-text">
-
-                    Already have an account?
-
-                    <span>
-                        Sign in
-                    </span>
-
-                </p>
-
-                <p className="auth-security">
-
-                    Secured with JWT • 256-bit encryption
-
-                </p>
-
-            </div>
-
-        </div>
+        </>
     );
-};
-
-export default AuthModal;
+}
