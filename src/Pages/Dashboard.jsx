@@ -5,7 +5,10 @@ import {
     FiTrendingUp,
     FiTarget,
     FiClock,
-    FiAward
+    FiAward,
+    FiMic,
+    FiCode,
+    FiFileText
 } from "react-icons/fi";
 
 import "../styles/dashboard.css";
@@ -180,7 +183,7 @@ export default function Dashboard() {
 
                     </div>
 
-                    {/* BOTTOM SECTION */}
+                    {/* TOP GRAPH SECTION */}
 
                     <div className="dashboard-bottom">
 
@@ -239,6 +242,196 @@ export default function Dashboard() {
                                     <span>
                                         142 / 195 solved
                                     </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {/* NEW BOTTOM UI */}
+
+                    <div className="dashboard-bottom second-bottom">
+
+                        {/* CARD 1 */}
+
+                        <div className="action-card">
+
+                            <div className="action-arrow">
+                                ↗
+                            </div>
+
+                            <div className="action-icon">
+                                <FiMic />
+                            </div>
+
+                            <h3>
+                                Start Mock Interview
+                            </h3>
+
+                            <p>
+                                5–15 min sessions
+                            </p>
+
+                        </div>
+
+                        {/* CARD 2 */}
+
+                        <div className="action-card">
+
+                            <div className="action-arrow">
+                                ↗
+                            </div>
+
+                            <div className="action-icon">
+                                <FiCode />
+                            </div>
+
+                            <h3>
+                                Solve a Problem
+                            </h3>
+
+                            <p>
+                                Daily challenge ready
+                            </p>
+
+                        </div>
+
+                        {/* CARD 3 */}
+
+                        <div className="action-card">
+
+                            <div className="action-arrow">
+                                ↗
+                            </div>
+
+                            <div className="action-icon">
+                                <FiFileText />
+                            </div>
+
+                            <h3>
+                                Analyze Resume
+                            </h3>
+
+                            <p>
+                                Get instant ATS score
+                            </p>
+
+                        </div>
+
+                        {/* RECENT ACTIVITY */}
+
+                        <div className="activity-card">
+
+                            <h3>
+                                Recent activity
+                            </h3>
+
+                            {/* ITEM */}
+
+                            <div className="activity-item">
+
+                                <div className="activity-left">
+
+                                    <div className="activity-dot"></div>
+
+                                    <div className="activity-text">
+
+                                        <h4>
+                                            Completed mock: Behavioral
+                                        </h4>
+
+                                        <p>
+                                            2h ago
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                                <span className="activity-score">
+                                    Score 87
+                                </span>
+
+                            </div>
+
+                            {/* ITEM */}
+
+                            <div className="activity-item">
+
+                                <div className="activity-left">
+
+                                    <div className="activity-dot"></div>
+
+                                    <div className="activity-text">
+
+                                        <h4>
+                                            Solved: Two Sum II
+                                        </h4>
+
+                                        <p>
+                                            5h ago
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                                <span className="activity-score">
+                                    +10 XP
+                                </span>
+
+                            </div>
+
+                            {/* ITEM */}
+
+                            <div className="activity-item">
+
+                                <div className="activity-left">
+
+                                    <div className="activity-dot"></div>
+
+                                    <div className="activity-text">
+
+                                        <h4>
+                                            Resume v3 uploaded
+                                        </h4>
+
+                                        <p>
+                                            Yesterday
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                                <span className="activity-score">
+                                    ATS 92
+                                </span>
+
+                            </div>
+
+                            {/* ITEM */}
+
+                            <div className="activity-item">
+
+                                <div className="activity-left">
+
+                                    <div className="activity-dot"></div>
+
+                                    <div className="activity-text">
+
+                                        <h4>
+                                            Joined cohort: Google SDE
+                                        </h4>
+
+                                        <p>
+                                            2d ago
+                                        </p>
+
+                                    </div>
 
                                 </div>
 
