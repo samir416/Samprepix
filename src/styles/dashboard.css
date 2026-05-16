@@ -73,6 +73,8 @@ body{
     margin-bottom:-16px;
 
     margin-left:-18px;
+
+    margin-top:-18px;
 }
 
 .dashboard-logo img{
@@ -152,6 +154,10 @@ body{
     rgba(255,255,255,0.45);
 }
 
+/* =========================
+   ACTIVE SIDEBAR BUTTON FIX
+========================= */
+
 .dashboard-menu .active{
 
     background:
@@ -165,6 +171,168 @@ body{
 
     box-shadow:
     0 6px 18px rgba(6,182,212,0.18);
+}
+
+/* ACTIVE BUTTON HOVER */
+
+.dashboard-menu .active:hover{
+
+    background:
+    linear-gradient(
+        135deg,
+        #5558ee,
+        #05a9c7
+    );
+
+    color:white;
+}
+
+/* NORMAL BUTTON HOVER */
+
+.dashboard-menu button:hover:not(.active){
+
+    background:
+    rgba(255,255,255,0.45);
+}
+
+/* =========================
+   GRAPH FIX
+========================= */
+
+.fake-graph{
+
+    width:100%;
+
+    height:240px;
+
+    border-radius:18px;
+
+    position:relative;
+
+    overflow:hidden;
+
+    background:
+    linear-gradient(
+        to top,
+        rgba(124,115,255,0.22),
+        rgba(0,194,255,0.06)
+    );
+
+    display:flex;
+
+    align-items:flex-end;
+}
+
+/* GRAPH CURVE */
+
+.graph-line{
+
+    position:absolute;
+
+    left:0;
+
+    bottom:40px;
+
+    width:100%;
+
+    height:140px;
+
+    border-bottom:
+    5px solid #6366f1;
+
+    border-left:
+    5px solid transparent;
+
+    border-right:
+    5px solid transparent;
+
+    border-radius:
+    0 0 50% 50%;
+}
+
+/* OPTIONAL GRAPH BARS */
+
+.fake-graph::before{
+
+    content:\"\";
+
+    position:absolute;
+
+    bottom:0;
+
+    left:0;
+
+    width:100%;
+
+    height:100%;
+
+    background:
+    repeating-linear-gradient(
+        to right,
+        rgba(99,102,241,0.10) 0px,
+        rgba(99,102,241,0.10) 35px,
+        transparent 35px,
+        transparent 70px
+    );
+
+    opacity:0.35;
+}
+
+.real-graph{
+
+    width:100%;
+
+    height:255px;
+
+    margin-top:6px;
+
+    border-radius:20px;
+
+    position:relative;
+
+    overflow:visible;
+
+    padding-right:12px;
+}
+
+.recharts-layer{
+
+    overflow:visible !important;
+}
+
+.recharts-wrapper{
+
+    overflow:visible !important;
+}
+
+/* GRID */
+
+.recharts-cartesian-grid line{
+
+    stroke:#d1d5db;
+}
+
+/* X Y TEXT */
+
+.recharts-text{
+
+    font-size:12px;
+
+    fill:#6b7280;
+}
+
+/* TOOLTIP */
+
+.recharts-default-tooltip{
+
+    border:none !important;
+
+    border-radius:18px !important;
+
+    box-shadow:
+    0 10px 25px rgba(0,0,0,0.08) !important;
+
+    padding:10px 14px !important;
 }
 
 /* UPGRADE CARD */
@@ -470,51 +638,253 @@ body{
     gap:12px;
 }
 
-/* GRAPH CARD */
+/* =========================
+   MODERN PREMIUM GRAPH
+========================= */
 
 .graph-card{
 
     height:340px;
 
-    border-radius:18px;
+    border-radius:28px;
 
-    background:white;
+    background:
+    linear-gradient(
+        180deg,
+        rgba(255,255,255,0.92),
+        rgba(255,255,255,0.78)
+    );
 
-    padding:16px;
+    padding:20px 22px 16px 18px;
 
     border:
-    1px solid rgba(15,23,42,0.04);
+    1px solid rgba(255,255,255,0.5);
+
+    overflow:hidden;
+
+    position:relative;
+
+    backdrop-filter:blur(18px);
+
+    box-shadow:
+    0 10px 35px rgba(99,102,241,0.08);
 }
 
-.graph-top{
+/* =========================
+   TOP SECTION
+========================= */
 
-    display:flex;
-
-    justify-content:space-between;
-
-    margin-bottom:16px;
+.graph-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: -17px;   
 }
 
 .graph-top h3{
 
-    font-size:15px;
+    font-size:19px;
+
+    font-weight:700;
 
     color:#111827;
+
+    margin-bottom:4px;
 }
 
 .graph-top p{
 
-    font-size:11px;
+    font-size:13px;
 
     color:#6b7280;
 }
 
 .graph-top span{
 
-    color:#22c55e;
+    color:#00c853;
+
+    font-size:15px;
+
+    font-weight:700;
+}
+
+/* =========================
+   GRAPH CONTAINER
+========================= */
+
+.real-graph{
+
+    width:100%;
+
+    height:255px;
+
+    margin-top:6px;
+
+    border-radius:20px;
+
+    overflow:visible;
+
+    position:relative;
+
+    padding-right:16px;
+}
+
+/* =========================
+   REMOVE OVERFLOW
+========================= */
+
+.recharts-wrapper{
+
+    overflow:visible !important;
+}
+
+.recharts-responsive-container{
+
+    overflow:visible !important;
+}
+
+.recharts-surface{
+
+    overflow:visible !important;
+}
+
+/* =========================
+   GRID LINES
+========================= */
+
+.recharts-cartesian-grid line{
+
+    stroke:#d8dceb;
+
+    opacity:0.32;
+}
+
+/* =========================
+   AXIS TEXT
+========================= */
+
+.recharts-text{
 
     font-size:12px;
+
+    fill:#7b8194;
+
+    font-weight:500;
 }
+
+/* =========================
+   REMOVE HARSH CURSOR
+========================= */
+
+.recharts-tooltip-cursor{
+
+    stroke:rgba(109,99,255,0.18);
+
+    stroke-width:1px;
+}
+
+/* =========================
+   PREMIUM TOOLTIP
+========================= */
+
+.recharts-default-tooltip{
+
+    border:none !important;
+
+    border-radius:22px !important;
+
+    background:
+    rgba(255,255,255,0.92) !important;
+
+    backdrop-filter:blur(18px);
+
+    box-shadow:
+    0 15px 45px rgba(0,0,0,0.10) !important;
+
+    padding:16px 18px !important;
+}
+
+/* DAY */
+
+.recharts-tooltip-label{
+
+    font-size:15px !important;
+
+    font-weight:700 !important;
+
+    color:#111827 !important;
+
+    margin-bottom:8px !important;
+}
+
+/* VALUE */
+
+.recharts-tooltip-item{
+
+    color:#6d63ff !important;
+
+    font-size:14px !important;
+
+    font-weight:700 !important;
+}
+
+/* =========================
+   GRAPH LINE
+========================= */
+
+.recharts-area-curve{
+
+    stroke:#6d63ff !important;
+
+    stroke-width:4px !important;
+
+    filter:
+    drop-shadow(0 4px 10px rgba(109,99,255,0.25));
+}
+
+/* =========================
+   GRAPH AREA
+========================= */
+
+.recharts-area-area{
+
+    fill-opacity:1 !important;
+
+    filter:
+    drop-shadow(0 15px 30px rgba(109,99,255,0.08));
+}
+
+/* =========================
+   DOTS
+========================= */
+
+.recharts-dot circle{
+
+    fill:#6d63ff !important;
+
+    stroke:white !important;
+
+    stroke-width:3px !important;
+
+    r:4.5;
+}
+
+/* ACTIVE DOT */
+
+.recharts-active-dot circle{
+
+    fill:#6d63ff !important;
+
+    stroke:white !important;
+
+    stroke-width:5px !important;
+
+    r:7;
+
+    filter:
+    drop-shadow(0 0 14px rgba(109,99,255,0.45));
+}
+
 
 /* GRAPH */
 
@@ -575,6 +945,8 @@ body{
     margin-bottom:4px;
 
     color:#111827;
+
+    font-weight: bold
 }
 
 .progress-card p{
@@ -745,7 +1117,7 @@ body{
 
     padding:22px;
 
-    height:185px;
+    height:250px;
 
     border:
     1px solid rgba(15,23,42,0.05);
@@ -968,4 +1340,11 @@ body{
         grid-template-columns:
         1fr;
     }
+}
+
+.sidebar-link{
+
+    text-decoration:none;
+
+    width:100%;
 }

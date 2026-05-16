@@ -1,6 +1,13 @@
 import Sidebar from "../Components/Dashboard/Sidebar";
 import Topbar from "../Components/Dashboard/Topbar";
 
+import { useLocation } from "react-router-dom";
+
+import ResumeAnalyzer from "./ResumeAnalyzer";
+import MockInterview from "./MockInterview";
+import CodingArena from "./CodingArena";
+import Performance from "./Performance";
+
 import {
     FiTrendingUp,
     FiTarget,
@@ -11,9 +18,52 @@ import {
     FiFileText
 } from "react-icons/fi";
 
+import {
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+    Tooltip,
+    XAxis,
+    YAxis,
+    CartesianGrid
+} from "recharts";
+
 import "../styles/dashboard.css";
 
 export default function Dashboard() {
+
+    const location = useLocation();
+
+    const graphData = [
+        {
+            day: "Mon",
+            score: 62
+        },
+        {
+            day: "Tue",
+            score: 68
+        },
+        {
+            day: "Wed",
+            score: 71
+        },
+        {
+            day: "Thu",
+            score: 65
+        },
+        {
+            day: "Fri",
+            score: 78
+        },
+        {
+            day: "Sat",
+            score: 82
+        },
+        {
+            day: "Sun",
+            score: 87
+        }
+    ];
 
     return (
 
@@ -35,411 +85,557 @@ export default function Dashboard() {
 
                 <div className="dashboard-content">
 
-                    {/* HEADER */}
+                    {
 
-                    <div className="dashboard-header">
+                        /* =========================
+                           RESUME ANALYZER
+                        ========================= */
 
-                        <h1>
-                            Welcome back, Aarav 👋
-                        </h1>
+                        location.pathname === "/resume-analyzer"
 
-                        <p>
-                            Here's how your placement prep is going this week.
-                        </p>
+                            ? (
 
-                    </div>
+                                <ResumeAnalyzer />
 
-                    {/* STATS */}
+                            )
 
-                    <div className="stats-grid">
+                            /* =========================
+                               MOCK INTERVIEW
+                            ========================= */
 
-                        {/* CARD 1 */}
+                            : location.pathname === "/mock-interview"
 
-                        <div className="stat-card">
+                                ? (
 
-                            <div className="stat-top">
+                                    <MockInterview />
 
-                                <p>
-                                    Interview Score
-                                </p>
+                                )
 
-                                <div className="stat-icon">
+                                /* =========================
+                                   CODING ARENA
+                                ========================= */
 
-                                    <FiTrendingUp />
+                                : location.pathname === "/coding-arena"
 
-                                </div>
+                                    ? (
 
-                            </div>
+                                        <CodingArena />
 
-                            <div className="stat-bottom">
+                                    )
 
-                                <h2>
-                                    87
-                                </h2>
+                                    /* =========================
+                                       PERFORMANCE
+                                    ========================= */
 
-                                <span>
-                                    +12%
-                                </span>
+                                    : location.pathname === "/performance"
 
-                            </div>
+                                        ? (
 
-                        </div>
+                                            <Performance />
 
-                        {/* CARD 2 */}
+                                        )
 
-                        <div className="stat-card">
+                                        /* =========================
+                                           DASHBOARD HOME
+                                        ========================= */
 
-                            <div className="stat-top">
+                                        : (
 
-                                <p>
-                                    Resume ATS
-                                </p>
+                                            <>
 
-                                <div className="stat-icon">
+                                                {/* HEADER */}
 
-                                    <FiTarget />
+                                                <div className="dashboard-header">
 
-                                </div>
+                                                    <h1>
+                                                        Welcome back, Aarav 👋
+                                                    </h1>
 
-                            </div>
+                                                    <p>
+                                                        Here's how your placement prep is going this week.
+                                                    </p>
 
-                            <div className="stat-bottom">
+                                                </div>
 
-                                <h2>
-                                    92
-                                </h2>
+                                                {/* STATS */}
 
-                                <span>
-                                    +5%
-                                </span>
+                                                <div className="stats-grid">
 
-                            </div>
+                                                    {/* CARD 1 */}
 
-                        </div>
+                                                    <div className="stat-card">
 
-                        {/* CARD 3 */}
+                                                        <div className="stat-top">
 
-                        <div className="stat-card">
+                                                            <p>
+                                                                Interview Score
+                                                            </p>
 
-                            <div className="stat-top">
+                                                            <div className="stat-icon">
 
-                                <p>
-                                    Day Streak
-                                </p>
+                                                                <FiTrendingUp />
 
-                                <div className="stat-icon">
+                                                            </div>
 
-                                    <FiClock />
+                                                        </div>
 
-                                </div>
+                                                        <div className="stat-bottom">
 
-                            </div>
+                                                            <h2>
+                                                                87
+                                                            </h2>
 
-                            <div className="stat-bottom">
+                                                            <span>
+                                                                +12%
+                                                            </span>
 
-                                <h2>
-                                    14
-                                </h2>
+                                                        </div>
 
-                                <span>
-                                    Keep going!
-                                </span>
+                                                    </div>
 
-                            </div>
+                                                    {/* CARD 2 */}
 
-                        </div>
+                                                    <div className="stat-card">
 
-                        {/* CARD 4 */}
+                                                        <div className="stat-top">
 
-                        <div className="stat-card">
+                                                            <p>
+                                                                Resume ATS
+                                                            </p>
 
-                            <div className="stat-top">
+                                                            <div className="stat-icon">
 
-                                <p>
-                                    Rank
-                                </p>
+                                                                <FiTarget />
 
-                                <div className="stat-icon">
+                                                            </div>
 
-                                    <FiAward />
+                                                        </div>
 
-                                </div>
+                                                        <div className="stat-bottom">
 
-                            </div>
+                                                            <h2>
+                                                                92
+                                                            </h2>
 
-                            <div className="stat-bottom">
+                                                            <span>
+                                                                +5%
+                                                            </span>
 
-                                <h2>
-                                    #284
-                                </h2>
+                                                        </div>
 
-                                <span>
-                                    Top 3%
-                                </span>
+                                                    </div>
 
-                            </div>
+                                                    {/* CARD 3 */}
 
-                        </div>
+                                                    <div className="stat-card">
 
-                    </div>
+                                                        <div className="stat-top">
 
-                    {/* TOP GRAPH SECTION */}
+                                                            <p>
+                                                                Day Streak
+                                                            </p>
 
-                    <div className="dashboard-bottom">
+                                                            <div className="stat-icon">
 
-                        {/* GRAPH */}
+                                                                <FiClock />
 
-                        <div className="graph-card">
+                                                            </div>
 
-                            <div className="graph-top">
+                                                        </div>
 
-                                <div>
+                                                        <div className="stat-bottom">
 
-                                    <h3>
-                                        Interview Score Trend
-                                    </h3>
+                                                            <h2>
+                                                                14
+                                                            </h2>
 
-                                    <p>
-                                        Last 7 days
-                                    </p>
+                                                            <span>
+                                                                Keep going!
+                                                            </span>
 
-                                </div>
+                                                        </div>
 
-                                <span>
-                                    +25 pts
-                                </span>
+                                                    </div>
 
-                            </div>
+                                                    {/* CARD 4 */}
 
-                            <div className="fake-graph">
+                                                    <div className="stat-card">
 
-                                <div className="graph-line"></div>
+                                                        <div className="stat-top">
 
-                            </div>
+                                                            <p>
+                                                                Rank
+                                                            </p>
 
-                        </div>
+                                                            <div className="stat-icon">
 
-                        {/* DONUT */}
+                                                                <FiAward />
 
-                        <div className="progress-card">
+                                                            </div>
 
-                            <h3>
-                                Coding Progress
-                            </h3>
+                                                        </div>
 
-                            <p>
-                                DSA mastery
-                            </p>
+                                                        <div className="stat-bottom">
 
-                            <div className="donut-chart">
+                                                            <h2>
+                                                                #284
+                                                            </h2>
 
-                                <div className="donut-inner">
+                                                            <span>
+                                                                Top 3%
+                                                            </span>
 
-                                    <h2>
-                                        73%
-                                    </h2>
+                                                        </div>
 
-                                    <span>
-                                        142 / 195 solved
-                                    </span>
+                                                    </div>
 
-                                </div>
+                                                </div>
 
-                            </div>
+                                                {/* TOP GRAPH SECTION */}
 
-                        </div>
+                                                <div className="dashboard-bottom">
 
-                    </div>
+                                                    {/* GRAPH */}
 
-                    {/* NEW BOTTOM UI */}
+                                                    <div className="graph-card">
 
-                    <div className="dashboard-bottom second-bottom">
+                                                        <div className="graph-top">
 
-                        {/* CARD 1 */}
+                                                            <div>
 
-                        <div className="action-card">
+                                                                <h3>
+                                                                    Interview Score Trend
+                                                                </h3>
 
-                            <div className="action-arrow">
-                                ↗
-                            </div>
+                                                                <p>
+                                                                    Last 7 days
+                                                                </p>
 
-                            <div className="action-icon">
-                                <FiMic />
-                            </div>
+                                                            </div>
 
-                            <h3>
-                                Start Mock Interview
-                            </h3>
+                                                            <span>
+                                                                +25 pts
+                                                            </span>
 
-                            <p>
-                                5–15 min sessions
-                            </p>
+                                                        </div>
 
-                        </div>
+                                                        <div className="real-graph">
 
-                        {/* CARD 2 */}
+                                                            <ResponsiveContainer
+                                                                width="100%"
+                                                                height={270}
+                                                            >
 
-                        <div className="action-card">
+                                                                <AreaChart
 
-                            <div className="action-arrow">
-                                ↗
-                            </div>
+                                                                    data={graphData}
 
-                            <div className="action-icon">
-                                <FiCode />
-                            </div>
+                                                                    margin={{
+                                                                        top: 10,
+                                                                        right: 30,
+                                                                        left: -15,
+                                                                        bottom: 0
+                                                                    }}
+                                                                >
 
-                            <h3>
-                                Solve a Problem
-                            </h3>
+                                                                    <defs>
 
-                            <p>
-                                Daily challenge ready
-                            </p>
+                                                                        <linearGradient
+                                                                            id="colorScore"
+                                                                            x1="0"
+                                                                            y1="0"
+                                                                            x2="0"
+                                                                            y2="1"
+                                                                        >
 
-                        </div>
+                                                                            <stop
+                                                                                offset="5%"
+                                                                                stopColor="#6366f1"
+                                                                                stopOpacity={0.28}
+                                                                            />
 
-                        {/* CARD 3 */}
+                                                                            <stop
+                                                                                offset="95%"
+                                                                                stopColor="#6366f1"
+                                                                                stopOpacity={0.03}
+                                                                            />
 
-                        <div className="action-card">
+                                                                        </linearGradient>
 
-                            <div className="action-arrow">
-                                ↗
-                            </div>
+                                                                    </defs>
 
-                            <div className="action-icon">
-                                <FiFileText />
-                            </div>
+                                                                    <CartesianGrid
+                                                                        strokeDasharray="4 4"
+                                                                        vertical={true}
+                                                                        horizontal={true}
+                                                                    />
 
-                            <h3>
-                                Analyze Resume
-                            </h3>
+                                                                    <XAxis
+                                                                        dataKey="day"
+                                                                        tickLine={false}
+                                                                        axisLine={false}
+                                                                    />
 
-                            <p>
-                                Get instant ATS score
-                            </p>
+                                                                    <YAxis
+                                                                        tickLine={false}
+                                                                        axisLine={false}
+                                                                    />
 
-                        </div>
+                                                                    <Tooltip />
 
-                        {/* RECENT ACTIVITY */}
+                                                                    <Area
+                                                                        type="monotone"
+                                                                        dataKey="score"
+                                                                        stroke="#6366f1"
+                                                                        strokeWidth={4}
+                                                                        fillOpacity={1}
+                                                                        fill="url(#colorScore)"
+                                                                        dot={{
+                                                                            r: 5,
+                                                                            strokeWidth: 4,
+                                                                            fill: "#6366f1",
+                                                                            stroke: "#ffffff"
+                                                                        }}
+                                                                        activeDot={{
+                                                                            r: 7
+                                                                        }}
+                                                                    />
 
-                        <div className="activity-card">
+                                                                </AreaChart>
 
-                            <h3>
-                                Recent activity
-                            </h3>
+                                                            </ResponsiveContainer>
 
-                            {/* ITEM */}
+                                                        </div>
 
-                            <div className="activity-item">
+                                                    </div>
 
-                                <div className="activity-left">
+                                                    {/* DONUT */}
 
-                                    <div className="activity-dot"></div>
+                                                    <div className="progress-card">
 
-                                    <div className="activity-text">
+                                                        <h3>
+                                                            Coding Progress
+                                                        </h3>
 
-                                        <h4>
-                                            Completed mock: Behavioral
-                                        </h4>
+                                                        <p>
+                                                            DSA mastery
+                                                        </p>
 
-                                        <p>
-                                            2h ago
-                                        </p>
+                                                        <div className="donut-chart">
 
-                                    </div>
+                                                            <div className="donut-inner">
 
-                                </div>
+                                                                <h2>
+                                                                    73%
+                                                                </h2>
 
-                                <span className="activity-score">
-                                    Score 87
-                                </span>
+                                                                <span>
+                                                                    142 / 195 solved
+                                                                </span>
 
-                            </div>
+                                                            </div>
 
-                            {/* ITEM */}
+                                                        </div>
 
-                            <div className="activity-item">
+                                                    </div>
 
-                                <div className="activity-left">
+                                                </div>
 
-                                    <div className="activity-dot"></div>
+                                                {/* NEW BOTTOM UI */}
 
-                                    <div className="activity-text">
+                                                <div className="dashboard-bottom second-bottom">
 
-                                        <h4>
-                                            Solved: Two Sum II
-                                        </h4>
+                                                    {/* CARD 1 */}
 
-                                        <p>
-                                            5h ago
-                                        </p>
+                                                    <div className="action-card">
 
-                                    </div>
+                                                        <div className="action-arrow">
+                                                            ↗
+                                                        </div>
 
-                                </div>
+                                                        <div className="action-icon">
+                                                            <FiMic />
+                                                        </div>
 
-                                <span className="activity-score">
-                                    +10 XP
-                                </span>
+                                                        <h3>
+                                                            Start Mock Interview
+                                                        </h3>
 
-                            </div>
+                                                        <p>
+                                                            5–15 min sessions
+                                                        </p>
 
-                            {/* ITEM */}
+                                                    </div>
 
-                            <div className="activity-item">
+                                                    {/* CARD 2 */}
 
-                                <div className="activity-left">
+                                                    <div className="action-card">
 
-                                    <div className="activity-dot"></div>
+                                                        <div className="action-arrow">
+                                                            ↗
+                                                        </div>
 
-                                    <div className="activity-text">
+                                                        <div className="action-icon">
+                                                            <FiCode />
+                                                        </div>
 
-                                        <h4>
-                                            Resume v3 uploaded
-                                        </h4>
+                                                        <h3>
+                                                            Solve a Problem
+                                                        </h3>
 
-                                        <p>
-                                            Yesterday
-                                        </p>
+                                                        <p>
+                                                            Daily challenge ready
+                                                        </p>
 
-                                    </div>
+                                                    </div>
 
-                                </div>
+                                                    {/* CARD 3 */}
 
-                                <span className="activity-score">
-                                    ATS 92
-                                </span>
+                                                    <div className="action-card">
 
-                            </div>
+                                                        <div className="action-arrow">
+                                                            ↗
+                                                        </div>
 
-                            {/* ITEM */}
+                                                        <div className="action-icon">
+                                                            <FiFileText />
+                                                        </div>
 
-                            <div className="activity-item">
+                                                        <h3>
+                                                            Analyze Resume
+                                                        </h3>
 
-                                <div className="activity-left">
+                                                        <p>
+                                                            Get instant ATS score
+                                                        </p>
 
-                                    <div className="activity-dot"></div>
+                                                    </div>
 
-                                    <div className="activity-text">
+                                                    {/* RECENT ACTIVITY */}
 
-                                        <h4>
-                                            Joined cohort: Google SDE
-                                        </h4>
+                                                    <div className="activity-card">
 
-                                        <p>
-                                            2d ago
-                                        </p>
+                                                        <h3>
+                                                            Recent activity
+                                                        </h3>
 
-                                    </div>
+                                                        {/* ITEM */}
 
-                                </div>
+                                                        <div className="activity-item">
 
-                            </div>
+                                                            <div className="activity-left">
 
-                        </div>
+                                                                <div className="activity-dot"></div>
 
-                    </div>
+                                                                <div className="activity-text">
+
+                                                                    <h4>
+                                                                        Completed mock: Behavioral
+                                                                    </h4>
+
+                                                                    <p>
+                                                                        2h ago
+                                                                    </p>
+
+                                                                </div>
+
+                                                            </div>
+
+                                                            <span className="activity-score">
+                                                                Score 87
+                                                            </span>
+
+                                                        </div>
+
+                                                        {/* ITEM */}
+
+                                                        <div className="activity-item">
+
+                                                            <div className="activity-left">
+
+                                                                <div className="activity-dot"></div>
+
+                                                                <div className="activity-text">
+
+                                                                    <h4>
+                                                                        Solved: Two Sum II
+                                                                    </h4>
+
+                                                                    <p>
+                                                                        5h ago
+                                                                    </p>
+
+                                                                </div>
+
+                                                            </div>
+
+                                                            <span className="activity-score">
+                                                                +10 XP
+                                                            </span>
+
+                                                        </div>
+
+                                                        {/* ITEM */}
+
+                                                        <div className="activity-item">
+
+                                                            <div className="activity-left">
+
+                                                                <div className="activity-dot"></div>
+
+                                                                <div className="activity-text">
+
+                                                                    <h4>
+                                                                        Resume v3 uploaded
+                                                                    </h4>
+
+                                                                    <p>
+                                                                        Yesterday
+                                                                    </p>
+
+                                                                </div>
+
+                                                            </div>
+
+                                                            <span className="activity-score">
+                                                                ATS 92
+                                                            </span>
+
+                                                        </div>
+
+                                                        {/* ITEM */}
+
+                                                        <div className="activity-item">
+
+                                                            <div className="activity-left">
+
+                                                                <div className="activity-dot"></div>
+
+                                                                <div className="activity-text">
+
+                                                                    <h4>
+                                                                        Joined cohort: Google SDE
+                                                                    </h4>
+
+                                                                    <p>
+                                                                        2d ago
+                                                                    </p>
+
+                                                                </div>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </>
+
+                                        )
+
+                    }
 
                 </div>
 

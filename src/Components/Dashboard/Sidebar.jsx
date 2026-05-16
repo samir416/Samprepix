@@ -5,10 +5,17 @@ import {
     FiFileText,
     FiMic,
     FiCode,
-    FiShield
+    FiBarChart2
 } from "react-icons/fi";
 
+import {
+    Link,
+    useLocation
+} from "react-router-dom";
+
 export default function Sidebar() {
+
+    const location = useLocation();
 
     return (
 
@@ -35,45 +42,120 @@ export default function Sidebar() {
 
                 <nav className="dashboard-menu">
 
-                    <button className="active">
+                    {/* DASHBOARD */}
 
-                        <FiGrid />
+                    <Link
+                        to="/dashboard"
+                        className="sidebar-link"
+                    >
 
-                        Dashboard
+                        <button
+                            className={
+                                location.pathname === "/dashboard"
+                                    ? "active"
+                                    : ""
+                            }
+                        >
 
-                    </button>
+                            <FiGrid />
 
-                    <button>
+                            Dashboard
 
-                        <FiFileText />
+                        </button>
 
-                        Resume Analyzer
+                    </Link>
 
-                    </button>
+                    {/* RESUME ANALYZER */}
 
-                    <button>
+                    <Link
+                        to="/resume-analyzer"
+                        className="sidebar-link"
+                    >
 
-                        <FiMic />
+                        <button
+                            className={
+                                location.pathname === "/resume-analyzer"
+                                    ? "active"
+                                    : ""
+                            }
+                        >
 
-                        AI Interview
+                            <FiFileText />
 
-                    </button>
+                            Resume Analyzer
 
-                    <button>
+                        </button>
 
-                        <FiCode />
+                    </Link>
 
-                        Coding Arena
+                    {/* AI INTERVIEW */}
 
-                    </button>
+                    <Link
+                        to="/mock-interview"
+                        className="sidebar-link"
+                    >
 
-                    <button>
+                        <button
+                            className={
+                                location.pathname === "/mock-interview"
+                                    ? "active"
+                                    : ""
+                            }
+                        >
 
-                        <FiShield />
+                            <FiMic />
 
-                        Admin
+                            AI Interview
 
-                    </button>
+                        </button>
+
+                    </Link>
+
+                    {/* CODING ARENA */}
+
+                    <Link
+                        to="/coding-arena"
+                        className="sidebar-link"
+                    >
+
+                        <button
+                            className={
+                                location.pathname === "/coding-arena"
+                                    ? "active"
+                                    : ""
+                            }
+                        >
+
+                            <FiCode />
+
+                            Coding Arena
+
+                        </button>
+
+                    </Link>
+
+                    {/* PERFORMANCE */}
+
+                    <Link
+                        to="/performance"
+                        className="sidebar-link"
+                    >
+
+                        <button
+                            className={
+                                location.pathname === "/performance"
+                                    ? "active"
+                                    : ""
+                            }
+                        >
+
+                            <FiBarChart2 />
+
+                            Performance
+
+                        </button>
+
+                    </Link>
 
                 </nav>
 
