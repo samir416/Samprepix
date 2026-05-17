@@ -1,12 +1,67 @@
 import { Link } from "react-router-dom";
-import { Moon } from "lucide-react";
+
+import {
+    Moon,
+    Sun
+} from "lucide-react";
+
 import logo from "../../assets/Logo.png";
+
 import "../../styles/home.css";
-import { useNavigate } from "react-router-dom";
+
+import {
+    useLocation
+} from "react-router-dom";
+
+import {
+    useEffect,
+    useState
+} from "react";
 
 function Navbar() {
 
-    const navigate = useNavigate();
+    const location = useLocation();
+
+    const [darkMode, setDarkMode] = useState(false);
+
+    /* LOAD SAVED THEME */
+
+    useEffect(() => {
+
+        const savedTheme =
+            localStorage.getItem("theme");
+
+        if (savedTheme === "dark") {
+
+            document.body.classList.add(
+                "dark-theme"
+            );
+
+            setDarkMode(true);
+        }
+
+    }, []);
+
+    /* TOGGLE */
+
+    const toggleTheme = () => {
+
+        document.body.classList.toggle(
+            "dark-theme"
+        );
+
+        const isDark =
+            document.body.classList.contains(
+                "dark-theme"
+            );
+
+        setDarkMode(isDark);
+
+        localStorage.setItem(
+            "theme",
+            isDark ? "dark" : "light"
+        );
+    };
 
     return (
 
@@ -19,11 +74,13 @@ function Navbar() {
                 <div className="logo-section">
 
                     <div className="logo-box">
+
                         <img
                             src={logo}
                             alt="Samprepix Logo"
                             className="navbar-logo"
                         />
+
                     </div>
 
                     <h2 className="logo-text">
@@ -44,7 +101,9 @@ function Navbar() {
                                 : ""
                         }
                     >
+
                         Home
+
                     </Link>
 
                     <Link
@@ -55,7 +114,9 @@ function Navbar() {
                                 : ""
                         }
                     >
+
                         Features
+
                     </Link>
 
                     <Link
@@ -66,7 +127,9 @@ function Navbar() {
                                 : ""
                         }
                     >
+
                         Pricing
+
                     </Link>
 
                 </div>
@@ -75,23 +138,45 @@ function Navbar() {
 
                 <div className="nav-right">
 
-                    <div className="theme-icon">
-                        <Moon size={18} />
-                    </div>
+                    {/* SIMPLE PREMIUM TOGGLE */}
 
-                    <Link className="signin-btn" to="/login">
+                    <button
+                        className="theme-toggle"
+                        onClick={toggleTheme}
+                        aria-label="Toggle Theme"
+                    >
+
+                        {
+                            darkMode
+                                ? <Sun size={22} />
+                                : <Moon size={22} />
+                        }
+
+                    </button>
+
+                    <Link
+                        className="signin-btn"
+                        to="/login"
+                    >
+
                         Sign in
+
                     </Link>
 
-                    <Link className="getstarted-btn" to="/auth">
+                    <Link
+                        className="getstarted-btn"
+                        to="/auth"
+                    >
+
                         Get started
+
                     </Link>
+
                 </div>
 
             </nav>
 
         </div>
-
     )
 }
 

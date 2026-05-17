@@ -1,0 +1,402 @@
+/* =========================================================
+   GLOBAL ADVANCED DARK THEME SYSTEM
+========================================================= */
+
+/* =========================================================
+   ROOT
+========================================================= */
+
+body.dark-theme {
+    background: #020617;
+    color: #f8fafc;
+}
+
+/* =========================================================
+   GLOBAL BACKGROUND
+========================================================= */
+
+body.dark-theme,
+body.dark-theme main,
+body.dark-theme section,
+body.dark-theme footer,
+body.dark-theme .home-page,
+body.dark-theme .features-page,
+body.dark-theme .pricing-page,
+body.dark-theme .dashboard-page {
+
+    background:
+        linear-gradient(
+            180deg,
+            #020617 0%,
+            #081226 45%,
+            #0f172a 100%
+        ) !important;
+}
+
+/* =========================================================
+   NAVBAR
+========================================================= */
+
+body.dark-theme .custom-navbar {
+
+    background:
+        rgba(7,15,30,0.82) !important;
+
+    border:
+        1px solid rgba(255,255,255,0.06);
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,0.4);
+}
+
+body.dark-theme .nav-links a,
+body.dark-theme .logo-text,
+body.dark-theme .signin-btn,
+body.dark-theme .theme-toggle {
+
+    color: #ffffff !important;
+}
+
+body.dark-theme .active-nav {
+
+    background:
+        rgba(255,255,255,0.08) !important;
+
+    border:
+        1px solid rgba(255,255,255,0.06);
+
+    box-shadow:
+        0 4px 14px rgba(0,0,0,0.18);
+}
+
+/* =========================================================
+   HEADINGS
+========================================================= */
+
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4,
+body.dark-theme h5,
+body.dark-theme h6 {
+
+    color: #ffffff !important;
+}
+
+/* =========================================================
+   TEXT
+========================================================= */
+
+body.dark-theme p,
+body.dark-theme span,
+body.dark-theme li,
+body.dark-theme small {
+
+    color: #cbd5e1 !important;
+}
+
+/* =========================================================
+   ALL CARDS
+========================================================= */
+
+body.dark-theme .feature-card,
+body.dark-theme .features-card,
+body.dark-theme .feature-box,
+body.dark-theme .feature-item,
+body.dark-theme .pricing-card,
+body.dark-theme .testimonial-card,
+body.dark-theme .tool-card,
+body.dark-theme .dashboard-card,
+body.dark-theme .analytics-card,
+body.dark-theme .upgrade-card,
+body.dark-theme .history-card,
+body.dark-theme .stats-card,
+body.dark-theme .ai-card {
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(15,23,42,0.96),
+            rgba(8,15,30,0.98)
+        ) !important;
+
+    border:
+        1px solid rgba(255,255,255,0.06) !important;
+
+    box-shadow:
+        0 12px 35px rgba(0,0,0,0.35);
+
+    backdrop-filter: blur(16px);
+
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease,
+        border 0.35s ease,
+        background 0.35s ease;
+}
+
+/* =========================================================
+   CARD HOVER
+========================================================= */
+
+body.dark-theme .feature-card:hover,
+body.dark-theme .features-card:hover,
+body.dark-theme .feature-box:hover,
+body.dark-theme .feature-item:hover,
+body.dark-theme .pricing-card:hover,
+body.dark-theme .testimonial-card:hover,
+body.dark-theme .tool-card:hover,
+body.dark-theme .dashboard-card:hover {
+
+    transform:
+        translateY(-8px);
+
+    border:
+        1px solid rgba(99,102,241,0.4) !important;
+
+    box-shadow:
+        0 18px 45px rgba(0,0,0,0.45),
+        0 0 24px rgba(99,102,241,0.16);
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+body.dark-theme .plan-btn,
+body.dark-theme .apply-btn,
+body.dark-theme .history-open-btn,
+body.dark-theme .sidebar-upgrade-btn,
+body.dark-theme .getstarted-btn {
+
+    background:
+        linear-gradient(
+            135deg,
+            #4f46e5,
+            #7c3aed
+        ) !important;
+
+    color: #ffffff !important;
+
+    border: none;
+
+    box-shadow:
+        0 10px 25px rgba(79,70,229,0.3);
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        filter 0.3s ease;
+}
+
+/* =========================================================
+   BUTTON HOVER
+========================================================= */
+
+body.dark-theme .plan-btn:hover,
+body.dark-theme .apply-btn:hover,
+body.dark-theme .history-open-btn:hover,
+body.dark-theme .sidebar-upgrade-btn:hover,
+body.dark-theme .getstarted-btn:hover {
+
+    transform:
+        translateY(-4px);
+
+    filter:
+        brightness(1.08);
+
+    box-shadow:
+        0 16px 35px rgba(79,70,229,0.42);
+}
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+body.dark-theme input,
+body.dark-theme textarea {
+
+    background:
+        rgba(15,23,42,0.92) !important;
+
+    border:
+        1px solid rgba(255,255,255,0.08) !important;
+
+    color:
+        #ffffff !important;
+}
+
+body.dark-theme input::placeholder,
+body.dark-theme textarea::placeholder {
+
+    color: #94a3b8;
+}
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+body.dark-theme footer,
+body.dark-theme .footer-section {
+
+    background:
+        linear-gradient(
+            180deg,
+            #020617,
+            #081226
+        ) !important;
+
+    border-top:
+        1px solid rgba(255,255,255,0.06);
+}
+
+body.dark-theme footer a {
+
+    color:
+        #cbd5e1 !important;
+}
+
+body.dark-theme footer a:hover {
+
+    color:
+        #ffffff !important;
+}
+
+/* =========================================================
+   HISTORY PAGE
+========================================================= */
+
+body.dark-theme .history-page,
+body.dark-theme .history-wrapper {
+
+    background:
+        linear-gradient(
+            180deg,
+            #020617,
+            #0f172a
+        ) !important;
+}
+
+body.dark-theme .history-table,
+body.dark-theme .history-row {
+
+    background:
+        rgba(15,23,42,0.92) !important;
+
+    border:
+        1px solid rgba(255,255,255,0.06);
+}
+
+body.dark-theme .history-head {
+
+    background:
+        rgba(30,41,59,0.92) !important;
+}
+
+body.dark-theme .back-btn {
+
+    background:
+        rgba(255,255,255,0.06);
+
+    color:
+        #ffffff;
+
+    border:
+        1px solid rgba(255,255,255,0.08);
+}
+
+body.dark-theme .back-btn:hover {
+
+    background:
+        rgba(99,102,241,0.18);
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+html.dark-theme,
+body.dark-theme {
+
+    scrollbar-color:
+        #6366f1 #020617;
+}
+
+body.dark-theme::-webkit-scrollbar,
+body.dark-theme *::-webkit-scrollbar {
+
+    width: 10px;
+    height: 10px;
+}
+
+body.dark-theme::-webkit-scrollbar-track,
+body.dark-theme *::-webkit-scrollbar-track {
+
+    background: #020617;
+}
+
+body.dark-theme::-webkit-scrollbar-thumb,
+body.dark-theme *::-webkit-scrollbar-thumb {
+
+    background:
+        linear-gradient(
+            180deg,
+            #4f46e5,
+            #7c3aed
+        );
+
+    border-radius: 999px;
+}
+
+body.dark-theme::-webkit-scrollbar-thumb:hover,
+body.dark-theme *::-webkit-scrollbar-thumb:hover {
+
+    background:
+        linear-gradient(
+            180deg,
+            #6366f1,
+            #8b5cf6
+        );
+}
+
+/* =========================================================
+   GLOBAL TRANSITIONS
+========================================================= */
+
+body,
+body * {
+
+    transition:
+        background 0.35s ease,
+        color 0.35s ease,
+        border 0.35s ease,
+        box-shadow 0.35s ease,
+        transform 0.35s ease;
+}
+
+/* =========================================================
+   FINAL DARK MODE FIX PATCH
+========================================================= */
+
+/* =========================================================
+   THEME TOGGLE ICON FIX
+========================================================= */
+
+body.dark-theme .theme-toggle {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+
+    color: #ffffff !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.dark-theme .theme-toggle svg {
+    color: #ffffff !important;
+    stroke-width: 2.2;
+}
+

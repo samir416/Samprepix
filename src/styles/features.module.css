@@ -495,3 +495,108 @@
   }
 
 }
+/* =========================================
+   REAL DARK MODE FIX FOR CSS MODULES
+========================================= */
+
+:global(body.dark-theme) .feature-card {
+
+    background:
+        linear-gradient(
+            145deg,
+            #0f172a,
+            #111827
+        ) !important;
+
+    border:
+        1px solid rgba(255,255,255,0.07) !important;
+
+    box-shadow:
+        0 14px 40px rgba(0,0,0,0.34) !important;
+}
+
+/* REMOVE WHITE OVERLAY */
+
+:global(body.dark-theme) .feature-card::before {
+
+    display: none !important;
+}
+
+/* FIX GLOW */
+
+:global(body.dark-theme) .feature-card::after {
+
+    opacity: 0.22 !important;
+}
+
+/* TITLE */
+
+:global(body.dark-theme) .feature-card h3 {
+
+    color: #f8fafc !important;
+}
+
+/* DESCRIPTION */
+
+:global(body.dark-theme) .feature-card p {
+
+    color: #cbd5e1 !important;
+}
+
+/* HOVER */
+
+:global(body.dark-theme) .feature-card:hover {
+
+    background:
+        linear-gradient(
+            145deg,
+            #131c31,
+            #172033
+        ) !important;
+
+    border:
+        1px solid rgba(99,102,241,0.32) !important;
+
+    box-shadow:
+        0 24px 60px rgba(0,0,0,0.42),
+        0 0 26px rgba(99,102,241,0.16) !important;
+}
+
+/* HOVER TITLE */
+
+:global(body.dark-theme) .feature-card:hover h3 {
+
+    color: #ffffff !important;
+}
+
+/* HOVER TEXT */
+
+:global(body.dark-theme) .feature-card:hover p {
+
+    color: #e2e8f0 !important;
+}
+
+/* HERO TEXT */
+
+:global(body.dark-theme) .features-hero h1 {
+
+    color: #ffffff !important;
+}
+
+:global(body.dark-theme) .features-hero p {
+
+    color: #cbd5e1 !important;
+}
+
+/* PAGE BG */
+
+:global(body.dark-theme) .features-page {
+
+    background:
+        linear-gradient(
+            180deg,
+            #020617,
+            #081226,
+            #0f172a
+        ) !important;
+}
