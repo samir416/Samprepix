@@ -1348,3 +1348,132 @@ body{
 
     width:100%;
 }
+/* =========================
+   SIDEBAR PREMIUM BUTTON
+========================= */
+
+.sidebar-upgrade-btn {
+    position: relative;
+    overflow: hidden;
+
+    width: 100%;
+    margin-top: 14px;
+
+    padding: 14px 18px;
+
+    border: none;
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #5b8cff 0%,
+            #7b61ff 45%,
+            #9f6bff 100%
+        );
+
+    color: #ffffff;
+
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 10px 25px rgba(91, 140, 255, 0.28),
+        0 4px 12px rgba(123, 97, 255, 0.16);
+
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease,
+        filter 0.35s ease,
+        background 0.5s ease;
+
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+
+    z-index: 1;
+}
+
+/* Glow Layer */
+
+.sidebar-upgrade-btn::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            120deg,
+            rgba(255,255,255,0.28),
+            rgba(255,255,255,0.05),
+            rgba(255,255,255,0.28)
+        );
+
+    opacity: 0;
+
+    transition: opacity 0.4s ease;
+
+    z-index: -1;
+}
+
+/* Shine Sweep */
+
+.sidebar-upgrade-btn::after {
+    content: "";
+
+    position: absolute;
+
+    top: -60%;
+    left: -130%;
+
+    width: 70px;
+    height: 240%;
+
+    background: rgba(255,255,255,0.32);
+
+    transform: rotate(25deg);
+
+    transition: left 0.9s ease;
+}
+
+/* Hover */
+
+.sidebar-upgrade-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+
+    box-shadow:
+        0 18px 40px rgba(91, 140, 255, 0.36),
+        0 8px 18px rgba(123, 97, 255, 0.22);
+
+    filter: brightness(1.05);
+}
+
+.sidebar-upgrade-btn:hover::after {
+    left: 150%;
+}
+
+.sidebar-upgrade-btn:hover::before {
+    opacity: 1;
+}
+
+/* Click Animation */
+
+.sidebar-upgrade-btn:active {
+    transform: scale(0.96);
+
+    box-shadow:
+        0 6px 18px rgba(91, 140, 255, 0.22);
+}
+
+/* Focus */
+
+.sidebar-upgrade-btn:focus-visible {
+    outline: none;
+
+    box-shadow:
+        0 0 0 4px rgba(91, 140, 255, 0.22),
+        0 16px 35px rgba(123, 97, 255, 0.28);
+}

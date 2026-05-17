@@ -187,7 +187,7 @@ export default function Home() {
 
           {/* CARD 1 */}
 
-          <div className="feature-card">
+          <div className="feature-card reveal-card">
 
             <div className="feature-icon">
               🎤
@@ -206,7 +206,7 @@ export default function Home() {
 
           {/* CARD 2 */}
 
-          <div className="feature-card">
+          <div className="feature-card reveal-card">
 
             <div className="feature-icon">
               📄
@@ -224,7 +224,7 @@ export default function Home() {
 
           {/* CARD 3 */}
 
-          <div className="feature-card">
+          <div className="feature-card reveal-card">
 
             <div className="feature-icon">
               {"</>"}
@@ -242,7 +242,7 @@ export default function Home() {
 
           {/* CARD 4 */}
 
-          <div className="feature-card">
+          <div className="feature-card reveal-card">
 
             <div className="feature-icon">
               📉
@@ -260,7 +260,7 @@ export default function Home() {
 
           {/* CARD 5 */}
 
-          <div className="feature-card">
+          <div className="feature-card reveal-card">
 
             <div className="feature-icon">
               ⚙️
@@ -278,7 +278,7 @@ export default function Home() {
 
           {/* CARD 6 */}
 
-          <div className="feature-card">
+          <div className="feature-card reveal-card">
 
             <div className="feature-icon">
               ⚡

@@ -13,6 +13,8 @@ import {
     useLocation
 } from "react-router-dom";
 
+import Pricing from "../../Pages/Pricing";
+
 export default function Sidebar() {
 
     const location = useLocation();
@@ -173,7 +175,10 @@ export default function Sidebar() {
                     Unlimited mocks, all tracks.
                 </p>
 
-                <button>
+                <button
+                    className="sidebar-upgrade-btn"
+                    onClick={() => window.location.href = '/pricing'}
+                >
                     Upgrade
                 </button>
 

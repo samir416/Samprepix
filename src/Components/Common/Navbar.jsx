@@ -34,21 +34,42 @@ function Navbar() {
 
                 {/* CENTER */}
 
-                <ul className="nav-links">
+                <div className="nav-links">
 
-                    <li>
-                        <Link to="/">Home</Link>
-                    </li>
+                    <Link
+                        to="/"
+                        className={
+                            location.pathname === "/"
+                                ? "active-nav"
+                                : ""
+                        }
+                    >
+                        Home
+                    </Link>
 
-                    <li>
-                        <Link to="/">Features</Link>
-                    </li>
+                    <Link
+                        to="/features"
+                        className={
+                            location.pathname === "/features"
+                                ? "active-nav"
+                                : ""
+                        }
+                    >
+                        Features
+                    </Link>
 
-                    <li>
-                        <Link to="/">Pricing</Link>
-                    </li>
+                    <Link
+                        to="/pricing"
+                        className={
+                            location.pathname === "/pricing"
+                                ? "active-nav"
+                                : ""
+                        }
+                    >
+                        Pricing
+                    </Link>
 
-                </ul>
+                </div>
 
                 {/* RIGHT */}
 

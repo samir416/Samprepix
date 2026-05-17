@@ -1,11 +1,11 @@
 import { Routes, Route } from "react-router-dom";
-
 import Home from "../Pages/Home";
 import Login from "../Pages/Login";
 import Register from "../Pages/Register";
 import Dashboard from "../Pages/Dashboard";
 import AuthModal from "../Components/Auth/AuthModal";
-import Performance from "../Pages/Performance";
+import Features from "../Pages/Features";
+import Pricing from "../Pages/Pricing";
 
 export default function AppRoutes() {
 
@@ -18,6 +18,20 @@ export default function AppRoutes() {
             <Route
                 path="/"
                 element={<Home />}
+            />
+
+            {/* FEATURES */}
+
+            <Route
+                path="/features"
+                element={<Features />}
+            />
+
+            /* PRICING */
+
+            <Route
+                path="/pricing"
+                element={<Pricing />}
             />
 
             {/* LOGIN */}
