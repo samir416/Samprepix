@@ -590,3 +590,139 @@
 
     max-width:95%;
 }
+
+/* =========================================
+   DARK MODE - MOCK INTERVIEW
+========================================= */
+
+body.dark-theme .mock-page{
+
+    background:
+    linear-gradient(
+        135deg,
+        #020617,
+        #071226
+    );
+}
+
+/* HEADER */
+
+body.dark-theme .mock-header h1{
+
+    color:#ffffff;
+}
+
+body.dark-theme .mock-header p{
+
+    color:#94a3b8;
+}
+
+/* TIMER */
+
+body.dark-theme .timer-box{
+
+    background:
+    rgba(9,15,35,0.82);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    color:white;
+}
+
+/* MAIN PANELS */
+
+body.dark-theme .ai-panel,
+body.dark-theme .feedback-card,
+body.dark-theme .transcript-card,
+body.dark-theme .current-question-card{
+
+    background:
+    rgba(9,15,35,0.82);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    box-shadow:
+    0 10px 40px rgba(0,0,0,0.28);
+}
+
+/* QUESTION BADGE */
+
+body.dark-theme .question-badge{
+
+    background:
+    rgba(255,255,255,0.08);
+
+    color:white;
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+}
+
+/* LISTENING */
+
+body.dark-theme .listening-box{
+
+    background:
+    rgba(255,255,255,0.08);
+
+    color:white;
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+}
+
+/* CONTROL BUTTONS */
+
+body.dark-theme .control-btn{
+
+    background:
+    rgba(255,255,255,0.08);
+
+    color:white;
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+}
+
+/* TEXT */
+
+body.dark-theme .feedback-card h3,
+body.dark-theme .transcript-card h3,
+body.dark-theme .feedback-top span,
+body.dark-theme .current-question-card p{
+
+    color:white;
+}
+
+body.dark-theme .transcript-card p{
+
+    color:#cbd5e1;
+}
+
+body.dark-theme .current-question-card h4{
+
+    color:#94a3b8;
+}
+
+/* BARS */
+
+body.dark-theme .feedback-bar{
+
+    background:
+    rgba(255,255,255,0.08);
+}
+
+/* TYPING BOX */
+
+body.dark-theme .typing-box{
+
+    background:
+    rgba(255,255,255,0.08);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    color:#cbd5e1;
+}

@@ -1477,3 +1477,214 @@ body{
         0 0 0 4px rgba(91, 140, 255, 0.22),
         0 16px 35px rgba(123, 97, 255, 0.28);
 }
+
+/* =========================================
+   GLOBAL PAGE DARK MODE
+========================================= */
+
+/* COMMON CARDS */
+
+body.dark-theme .resume-upload-card,
+body.dark-theme .ats-card,
+body.dark-theme .skill-gap-card,
+body.dark-theme .interview-main-card,
+body.dark-theme .feedback-card,
+body.dark-theme .transcript-card,
+body.dark-theme .question-card,
+body.dark-theme .coding-problem-card,
+body.dark-theme .coding-editor-card,
+body.dark-theme .testcase-card,
+body.dark-theme .performance-card,
+body.dark-theme .metric-card {
+
+    background:
+    rgba(9,15,35,0.82);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    color: white;
+
+    backdrop-filter: blur(16px);
+}
+
+/* HEADINGS */
+
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4,
+body.dark-theme h5,
+body.dark-theme h6 {
+
+    color: white;
+}
+
+/* TEXT */
+
+body.dark-theme p,
+body.dark-theme span,
+body.dark-theme label,
+body.dark-theme li {
+
+    color: #cbd5e1;
+}
+
+/* INPUTS */
+
+body.dark-theme input,
+body.dark-theme textarea,
+body.dark-theme select {
+
+    background: #172036;
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    color: white;
+}
+
+/* PLACEHOLDER */
+
+body.dark-theme input::placeholder,
+body.dark-theme textarea::placeholder {
+
+    color: #94a3b8;
+}
+
+/* CODE EDITOR */
+
+body.dark-theme .editor-container,
+body.dark-theme .code-editor {
+
+    background: #0f172a;
+
+    color: white;
+}
+
+/* TEST CASES */
+
+body.dark-theme .testcase-item {
+
+    background:
+    rgba(255,255,255,0.04);
+
+    border:
+    1px solid rgba(255,255,255,0.05);
+}
+
+/* BUTTONS */
+
+body.dark-theme button:not(.active) {
+
+    color: white;
+}
+
+/* LIGHT CARDS FIX */
+
+body.dark-theme .card,
+body.dark-theme .panel,
+body.dark-theme .box {
+
+    background:
+    rgba(9,15,35,0.82);
+
+    color: white;
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+}
+
+/* AUTH PAGES */
+
+body.dark-theme .auth-modal {
+
+    background:
+    rgba(9,15,35,0.92);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    box-shadow:
+    0 15px 40px rgba(0,0,0,0.45);
+}
+
+body.dark-theme .auth-modal h2 {
+
+    color: white;
+}
+
+body.dark-theme .auth-subtitle,
+body.dark-theme .auth-bottom-text,
+body.dark-theme .auth-security {
+
+    color: #94a3b8;
+}
+
+body.dark-theme .auth-input-group label {
+
+    color: #e2e8f0;
+}
+
+body.dark-theme .auth-input-group input {
+
+    background: #172036;
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    color: white;
+}
+
+body.dark-theme .auth-socials button {
+
+    background: #172036;
+
+    color: white;
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+}
+
+body.dark-theme .auth-divider span {
+
+    background:
+    rgba(255,255,255,0.08);
+}
+
+/* NAVBAR */
+
+body.dark-theme .custom-navbar {
+
+    background:
+    rgba(2,6,23,0.75);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    backdrop-filter: blur(18px);
+}
+
+body.dark-theme .nav-links a,
+body.dark-theme .signin-btn,
+body.dark-theme .logo-text {
+
+    color: white;
+}
+
+body.dark-theme .nav-links a:hover {
+
+    background:
+    rgba(255,255,255,0.06);
+}
+
+body.dark-theme .active-nav {
+
+    background:
+    rgba(255,255,255,0.08);
+}
+
+body.dark-theme .theme-toggle {
+
+    color: white;
+}

@@ -188,22 +188,20 @@
 
     border-radius:12px;
 
-    font-size:11px;
+    font-size:14px;
 
     font-weight:600;
 }
 
 .tag-green{
 
-    background:#dcfce7;
-
+    border: 1px solid white;
     color:#16a34a;
 }
 
 .tag-blue{
 
-    background:#dbeafe;
-
+    border: 1px solid white;
     color:#4f46e5;
 }
 
@@ -900,4 +898,193 @@
         transform:
         translateY(0);
     }
+}
+
+/* =========================================
+   DARK MODE - CODING ARENA
+========================================= */
+
+body.dark-theme .coding-page{
+
+    background:
+    linear-gradient(
+        135deg,
+        #020617,
+        #071226
+    );
+}
+
+/* HEADER */
+
+body.dark-theme .problem-head h1{
+
+    color:#ffffff;
+}
+
+body.dark-theme .problem-head span{
+
+    color:#94a3b8;
+}
+
+/* BUTTONS */
+
+body.dark-theme .run-btn{
+
+    background:
+    rgba(255,255,255,0.08);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    color:white;
+
+    box-shadow:
+    0 8px 24px rgba(0,0,0,0.22);
+}
+
+/* MAIN CARDS */
+
+body.dark-theme .problem-card,
+body.dark-theme .editor-card,
+body.dark-theme .testcase-card,
+body.dark-theme .run-result-card{
+
+    background:
+    rgba(9,15,35,0.82);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    box-shadow:
+    0 12px 40px rgba(0,0,0,0.26);
+}
+
+/* EDITOR HEADER */
+
+body.dark-theme .editor-header{
+
+    background:
+    rgba(255,255,255,0.05);
+
+    border-bottom:
+    1px solid rgba(255,255,255,0.06);
+}
+
+/* TEXT */
+
+body.dark-theme .problem-description p,
+body.dark-theme .constraints-box li,
+body.dark-theme .run-result-card p{
+
+    color:#cbd5e1;
+}
+
+body.dark-theme .constraints-box h3,
+body.dark-theme .testcase-top h3,
+body.dark-theme .run-top span,
+body.dark-theme .language-item h4,
+body.dark-theme .ai-hint{
+
+    color:white;
+}
+
+body.dark-theme .problem-time,
+body.dark-theme .language-item p,
+body.dark-theme .testcase-top span{
+
+    color:#94a3b8;
+}
+
+/* CODE */
+
+body.dark-theme .problem-description code{
+
+    background:
+    rgba(255,255,255,0.08);
+
+    color:#93c5fd;
+}
+
+/* EXAMPLE */
+
+body.dark-theme .example-box,
+body.dark-theme .case-item{
+
+    background:
+    rgba(255,255,255,0.05);
+}
+
+body.dark-theme .example-box p,
+body.dark-theme .case-item p{
+
+    color:white;
+}
+
+/* BARS */
+
+body.dark-theme .run-progress{
+
+    background:
+    rgba(255,255,255,0.08);
+}
+
+/* SEARCH */
+
+body.dark-theme .language-search{
+
+    background:
+    rgba(255,255,255,0.06);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    color:white;
+}
+
+body.dark-theme .language-search::placeholder{
+
+    color:#94a3b8;
+}
+
+/* DROPDOWN */
+
+body.dark-theme .language-dropdown{
+
+    background:
+    rgba(9,15,35,0.96);
+
+    border:
+    1px solid rgba(255,255,255,0.06);
+
+    box-shadow:
+    0 20px 40px rgba(0,0,0,0.32);
+}
+
+/* ITEMS */
+
+body.dark-theme .language-item:hover{
+
+    background:
+    rgba(255,255,255,0.05);
+}
+
+body.dark-theme .active-language{
+
+    background:
+    rgba(109,99,255,0.18);
+}
+
+/* ICONS */
+
+body.dark-theme .search-icon,
+body.dark-theme .dropdown-arrow{
+
+    color:#94a3b8;
+}
+
+/* TEST CASE */
+
+body.dark-theme .case-item span{
+
+    color:#4ade80;
 }
