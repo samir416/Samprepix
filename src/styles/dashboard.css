@@ -32,11 +32,11 @@ body{
 
     min-width:240px;
 
-    min-height:100vh;
+    height:100vh;
 
-    position:sticky;
+    position:relative;
 
-    top:0;
+    overflow:hidden;
 
     padding:14px 10px;
 
@@ -57,7 +57,6 @@ body{
     justify-content:space-between;
 }
 
-/* LOGO */
 
 /* LOGO */
 .dashboard-logo{
@@ -1042,47 +1041,7 @@ body{
     }
 }
 
-@media(max-width:768px){
 
-    .dashboard-layout{
-        flex-direction:column;
-    }
-
-    .dashboard-sidebar{
-        width:100%;
-        min-height:auto;
-        position:relative;
-    }
-
-    .stats-grid{
-        grid-template-columns:1fr;
-    }
-
-    .dashboard-topbar input{
-        width:180px;
-    }
-}
-
-/* =========================
-   STICKY SIDEBAR FIX
-========================= */
-
-.dashboard-sidebar{
-
-    width:240px;
-
-    min-width:240px;
-
-    height:100vh;
-
-    position:sticky;
-
-    top:0;
-
-    align-self:flex-start;
-
-    overflow:hidden;
-}
 
 /* =========================
    NEW BOTTOM SECTION
@@ -1687,4 +1646,201 @@ body.dark-theme .active-nav {
 body.dark-theme .theme-toggle {
 
     color: white;
+}
+
+/* =========================================
+   FINAL MOBILE SIDEBAR FIX
+========================================= */
+
+.topbar-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    width:100%;
+}
+
+/* HAMBURGER */
+
+.mobile-menu-btn{
+
+    display:none;
+
+    width:42px;
+
+    height:42px;
+
+    min-width:42px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:white;
+
+    cursor:pointer;
+
+    align-items:center;
+
+    justify-content:center;
+
+    box-shadow:
+    0 4px 14px rgba(0,0,0,0.06);
+}
+
+/* DARK MODE */
+
+body.dark-theme .mobile-menu-btn{
+
+    background:#111827;
+
+    color:white;
+}
+
+/* SIDEBAR WRAPPER */
+
+.sidebar-mobile-wrapper{
+
+    width:240px;
+
+    transition:left 0.3s ease;
+}
+
+/* OVERLAY */
+
+.sidebar-overlay{
+
+    display:none;
+}
+
+/* =========================================
+   MOBILE ONLY
+========================================= */
+
+@media screen and (max-width:768px){
+
+
+    /* SHOW HAMBURGER */
+
+    .mobile-menu-btn{
+
+        display:flex !important;
+    }
+
+    /* SIDEBAR */
+
+    .sidebar-mobile-wrapper{
+
+        position:fixed;
+
+        top:0;
+
+        left:-240px;
+
+        height:100vh;
+
+        z-index:1200;
+
+        background:white;
+    }
+
+    /* OPEN SIDEBAR */
+
+    .show-sidebar{
+
+        left:0;
+    }
+
+    /* OVERLAY */
+
+    .sidebar-overlay{
+
+        display:block;
+
+        position:fixed;
+
+        inset:0;
+
+        background:
+        rgba(0,0,0,0.45);
+
+        opacity:0;
+
+        visibility:hidden;
+
+        transition:0.3s ease;
+
+        z-index:1100;
+    }
+
+    .show-overlay{
+
+        opacity:1;
+
+        visibility:visible;
+    }
+
+    /* SIDEBAR */
+
+    .dashboard-sidebar{
+
+        width:240px;
+
+        min-width:240px;
+
+        height:100vh;
+
+        overflow-y:auto;
+
+        position:relative;
+    }
+
+    /* CONTENT */
+
+    .dashboard-content{
+
+        padding:14px;
+    }
+
+    /* SEARCH */
+
+    .dashboard-topbar input{
+
+        width:100%;
+    }
+
+    /* RESPONSIVE GRIDS */
+
+    .stats-grid,
+    .dashboard-bottom,
+    .second-bottom{
+
+        grid-template-columns:1fr;
+    }
+}
+
+/* =========================================
+   DESKTOP FORCE FIX
+========================================= */
+
+@media only screen and (min-width:769px){
+    .mobile-menu-btn{
+
+        display:none !important;
+    }
+
+    .sidebar-mobile-wrapper{
+
+        position:relative !important;
+
+        left:0 !important;
+    }
+
+    .sidebar-overlay{
+
+        display:none !important;
+    }
 }

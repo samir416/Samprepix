@@ -1,17 +1,32 @@
 import {
     Moon,
-    Sun
+    Sun,
+    Menu
 } from "lucide-react";
 
 import {
     useEffect,
+    useRef,
     useState
 } from "react";
 
-export default function Topbar() {
+import NotificationDropdown from "./NotificationDropdown";
+import ProfileDropdown from "./ProfileDropdown";
 
-    const [darkMode, setDarkMode] =
-        useState(false);
+export default function Topbar({
+    sidebarOpen,
+    setSidebarOpen
+}) {
+
+    const [darkMode, setDarkMode] = useState(false);
+
+    const [openNotifications, setOpenNotifications] = useState(false);
+
+    const [openProfile, setOpenProfile] = useState(false);
+
+    const profileRef = useRef(null);
+
+    const notificationRef = useRef(null);
 
     /* LOAD SAVED THEME */
 
@@ -31,7 +46,45 @@ export default function Topbar() {
 
     }, []);
 
-    /* TOGGLE */
+    /* OUTSIDE CLICK */
+
+    useEffect(() => {
+
+        function handleClickOutside(e) {
+
+            if (
+                profileRef.current &&
+                !profileRef.current.contains(e.target)
+            ) {
+
+                setOpenProfile(false);
+            }
+
+            if (
+                notificationRef.current &&
+                !notificationRef.current.contains(e.target)
+            ) {
+
+                setOpenNotifications(false);
+            }
+        }
+
+        document.addEventListener(
+            "mousedown",
+            handleClickOutside
+        );
+
+        return () => {
+
+            document.removeEventListener(
+                "mousedown",
+                handleClickOutside
+            );
+        };
+
+    }, []);
+
+    /* TOGGLE THEME */
 
     const toggleTheme = () => {
 
@@ -56,14 +109,37 @@ export default function Topbar() {
 
         <div className="dashboard-topbar">
 
-            <input
-                type="text"
-                placeholder="Search problems, topics, companies..."
-            />
+            {/* LEFT */}
+
+            <div className="topbar-left">
+
+                {/* MOBILE HAMBURGER */}
+
+                <button
+                    className="mobile-menu-btn"
+                    onClick={() =>
+                        setSidebarOpen(!sidebarOpen)
+                    }
+                >
+
+                    <Menu size={22} />
+
+                </button>
+
+                {/* SEARCH */}
+
+                <input
+                    type="text"
+                    placeholder="Search problems, topics, companies..."
+                />
+
+            </div>
+
+            {/* RIGHT */}
 
             <div className="topbar-right">
 
-                {/* THEME TOGGLE */}
+                {/* THEME */}
 
                 <button
                     className="dashboard-theme-toggle"
@@ -80,13 +156,59 @@ export default function Topbar() {
 
                 {/* NOTIFICATION */}
 
-                <button>
-                    🔔
-                </button>
+                <div
+                    className="notification-wrapper"
+                    ref={notificationRef}
+                >
+
+                    <button
+                        className="notification-btn"
+                        onClick={() =>
+                            setOpenNotifications(
+                                !openNotifications
+                            )
+                        }
+                    >
+
+                        🔔
+
+                        <span className="notification-badge">
+                            3
+                        </span>
+
+                    </button>
+
+                    {
+                        openNotifications &&
+                        <NotificationDropdown />
+                    }
+
+                </div>
 
                 {/* PROFILE */}
 
-                <div className="profile-circle">
+                <div
+                    className="profile-wrapper"
+                    ref={profileRef}
+                >
+
+                    <div
+                        className="profile-circle"
+                        onClick={() =>
+                            setOpenProfile(
+                                !openProfile
+                            )
+                        }
+                    >
+
+                        S
+
+                    </div>
+
+                    {
+                        openProfile &&
+                        <ProfileDropdown />
+                    }
 
                 </div>
 
