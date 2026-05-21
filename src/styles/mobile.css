@@ -1,0 +1,986 @@
+/* =========================================
+   FINAL PREMIUM MOBILE RESPONSIVE CSS
+========================================= */
+
+
+
+
+@media screen and (max-width:768px) {
+
+
+    /* =========================================
+   DESKTOP TOPBAR HIDE
+========================================= */
+
+    .dashboard-topbar {
+
+        display: none !important;
+    }
+
+    /* =========================================
+   MOBILE PREMIUM TOPBAR
+========================================= */
+
+    .mobile-premium-topbar {
+
+        display: flex !important;
+
+        align-items: center;
+
+        gap: 12px;
+
+        width: 100%;
+
+        position: sticky;
+
+        top: 0;
+
+        z-index: 999;
+
+        padding-bottom: 18px;
+    }
+
+    .mobile-menu-btn {
+
+        width: 54px;
+
+        height: 54px;
+
+        min-width: 54px;
+
+        border: none;
+
+        border-radius: 18px;
+
+        background:
+            rgba(255, 255, 255, 0.82);
+
+        backdrop-filter: blur(20px);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        box-shadow:
+            0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .mobile-search-wrap {
+
+        flex: 1;
+    }
+
+    .mobile-search-wrap input {
+
+        width: 100%;
+
+        height: 54px;
+
+        border: none;
+
+        outline: none;
+
+        border-radius: 20px;
+
+        background:
+            rgba(255, 255, 255, 0.82);
+
+        backdrop-filter: blur(20px);
+
+        padding: 0 18px;
+
+        font-size: 15px;
+
+        color: #0f172a;
+    }
+
+    /* =========================================
+   SETTINGS
+========================================= */
+
+    .mobile-settings-wrapper {
+
+        position: relative;
+    }
+
+    .mobile-settings-btn {
+
+        width: 54px;
+
+        height: 54px;
+
+        border: none;
+
+        border-radius: 18px;
+
+        background:
+            linear-gradient(135deg,
+                #6366f1,
+                #06b6d4);
+
+        color: white;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        box-shadow:
+            0 12px 30px rgba(59, 130, 246, 0.28);
+    }
+
+    .mobile-settings-dropdown {
+
+        position: absolute;
+
+        top: 70px;
+
+        right: 0;
+
+        width: 220px;
+
+        padding: 16px;
+
+        border-radius: 24px;
+
+        background:
+            rgba(255, 255, 255, 0.88);
+
+        backdrop-filter: blur(24px);
+
+        box-shadow:
+            0 20px 45px rgba(15, 23, 42, 0.15);
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 10px;
+
+        z-index: 999;
+    }
+
+    .mobile-setting-item {
+
+        width: 100%;
+
+        height: 52px;
+
+        border: none;
+
+        border-radius: 16px;
+
+        background: #f8fafc;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+
+        padding: 0 16px;
+
+        font-size: 15px;
+
+        font-weight: 600;
+    }
+
+    /* =========================================
+   MOBILE SLIDE MENU
+========================================= */
+
+    .mobile-slide-menu {
+
+        position: fixed;
+
+        top: 90px;
+
+        left: 14px;
+
+        width: 260px;
+
+        padding: 18px;
+
+        border-radius: 28px;
+
+        background:
+            rgba(255, 255, 255, 0.88);
+
+        backdrop-filter: blur(24px);
+
+        box-shadow:
+            0 20px 45px rgba(15, 23, 42, 0.15);
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 12px;
+
+        z-index: 999;
+    }
+
+    .mobile-slide-menu a {
+
+        text-decoration: none;
+
+        color: #0f172a;
+
+        font-size: 16px;
+
+        font-weight: 700;
+
+        padding: 16px 18px;
+
+        border-radius: 18px;
+
+        transition: 0.3s ease;
+    }
+
+    .mobile-slide-menu a:hover {
+
+        background:
+            linear-gradient(135deg,
+                #6366f1,
+                #06b6d4);
+
+        color: white;
+    }
+
+
+    html,
+    body {
+
+        overflow-x: hidden !important;
+        width: 100%;
+        scroll-behavior: smooth;
+    }
+
+    * {
+
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+
+        background:
+            linear-gradient(135deg,
+                #f5f3ff 0%,
+                #ecfeff 100%);
+    }
+
+    /* =====================================
+       DESKTOP SIDEBAR
+    ===================================== */
+
+    .dashboard-sidebar {
+
+        display: none !important;
+    }
+
+    /* =====================================
+       MOBILE PAGE SPACING
+    ===================================== */
+
+    .dashboard-content {
+
+        padding: 14px !important;
+        padding-top: 22px !important;
+    }
+
+    /* =========================================
+   PREMIUM MOBILE TOPBAR
+========================================= */
+
+    .mobile-premium-topbar {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+
+        margin-bottom: 22px;
+    }
+
+    .mobile-menu-btn,
+    .mobile-settings-btn {
+
+        width: 54px;
+
+        height: 54px;
+
+        min-width: 54px;
+
+        border: none;
+
+        border-radius: 18px;
+
+        background:
+            rgba(255, 255, 255, 0.75);
+
+        backdrop-filter: blur(20px);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        box-shadow:
+            0 10px 28px rgba(15, 23, 42, 0.08);
+
+        color: #0f172a;
+    }
+
+    .mobile-search-wrap {
+
+        flex: 1;
+    }
+
+    .mobile-search-wrap input {
+
+        width: 100%;
+
+        height: 54px;
+
+        border: none;
+
+        outline: none;
+
+        border-radius: 18px;
+
+        background:
+            rgba(255, 255, 255, 0.75);
+
+        backdrop-filter: blur(20px);
+
+        padding: 0 18px;
+
+        font-size: 15px;
+
+        color: #0f172a;
+
+        box-shadow:
+            0 10px 28px rgba(15, 23, 42, 0.05);
+    }
+
+    /* =========================================
+   SLIDE MENU
+========================================= */
+
+    .mobile-slide-menu {
+
+        position: fixed;
+
+        top: 90px;
+
+        left: 14px;
+
+        width: 260px;
+
+        padding: 18px;
+
+        border-radius: 28px;
+
+        background:
+            rgba(255, 255, 255, 0.82);
+
+        backdrop-filter: blur(24px);
+
+        box-shadow:
+            0 20px 45px rgba(15, 23, 42, 0.15);
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 14px;
+
+        z-index: 999;
+    }
+
+    .mobile-slide-menu a {
+
+        text-decoration: none;
+
+        color: #0f172a;
+
+        font-size: 16px;
+
+        font-weight: 700;
+
+        padding: 16px 18px;
+
+        border-radius: 18px;
+
+        transition: 0.3s ease;
+    }
+
+    .mobile-slide-menu a:hover {
+
+        background:
+            linear-gradient(135deg,
+                #6366f1,
+                #06b6d4);
+
+        color: white;
+    }
+
+    /* =========================================
+   SETTINGS DROPDOWN
+========================================= */
+
+    .mobile-settings-wrapper {
+
+        position: relative;
+    }
+
+    .mobile-settings-dropdown {
+
+        position: absolute;
+
+        top: 70px;
+
+        right: 0;
+
+        width: 220px;
+
+        padding: 14px;
+
+        border-radius: 24px;
+
+        background:
+            rgba(255, 255, 255, 0.85);
+
+        backdrop-filter: blur(24px);
+
+        box-shadow:
+            0 20px 40px rgba(15, 23, 42, 0.12);
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 10px;
+
+        z-index: 999;
+    }
+
+    .mobile-setting-item {
+
+        width: 100%;
+
+        border: none;
+
+        background: #f8fafc;
+
+        border-radius: 16px;
+
+        height: 52px;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+
+        padding: 0 16px;
+
+        font-size: 15px;
+
+        font-weight: 600;
+
+        color: #0f172a;
+    }
+
+    /* =========================================
+   2x2 STATS GRID
+========================================= */
+
+    .stats-grid {
+
+        display: grid !important;
+
+        grid-template-columns: 1fr 1fr !important;
+
+        gap: 16px !important;
+    }
+
+    .stat-card {
+
+        min-height: 220px !important;
+    }
+
+    .stat-bottom h2 {
+
+        font-size: 64px !important;
+    }
+
+    /* =========================================
+   OTHER CARDS SINGLE COLUMN
+========================================= */
+
+    .dashboard-lower-grid {
+
+        display: flex !important;
+
+        flex-direction: column !important;
+
+        gap: 18px;
+    }
+
+    /* =========================================
+   DARK MODE
+========================================= */
+
+    body.dark-theme .mobile-slide-menu,
+    body.dark-theme .mobile-settings-dropdown,
+    body.dark-theme .mobile-menu-btn,
+    body.dark-theme .mobile-settings-btn,
+    body.dark-theme .mobile-search-wrap input {
+
+        background:
+            rgba(15, 23, 42, 0.82);
+
+        color: white;
+
+        border:
+            1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    body.dark-theme .mobile-slide-menu a {
+
+        color: white;
+    }
+
+    body.dark-theme .mobile-setting-item {
+
+        background: #0f172a;
+
+        color: white;
+    }
+
+
+
+    /* SEARCH */
+
+    .dashboard-topbar input {
+
+        width: 100% !important;
+
+        height: 62px !important;
+
+        border: none !important;
+
+        outline: none !important;
+
+        border-radius: 24px !important;
+
+        background:
+            rgba(255, 255, 255, 0.88) !important;
+
+        backdrop-filter: blur(18px);
+
+        padding: 0 22px !important;
+
+        font-size: 16px !important;
+
+        color: #0f172a;
+
+        box-shadow:
+            0 10px 25px rgba(15, 23, 42, 0.05);
+    }
+
+    .dashboard-topbar input::placeholder {
+
+        color: #64748b;
+    }
+
+    /* RIGHT ICONS */
+
+    .topbar-right {
+
+        display: flex !important;
+
+        align-items: center;
+
+        gap: 10px;
+
+        width: auto !important;
+    }
+
+    /* ICONS */
+
+    .dashboard-theme-toggle,
+    .notification-btn,
+    .profile-circle {
+
+        width: 52px !important;
+
+        height: 52px !important;
+
+        min-width: 52px !important;
+
+        border: none !important;
+
+        border-radius: 18px !important;
+
+        background:
+            rgba(255, 255, 255, 0.82) !important;
+
+        backdrop-filter: blur(18px);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        box-shadow:
+            0 8px 22px rgba(15, 23, 42, 0.08);
+
+        transition: 0.3s ease;
+    }
+
+    .profile-circle {
+
+        background:
+            linear-gradient(135deg,
+                #6366f1,
+                #06b6d4) !important;
+
+        color: white;
+
+        font-weight: 700;
+
+        font-size: 18px;
+    }
+
+    /* =====================================
+       HEADER
+    ===================================== */
+
+    .dashboard-header {
+
+        margin-top: 26px !important;
+    }
+
+    .dashboard-header h1 {
+
+        font-size: 64px !important;
+
+        line-height: 0.92 !important;
+
+        letter-spacing: -3px;
+
+        color: #0f172a;
+
+        margin-bottom: 16px;
+
+        max-width: 100%;
+
+        word-break: break-word;
+    }
+
+    .dashboard-header p {
+
+        font-size: 18px !important;
+
+        line-height: 1.7 !important;
+
+        color: #64748b;
+
+        max-width: 95%;
+    }
+
+    /* =====================================
+       STATS GRID
+    ===================================== */
+
+    .stats-grid {
+
+        display: grid !important;
+
+        grid-template-columns: 1fr !important;
+
+        gap: 22px !important;
+
+        margin-top: 28px;
+    }
+
+    /* =====================================
+       STAT CARD
+    ===================================== */
+
+    .stat-card {
+
+        position: relative;
+
+        min-height: 180px !important;
+
+        border-radius: 34px !important;
+
+        padding: 28px !important;
+
+        overflow: hidden;
+
+        background:
+            rgba(255, 255, 255, 0.72) !important;
+
+        backdrop-filter: blur(20px);
+
+        border:
+            1px solid rgba(255, 255, 255, 0.5);
+
+        box-shadow:
+            0 12px 35px rgba(15, 23, 42, 0.05);
+    }
+
+    .stat-card::before {
+
+        content: "";
+
+        position: absolute;
+
+        inset: 0;
+
+        background:
+            linear-gradient(135deg,
+                rgba(99, 102, 241, 0.03),
+                rgba(6, 182, 212, 0.03));
+
+        pointer-events: none;
+    }
+
+    .stat-card h4 {
+
+        font-size: 17px !important;
+
+        color: #64748b;
+    }
+
+    .stat-bottom h2 {
+
+        font-size: 56px !important;
+
+        line-height: 1 !important;
+
+        color: #0f172a;
+    }
+
+    .stat-top{
+
+    display:flex !important;
+
+    flex-direction:column !important;
+
+    align-items:flex-start !important;
+
+    gap:10px;
+}
+
+.stat-bottom{
+
+    display:flex !important;
+
+    flex-direction:column !important;
+
+    align-items:flex-start !important;
+
+    gap:10px;
+}
+
+    /* =====================================
+       CARD ICON
+    ===================================== */
+
+    .stat-icon {
+
+        width: 58px !important;
+
+        height: 58px !important;
+
+        border-radius: 20px !important;
+
+        background:
+            linear-gradient(135deg,
+                #6366f1,
+                #06b6d4);
+
+        box-shadow:
+            0 10px 25px rgba(59, 130, 246, 0.22);
+    }
+
+    /* =====================================
+       PREMIUM DARK MODE
+    ===================================== */
+
+    body.dark-mode {
+
+        background:
+            linear-gradient(135deg,
+                #020617,
+                #00112e);
+    }
+
+    body.dark-mode .stat-card,
+    body.dark-mode .dashboard-topbar input,
+    body.dark-mode .dashboard-theme-toggle,
+    body.dark-mode .notification-btn,
+    body.dark-mode .profile-circle,
+    body.dark-mode .mobile-dashboard-nav button {
+
+        background:
+            rgba(15, 23, 42, 0.72) !important;
+
+        color: white !important;
+
+        border:
+            1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    body.dark-mode .dashboard-header h1 {
+
+        color: white;
+    }
+
+    body.dark-mode .dashboard-header p {
+
+        color: #94a3b8;
+    }
+
+    body.dark-mode .stat-bottom h2 {
+
+        color: white;
+    }
+
+    /* =====================================
+       AUTH PAGES
+    ===================================== */
+
+    .auth-container {
+
+        padding: 18px !important;
+        padding-top: 130px !important;
+    }
+
+    .auth-card {
+
+        width: 100% !important;
+
+        border-radius: 36px !important;
+
+        padding: 32px 22px !important;
+
+        background:
+            rgba(255, 255, 255, 0.82);
+
+        backdrop-filter: blur(22px);
+
+        box-shadow:
+            0 12px 35px rgba(15, 23, 42, 0.08);
+    }
+
+    .auth-card h1 {
+
+        font-size: 54px !important;
+
+        line-height: 1 !important;
+
+        letter-spacing: -2px;
+    }
+
+    /* SOCIAL BUTTONS */
+
+    .auth-socials {
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 18px;
+
+        margin-top: 20px;
+
+        margin-bottom: 30px;
+    }
+
+    .auth-socials button {
+
+        width: 100%;
+
+        min-height: 64px !important;
+
+        border-radius: 22px !important;
+
+        font-size: 20px !important;
+
+        font-weight: 700;
+
+        border: none;
+
+        background: white;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 14px;
+
+        box-shadow:
+            0 8px 25px rgba(15, 23, 42, 0.06);
+    }
+
+    .auth-socials button svg {
+
+        width: 24px;
+        height: 24px;
+    }
+
+    /* INPUTS */
+
+    .auth-card input {
+
+        height: 62px !important;
+
+        border-radius: 22px !important;
+
+        font-size: 17px !important;
+
+        padding: 0 20px !important;
+    }
+
+    /* BUTTON */
+
+    .auth-submit-btn {
+
+        width: 100%;
+
+        height: 64px !important;
+
+        border: none;
+
+        border-radius: 24px !important;
+
+        font-size: 20px !important;
+
+        font-weight: 700;
+
+        background:
+            linear-gradient(135deg,
+                #6366f1,
+                #06b6d4);
+
+        color: white;
+    }
+
+
+
+}

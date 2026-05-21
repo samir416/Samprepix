@@ -1,11 +1,17 @@
 import { Routes, Route } from "react-router-dom";
+
 import Home from "../Pages/Home";
 import Login from "../Pages/Login";
 import Register from "../Pages/Register";
 import Dashboard from "../Pages/Dashboard";
-import AuthModal from "../Components/Auth/AuthModal";
+import ResumeAnalyzer from "../Pages/ResumeAnalyzer";
+import MockInterview from "../Pages/MockInterview";
+import Performance from "../Pages/Performance";
+import CodingArena from "../Pages/CodingArena";
 import Features from "../Pages/Features";
 import Pricing from "../Pages/Pricing";
+
+import AuthModal from "../Components/Auth/AuthModal";
 
 export default function AppRoutes() {
 
@@ -27,7 +33,7 @@ export default function AppRoutes() {
                 element={<Features />}
             />
 
-            /* PRICING */
+            {/* PRICING */}
 
             <Route
                 path="/pricing"
@@ -48,41 +54,6 @@ export default function AppRoutes() {
                 element={<Register />}
             />
 
-            {/* DASHBOARD */}
-
-            <Route
-                path="/dashboard"
-                element={<Dashboard />}
-            />
-
-            {/* RESUME ANALYZER */}
-
-            <Route
-                path="/resume-analyzer"
-                element={<Dashboard />}
-            />
-
-            {/* MOCK INTERVIEW */}
-
-            <Route
-                path="/mock-interview"
-                element={<Dashboard />}
-            />
-
-            {/* PERFORMANCE */}
-
-            <Route
-                path="/performance"
-                element={<Dashboard />}
-            />
-
-            {/* CODING ARENA */}
-
-            <Route
-                path="/coding-arena"
-                element={<Dashboard />}
-            />
-
             {/* AUTH */}
 
             <Route
@@ -90,6 +61,40 @@ export default function AppRoutes() {
                 element={<AuthModal />}
             />
 
+           {/* DASHBOARD */}
+
+<Route
+    path="/dashboard"
+    element={<Dashboard />}
+/>
+
+{/* RESUME ANALYZER */}
+
+<Route
+    path="/resume-analyzer"
+    element={<Dashboard />}
+/>
+
+{/* MOCK INTERVIEW */}
+
+<Route
+    path="/mock-interview"
+    element={<Dashboard />}
+/>
+
+{/* PERFORMANCE */}
+
+<Route
+    path="/performance"
+    element={<Dashboard />}
+/>
+
+{/* CODING ARENA */}
+
+<Route
+    path="/coding-arena"
+    element={<Dashboard />}
+/>
         </Routes>
     );
 }

@@ -1,7 +1,9 @@
 import {
     Moon,
     Sun,
-    Menu
+    Menu,
+    X,
+    Settings
 } from "lucide-react";
 
 import {
@@ -13,10 +15,7 @@ import {
 import NotificationDropdown from "./NotificationDropdown";
 import ProfileDropdown from "./ProfileDropdown";
 
-export default function Topbar({
-    sidebarOpen,
-    setSidebarOpen
-}) {
+export default function Topbar() {
 
     const [darkMode, setDarkMode] = useState(false);
 
@@ -24,11 +23,13 @@ export default function Topbar({
 
     const [openProfile, setOpenProfile] = useState(false);
 
+    const [openMobileMenu, setOpenMobileMenu] = useState(false);
+
+    const [openSettings, setOpenSettings] = useState(false);
+
     const profileRef = useRef(null);
 
     const notificationRef = useRef(null);
-
-    /* LOAD SAVED THEME */
 
     useEffect(() => {
 
@@ -45,8 +46,6 @@ export default function Topbar({
         }
 
     }, []);
-
-    /* OUTSIDE CLICK */
 
     useEffect(() => {
 
@@ -84,8 +83,6 @@ export default function Topbar({
 
     }, []);
 
-    /* TOGGLE THEME */
-
     const toggleTheme = () => {
 
         document.body.classList.toggle(
@@ -107,113 +104,258 @@ export default function Topbar({
 
     return (
 
-        <div className="dashboard-topbar">
+        <>
 
-            {/* LEFT */}
+            {/* MOBILE PREMIUM TOPBAR */}
 
-            <div className="topbar-left">
+            <div className="mobile-premium-topbar">
 
-                {/* MOBILE HAMBURGER */}
+                {/* LEFT MENU */}
 
                 <button
                     className="mobile-menu-btn"
                     onClick={() =>
-                        setSidebarOpen(!sidebarOpen)
+                        setOpenMobileMenu(
+                            !openMobileMenu
+                        )
                     }
                 >
 
-                    <Menu size={22} />
+                    {
+                        openMobileMenu
+                            ? <X size={22} />
+                            : <Menu size={22} />
+                    }
 
                 </button>
 
                 {/* SEARCH */}
 
-                <input
-                    type="text"
-                    placeholder="Search problems, topics, companies..."
-                />
+                <div className="mobile-search-wrap">
 
-            </div>
+                    <input
+                        type="text"
+                        placeholder="Search problems, topics..."
+                    />
 
-            {/* RIGHT */}
+                </div>
 
-            <div className="topbar-right">
+                {/* SETTINGS */}
 
-                {/* THEME */}
-
-                <button
-                    className="dashboard-theme-toggle"
-                    onClick={toggleTheme}
-                >
-
-                    {
-                        darkMode
-                            ? <Sun size={18} />
-                            : <Moon size={18} />
-                    }
-
-                </button>
-
-                {/* NOTIFICATION */}
-
-                <div
-                    className="notification-wrapper"
-                    ref={notificationRef}
-                >
+                <div className="mobile-settings-wrapper">
 
                     <button
-                        className="notification-btn"
+                        className="mobile-settings-btn"
                         onClick={() =>
-                            setOpenNotifications(
-                                !openNotifications
+                            setOpenSettings(
+                                !openSettings
                             )
                         }
                     >
 
-                        🔔
-
-                        <span className="notification-badge">
-                            3
-                        </span>
+                        <Settings size={20} />
 
                     </button>
 
                     {
-                        openNotifications &&
-                        <NotificationDropdown />
-                    }
 
-                </div>
+                        openSettings &&
 
-                {/* PROFILE */}
+                        <div className="mobile-settings-dropdown">
 
-                <div
-                    className="profile-wrapper"
-                    ref={profileRef}
-                >
+                            {/* THEME */}
 
-                    <div
-                        className="profile-circle"
-                        onClick={() =>
-                            setOpenProfile(
-                                !openProfile
-                            )
-                        }
-                    >
+                            <button
+                                className="mobile-setting-item"
+                                onClick={toggleTheme}
+                            >
 
-                        S
+                                {
+                                    darkMode
+                                        ? <Sun size={18} />
+                                        : <Moon size={18} />
+                                }
 
-                    </div>
+                                Theme
 
-                    {
-                        openProfile &&
-                        <ProfileDropdown />
+                            </button>
+
+                            {/* NOTIFICATION */}
+
+                            <button
+                                className="mobile-setting-item"
+                                onClick={() =>
+                                    setOpenNotifications(
+                                        !openNotifications
+                                    )
+                                }
+                            >
+
+                                🔔 Notifications
+
+                            </button>
+
+                            {/* PROFILE */}
+
+                            <button
+                                className="mobile-setting-item"
+                                onClick={() =>
+                                    setOpenProfile(
+                                        !openProfile
+                                    )
+                                }
+                            >
+
+                                👤 Profile
+
+                            </button>
+
+                        </div>
                     }
 
                 </div>
 
             </div>
 
-        </div>
+            {/* MOBILE SLIDE MENU */}
+
+            {
+
+                openMobileMenu &&
+
+                <div className="mobile-slide-menu">
+
+                    <a href="/dashboard">
+
+                        Dashboard
+
+                    </a>
+
+                    <a href="/resume-analyzer">
+
+                        Resume Analyzer
+
+                    </a>
+
+                    <a href="/mock-interview">
+
+                        AI Interview
+
+                    </a>
+
+                    <a href="/coding-arena">
+
+                        Coding Arena
+
+                    </a>
+
+                    <a href="/performance">
+
+                        Performance
+
+                    </a>
+
+                </div>
+            }
+
+            {/* DESKTOP TOPBAR */}
+
+            <div className="dashboard-topbar">
+
+                {/* SEARCH */}
+
+                <div className="topbar-left">
+
+                    <input
+                        type="text"
+                        placeholder="Search problems, topics..."
+                    />
+
+                </div>
+
+                {/* RIGHT */}
+
+                <div className="topbar-right">
+
+                    {/* THEME */}
+
+                    <button
+                        className="dashboard-theme-toggle"
+                        onClick={toggleTheme}
+                    >
+
+                        {
+                            darkMode
+                                ? <Sun size={18} />
+                                : <Moon size={18} />
+                        }
+
+                    </button>
+
+                    {/* NOTIFICATION */}
+
+                    <div
+                        className="notification-wrapper"
+                        ref={notificationRef}
+                    >
+
+                        <button
+                            className="notification-btn"
+                            onClick={() =>
+                                setOpenNotifications(
+                                    !openNotifications
+                                )
+                            }
+                        >
+
+                            🔔
+
+                            <span className="notification-badge">
+
+                                3
+
+                            </span>
+
+                        </button>
+
+                        {
+                            openNotifications &&
+                            <NotificationDropdown />
+                        }
+
+                    </div>
+
+                    {/* PROFILE */}
+
+                    <div
+                        className="profile-wrapper"
+                        ref={profileRef}
+                    >
+
+                        <div
+                            className="profile-circle"
+                            onClick={() =>
+                                setOpenProfile(
+                                    !openProfile
+                                )
+                            }
+                        >
+
+                            S
+
+                        </div>
+
+                        {
+                            openProfile &&
+                            <ProfileDropdown />
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </>
     );
 }
