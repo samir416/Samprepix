@@ -1089,3 +1089,28 @@ body.dark-theme .case-item span{
     color:#4ade80;
 }
 
+@media screen and (max-width:768px){
+
+   .coding-grid {
+    display: ruby-text;
+    gap: 12px;
+    align-items: start;
+}
+
+.testcase-card {
+    margin-top: 19px;
+}
+
+.problem-card{
+    margin-bottom: 32px;
+}
+
+.run-result-card{
+    margin-top: 10px;
+}
+
+.accepted-card{
+    margin-top: 18px;
+}
+    
+}

@@ -3,7 +3,15 @@ import {
     Sun,
     Menu,
     X,
-    Settings
+    Settings,
+    LayoutDashboard,
+    FileText,
+    Mic,
+    Code2,
+    BarChart3,
+    Bell,
+    User,
+    ArrowLeft
 } from "lucide-react";
 
 import {
@@ -17,19 +25,39 @@ import ProfileDropdown from "./ProfileDropdown";
 
 export default function Topbar() {
 
+    /* =========================
+       STATES
+    ========================= */
+
     const [darkMode, setDarkMode] = useState(false);
 
-    const [openNotifications, setOpenNotifications] = useState(false);
+    const [openNotifications, setOpenNotifications] =
+        useState(false);
 
-    const [openProfile, setOpenProfile] = useState(false);
+    const [openProfile, setOpenProfile] =
+        useState(false);
 
-    const [openMobileMenu, setOpenMobileMenu] = useState(false);
+    const [openMobileMenu, setOpenMobileMenu] =
+        useState(false);
 
-    const [openSettings, setOpenSettings] = useState(false);
+    const [openSettings, setOpenSettings] =
+        useState(false);
+
+    /* =========================
+       REFS
+    ========================= */
 
     const profileRef = useRef(null);
 
     const notificationRef = useRef(null);
+
+    const mobileMenuRef = useRef(null);
+
+    const settingsRef = useRef(null);
+
+    /* =========================
+       LOAD THEME
+    ========================= */
 
     useEffect(() => {
 
@@ -47,13 +75,19 @@ export default function Topbar() {
 
     }, []);
 
+    /* =========================
+       OUTSIDE CLICK
+    ========================= */
+
     useEffect(() => {
 
         function handleClickOutside(e) {
 
             if (
                 profileRef.current &&
-                !profileRef.current.contains(e.target)
+                !profileRef.current.contains(
+                    e.target
+                )
             ) {
 
                 setOpenProfile(false);
@@ -61,10 +95,32 @@ export default function Topbar() {
 
             if (
                 notificationRef.current &&
-                !notificationRef.current.contains(e.target)
+                !notificationRef.current.contains(
+                    e.target
+                )
             ) {
 
                 setOpenNotifications(false);
+            }
+
+            if (
+                mobileMenuRef.current &&
+                !mobileMenuRef.current.contains(
+                    e.target
+                )
+            ) {
+
+                setOpenMobileMenu(false);
+            }
+
+            if (
+                settingsRef.current &&
+                !settingsRef.current.contains(
+                    e.target
+                )
+            ) {
+
+                setOpenSettings(false);
             }
         }
 
@@ -82,6 +138,10 @@ export default function Topbar() {
         };
 
     }, []);
+
+    /* =========================
+       TOGGLE THEME
+    ========================= */
 
     const toggleTheme = () => {
 
@@ -106,28 +166,93 @@ export default function Topbar() {
 
         <>
 
-            {/* MOBILE PREMIUM TOPBAR */}
+            {/* =========================
+                MOBILE PREMIUM TOPBAR
+            ========================= */}
 
             <div className="mobile-premium-topbar">
 
-                {/* LEFT MENU */}
+                {/* HAMBURGER */}
 
-                <button
-                    className="mobile-menu-btn"
-                    onClick={() =>
-                        setOpenMobileMenu(
-                            !openMobileMenu
-                        )
-                    }
+                <div
+                    className="mobile-menu-wrapper"
+                    ref={mobileMenuRef}
                 >
 
-                    {
-                        openMobileMenu
-                            ? <X size={22} />
-                            : <Menu size={22} />
-                    }
+                    <button
+                        className={
+                            openMobileMenu
+                                ? "mobile-menu-btn active-menu"
+                                : "mobile-menu-btn"
+                        }
+                        onClick={() =>
+                            setOpenMobileMenu(
+                                !openMobileMenu
+                            )
+                        }
+                    >
 
-                </button>
+                        {
+                            openMobileMenu
+                                ? <X size={22} />
+                                : <Menu size={22} />
+                        }
+
+                    </button>
+
+                    {/* MOBILE SIDEBAR */}
+
+                    <div
+                        className={
+                            openMobileMenu
+                                ? "mobile-slide-menu active"
+                                : "mobile-slide-menu"
+                        }
+                    >
+
+                        <a href="/dashboard">
+
+                            <LayoutDashboard size={18} />
+
+                            Dashboard
+
+                        </a>
+
+                        <a href="/resume-analyzer">
+
+                            <FileText size={18} />
+
+                            Resume Analyzer
+
+                        </a>
+
+                        <a href="/mock-interview">
+
+                            <Mic size={18} />
+
+                            AI Interview
+
+                        </a>
+
+                        <a href="/coding-arena">
+
+                            <Code2 size={18} />
+
+                            Coding Arena
+
+                        </a>
+
+                        <a href="/performance">
+
+                            <BarChart3 size={18} />
+
+                            Performance
+
+                        </a>
+
+                    </div>
+
+                </div>
 
                 {/* SEARCH */}
 
@@ -142,10 +267,17 @@ export default function Topbar() {
 
                 {/* SETTINGS */}
 
-                <div className="mobile-settings-wrapper">
+                <div
+                    className="mobile-settings-wrapper"
+                    ref={settingsRef}
+                >
 
                     <button
-                        className="mobile-settings-btn"
+                        className={
+                            openSettings
+                                ? "mobile-settings-btn active-settings"
+                                : "mobile-settings-btn"
+                        }
                         onClick={() =>
                             setOpenSettings(
                                 !openSettings
@@ -184,14 +316,19 @@ export default function Topbar() {
 
                             <button
                                 className="mobile-setting-item"
-                                onClick={() =>
-                                    setOpenNotifications(
-                                        !openNotifications
-                                    )
-                                }
+                                onClick={() => {
+
+                                    setOpenNotifications(true);
+
+                                    setOpenProfile(false);
+
+                                    setOpenSettings(false);
+                                }}
                             >
 
-                                🔔 Notifications
+                                <Bell size={18} />
+
+                                Notifications
 
                             </button>
 
@@ -199,14 +336,19 @@ export default function Topbar() {
 
                             <button
                                 className="mobile-setting-item"
-                                onClick={() =>
-                                    setOpenProfile(
-                                        !openProfile
-                                    )
-                                }
+                                onClick={() => {
+
+                                    setOpenProfile(true);
+
+                                    setOpenNotifications(false);
+
+                                    setOpenSettings(false);
+                                }}
                             >
 
-                                👤 Profile
+                                <User size={18} />
+
+                                Profile
 
                             </button>
 
@@ -217,48 +359,101 @@ export default function Topbar() {
 
             </div>
 
-            {/* MOBILE SLIDE MENU */}
+            {/* =========================
+                MOBILE NOTIFICATION
+            ========================= */}
+
+            {
+
+                openNotifications &&
+
+                <div
+                    className="mobile-popup-dropdown"
+                    ref={notificationRef}
+                >
+
+                    <div className="mobile-popup-header">
+
+                        <button
+                            className="mobile-back-btn"
+                            onClick={() =>
+                                setOpenNotifications(false)
+                            }
+                        >
+
+                            <ArrowLeft size={18} />
+
+                        </button>
+
+                        <h3>
+
+                            Notifications
+
+                        </h3>
+
+                    </div>
+
+                    <NotificationDropdown />
+
+                </div>
+            }
+
+            {/* =========================
+                MOBILE PROFILE
+            ========================= */}
+
+            {
+
+                openProfile &&
+
+                <div
+                    className="mobile-popup-dropdown"
+                    ref={profileRef}
+                >
+
+                    <div className="mobile-popup-header">
+
+                        <button
+                            className="mobile-back-btn"
+                            onClick={() =>
+                                setOpenProfile(false)
+                            }
+                        >
+
+                            <ArrowLeft size={18} />
+
+                        </button>
+
+                        <h3>
+
+                            Profile
+
+                        </h3>
+
+                    </div>
+
+                    <ProfileDropdown />
+
+                </div>
+            }
+
+            {/* MOBILE OVERLAY */}
 
             {
 
                 openMobileMenu &&
 
-                <div className="mobile-slide-menu">
-
-                    <a href="/dashboard">
-
-                        Dashboard
-
-                    </a>
-
-                    <a href="/resume-analyzer">
-
-                        Resume Analyzer
-
-                    </a>
-
-                    <a href="/mock-interview">
-
-                        AI Interview
-
-                    </a>
-
-                    <a href="/coding-arena">
-
-                        Coding Arena
-
-                    </a>
-
-                    <a href="/performance">
-
-                        Performance
-
-                    </a>
-
-                </div>
+                <div
+                    className="mobile-overlay"
+                    onClick={() =>
+                        setOpenMobileMenu(false)
+                    }
+                />
             }
 
-            {/* DESKTOP TOPBAR */}
+            {/* =========================
+                DESKTOP TOPBAR
+            ========================= */}
 
             <div className="dashboard-topbar">
 
@@ -319,7 +514,9 @@ export default function Topbar() {
                         </button>
 
                         {
+
                             openNotifications &&
+
                             <NotificationDropdown />
                         }
 
@@ -346,7 +543,9 @@ export default function Topbar() {
                         </div>
 
                         {
+
                             openProfile &&
+
                             <ProfileDropdown />
                         }
 
