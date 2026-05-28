@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.aiinterview.backend.model.LoginRequest;
 import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.entity.User;
+import java.util.List;
 
 @RestController
 public class TestController {
@@ -38,6 +39,12 @@ public class TestController {
         userRepository.save(user);
 
         return "User saved successfully!";
+    }
+
+    @GetMapping("/users")
+    public List <User>getUsers()
+    {
+        return userRepository.findAll();
     }
 
 }
