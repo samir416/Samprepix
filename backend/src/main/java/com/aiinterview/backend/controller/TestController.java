@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 @RestController
 public class TestController {
@@ -67,6 +68,16 @@ public class TestController {
             return userRepository.save(user);
         } else {
             return null;
+        }
+    }
+
+    @DeleteMapping("/users/{id}")
+    public String deleteUser(@PathVariable Long id) {
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return "User deleted successfully!";
+        } else {
+            return "User not found!";
         }
     }
 
