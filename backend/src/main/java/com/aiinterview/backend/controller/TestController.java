@@ -1,25 +1,28 @@
 package com.aiinterview.backend.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.model.LoginRequest;
 import com.aiinterview.backend.repository.UserRepository;
-import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.service.UserService;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Optional;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 
 @RestController
 public class TestController {
 
     private final UserRepository userRepository;
+    private final UserService userService;
 
-    public TestController(UserRepository userRepository) {
+    public TestController(
+            UserRepository userRepository,
+            UserService userService) {
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @GetMapping("/")
@@ -33,52 +36,91 @@ public class TestController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest loginRequest) {
-        return "Hello, " + loginRequest.getEmail() + "!";
+    public ResponseEntity<String> login(
+            @RequestBody LoginRequest loginRequest) {
+
+        String response = userService.login(
+                loginRequest.getEmail(),
+                loginRequest.getPassword());
+
+        if (response.equals("Login successful!")) {
+
+            return ResponseEntity.ok(response);
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(response);
     }
 
     @PostMapping("/register")
-    public String register(@RequestBody User user) {
+    public ResponseEntity<String> register(@RequestBody User user) {
 
-        userRepository.save(user);
+        String response = userService.saveUser(user);
 
-        return "User saved successfully!";
+        if (response.equals("Email already exists!")) {
+
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(response);
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @GetMapping("/users")
-    public List <User>getUsers()
-    {
+    public List<User> getUsers() {
+
         return userRepository.findAll();
     }
 
     @GetMapping("/users/{id}")
     public User getUserById(@PathVariable Long id) {
+
         Optional<User> user = userRepository.findById(id);
+
         return user.orElse(null);
     }
 
     @PutMapping("/users/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
+    public User updateUser(
+            @PathVariable Long id,
+            @RequestBody User updatedUser) {
+
         Optional<User> existingUser = userRepository.findById(id);
+
         if (existingUser.isPresent()) {
+
             User user = existingUser.get();
+
+            user.setName(updatedUser.getName());
             user.setEmail(updatedUser.getEmail());
             user.setPassword(updatedUser.getPassword());
-            user.setName(updatedUser.getName());
+
             return userRepository.save(user);
-        } else {
-            return null;
         }
+
+        return null;
     }
 
     @DeleteMapping("/users/{id}")
     public String deleteUser(@PathVariable Long id) {
+
         if (userRepository.existsById(id)) {
+
             userRepository.deleteById(id);
+
             return "User deleted successfully!";
-        } else {
-            return "User not found!";
         }
+
+        return "User not found!";
+    }
+
+    @PostMapping("/login-test")
+    public String loginTest() {
+        return "working";
     }
 
 }
