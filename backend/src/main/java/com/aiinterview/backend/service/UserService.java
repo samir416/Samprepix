@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.List;
 import java.util.Optional;
+import com.aiinterview.backend.security.JwtUtil;
 
 @Service
 public class UserService {
@@ -73,24 +74,25 @@ public class UserService {
         return "User not found!";
     }
 
-    public String login(String email, String password) {
+   public String login(String email, String password) {
 
-        Optional<User> user = userRepository.findByEmail(email);
+    Optional<User> user =
+            userRepository.findByEmail(email);
 
-        if (user.isPresent()) {
+    if (user.isPresent()) {
 
-            if (passwordEncoder.matches(
-                    password,
-                    user.get().getPassword())) {
+        if (passwordEncoder.matches(
+                password,
+                user.get().getPassword())) {
 
-                return "Login successful!";
-            }
-
-            return "Invalid password!";
+            return JwtUtil.generateToken(email);
         }
 
-        return "User not found!";
+        return "Invalid password!";
     }
+
+    return "User not found!";
+}
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
