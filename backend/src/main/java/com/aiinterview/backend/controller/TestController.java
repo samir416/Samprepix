@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import com.aiinterview.backend.security.JwtUtil;
 
 @RestController
 public class TestController {
@@ -122,5 +123,25 @@ public class TestController {
     public String loginTest() {
         return "working";
     }
+
+    @GetMapping("/profile")
+public String profile(
+        @RequestHeader("Authorization")
+        String authHeader) {
+
+    String token =
+            authHeader.replace("Bearer ", "");
+
+    if(!JwtUtil.validateToken(token)) {
+
+        return "Invalid Token!";
+    }
+
+    String email =
+            JwtUtil.extractEmail(token);
+
+    return "Welcome " + email;
+}
+
 
 }

@@ -25,4 +25,32 @@ public class JwtUtil {
                 .signWith(SECRET_KEY)
                 .compact();
     }
+
+    public static String extractEmail(String token) {
+
+    return Jwts.parser()
+            .verifyWith(SECRET_KEY)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .getSubject();
+}
+
+public static boolean validateToken(String token) {
+
+    try {
+
+        Jwts.parser()
+                .verifyWith(SECRET_KEY)
+                .build()
+                .parseSignedClaims(token);
+
+        return true;
+
+    } catch (Exception e) {
+
+        return false;
+    }
+}
+
 }
