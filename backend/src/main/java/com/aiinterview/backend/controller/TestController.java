@@ -12,6 +12,7 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import com.aiinterview.backend.security.JwtUtil;
+import com.aiinterview.backend.model.LoginResponse;
 
 @RestController
 public class TestController {
@@ -37,21 +38,23 @@ public class TestController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(
+    public ResponseEntity<?> login(
             @RequestBody LoginRequest loginRequest) {
 
         String response = userService.login(
                 loginRequest.getEmail(),
                 loginRequest.getPassword());
 
-        if (response.equals("Login successful!")) {
+        if (response.equals("Invalid password!")
+                || response.equals("User not found!")) {
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(response);
         }
 
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(response);
+        return ResponseEntity.ok(
+                new LoginResponse(response));
     }
 
     @PostMapping("/register")
@@ -124,24 +127,9 @@ public class TestController {
         return "working";
     }
 
-    @GetMapping("/profile")
-public String profile(
-        @RequestHeader("Authorization")
-        String authHeader) {
+  @GetMapping("/profile")
+public String profile() {
 
-    String token =
-            authHeader.replace("Bearer ", "");
-
-    if(!JwtUtil.validateToken(token)) {
-
-        return "Invalid Token!";
-    }
-
-    String email =
-            JwtUtil.extractEmail(token);
-
-    return "Welcome " + email;
+    return "Profile Access Granted";
 }
-
-
 }
