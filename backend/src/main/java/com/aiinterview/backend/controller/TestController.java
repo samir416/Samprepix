@@ -13,6 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import com.aiinterview.backend.security.JwtUtil;
 import com.aiinterview.backend.model.LoginResponse;
+import jakarta.validation.Valid;
+import com.aiinterview.backend.model.RegisterRequest;
+import com.aiinterview.backend.model.ApiResponse;
+
 
 @RestController
 public class TestController {
@@ -57,22 +61,44 @@ public class TestController {
                 new LoginResponse(response));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody User user) {
+ @PostMapping("/register")
+public ResponseEntity<ApiResponse> register(
+        @Valid
+        @RequestBody
+        RegisterRequest request) {
 
-        String response = userService.saveUser(user);
+    User user = new User();
 
-        if (response.equals("Email already exists!")) {
+    user.setName(request.getName());
+    user.setEmail(request.getEmail());
+    user.setPassword(request.getPassword());
 
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(response);
-        }
+    String response =
+            userService.saveUser(user);
+
+    if (response.equals(
+            "Email already exists!")) {
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+                .badRequest()
+                .body(
+                        new ApiResponse(
+                                false,
+                                response
+                        )
+                );
     }
+
+    return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(
+                    new ApiResponse(
+                            true,
+                            response
+                    )
+            );
+}
+
 
     @GetMapping("/users")
     public List<User> getUsers() {
