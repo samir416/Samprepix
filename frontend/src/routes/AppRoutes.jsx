@@ -12,6 +12,7 @@ import Features from "../Pages/Features";
 import Pricing from "../Pages/Pricing";
 
 import AuthModal from "../Components/Auth/AuthModal";
+import ProtectedRoute from "../Components/Auth/ProtectedRoute";
 
 export default function AppRoutes() {
 
@@ -61,40 +62,57 @@ export default function AppRoutes() {
                 element={<AuthModal />}
             />
 
-           {/* DASHBOARD */}
+            {/* DASHBOARD */}
 
-<Route
-    path="/dashboard"
-    element={<Dashboard />}
-/>
+            <Route
+                path="/dashboard"
+                element={
+                    <ProtectedRoute>
+                        <Dashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-{/* RESUME ANALYZER */}
+            {/* RESUME ANALYZER */}
 
-<Route
-    path="/resume-analyzer"
-    element={<Dashboard />}
-/>
+            <Route
+                path="/resume-analyzer"
+                element={<ProtectedRoute>
+                    <Dashboard />
+                </ProtectedRoute>
+                }
+            />
 
-{/* MOCK INTERVIEW */}
+            {/* MOCK INTERVIEW */}
 
-<Route
-    path="/mock-interview"
-    element={<Dashboard />}
-/>
+            <Route
+                path="/mock-interview"
+                element={<ProtectedRoute>
+                    <Dashboard />
+                </ProtectedRoute>
+                }
+            />
 
-{/* PERFORMANCE */}
+            {/* PERFORMANCE */}
 
-<Route
-    path="/performance"
-    element={<Dashboard />}
-/>
+            <Route
+                path="/performance"
+                element={
+                    <ProtectedRoute>
+                        <Dashboard />
+                    </ProtectedRoute>
+                }
+            />
 
-{/* CODING ARENA */}
+            {/* CODING ARENA */}
 
-<Route
-    path="/coding-arena"
-    element={<Dashboard />}
-/>
+            <Route
+                path="/coding-arena"
+                element={<ProtectedRoute>
+                    <Dashboard />
+                </ProtectedRoute>
+                }
+            />
         </Routes>
     );
 }

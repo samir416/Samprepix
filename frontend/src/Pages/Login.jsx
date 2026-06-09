@@ -3,10 +3,15 @@ import "../styles/authmodal.css";
 import Logo from "../assets/Logo.png";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { loginUser } from "../services/authService";
 
 export default function Login() {
 
     const navigate = useNavigate();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
     return (
 
@@ -79,11 +84,34 @@ export default function Login() {
 
                     <form
                         className="auth-form"
-                        onSubmit={(e) => {
+                        onSubmit={async (e) => {
 
                             e.preventDefault();
 
-                            navigate("/dashboard");
+                            try {
+
+                                const data =
+                                    await loginUser(
+                                        email,
+                                        password
+                                    );
+
+                                localStorage.setItem(
+                                    "token",
+                                    data.token
+                                );
+
+                                console.log(data);
+
+                                navigate("/dashboard");
+                            } catch (err) {
+
+                                console.log(err);
+
+                                setError(
+                                    "Invalid email or password"
+                                );
+                            }
                         }}
                     >
 
@@ -96,6 +124,8 @@ export default function Login() {
                             <input
                                 type="email"
                                 placeholder="you@university.edu"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
 
                         </div>
@@ -109,9 +139,20 @@ export default function Login() {
                             <input
                                 type="password"
                                 placeholder="••••••••"
+                                value={password}
+                                onChange={(e) =>
+                                    setPassword(e.target.value)
+                                }
                             />
 
                         </div>
+                        {
+                            error && (
+                                <p>
+                                    {error}
+                                </p>
+                            )
+                        }
 
                         <button
                             type="submit"

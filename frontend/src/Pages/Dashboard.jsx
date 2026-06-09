@@ -7,6 +7,9 @@ import ResumeAnalyzer from "./ResumeAnalyzer";
 import MockInterview from "./MockInterview";
 import CodingArena from "./CodingArena";
 import Performance from "./Performance";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { getProfile } from "../services/profileService";
 
 import {
     FiTrendingUp,
@@ -31,6 +34,8 @@ import {
 import "../styles/dashboard.css";
 
 export default function Dashboard() {
+
+    const navigate = useNavigate();
 
     const location = useLocation();
 
@@ -64,6 +69,34 @@ export default function Dashboard() {
             score: 87
         }
     ];
+
+    useEffect(() => {
+
+        const verifyUser = async () => {
+
+            try {
+
+                const data =
+                    await getProfile();
+
+                console.log(
+                    "PROFILE:",
+                    data
+                );
+
+            } catch (err) {
+
+                localStorage.removeItem(
+                    "token"
+                );
+
+                navigate("/login");
+            }
+        };
+
+        verifyUser();
+
+    }, [navigate]);
 
     return (
 
