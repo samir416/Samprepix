@@ -7,12 +7,15 @@ import {
 } from "react-icons/fi";
 
 import "../styles/resumeAnalyzer.css";
+import { getResumeAnalysis } from "../services/resumeService";
 
 export default function ResumeAnalyzer() {
 
     const [uploadStatus, setUploadStatus] = useState("idle");
 
     const [fileName, setFileName] = useState("");
+
+    const [analysis, setAnalysis] = useState(null);
 
     /* LOAD SAVED DATA */
 
@@ -35,6 +38,31 @@ export default function ResumeAnalyzer() {
         }
 
     }, []);
+
+    useEffect(() => {
+
+        const fetchAnalysis =
+            async () => {
+
+                try {
+
+                    const data =
+                        await getResumeAnalysis();
+
+                    console.log(data);
+
+                    setAnalysis(data);
+
+                } catch (error) {
+
+                    console.log(error);
+                }
+            };
+
+        fetchAnalysis();
+
+    }, []);
+
 
     const handleFileChange = (e) => {
 
@@ -259,10 +287,13 @@ export default function ResumeAnalyzer() {
                         <h3>
                             ATS Score
                         </h3>
-
                         <div className="ats-score">
 
-                            --
+                            {
+                                analysis
+                                    ? analysis.score
+                                    : "--"
+                            }
 
                         </div>
 

@@ -3,7 +3,7 @@ import "../styles/authmodal.css";
 import Logo from "../assets/Logo.png";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { loginUser } from "../services/authService";
 
 export default function Login() {
@@ -12,6 +12,13 @@ export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+
+    useEffect(() => {
+
+    setEmail("");
+    setPassword("");
+
+}, []);
 
     return (
 
@@ -84,6 +91,7 @@ export default function Login() {
 
                     <form
                         className="auth-form"
+                        autoComplete="off"
                         onSubmit={async (e) => {
 
                             e.preventDefault();
@@ -124,7 +132,9 @@ export default function Login() {
                             <input
                                 type="email"
                                 placeholder="you@university.edu"
+                                autoComplete="off"
                                 value={email}
+                                name="login_email"
                                 onChange={(e) => setEmail(e.target.value)}
                             />
 
@@ -139,7 +149,9 @@ export default function Login() {
                             <input
                                 type="password"
                                 placeholder="••••••••"
+                                autoComplete="off"
                                 value={password}
+                                name="login_password"
                                 onChange={(e) =>
                                     setPassword(e.target.value)
                                 }

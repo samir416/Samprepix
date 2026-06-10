@@ -3,10 +3,17 @@ import "../../styles/authmodal.css";
 import Logo from "../../assets/Logo.png";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { registerUser } from "../../services/authService";
 
 export default function AuthModal() {
 
     const navigate = useNavigate();
+
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
     return (
 
@@ -83,11 +90,30 @@ export default function AuthModal() {
 
                     <form
                         className="auth-form"
-                        onSubmit={(e) => {
+                        onSubmit={async (e) => {
 
                             e.preventDefault();
 
-                            navigate("/dashboard");
+                            try {
+
+                                await registerUser(
+                                    name,
+                                    email,
+                                    password
+                                );
+                                setName("");
+                                setEmail("");
+                                setPassword("");
+                                navigate("/login");
+
+                            } catch (err) {
+
+                                console.log(err);
+
+                                setError(
+                                    "Registration failed"
+                                );
+                            }
                         }}
                     >
                         <div className="auth-input-group">
@@ -99,6 +125,10 @@ export default function AuthModal() {
                             <input
                                 type="text"
                                 placeholder="Aarav Mehta"
+                                value={name}
+                                onChange={(e) =>
+                                    setName(e.target.value)
+                                }
                             />
 
                         </div>
@@ -112,6 +142,10 @@ export default function AuthModal() {
                             <input
                                 type="email"
                                 placeholder="you@university.edu"
+                                value={email}
+                                onChange={(e) =>
+                                    setEmail(e.target.value)
+                                }
                             />
 
                         </div>
@@ -125,9 +159,20 @@ export default function AuthModal() {
                             <input
                                 type="password"
                                 placeholder="••••••••"
+                                value={password}
+                                onChange={(e) =>
+                                    setPassword(e.target.value)
+                                }
                             />
 
                         </div>
+                        {
+                            error && (
+                                <p>
+                                    {error}
+                                </p>
+                            )
+                        }
 
                         <button
                             type="submit"

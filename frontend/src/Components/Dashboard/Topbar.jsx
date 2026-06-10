@@ -22,6 +22,7 @@ import {
 
 import NotificationDropdown from "./NotificationDropdown";
 import ProfileDropdown from "./ProfileDropdown";
+import { useNavigate } from "react-router-dom";
 
 export default function Topbar() {
 
@@ -34,7 +35,10 @@ export default function Topbar() {
     const [openNotifications, setOpenNotifications] =
         useState(false);
 
-    const [openProfile, setOpenProfile] =
+    const [openMobileProfile, setOpenMobileProfile] =
+        useState(false);
+
+    const [openDesktopProfile, setOpenDesktopProfile] =
         useState(false);
 
     const [openMobileMenu, setOpenMobileMenu] =
@@ -90,7 +94,8 @@ export default function Topbar() {
                 )
             ) {
 
-                setOpenProfile(false);
+                setOpenMobileProfile(false);
+                setOpenDesktopProfile(false);
             }
 
             if (
@@ -160,6 +165,15 @@ export default function Topbar() {
             "theme",
             isDark ? "dark" : "light"
         );
+    };
+
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+
+        localStorage.removeItem("token");
+
+        navigate("/login");
     };
 
     return (
@@ -320,7 +334,8 @@ export default function Topbar() {
 
                                     setOpenNotifications(true);
 
-                                    setOpenProfile(false);
+                                    setOpenMobileProfile(false);
+                                    setOpenDesktopProfile(false);
 
                                     setOpenSettings(false);
                                 }}
@@ -338,8 +353,7 @@ export default function Topbar() {
                                 className="mobile-setting-item"
                                 onClick={() => {
 
-                                    setOpenProfile(true);
-
+                                    setOpenMobileProfile(true);
                                     setOpenNotifications(false);
 
                                     setOpenSettings(false);
@@ -404,7 +418,7 @@ export default function Topbar() {
 
             {
 
-                openProfile &&
+                openMobileProfile &&
 
                 <div
                     className="mobile-popup-dropdown"
@@ -416,7 +430,7 @@ export default function Topbar() {
                         <button
                             className="mobile-back-btn"
                             onClick={() =>
-                                setOpenProfile(false)
+                                setOpenMobileProfile(false)
                             }
                         >
 
@@ -532,8 +546,8 @@ export default function Topbar() {
                         <div
                             className="profile-circle"
                             onClick={() =>
-                                setOpenProfile(
-                                    !openProfile
+                                setOpenDesktopProfile(
+                                    !openDesktopProfile
                                 )
                             }
                         >
@@ -543,9 +557,7 @@ export default function Topbar() {
                         </div>
 
                         {
-
-                            openProfile &&
-
+                            openDesktopProfile &&
                             <ProfileDropdown />
                         }
 

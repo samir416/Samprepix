@@ -1,4 +1,5 @@
 import "../../styles/profileDropdown.css";
+import { useNavigate } from "react-router-dom";
 
 export default function ProfileDropdown() {
 
@@ -7,7 +8,7 @@ export default function ProfileDropdown() {
         {
             icon: "👤",
             label: "Profile"
-        },
+        },  
 
         {
             icon: "⚙️",
@@ -24,6 +25,15 @@ export default function ProfileDropdown() {
             label: "Billing"
         }
     ];
+
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+
+        localStorage.removeItem("token");
+
+        navigate("/login");
+    };
 
     return (
 
@@ -87,7 +97,10 @@ export default function ProfileDropdown() {
 
             <div className="profile-logout">
 
-                <button className="logout-btn">
+                <button
+                    className="logout-btn"
+                    onClick={handleLogout}
+                >
 
                     <span className="menu-emoji">
 

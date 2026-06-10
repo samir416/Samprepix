@@ -16,6 +16,7 @@ import com.aiinterview.backend.model.LoginResponse;
 import jakarta.validation.Valid;
 import com.aiinterview.backend.model.RegisterRequest;
 import com.aiinterview.backend.model.ApiResponse;
+import com.aiinterview.backend.model.ForgotPasswordRequest;
 
 
 @RestController
@@ -98,6 +99,39 @@ public ResponseEntity<ApiResponse> register(
                     )
             );
 }
+
+@PostMapping("/forgot-password")
+public ResponseEntity<ApiResponse> forgotPassword(
+
+        @Valid
+        @RequestBody
+        ForgotPasswordRequest request) {
+
+    Optional<User> user =
+            userRepository.findByEmail(
+                    request.getEmail()
+            );
+
+    if (user.isEmpty()) {
+
+        return ResponseEntity
+                .badRequest()
+                .body(
+                        new ApiResponse(
+                                false,
+                                "Email not found!"
+                        )
+                );
+    }
+
+    return ResponseEntity.ok(
+            new ApiResponse(
+                    true,
+                    "Reset link sent successfully!"
+            )
+    );
+}
+
 
 
     @GetMapping("/users")
