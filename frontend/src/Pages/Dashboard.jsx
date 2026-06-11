@@ -7,9 +7,10 @@ import ResumeAnalyzer from "./ResumeAnalyzer";
 import MockInterview from "./MockInterview";
 import CodingArena from "./CodingArena";
 import Performance from "./Performance";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProfile } from "../services/profileService";
+import { getResumeHistory } from "../services/resumeService";
 
 import {
     FiTrendingUp,
@@ -38,6 +39,8 @@ export default function Dashboard() {
     const navigate = useNavigate();
 
     const location = useLocation();
+
+    const [resumeHistory,setResumeHistory] = useState([]);
 
     const graphData = [
         {
@@ -95,6 +98,26 @@ export default function Dashboard() {
         };
 
         verifyUser();
+
+        const loadHistory =
+    async () => {
+
+        try {
+
+            const data =
+                await getResumeHistory();
+
+            setResumeHistory(
+                data
+            );
+
+        } catch (error) {
+
+            console.log(error);
+        }
+    };
+
+loadHistory();
 
     }, [navigate]);
 
@@ -545,124 +568,62 @@ export default function Dashboard() {
                                                     </div>
 
                                                     {/* RECENT ACTIVITY */}
+                                                    
+                                                        <div className="activity-card">
 
-                                                    <div className="activity-card">
+                                                            
 
-                                                        <h3>
-                                                            Recent activity
-                                                        </h3>
+                                                            <h3>
+                                                                Recent activity
+                                                            </h3>
 
-                                                        {/* ITEM */}
+                                                            
 
-                                                        <div className="activity-item">
+                                                           {
+    resumeHistory.map(
+        (item) => (
 
-                                                            <div className="activity-left">
+            <div
+                className="activity-item"
+                key={item.id}
+            >
 
-                                                                <div className="activity-dot"></div>
+                <div className="activity-left">
 
-                                                                <div className="activity-text">
+                    <div className="activity-dot"></div>
 
-                                                                    <h4>
-                                                                        Completed mock: Behavioral
-                                                                    </h4>
+                    <div className="activity-text">
 
-                                                                    <p>
-                                                                        2h ago
-                                                                    </p>
+                        <h4>
+                            Resume Analysis
+                        </h4>
 
-                                                                </div>
+                        <p>
+                            {
+                                item.analyzedAt
+                                    .split("T")[0]
+                            }
+                        </p>
 
-                                                            </div>
+                    </div>
 
-                                                            <span className="activity-score">
-                                                                Score 87
-                                                            </span>
+                </div>
 
-                                                        </div>
+                <span className="activity-score">
 
-                                                        {/* ITEM */}
+                    ATS {item.score}
 
-                                                        <div className="activity-item">
+                </span>
 
-                                                            <div className="activity-left">
-
-                                                                <div className="activity-dot"></div>
-
-                                                                <div className="activity-text">
-
-                                                                    <h4>
-                                                                        Solved: Two Sum II
-                                                                    </h4>
-
-                                                                    <p>
-                                                                        5h ago
-                                                                    </p>
-
-                                                                </div>
-
-                                                            </div>
-
-                                                            <span className="activity-score">
-                                                                +10 XP
-                                                            </span>
-
-                                                        </div>
-
-                                                        {/* ITEM */}
-
-                                                        <div className="activity-item">
-
-                                                            <div className="activity-left">
-
-                                                                <div className="activity-dot"></div>
-
-                                                                <div className="activity-text">
-
-                                                                    <h4>
-                                                                        Resume v3 uploaded
-                                                                    </h4>
-
-                                                                    <p>
-                                                                        Yesterday
-                                                                    </p>
-
-                                                                </div>
-
-                                                            </div>
-
-                                                            <span className="activity-score">
-                                                                ATS 92
-                                                            </span>
-
-                                                        </div>
-
-                                                        {/* ITEM */}
-
-                                                        <div className="activity-item">
-
-                                                            <div className="activity-left">
-
-                                                                <div className="activity-dot"></div>
-
-                                                                <div className="activity-text">
-
-                                                                    <h4>
-                                                                        Joined cohort: Google SDE
-                                                                    </h4>
-
-                                                                    <p>
-                                                                        2d ago
-                                                                    </p>
-
-                                                                </div>
-
+            </div>
+        )
+    )
+}
                                                             </div>
 
                                                         </div>
 
-                                                    </div>
 
-                                                </div>
 
                                             </>
 

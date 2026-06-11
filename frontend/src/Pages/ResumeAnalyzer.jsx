@@ -7,7 +7,7 @@ import {
 } from "react-icons/fi";
 
 import "../styles/resumeAnalyzer.css";
-import { getResumeAnalysis } from "../services/resumeService";
+import { analyzeResumeFile } from "../services/resumeService";
 
 export default function ResumeAnalyzer() {
 
@@ -39,32 +39,9 @@ export default function ResumeAnalyzer() {
 
     }, []);
 
-    useEffect(() => {
-
-        const fetchAnalysis =
-            async () => {
-
-                try {
-
-                    const data =
-                        await getResumeAnalysis();
-
-                    console.log(data);
-
-                    setAnalysis(data);
-
-                } catch (error) {
-
-                    console.log(error);
-                }
-            };
-
-        fetchAnalysis();
-
-    }, []);
 
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
 
         const file = e.target.files[0];
 
@@ -119,6 +96,26 @@ export default function ResumeAnalyzer() {
             );
 
             e.target.value = "";
+
+            return;
+        }
+
+        try {
+
+            const data =
+                await analyzeResumeFile(
+                    file
+                );
+
+            console.log(data);
+
+            setAnalysis(data);
+
+        } catch (error) {
+
+            console.log(error);
+
+            setUploadStatus("error");
 
             return;
         }
@@ -307,133 +304,117 @@ export default function ResumeAnalyzer() {
 
                     {/* SKILLS */}
 
+                    {/* DETECTED SKILLS */}
+
                     <div className="skills-card">
 
                         <h3>
-                            Skill gap analysis
+                            Detected Skills
                         </h3>
 
-                        {/* ITEM */}
+                        {
+                            analysis?.skills?.map(
+                                (skill, index) => (
 
-                        <div className="skill-item">
+                                    <div
+                                        className="skill-item"
+                                        key={index}
+                                    >
 
-                            <div className="skill-top">
+                                        <div className="skill-top">
 
-                                <span>
-                                    React
-                                </span>
+                                            <span>
+                                                {skill}
+                                            </span>
 
-                                <span>
-                                    92%
-                                </span>
+                                            <span>
+                                                ✓
+                                            </span>
 
-                            </div>
+                                        </div>
 
-                            <div className="skill-bar">
+                                        <div className="skill-bar">
 
-                                <div
-                                    className="skill-fill"
-                                    style={{
-                                        width: "92%"
-                                    }}
-                                ></div>
+                                            <div
+                                                className="skill-fill"
+                                                style={{
+                                                    width: "100%"
+                                                }}
+                                            ></div>
 
-                            </div>
+                                        </div>
 
-                        </div>
+                                    </div>
+                                )
+                            )
+                        }
 
-                        {/* ITEM */}
+                    </div>
 
-                        <div className="skill-item">
+                    {/* MISSING SKILLS */}
 
-                            <div className="skill-top">
+                    <div className="skills-card">
 
-                                <span>
-                                    TypeScript
-                                </span>
+                        <h3>
+                            Missing Skills
+                        </h3>
 
-                                <span>
-                                    64%
-                                </span>
+                        {
+                            analysis?.missingSkills?.map(
+                                (skill, index) => (
 
-                            </div>
+                                    <div
+                                        className="skill-item"
+                                        key={index}
+                                    >
 
-                            <div className="skill-bar">
+                                        <div className="skill-top">
 
-                                <div
-                                    className="skill-fill"
-                                    style={{
-                                        width: "64%"
-                                    }}
-                                ></div>
+                                            <span>
+                                                {skill}
+                                            </span>
 
-                            </div>
+                                        </div>
 
-                        </div>
+                                    </div>
+                                )
+                            )
+                        }
 
-                        {/* ITEM */}
+                    </div>
+                    <div className="skills-card">
 
-                        <div className="skill-item">
+    <h3>
+        Suggestions
+    </h3>
 
-                            <div className="skill-top">
+    {
+        analysis?.suggestions?.map(
+            (suggestion, index) => (
 
-                                <span>
-                                    System Design
-                                </span>
+                <div
+                    className="skill-item"
+                    key={index}
+                >
 
-                                <span>
-                                    38%
-                                </span>
+                    <div className="skill-top">
 
-                            </div>
-
-                            <div className="skill-bar">
-
-                                <div
-                                    className="skill-fill"
-                                    style={{
-                                        width: "38%"
-                                    }}
-                                ></div>
-
-                            </div>
-
-                        </div>
-
-                        {/* ITEM */}
-
-                        <div className="skill-item">
-
-                            <div className="skill-top">
-
-                                <span>
-                                    DSA
-                                </span>
-
-                                <span>
-                                    78%
-                                </span>
-
-                            </div>
-
-                            <div className="skill-bar">
-
-                                <div
-                                    className="skill-fill"
-                                    style={{
-                                        width: "78%"
-                                    }}
-                                ></div>
-
-                            </div>
-
-                        </div>
+                        <span>
+                            {suggestion}
+                        </span>
 
                     </div>
 
                 </div>
+            )
+        )
+    }
+
+</div>
+                </div>
 
             </div>
+
 
         </section>
     );
