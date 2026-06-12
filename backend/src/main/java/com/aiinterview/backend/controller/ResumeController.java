@@ -4,6 +4,8 @@ import com.aiinterview.backend.entity.ResumeAnalysis;
 import com.aiinterview.backend.model.ResumeResponse;
 import com.aiinterview.backend.service.ResumeService;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,99 +15,106 @@ import java.util.List;
 @RequestMapping("/resume")
 public class ResumeController {
 
-    private final ResumeService resumeService;
+        private final ResumeService resumeService;
 
-    public ResumeController(
-            ResumeService resumeService) {
-        this.resumeService = resumeService;
-    }
-
-    @GetMapping("/analyze")
-    public ResumeResponse analyzeResume() {
-
-        return resumeService.analyzeResume();
-    }
-
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadResume(
-
-            @RequestParam("file") MultipartFile file) {
-
-        if (file.isEmpty()) {
-
-            return ResponseEntity
-                    .badRequest()
-                    .body("No file selected");
+        public ResumeController(
+                        ResumeService resumeService) {
+                this.resumeService = resumeService;
         }
 
-        return ResponseEntity.ok(
-                "File uploaded successfully: "
-                        + file.getOriginalFilename());
-    }
+        @GetMapping("/analyze")
+        public ResumeResponse analyzeResume() {
 
-    @PostMapping("/extract")
-    public ResponseEntity<String> extractText(
+                return resumeService.analyzeResume();
+        }
 
-            @RequestParam("file") MultipartFile file
+        @PostMapping("/upload")
+        public ResponseEntity<String> uploadResume(
 
-    ) throws Exception {
+                        @RequestParam("file") MultipartFile file) {
 
-        return ResponseEntity.ok(
+                if (file.isEmpty()) {
 
-                resumeService
-                        .extractTextFromPdf(file));
-    }
+                        return ResponseEntity
+                                        .badRequest()
+                                        .body("No file selected");
+                }
 
-    @PostMapping("/skills")
-    public ResponseEntity<?> detectSkills(
+                return ResponseEntity.ok(
+                                "File uploaded successfully: "
+                                                + file.getOriginalFilename());
+        }
 
-            @RequestParam("file") MultipartFile file
+        @PostMapping("/extract")
+        public ResponseEntity<String> extractText(
 
-    ) throws Exception {
+                        @RequestParam("file") MultipartFile file
 
-        String text = resumeService
-                .extractTextFromPdf(file);
+        ) throws Exception {
 
-        return ResponseEntity.ok(
+                return ResponseEntity.ok(
 
-                resumeService
-                        .detectSkills(text));
-    }
+                                resumeService
+                                                .extractTextFromPdf(file));
+        }
 
-    @PostMapping("/score")
-    public ResponseEntity<Integer> scoreResume(
+        @PostMapping("/skills")
+        public ResponseEntity<?> detectSkills(
 
-            @RequestParam("file") MultipartFile file
+                        @RequestParam("file") MultipartFile file
 
-    ) throws Exception {
+        ) throws Exception {
 
-        String text = resumeService
-                .extractTextFromPdf(file);
+                String text = resumeService
+                                .extractTextFromPdf(file);
 
-        java.util.List<String> skills = resumeService
-                .detectSkills(text);
+                return ResponseEntity.ok(
 
-        int score = resumeService
-                .calculateScore(skills);
+                                resumeService
+                                                .detectSkills(text));
+        }
 
-        return ResponseEntity.ok(score);
-    }
+        @PostMapping("/score")
+        public ResponseEntity<Integer> scoreResume(
 
-    @PostMapping("/analyze-file")
-    public ResumeResponse analyzeFile(
+                        @RequestParam("file") MultipartFile file
 
-            @RequestParam("file") MultipartFile file
+        ) throws Exception {
 
-    ) throws Exception {
+                String text = resumeService
+                                .extractTextFromPdf(file);
 
-        return resumeService
-                .analyzeResumeFile(file);
-    }
+                java.util.List<String> skills = resumeService
+                                .detectSkills(text);
 
-    @GetMapping("/history")
-    public List<ResumeAnalysis> history() {
+                int score = resumeService
+                                .calculateScore(skills);
 
-        return resumeService
-                .getHistory();
-    }
+                return ResponseEntity.ok(score);
+        }
+
+        @PostMapping("/analyze-file")
+        public ResumeResponse analyzeFile(
+
+                        @RequestParam("file") MultipartFile file,
+
+                        HttpServletRequest request
+
+        ) throws Exception {
+
+                String email = (String) request.getAttribute(
+                                "email");
+
+                return resumeService.analyzeResumeFile(
+                                file,
+                                email);
+        }
+
+        @GetMapping("/history")
+        public List<ResumeAnalysis> history(HttpServletRequest request) {
+
+                String email = (String) request.getAttribute("email");
+
+                return resumeService.getHistory(email);
+        }
 }

@@ -40,7 +40,7 @@ export default function Dashboard() {
 
     const location = useLocation();
 
-    const [resumeHistory,setResumeHistory] = useState([]);
+    const [resumeHistory, setResumeHistory] = useState([]);
 
     const graphData = [
         {
@@ -100,24 +100,24 @@ export default function Dashboard() {
         verifyUser();
 
         const loadHistory =
-    async () => {
+            async () => {
 
-        try {
+                try {
 
-            const data =
-                await getResumeHistory();
+                    const data =
+                        await getResumeHistory();
 
-            setResumeHistory(
-                data
-            );
+                    setResumeHistory(
+                        data
+                    );
 
-        } catch (error) {
+                } catch (error) {
 
-            console.log(error);
-        }
-    };
+                    console.log(error);
+                }
+            };
 
-loadHistory();
+        loadHistory();
 
     }, [navigate]);
 
@@ -568,60 +568,60 @@ loadHistory();
                                                     </div>
 
                                                     {/* RECENT ACTIVITY */}
-                                                    
-                                                        <div className="activity-card">
 
-                                                            
+                                                    <div className="activity-card">
 
-                                                            <h3>
-                                                                Recent activity
-                                                            </h3>
 
-                                                            
 
-                                                           {
-    resumeHistory.map(
-        (item) => (
+                                                        <h3>
+                                                            Recent activity
+                                                        </h3>
 
-            <div
-                className="activity-item"
-                key={item.id}
-            >
 
-                <div className="activity-left">
 
-                    <div className="activity-dot"></div>
+                                                        {
+                                                            resumeHistory.map(
+                                                                (item) => (
 
-                    <div className="activity-text">
+                                                                    <div
+                                                                        className="activity-item"
+                                                                        key={item.id}
+                                                                    >
 
-                        <h4>
-                            Resume Analysis
-                        </h4>
+                                                                        <div className="activity-left">
 
-                        <p>
-                            {
-                                item.analyzedAt
-                                    .split("T")[0]
-                            }
-                        </p>
+                                                                            <div className="activity-dot"></div>
 
-                    </div>
+                                                                            <div className="activity-text">
 
-                </div>
+                                                                                <h4>
+                                                                                    Resume Analysis
+                                                                                </h4>
 
-                <span className="activity-score">
+                                                                                <p>
+                                                                                    {
+                                                                                        item.analyzedAt
+                                                                                            .split("T")[0]
+                                                                                    }
+                                                                                </p>
 
-                    ATS {item.score}
+                                                                            </div>
 
-                </span>
+                                                                        </div>
 
-            </div>
-        )
-    )
-}
-                                                            </div>
+                                                                        <span className="activity-score">
 
-                                                        </div>
+                                                                            ATS {item.score}
+
+                                                                        </span>
+
+                                                                    </div>
+                                                                )
+                                                            )
+                                                        }
+                                                    </div>
+
+                                                </div>
 
 
 

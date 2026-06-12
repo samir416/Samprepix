@@ -168,8 +168,7 @@ public class ResumeService {
                 return suggestions;
         }
 
-        public ResumeResponse analyzeResumeFile(
-                        MultipartFile file) throws Exception {
+        public ResumeResponse analyzeResumeFile(MultipartFile file, String email) throws Exception {
 
                 String text = extractTextFromPdf(file);
 
@@ -209,8 +208,7 @@ public class ResumeService {
 
                 ResumeAnalysis analysis = new ResumeAnalysis();
 
-                analysis.setUserEmail(
-                                "samirprajapat5@gmail.com");
+                analysis.setUserEmail(email);
 
                 analysis.setScore(score);
 
@@ -263,11 +261,9 @@ public class ResumeService {
                 this.resumeAnalysisRepository = resumeAnalysisRepository;
         }
 
-        public List<ResumeAnalysis> getHistory() {
+        public List<ResumeAnalysis> getHistory(String email) {
 
-                return resumeAnalysisRepository
-                                .findByUserEmail(
-                                                "samirprajapat5@gmail.com");
+                return resumeAnalysisRepository.findByUserEmail(email);
         }
 
 }
