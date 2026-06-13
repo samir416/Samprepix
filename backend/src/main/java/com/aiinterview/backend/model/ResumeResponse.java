@@ -4,6 +4,16 @@ import java.util.List;
 
 public class ResumeResponse {
 
+    private boolean githubFound;
+
+    private boolean linkedinFound;
+
+    private boolean projectFound;
+
+    private boolean educationFound;
+
+    private boolean experienceFound;
+
     private int score;
 
     private List<String> skills;
@@ -43,4 +53,46 @@ public class ResumeResponse {
     public void setSuggestions(List<String> suggestions) {
         this.suggestions = suggestions;
     }
+
+    public boolean isGithubFound() {
+    return githubFound;
+}
+
+public void setGithubFound(boolean githubFound) {
+    this.githubFound = githubFound;
+}
+
+public boolean isLinkedinFound() {
+    return linkedinFound;
+}
+
+public void setLinkedinFound(boolean linkedinFound) {
+    this.linkedinFound = linkedinFound;
+}
+
+public boolean isProjectFound() {
+    return projectFound;
+}
+
+public void setProjectFound(boolean projectFound) {
+    this.projectFound = projectFound;
+}
+
+public boolean isEducationFound() {
+    return educationFound;
+}
+
+public void setEducationFound(boolean educationFound) {
+    this.educationFound = educationFound;
+}
+
+public boolean isExperienceFound() {
+    return experienceFound;
+}
+
+public void setExperienceFound(boolean experienceFound) {
+    this.experienceFound = experienceFound;
+}
+
+    
 }

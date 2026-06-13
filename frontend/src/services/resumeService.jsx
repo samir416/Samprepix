@@ -119,3 +119,18 @@ export const getResumeAnalysis =
         return response.data;
     };
     
+    export const getLatestResumeAnalysis = async () => {
+
+    const token = localStorage.getItem("token");
+
+    const response = await axios.get(
+        `${API_URL}/resume/latest`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+    );
+
+    return response.data;
+};

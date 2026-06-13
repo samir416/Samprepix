@@ -117,4 +117,13 @@ public class ResumeController {
 
                 return resumeService.getHistory(email);
         }
+
+        @GetMapping("/latest")
+        public ResumeAnalysis getLatestAnalysis(
+                        HttpServletRequest request) {
+
+                String email = (String) request.getAttribute("email");
+
+                return resumeService.getLatestAnalysis(email);
+        }
 }

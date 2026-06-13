@@ -98,14 +98,10 @@ public class ResumeService {
         public int calculateScore(
                         List<String> skills) {
 
-                int score = skills.size() * 10;
+                int totalSkills = 10;
 
-                if (score > 100) {
-
-                        score = 100;
-                }
-
-                return score;
+                return (skills.size() * 40)
+                                / totalSkills;
         }
 
         public List<String> findMissingSkills(
@@ -176,10 +172,35 @@ public class ResumeService {
 
                 int score = calculateScore(skills);
 
+                /* Projects */
+
+                if (hasProjects(text)) {
+
+                        score += 20;
+                }
+
+                /* Education */
+
+                if (hasEducation(text)) {
+
+                        score += 10;
+                }
+
+                /* Experience */
+
+                if (hasExperience(text)) {
+
+                        score += 10;
+                }
+
+                /* GitHub */
+
                 if (hasGithub(text)) {
 
                         score += 10;
                 }
+
+                /* LinkedIn */
 
                 if (hasLinkedIn(text)) {
 
@@ -205,6 +226,20 @@ public class ResumeService {
                 response.setSuggestions(
                                 generateSuggestions(
                                                 missingSkills));
+                response.setGithubFound(
+                                hasGithub(text));
+
+                response.setLinkedinFound(
+                                hasLinkedIn(text));
+
+                response.setProjectFound(
+                                hasProjects(text));
+
+                response.setEducationFound(
+                                hasEducation(text));
+
+                response.setExperienceFound(
+                                hasExperience(text));
 
                 ResumeAnalysis analysis = new ResumeAnalysis();
 
@@ -253,6 +288,42 @@ public class ResumeService {
                                 .contains("linkedin");
         }
 
+        public boolean hasProjects(
+                        String resumeText) {
+
+                String text = resumeText.toLowerCase();
+
+                return text.contains("project")
+                                || text.contains("projects")
+                                || text.contains("developed")
+                                || text.contains("built");
+        }
+
+        public boolean hasEducation(
+                        String resumeText) {
+
+                String text = resumeText.toLowerCase();
+
+                return text.contains("bca")
+                                || text.contains("bsc")
+                                || text.contains("mca")
+                                || text.contains("btech")
+                                || text.contains("degree")
+                                || text.contains("college")
+                                || text.contains("university");
+        }
+
+        public boolean hasExperience(
+                        String resumeText) {
+
+                String text = resumeText.toLowerCase();
+
+                return text.contains("experience")
+                                || text.contains("internship")
+                                || text.contains("intern")
+                                || text.contains("worked");
+        }
+
         private final ResumeAnalysisRepository resumeAnalysisRepository;
 
         public ResumeService(
@@ -264,6 +335,12 @@ public class ResumeService {
         public List<ResumeAnalysis> getHistory(String email) {
 
                 return resumeAnalysisRepository.findByUserEmail(email);
+        }
+
+        public ResumeAnalysis getLatestAnalysis(String email) {
+
+                return resumeAnalysisRepository
+                                .findTopByUserEmailOrderByIdDesc(email);
         }
 
 }

@@ -1,8 +1,6 @@
 import Sidebar from "../Components/Dashboard/Sidebar";
 import Topbar from "../Components/Dashboard/Topbar";
-
 import { useLocation } from "react-router-dom";
-
 import ResumeAnalyzer from "./ResumeAnalyzer";
 import MockInterview from "./MockInterview";
 import CodingArena from "./CodingArena";
@@ -10,7 +8,11 @@ import Performance from "./Performance";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProfile } from "../services/profileService";
-import { getResumeHistory } from "../services/resumeService";
+
+import {
+    getResumeHistory,
+    getLatestResumeAnalysis
+} from "../services/resumeService";
 
 import {
     FiTrendingUp,
@@ -42,37 +44,14 @@ export default function Dashboard() {
 
     const [resumeHistory, setResumeHistory] = useState([]);
 
-    const graphData = [
-        {
-            day: "Mon",
-            score: 62
-        },
-        {
-            day: "Tue",
-            score: 68
-        },
-        {
-            day: "Wed",
-            score: 71
-        },
-        {
-            day: "Thu",
-            score: 65
-        },
-        {
-            day: "Fri",
-            score: 78
-        },
-        {
-            day: "Sat",
-            score: 82
-        },
-        {
-            day: "Sun",
-            score: 87
-        }
-    ];
+    const [latestResume, setLatestResume] = useState(null);
 
+    const graphData = resumeHistory.map(
+        (item, index) => ({
+            day: `R${index + 1}`,
+            score: item.score
+        })
+    );
     useEffect(() => {
 
         const verifyUser = async () => {
@@ -106,7 +85,7 @@ export default function Dashboard() {
 
                     const data =
                         await getResumeHistory();
-
+                        
                     setResumeHistory(
                         data
                     );
@@ -118,6 +97,23 @@ export default function Dashboard() {
             };
 
         loadHistory();
+
+        const loadLatestResume = async () => {
+
+            try {
+
+                const data =
+                    await getLatestResumeAnalysis();
+
+                setLatestResume(data);
+
+            } catch (error) {
+
+                console.log(error);
+            }
+        };
+
+        loadLatestResume();
 
     }, [navigate]);
 
@@ -270,7 +266,11 @@ export default function Dashboard() {
                                                         <div className="stat-bottom">
 
                                                             <h2>
-                                                                92
+                                                                {
+                                                                    latestResume
+                                                                        ? latestResume.score
+                                                                        : "--"
+                                                                }
                                                             </h2>
 
                                                             <span>
@@ -360,17 +360,17 @@ export default function Dashboard() {
                                                             <div>
 
                                                                 <h3>
-                                                                    Interview Score Trend
+                                                                    ATS Score Trend
                                                                 </h3>
 
                                                                 <p>
-                                                                    Last 7 days
+                                                                    Resume History
                                                                 </p>
 
                                                             </div>
 
                                                             <span>
-                                                                +25 pts
+                                                                {resumeHistory.length} Records
                                                             </span>
 
                                                         </div>
