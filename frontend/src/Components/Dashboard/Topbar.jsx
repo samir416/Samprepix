@@ -509,13 +509,13 @@ export default function Topbar() {
                     >
 
                         <button
-                            className="notification-btn"
+                            className="notification-btn" 
                             onClick={() =>
                                 setOpenNotifications(
                                     !openNotifications
                                 )
-                            }
-                        >
+                            } 
+                            >
 
                             🔔
 

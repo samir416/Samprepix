@@ -9,121 +9,163 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/resume")
 public class ResumeController {
 
-        private final ResumeService resumeService;
+    private final ResumeService resumeService;
 
-        public ResumeController(
-                        ResumeService resumeService) {
-                this.resumeService = resumeService;
+    public ResumeController(
+            ResumeService resumeService) {
+
+        this.resumeService =
+                resumeService;
+    }
+
+    @GetMapping("/analyze")
+    public ResumeResponse analyzeResume() {
+
+        return resumeService
+                .analyzeResume();
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<String> uploadResume(
+
+            @RequestParam("file")
+            MultipartFile file) {
+
+        if (file.isEmpty()) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            "No file selected");
         }
 
-        @GetMapping("/analyze")
-        public ResumeResponse analyzeResume() {
+        return ResponseEntity.ok(
+                "File uploaded successfully: "
+                        + file.getOriginalFilename());
+    }
 
-                return resumeService.analyzeResume();
-        }
+    @PostMapping("/extract")
+    public ResponseEntity<String> extractText(
 
-        @PostMapping("/upload")
-        public ResponseEntity<String> uploadResume(
+            @RequestParam("file")
+            MultipartFile file)
 
-                        @RequestParam("file") MultipartFile file) {
+            throws Exception {
 
-                if (file.isEmpty()) {
+        return ResponseEntity.ok(
 
-                        return ResponseEntity
-                                        .badRequest()
-                                        .body("No file selected");
-                }
+                resumeService
+                        .extractTextFromPdf(
+                                file));
+    }
 
-                return ResponseEntity.ok(
-                                "File uploaded successfully: "
-                                                + file.getOriginalFilename());
-        }
+    @PostMapping("/skills")
+    public ResponseEntity<?> detectSkills(
 
-        @PostMapping("/extract")
-        public ResponseEntity<String> extractText(
+            @RequestParam("file")
+            MultipartFile file)
 
-                        @RequestParam("file") MultipartFile file
+            throws Exception {
 
-        ) throws Exception {
+        String text =
+                resumeService
+                        .extractTextFromPdf(
+                                file);
 
-                return ResponseEntity.ok(
+        return ResponseEntity.ok(
 
-                                resumeService
-                                                .extractTextFromPdf(file));
-        }
+                resumeService
+                        .detectSkills(
+                                text));
+    }
 
-        @PostMapping("/skills")
-        public ResponseEntity<?> detectSkills(
+    @PostMapping("/score")
+    public ResponseEntity<Integer> scoreResume(
 
-                        @RequestParam("file") MultipartFile file
+            @RequestParam("file")
+            MultipartFile file)
 
-        ) throws Exception {
+            throws Exception {
 
-                String text = resumeService
-                                .extractTextFromPdf(file);
+        String text =
+                resumeService
+                        .extractTextFromPdf(
+                                file);
 
-                return ResponseEntity.ok(
+        List<String> skills =
+                resumeService
+                        .detectSkills(
+                                text);
 
-                                resumeService
-                                                .detectSkills(text));
-        }
+        String role =
+                resumeService
+                        .detectRole(
+                                text);
 
-        @PostMapping("/score")
-        public ResponseEntity<Integer> scoreResume(
+        int score =
+                resumeService
+                        .calculateScore(
+                                skills,
+                                role);
 
-                        @RequestParam("file") MultipartFile file
+        return ResponseEntity.ok(
+                score);
+    }
 
-        ) throws Exception {
+    @PostMapping("/analyze-file")
+    public ResumeResponse analyzeFile(
 
-                String text = resumeService
-                                .extractTextFromPdf(file);
+            @RequestParam("file")
+            MultipartFile file,
 
-                java.util.List<String> skills = resumeService
-                                .detectSkills(text);
+            HttpServletRequest request)
 
-                int score = resumeService
-                                .calculateScore(skills);
+            throws Exception {
 
-                return ResponseEntity.ok(score);
-        }
-
-        @PostMapping("/analyze-file")
-        public ResumeResponse analyzeFile(
-
-                        @RequestParam("file") MultipartFile file,
-
-                        HttpServletRequest request
-
-        ) throws Exception {
-
-                String email = (String) request.getAttribute(
+        String email =
+                (String) request
+                        .getAttribute(
                                 "email");
 
-                return resumeService.analyzeResumeFile(
-                                file,
-                                email);
-        }
+        return resumeService
+                .analyzeResumeFile(
+                        file,
+                        email);
+    }
 
-        @GetMapping("/history")
-        public List<ResumeAnalysis> history(HttpServletRequest request) {
+    @GetMapping("/history")
+    public List<ResumeAnalysis> history(
+            HttpServletRequest request) {
 
-                String email = (String) request.getAttribute("email");
+        String email =
+                (String) request
+                        .getAttribute(
+                                "email");
 
-                return resumeService.getHistory(email);
-        }
+        return resumeService
+                .getHistory(
+                        email);
+    }
 
-        @GetMapping("/latest")
-        public ResumeAnalysis getLatestAnalysis(
-                        HttpServletRequest request) {
+    @GetMapping("/latest")
+    public ResumeAnalysis getLatestAnalysis(
 
-                String email = (String) request.getAttribute("email");
+            HttpServletRequest request) {
 
-                return resumeService.getLatestAnalysis(email);
-        }
-}
+        String email =
+                (String) request
+                        .getAttribute(
+                                "email");
+
+        return resumeService
+                .getLatestAnalysis(
+                        email);
+    }
+}       

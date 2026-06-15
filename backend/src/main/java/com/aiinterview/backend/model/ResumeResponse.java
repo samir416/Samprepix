@@ -4,6 +4,8 @@ import java.util.List;
 
 public class ResumeResponse {
 
+    private String role;
+
     private boolean githubFound;
 
     private boolean linkedinFound;
@@ -14,6 +16,10 @@ public class ResumeResponse {
 
     private boolean experienceFound;
 
+    private boolean validResume;
+
+    private String rejectionReason;
+
     private int score;
 
     private List<String> skills;
@@ -21,6 +27,74 @@ public class ResumeResponse {
     private List<String> missingSkills;
 
     private List<String> suggestions;
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public boolean isGithubFound() {
+        return githubFound;
+    }
+
+    public void setGithubFound(boolean githubFound) {
+        this.githubFound = githubFound;
+    }
+
+    public boolean isLinkedinFound() {
+        return linkedinFound;
+    }
+
+    public void setLinkedinFound(boolean linkedinFound) {
+        this.linkedinFound = linkedinFound;
+    }
+
+    public boolean isProjectFound() {
+        return projectFound;
+    }
+
+    public void setProjectFound(boolean projectFound) {
+        this.projectFound = projectFound;
+    }
+
+    public boolean isEducationFound() {
+        return educationFound;
+    }
+
+    public void setEducationFound(boolean educationFound) {
+        this.educationFound = educationFound;
+    }
+
+    public boolean isExperienceFound() {
+        return experienceFound;
+    }
+
+    public boolean isValidResume() {
+        return validResume;
+    }
+
+    public void setValidResume(
+            boolean validResume) {
+
+        this.validResume = validResume;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(
+            String rejectionReason) {
+
+        this.rejectionReason = rejectionReason;
+    }
+
+    public void setExperienceFound(boolean experienceFound) {
+        this.experienceFound = experienceFound;
+    }
 
     public int getScore() {
         return score;
@@ -53,46 +127,4 @@ public class ResumeResponse {
     public void setSuggestions(List<String> suggestions) {
         this.suggestions = suggestions;
     }
-
-    public boolean isGithubFound() {
-    return githubFound;
-}
-
-public void setGithubFound(boolean githubFound) {
-    this.githubFound = githubFound;
-}
-
-public boolean isLinkedinFound() {
-    return linkedinFound;
-}
-
-public void setLinkedinFound(boolean linkedinFound) {
-    this.linkedinFound = linkedinFound;
-}
-
-public boolean isProjectFound() {
-    return projectFound;
-}
-
-public void setProjectFound(boolean projectFound) {
-    this.projectFound = projectFound;
-}
-
-public boolean isEducationFound() {
-    return educationFound;
-}
-
-public void setEducationFound(boolean educationFound) {
-    this.educationFound = educationFound;
-}
-
-public boolean isExperienceFound() {
-    return experienceFound;
-}
-
-public void setExperienceFound(boolean experienceFound) {
-    this.experienceFound = experienceFound;
-}
-
-    
 }

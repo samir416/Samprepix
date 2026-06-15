@@ -1,30 +1,41 @@
 package com.aiinterview.backend.service;
 
 import com.aiinterview.backend.entity.ResumeAnalysis;
-import com.aiinterview.backend.repository.ResumeAnalysisRepository;
-
-import java.time.LocalDateTime;
-
 import com.aiinterview.backend.model.ResumeResponse;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.io.IOException;
+import com.aiinterview.backend.repository.ResumeAnalysisRepository;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class ResumeService {
+
+        private final ResumeAnalysisRepository resumeAnalysisRepository;
+
+        public ResumeService(
+                        ResumeAnalysisRepository resumeAnalysisRepository) {
+
+                this.resumeAnalysisRepository = resumeAnalysisRepository;
+        }
 
         public ResumeResponse analyzeResume() {
 
                 ResumeResponse response = new ResumeResponse();
 
-                response.setScore(78);
+                response.setRole(
+                                "FULL_STACK");
+
+                response.setScore(
+                                78);
 
                 response.setSkills(
                                 List.of(
@@ -48,14 +59,16 @@ public class ResumeService {
         }
 
         public String extractTextFromPdf(
-                        MultipartFile file) throws IOException {
+                        MultipartFile file)
+                        throws IOException {
 
                 PDDocument document = Loader.loadPDF(
                                 file.getBytes());
 
                 PDFTextStripper stripper = new PDFTextStripper();
 
-                String text = stripper.getText(document);
+                String text = stripper.getText(
+                                document);
 
                 document.close();
 
@@ -79,51 +92,148 @@ public class ResumeService {
                                 "react",
                                 "spring boot",
                                 "mysql",
+                                "hibernate",
+                                "git",
+                                "rest api",
                                 "c",
                                 "c++"
                 };
 
                 for (String skill : skills) {
 
-                        if (text.contains(
-                                        skill.toLowerCase())) {
+                        if (text.contains(skill)) {
 
-                                detectedSkills.add(skill);
+                                detectedSkills.add(
+                                                skill);
                         }
                 }
 
                 return detectedSkills;
         }
 
+        public String detectRole(
+                        String resumeText) {
+
+                String text = resumeText.toLowerCase();
+
+                boolean frontend =
+
+                                text.contains("html")
+                                                || text.contains("css")
+                                                || text.contains("javascript")
+                                                || text.contains("react");
+
+                boolean backend =
+
+                                text.contains("java")
+                                                || text.contains("spring boot")
+                                                || text.contains("hibernate")
+                                                || text.contains("mysql")
+                                                || text.contains("sql");
+
+                if (frontend && backend) {
+
+                        return "FULL_STACK";
+                }
+
+                if (backend) {
+
+                        return "JAVA_BACKEND";
+                }
+
+                if (frontend) {
+
+                        return "FRONTEND";
+                }
+
+                return "GENERAL";
+        }
+
+        public List<String> getRequiredSkills(
+                        String role) {
+
+                switch (role) {
+
+                        case "JAVA_BACKEND":
+
+                                return List.of(
+                                                "java",
+                                                "spring boot",
+                                                "sql",
+                                                "mysql",
+                                                "hibernate",
+                                                "git",
+                                                "rest api");
+
+                        case "FRONTEND":
+
+                                return List.of(
+                                                "html",
+                                                "css",
+                                                "javascript",
+                                                "react",
+                                                "git");
+
+                        case "FULL_STACK":
+
+                                return List.of(
+                                                "java",
+                                                "spring boot",
+                                                "sql",
+                                                "mysql",
+                                                "html",
+                                                "css",
+                                                "javascript",
+                                                "react",
+                                                "git");
+
+                        default:
+
+                                return List.of(
+                                                "java",
+                                                "sql",
+                                                "html");
+                }
+        }
+
         public int calculateScore(
-                        List<String> skills) {
+                        List<String> detectedSkills,
+                        String role) {
 
-                int totalSkills = 10;
+                List<String> requiredSkills = getRequiredSkills(
+                                role);
 
-                return (skills.size() * 40)
-                                / totalSkills;
+                int matchedSkills = 0;
+
+                for (String skill : requiredSkills) {
+
+                        if (detectedSkills.contains(
+                                        skill)) {
+
+                                matchedSkills++;
+                        }
+                }
+
+                return (matchedSkills * 100)
+                                / requiredSkills.size();
         }
 
         public List<String> findMissingSkills(
-                        List<String> detectedSkills) {
+                        List<String> detectedSkills,
+                        String role) {
 
-                List<String> requiredSkills = List.of(
-                                "java",
-                                "sql",
-                                "html",
-                                "css",
-                                "javascript",
-                                "react",
-                                "spring boot",
-                                "mysql");
+                List<String> requiredSkills = getRequiredSkills(
+                                role);
 
                 List<String> missingSkills = new ArrayList<>();
 
                 for (String skill : requiredSkills) {
 
-                        if (!detectedSkills.contains(skill)) {
+                        if (!detectedSkills.contains(
+                                        skill)) {
 
-                                missingSkills.add(skill);
+                                missingSkills.add(
+                                                skill);
                         }
                 }
 
@@ -131,80 +241,111 @@ public class ResumeService {
         }
 
         public List<String> generateSuggestions(
-                        List<String> missingSkills) {
+                        List<String> missingSkills,
+                        String role) {
 
                 List<String> suggestions = new ArrayList<>();
 
                 for (String skill : missingSkills) {
 
-                        switch (skill) {
+                        suggestions.add(
+                                        "Add or improve "
+                                                        + skill
+                                                        + " skills");
+                }
 
-                                case "react" ->
-                                        suggestions.add(
-                                                        "Learn React and build frontend projects");
+                switch (role) {
 
-                                case "spring boot" ->
-                                        suggestions.add(
-                                                        "Add Spring Boot backend projects");
+                        case "JAVA_BACKEND" -> {
 
-                                case "javascript" ->
-                                        suggestions.add(
-                                                        "Improve JavaScript fundamentals");
+                                suggestions.add(
+                                                "Build Spring Boot REST API projects");
 
-                                case "mysql" ->
-                                        suggestions.add(
-                                                        "Practice MySQL queries and database design");
+                                suggestions.add(
+                                                "Practice database design and SQL");
+                        }
 
-                                default ->
-                                        suggestions.add(
-                                                        "Improve " + skill + " skills");
+                        case "FRONTEND" -> {
+
+                                suggestions.add(
+                                                "Build responsive React projects");
+
+                                suggestions.add(
+                                                "Improve JavaScript fundamentals");
+                        }
+
+                        case "FULL_STACK" -> {
+
+                                suggestions.add(
+                                                "Build end-to-end full stack projects");
+
+                                suggestions.add(
+                                                "Deploy projects on cloud platforms");
                         }
                 }
 
                 return suggestions;
         }
 
-        public ResumeResponse analyzeResumeFile(MultipartFile file, String email) throws Exception {
+        public ResumeResponse analyzeResumeFile(
+                        MultipartFile file,
+                        String email)
+                        throws Exception {
 
-                String text = extractTextFromPdf(file);
+                String text = extractTextFromPdf(
+                                file);
 
-                List<String> skills = detectSkills(text);
+                List<String> skills = detectSkills(
+                                text);
 
-                int score = calculateScore(skills);
+                if (!isITResume(skills)) {
 
-                /* Projects */
+                        ResumeResponse response = new ResumeResponse();
+
+
+                        response.setValidResume( false);
+
+                        response.setRejectionReason( "NON_IT_RESUME");
+
+                        response.setScore(0);
+
+                        return response;
+                }
+
+                String role = detectRole(
+                                text);
+
+                int score = calculateScore(
+                                skills,
+                                role);
+
+                List<String> missingSkills = findMissingSkills(
+                                skills,
+                                role);
 
                 if (hasProjects(text)) {
 
-                        score += 20;
+                        score += 10;
                 }
-
-                /* Education */
 
                 if (hasEducation(text)) {
 
-                        score += 10;
+                        score += 5;
                 }
-
-                /* Experience */
 
                 if (hasExperience(text)) {
 
-                        score += 10;
+                        score += 5;
                 }
-
-                /* GitHub */
 
                 if (hasGithub(text)) {
 
-                        score += 10;
+                        score += 5;
                 }
-
-                /* LinkedIn */
 
                 if (hasLinkedIn(text)) {
 
-                        score += 10;
+                        score += 5;
                 }
 
                 if (score > 100) {
@@ -212,20 +353,27 @@ public class ResumeService {
                         score = 100;
                 }
 
-                List<String> missingSkills = findMissingSkills(skills);
-
                 ResumeResponse response = new ResumeResponse();
 
-                response.setScore(score);
+                response.setValidResume( true);
 
-                response.setSkills(skills);
+                response.setRole(
+                                role);
+
+                response.setScore(
+                                score);
+
+                response.setSkills(
+                                skills);
 
                 response.setMissingSkills(
                                 missingSkills);
 
                 response.setSuggestions(
                                 generateSuggestions(
-                                                missingSkills));
+                                                missingSkills,
+                                                role));
+
                 response.setGithubFound(
                                 hasGithub(text));
 
@@ -243,9 +391,11 @@ public class ResumeService {
 
                 ResumeAnalysis analysis = new ResumeAnalysis();
 
-                analysis.setUserEmail(email);
+                analysis.setUserEmail(
+                                email);
 
-                analysis.setScore(score);
+                analysis.setScore(
+                                score);
 
                 analysis.setSkills(
                                 String.join(
@@ -267,7 +417,8 @@ public class ResumeService {
                                                 .toString());
 
                 resumeAnalysisRepository
-                                .save(analysis);
+                                .save(
+                                                analysis);
 
                 return response;
         }
@@ -277,7 +428,8 @@ public class ResumeService {
 
                 return resumeText
                                 .toLowerCase()
-                                .contains("github");
+                                .contains(
+                                                "github");
         }
 
         public boolean hasLinkedIn(
@@ -285,7 +437,8 @@ public class ResumeService {
 
                 return resumeText
                                 .toLowerCase()
-                                .contains("linkedin");
+                                .contains(
+                                                "linkedin");
         }
 
         public boolean hasProjects(
@@ -293,10 +446,14 @@ public class ResumeService {
 
                 String text = resumeText.toLowerCase();
 
-                return text.contains("project")
-                                || text.contains("projects")
-                                || text.contains("developed")
-                                || text.contains("built");
+                return text.contains(
+                                "project")
+                                || text.contains(
+                                                "projects")
+                                || text.contains(
+                                                "developed")
+                                || text.contains(
+                                                "built");
         }
 
         public boolean hasEducation(
@@ -304,13 +461,20 @@ public class ResumeService {
 
                 String text = resumeText.toLowerCase();
 
-                return text.contains("bca")
-                                || text.contains("bsc")
-                                || text.contains("mca")
-                                || text.contains("btech")
-                                || text.contains("degree")
-                                || text.contains("college")
-                                || text.contains("university");
+                return text.contains(
+                                "bca")
+                                || text.contains(
+                                                "bsc")
+                                || text.contains(
+                                                "mca")
+                                || text.contains(
+                                                "btech")
+                                || text.contains(
+                                                "degree")
+                                || text.contains(
+                                                "college")
+                                || text.contains(
+                                                "university");
         }
 
         public boolean hasExperience(
@@ -318,29 +482,34 @@ public class ResumeService {
 
                 String text = resumeText.toLowerCase();
 
-                return text.contains("experience")
-                                || text.contains("internship")
-                                || text.contains("intern")
-                                || text.contains("worked");
+                return text.contains(
+                                "experience")
+                                || text.contains(
+                                                "internship")
+                                || text.contains(
+                                                "intern")
+                                || text.contains(
+                                                "worked");
         }
 
-        private final ResumeAnalysisRepository resumeAnalysisRepository;
+        public boolean isITResume(List<String> skills) {
 
-        public ResumeService(
-                        ResumeAnalysisRepository resumeAnalysisRepository) {
-
-                this.resumeAnalysisRepository = resumeAnalysisRepository;
+                return !skills.isEmpty();
         }
 
-        public List<ResumeAnalysis> getHistory(String email) {
-
-                return resumeAnalysisRepository.findByUserEmail(email);
-        }
-
-        public ResumeAnalysis getLatestAnalysis(String email) {
+        public List<ResumeAnalysis> getHistory(
+                        String email) {
 
                 return resumeAnalysisRepository
-                                .findTopByUserEmailOrderByIdDesc(email);
+                                .findByUserEmail(
+                                                email);
         }
 
+        public ResumeAnalysis getLatestAnalysis(
+                        String email) {
+
+                return resumeAnalysisRepository
+                                .findTopByUserEmailOrderByIdDesc(
+                                                email);
+        }
 }
