@@ -17,4 +17,4 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ## Update
 
-Last updated: July 1 , 2026
+Last updated: July 2 , 2026
