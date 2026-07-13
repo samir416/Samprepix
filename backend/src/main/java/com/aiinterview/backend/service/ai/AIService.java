@@ -1,7 +1,8 @@
 package com.aiinterview.backend.service.ai;
 
+import com.aiinterview.backend.dto.ai.AIResponse;
+
 public interface AIService {
 
-    String analyzeResume(String resumeText) throws Exception;
-
+AIResponse analyzeResume(String resumeText) throws Exception;
 }

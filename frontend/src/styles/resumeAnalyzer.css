@@ -37,24 +37,19 @@
 /* GRID */
 
 .resume-grid{
-
     display:grid;
-
-    grid-template-columns:
-    2.4fr 1fr;
-
-    gap:18px;
-
-    width:100%;
-
+    grid-template-columns:minmax(0,2.4fr) 340px;
+    gap:24px;
     align-items:start;
+    width:100%;
 }
 
 /* UPLOAD CARD */
 
 .upload-card{
 
-    height:300px;
+    min-height:330px;
+    height:auto;
 
     border-radius:28px;
 
@@ -180,19 +175,32 @@
 /* RIGHT */
 
 .resume-right{
-
     display:flex;
-
     flex-direction:column;
+    gap:24px;
+    position:sticky;
+    top:90px;
+}
 
-    gap:18px;
+.resume-main{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+    min-width:0;
+}
+
+
+
+.suggestions-card{
+    width:100%;
 }
 
 /* ATS CARD */
 
 .ats-card{
 
-    height:140px;
+    min-height:325px;
+    height:auto;
 
     border-radius:24px;
 
@@ -208,10 +216,152 @@
 
     overflow:hidden;
 
+    position: relative;
+
     box-shadow:
     0 10px 40px rgba(0,0,0,0.04);
 }
 
+.ats-bg-circle{
+
+    position:absolute;
+
+    width:180px;
+
+    height:180px;
+
+    border-radius:50%;
+
+    background:
+    radial-gradient(
+        rgba(99,102,241,.12),
+        transparent 70%
+    );
+
+    top:-70px;
+
+    right:-70px;
+}
+
+.ats-circle{
+
+    width:140px;
+
+    height:140px;
+
+    margin:18px auto;
+
+    border-radius:50%;
+
+    background:
+
+    conic-gradient(
+
+        #6d63ff 0,
+
+        #00c2ff var(--score),
+
+        #e5e7eb var(--score)
+
+    );
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+}
+
+.ats-circle-inner{
+
+    width:112px;
+
+    height:112px;
+
+    border-radius:50%;
+
+    background:white;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+}
+
+.ats-circle-inner h2{
+
+    font-size:38px;
+
+    font-weight:700;
+
+    color:#06b6d4;
+
+    margin:0;
+}
+
+.ats-circle-inner span{
+
+    font-size:13px;
+
+    color:#6b7280;
+}
+
+.ats-status{
+
+    text-align:center;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    color:#16a34a;
+
+    margin-top:6px;
+}
+.ats-progress{
+
+    width:100%;
+
+    height:10px;
+
+    background:#e5e7eb;
+
+    border-radius:30px;
+
+    overflow:hidden;
+
+    margin-top:18px;
+}
+.ats-progress-fill{
+
+    height:100%;
+
+    border-radius:30px;
+
+    background:
+    linear-gradient(
+        90deg,
+        #6d63ff,
+        #00c2ff
+    );
+
+    transition:.5s;
+}
+.ats-role{
+
+    margin-top:18px;
+
+    text-align:center;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:#475569;
+}
 .ats-card h3{
 
     text-align:center;
@@ -261,23 +411,14 @@
 /* SKILLS CARD */
 
 .skills-card{
-
-    border-radius:24px;
-
-    background:
-    rgba(255,255,255,0.76);
-
-    border:
-    1px solid rgba(255,255,255,0.45);
-
+    background:rgba(255,255,255,.78);
+    border:1px solid rgba(255,255,255,.45);
     backdrop-filter:blur(14px);
-
-    padding:18px;
-
-    overflow:hidden;
-
-    box-shadow:
-    0 10px 40px rgba(0,0,0,0.04);
+    border-radius:24px;
+    padding:22px;
+    box-shadow:0 10px 40px rgba(0,0,0,.05);
+    height:100%;
+    min-width: 76vw;
 }
 
 .skills-card h3{
@@ -361,13 +502,37 @@
 
     .upload-card{
 
-        height:280px;
+         min-height:220px;
+        padding:20px 16px;
     }
+
+    
 
     .upload-card h2{
 
         font-size:22px;
     }
+
+    .success-icon,
+    .error-icon,
+    .upload-icon{
+
+        width:60px;
+        height:60px;
+        font-size:32px;
+        margin-bottom:12px;
+
+    }
+
+     .upload-card h2{
+        font-size:30px;
+        margin-bottom:8px;
+    }
+
+    .uploaded-file{
+        font-size:13px;
+    }
+    
 }
 
 /* SUCCESS */
@@ -586,4 +751,60 @@ body.dark-theme .error-icon{
 
     background:
     rgba(239,68,68,0.14);
+}
+
+/* ATS CIRCLE */
+
+body.dark-theme .ats-circle-inner{
+
+    background:#0f172a;
+}
+
+body.dark-theme .ats-circle-inner h2{
+
+    color:#22d3ee;
+}
+
+body.dark-theme .ats-circle-inner span{
+
+    color:#94a3b8;
+}
+
+body.dark-theme .ats-status{
+
+    color:#4ade80;
+}
+
+body.dark-theme .ats-progress{
+
+    background:rgba(255,255,255,0.08);
+}
+
+body.dark-theme .ats-role{
+
+    color:#cbd5e1;
+}
+
+body.dark-theme .ats-bg-circle{
+
+    background:
+    radial-gradient(
+        rgba(34,211,238,.18),
+        transparent 70%
+    );
+}
+
+body.dark-theme .ats-circle{
+
+    background:
+
+    conic-gradient(
+
+        #6d63ff 0,
+
+        #22d3ee var(--score),
+
+        #1e293b var(--score)
+
+    );
 }

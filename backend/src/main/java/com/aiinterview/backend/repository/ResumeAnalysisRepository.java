@@ -8,7 +8,7 @@ import java.util.List;
 public interface ResumeAnalysisRepository
         extends JpaRepository<ResumeAnalysis, Long> {
 
-        List<ResumeAnalysis> findByUserEmail(String userEmail);
+    List<ResumeAnalysis> findByUserEmail(String userEmail);
 
-        ResumeAnalysis findTopByUserEmailOrderByIdDesc(String userEmail);
+    ResumeAnalysis findTopByUserEmailOrderByIdDesc(String userEmail);
 }

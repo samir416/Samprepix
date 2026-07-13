@@ -2,10 +2,8 @@ package com.aiinterview.backend.controller;
 
 import com.aiinterview.backend.entity.ResumeAnalysis;
 import com.aiinterview.backend.model.ResumeResponse;
-import com.aiinterview.backend.service.ResumeService;
-
+import com.aiinterview.backend.service.ResumeServiceV2;
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,156 +14,53 @@ import java.util.List;
 @RequestMapping("/resume")
 public class ResumeController {
 
-    private final ResumeService resumeService;
+    private final ResumeServiceV2 resumeService;
 
-    public ResumeController(
-            ResumeService resumeService) {
-
-        this.resumeService =
-                resumeService;
+    public ResumeController(ResumeServiceV2 resumeService) {
+        this.resumeService = resumeService;
     }
 
-    @GetMapping("/analyze")
-    public ResumeResponse analyzeResume() {
+    /**
+     * Analyze Resume
+     */
+    @PostMapping("/analyze")
+    public ResponseEntity<ResumeResponse> analyzeResume(
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request) throws Exception {
 
-        return resumeService
-                .analyzeResume();
+        String email = (String) request.getAttribute("email");
+
+        ResumeResponse response =
+                resumeService.analyzeResumeFile(file, email);
+
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadResume(
-
-            @RequestParam("file")
-            MultipartFile file) {
-
-        if (file.isEmpty()) {
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            "No file selected");
-        }
-
-        return ResponseEntity.ok(
-                "File uploaded successfully: "
-                        + file.getOriginalFilename());
-    }
-
-    @PostMapping("/extract")
-    public ResponseEntity<String> extractText(
-
-            @RequestParam("file")
-            MultipartFile file)
-
-            throws Exception {
-
-        return ResponseEntity.ok(
-
-                resumeService
-                        .extractTextFromPdf(
-                                file));
-    }
-
-    @PostMapping("/skills")
-    public ResponseEntity<?> detectSkills(
-
-            @RequestParam("file")
-            MultipartFile file)
-
-            throws Exception {
-
-        String text =
-                resumeService
-                        .extractTextFromPdf(
-                                file);
-
-        return ResponseEntity.ok(
-
-                resumeService
-                        .detectSkills(
-                                text));
-    }
-
-    @PostMapping("/score")
-    public ResponseEntity<Integer> scoreResume(
-
-            @RequestParam("file")
-            MultipartFile file)
-
-            throws Exception {
-
-        String text =
-                resumeService
-                        .extractTextFromPdf(
-                                file);
-
-        List<String> skills =
-                resumeService
-                        .detectSkills(
-                                text);
-
-        String role =
-                resumeService
-                        .detectRole(
-                                text);
-
-        int score =
-                resumeService
-                        .calculateScore(
-                                skills,
-                                role);
-
-        return ResponseEntity.ok(
-                score);
-    }
-
-    @PostMapping("/analyze-file")
-    public ResumeResponse analyzeFile(
-
-            @RequestParam("file")
-            MultipartFile file,
-
-            HttpServletRequest request)
-
-            throws Exception {
-
-        String email =
-                (String) request
-                        .getAttribute(
-                                "email");
-
-        return resumeService
-                .analyzeResumeFile(
-                        file,
-                        email);
-    }
-
+    /**
+     * Resume History
+     */
     @GetMapping("/history")
-    public List<ResumeAnalysis> history(
+    public ResponseEntity<List<ResumeAnalysis>> getHistory(
             HttpServletRequest request) {
 
-        String email =
-                (String) request
-                        .getAttribute(
-                                "email");
+        String email = (String) request.getAttribute("email");
 
-        return resumeService
-                .getHistory(
-                        email);
+        return ResponseEntity.ok(
+                resumeService.getHistory(email)
+        );
     }
 
+    /**
+     * Latest Resume Analysis
+     */
     @GetMapping("/latest")
-    public ResumeAnalysis getLatestAnalysis(
-
+    public ResponseEntity<ResumeAnalysis> getLatestAnalysis(
             HttpServletRequest request) {
 
-        String email =
-                (String) request
-                        .getAttribute(
-                                "email");
+        String email = (String) request.getAttribute("email");
 
-        return resumeService
-                .getLatestAnalysis(
-                        email);
+        return ResponseEntity.ok(
+                resumeService.getLatestAnalysis(email)
+        );
     }
-}       
+}

@@ -6,10 +6,7 @@ import jakarta.persistence.*;
 public class ResumeAnalysis {
 
     @Id
-    @GeneratedValue(
-            strategy =
-                    GenerationType.IDENTITY
-    )
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String userEmail;
@@ -39,9 +36,7 @@ public class ResumeAnalysis {
         return userEmail;
     }
 
-    public void setUserEmail(
-            String userEmail
-    ) {
+    public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
     }
 
@@ -57,9 +52,7 @@ public class ResumeAnalysis {
         return skills;
     }
 
-    public void setSkills(
-            String skills
-    ) {
+    public void setSkills(String skills) {
         this.skills = skills;
     }
 
@@ -67,32 +60,23 @@ public class ResumeAnalysis {
         return missingSkills;
     }
 
-    public void setMissingSkills(
-            String missingSkills
-    ) {
-        this.missingSkills =
-                missingSkills;
+    public void setMissingSkills(String missingSkills) {
+        this.missingSkills = missingSkills;
     }
 
     public String getSuggestions() {
         return suggestions;
     }
 
-    public void setSuggestions(
-            String suggestions
-    ) {
-        this.suggestions =
-                suggestions;
+    public void setSuggestions(String suggestions) {
+        this.suggestions = suggestions;
     }
 
     public String getAnalyzedAt() {
         return analyzedAt;
     }
 
-    public void setAnalyzedAt(
-            String analyzedAt
-    ) {
-        this.analyzedAt =
-                analyzedAt;
+    public void setAnalyzedAt(String analyzedAt) {
+        this.analyzedAt = analyzedAt;
     }
 }

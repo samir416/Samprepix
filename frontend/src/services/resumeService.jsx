@@ -1,130 +1,66 @@
 import axios from "axios";
 
-const API_URL =
-    "http://localhost:8080";
+const API_URL = "http://localhost:8080";
 
-export const getResumeAnalysis =
-    async () => {
+/**
+ * Analyze Resume
+ */
+export const analyzeResumeFile = async (file) => {
 
-        const token =
-            localStorage.getItem(
-                "token"
-            );
+    const token = localStorage.getItem("token");
 
-        const response =
-            await axios.get(
+    const formData = new FormData();
 
-                `${API_URL}/resume/analyze`,
+    formData.append("file", file);
 
-                {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
-                }
-            );
+    const response = await axios.post(
 
-        return response.data;
-    };
+        `${API_URL}/resume/analyze`,
 
-    export const uploadResume =
-    async (file) => {
+        formData,
 
-        const token =
-            localStorage.getItem(
-                "token"
-            );
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+    );
 
-        const formData =
-            new FormData();
+    return response.data;
+};
 
-        formData.append(
-            "file",
-            file
-        );
-
-        const response =
-            await axios.post(
-
-                "http://localhost:8080/resume/upload",
-
-                formData,
-
-                {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
-                }
-            );
-
-        return response.data;
-    };
-
-    export const analyzeResumeFile =
-    async (file) => {
-
-        const token =
-            localStorage.getItem(
-                "token"
-            );
-
-        const formData =
-            new FormData();
-
-        formData.append(
-            "file",
-            file
-        );
-
-        const response =
-            await axios.post(
-
-                `${API_URL}/resume/analyze-file`,
-
-                formData,
-
-                {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
-                }
-            );
-
-        return response.data;
-    };
-
-    export const getResumeHistory =
-    async () => {
-
-        const token =
-            localStorage.getItem(
-                "token"
-            );
-
-        const response =
-            await axios.get(
-
-                `${API_URL}/resume/history`,
-
-                {
-                    headers: {
-                        Authorization:
-                            `Bearer ${token}`
-                    }
-                }
-            );
-
-        return response.data;
-    };
-    
-    export const getLatestResumeAnalysis = async () => {
+/**
+ * Resume History
+ */
+export const getResumeHistory = async () => {
 
     const token = localStorage.getItem("token");
 
     const response = await axios.get(
+
+        `${API_URL}/resume/history`,
+
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+    );
+
+    return response.data;
+};
+
+/**
+ * Latest Resume Analysis
+ */
+export const getLatestResumeAnalysis = async () => {
+
+    const token = localStorage.getItem("token");
+
+    const response = await axios.get(
+
         `${API_URL}/resume/latest`,
+
         {
             headers: {
                 Authorization: `Bearer ${token}`

@@ -1,5 +1,6 @@
-package com.aiinterview.backend.controller.ai;
+package com.aiinterview.backend.controller;
 
+import com.aiinterview.backend.dto.ai.AIResponse;
 import com.aiinterview.backend.service.ai.AIService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,11 +15,11 @@ public class AIController {
     }
 
     @GetMapping("/ai/test")
-    public String testAI() throws Exception {
+    public AIResponse testAI() throws Exception {
 
         return aiService.analyzeResume(
-                "I am a Java Full Stack Developer. "
-                        + "I know Java, Spring Boot, React, MySQL."
+                "I am a Java Full Stack Developer. " +
+                "I know Java, Spring Boot, React, MySQL."
         );
     }
 }

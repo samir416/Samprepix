@@ -17,6 +17,8 @@ export default function ResumeAnalyzer() {
 
     const [analysis, setAnalysis] = useState(null);
 
+    const STORAGE_KEY = "resumeAnalysis";
+
     /* LOAD SAVED DATA */
 
     useEffect(() => {
@@ -27,15 +29,25 @@ export default function ResumeAnalyzer() {
         const savedFile =
             localStorage.getItem("resumeFileName");
 
-        if (savedStatus) {
+        const savedAnalysis =
+            localStorage.getItem(STORAGE_KEY);
 
+        if (savedStatus) {
             setUploadStatus(savedStatus);
         }
 
         if (savedFile) {
-
             setFileName(savedFile);
         }
+
+       if (savedAnalysis) {
+    try {
+        setAnalysis(JSON.parse(savedAnalysis));
+    } catch (error) {
+        console.error("Invalid saved analysis", error);
+        localStorage.removeItem(STORAGE_KEY);
+    }
+}
 
     }, []);
 
@@ -55,6 +67,10 @@ export default function ResumeAnalyzer() {
         ];
 
         if (!allowedTypes.includes(file.type)) {
+
+            setAnalysis(null);
+
+            localStorage.removeItem(STORAGE_KEY);
 
             setUploadStatus("error");
 
@@ -79,27 +95,30 @@ export default function ResumeAnalyzer() {
 
         const maxSize = 10 * 1024 * 1024;
 
-        if (file.size > maxSize) {
+       if (file.size > maxSize) {
 
-            setUploadStatus("error");
+    setAnalysis(null);
 
-            setFileName("File exceeds 10MB limit");
+    localStorage.removeItem(STORAGE_KEY);
 
-            localStorage.setItem(
-                "resumeUploadStatus",
-                "error"
-            );
+    setUploadStatus("error");
 
-            localStorage.setItem(
-                "resumeFileName",
-                "File exceeds 10MB limit"
-            );
+    setFileName("File exceeds 10MB limit");
 
-            e.target.value = "";
+    localStorage.setItem(
+        "resumeUploadStatus",
+        "error"
+    );
 
-            return;
-        }
+    localStorage.setItem(
+        "resumeFileName",
+        "File exceeds 10MB limit"
+    );
 
+    e.target.value = "";
+
+    return;
+}
         try {
 
             const data =
@@ -107,13 +126,20 @@ export default function ResumeAnalyzer() {
                     file
                 );
 
-            console.log(data);
 
             setAnalysis(data);
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(data)
+            );
 
         } catch (error) {
 
-            console.log(error);
+            console.error(error);
+
+            setAnalysis(null);
+
+            localStorage.removeItem(STORAGE_KEY);
 
             setUploadStatus("error");
 
@@ -159,103 +185,63 @@ export default function ResumeAnalyzer() {
 
             <div className="resume-grid">
 
-                {/* LEFT */}
+                {/* Upload Card */}
 
                 <div className="upload-card">
-
-                    {/* SUCCESS */}
 
                     {
                         uploadStatus === "success"
 
                             ? (
-
                                 <>
-
                                     <div className="success-icon">
-
                                         <FiCheckCircle />
-
                                     </div>
 
-                                    <h2>
-                                        Upload Complete
-                                    </h2>
+                                    <h2>Upload Complete</h2>
 
                                     <p className="uploaded-file">
-
                                         {fileName}
-
                                     </p>
 
                                     <span className="done-text">
-
                                         Done ✓
                                     </span>
-
                                 </>
-
                             )
-
-                            /* ERROR */
 
                             : uploadStatus === "error"
 
                                 ? (
-
                                     <>
-
                                         <div className="error-icon">
-
                                             <FiAlertTriangle />
-
                                         </div>
 
-                                        <h2>
-                                            Upload Failed
-                                        </h2>
+                                        <h2>Upload Failed</h2>
 
                                         <p className="uploaded-file error-text">
-
                                             {fileName}
-
                                         </p>
 
                                         <span className="done-text">
-
                                             Only PDF & DOCX under 10MB
                                         </span>
-
                                     </>
-
                                 )
-
-                                /* DEFAULT */
 
                                 : (
-
                                     <>
-
                                         <div className="upload-icon">
-
                                             <FiUploadCloud />
-
                                         </div>
 
-                                        <h2>
-                                            Upload your resume
-                                        </h2>
+                                        <h2>Upload your resume</h2>
 
-                                        <p>
-                                            PDF or DOCX up to 10MB
-                                        </p>
-
+                                        <p>PDF or DOCX up to 10MB</p>
                                     </>
-
                                 )
                     }
-
-                    {/* BUTTON ALWAYS VISIBLE */}
 
                     <label className="browse-btn">
 
@@ -264,7 +250,6 @@ export default function ResumeAnalyzer() {
                         <input
                             type="file"
                             accept=".pdf,.docx"
-                            multiple={false}
                             hidden
                             onChange={handleFileChange}
                         />
@@ -273,149 +258,110 @@ export default function ResumeAnalyzer() {
 
                 </div>
 
-                {/* RIGHT */}
+                {/* ATS */}
 
                 <div className="resume-right">
 
-                    {/* ATS */}
-
                     <div className="ats-card">
 
-                        <h3>
-                            ATS Score
-                        </h3>
-                        <div className="ats-score">
+                        <div className="ats-bg-circle"></div>
+
+                        <h3>ATS Score</h3>
+
+                        <div
+                            className="ats-circle"
+                            style={{
+                                "--score": `${analysis ? analysis.score : 0}%`
+                            }}
+                        >
+
+                            <div className="ats-circle-inner">
+
+                                <h2>
+
+                                    {
+                                        analysis
+                                            ? analysis.score
+                                            : "--"
+                                    }
+
+                                </h2>
+
+                                <span>/100</span>
+
+                            </div>
+
+                        </div>
+
+                        <div className="ats-status">
 
                             {
                                 analysis
-                                    ? analysis.score
+                                    ? analysis.score >= 90
+                                        ? "Excellent"
+                                        : analysis.score >= 75
+                                            ? "Good"
+                                            : analysis.score >= 60
+                                                ? "Average"
+                                                : "Needs Improvement"
                                     : "--"
                             }
 
                         </div>
 
-                        <p>
-                            out of 100
-                        </p>
+                        <div className="ats-progress">
 
-                        <div className="ats-line"></div>
+                            <div
+                                className="ats-progress-fill"
+                                style={{
+                                    width: `${analysis ? analysis.score : 0}%`
+                                }}
+                            />
 
-                    </div>
+                        </div>
 
-                    {/* SKILLS */}
+                        <div className="ats-role">
 
-                    {/* DETECTED SKILLS */}
+                            {
+                                analysis?.role || "Role Not Detected"
+                            }
 
-                    <div className="skills-card">
-
-                        <h3>
-                            Detected Skills
-                        </h3>
-
-                        {
-                            analysis?.skills?.map(
-                                (skill, index) => (
-
-                                    <div
-                                        className="skill-item"
-                                        key={index}
-                                    >
-
-                                        <div className="skill-top">
-
-                                            <span>
-                                                {skill}
-                                            </span>
-
-                                            <span>
-                                                ✓
-                                            </span>
-
-                                        </div>
-
-                                        <div className="skill-bar">
-
-                                            <div
-                                                className="skill-fill"
-                                                style={{
-                                                    width: "100%"
-                                                }}
-                                            ></div>
-
-                                        </div>
-
-                                    </div>
-                                )
-                            )
-                        }
-
-                    </div>
-
-                    {/* MISSING SKILLS */}
-
-                    <div className="skills-card">
-
-                        <h3>
-                            Missing Skills
-                        </h3>
-
-                        {
-                            analysis?.missingSkills?.map(
-                                (skill, index) => (
-
-                                    <div
-                                        className="skill-item"
-                                        key={index}
-                                    >
-
-                                        <div className="skill-top">
-
-                                            <span>
-                                                {skill}
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-                                )
-                            )
-                        }
-
-                    </div>
-                    <div className="skills-card">
-
-    <h3>
-        Suggestions
-    </h3>
-
-    {
-        analysis?.suggestions?.map(
-            (suggestion, index) => (
-
-                <div
-                    className="skill-item"
-                    key={index}
-                >
-
-                    <div className="skill-top">
-
-                        <span>
-                            {suggestion}
-                        </span>
+                        </div>
 
                     </div>
 
                 </div>
-            )
-        )
-    }
 
-</div>
+                {/* Suggestions */}
+
+                <div className="skills-card suggestions-card">
+
+                    <h3>
+                        AI Suggestions
+                    </h3>
+
+                    {
+                        analysis?.suggestions?.map((suggestion, index) => (
+
+                            <div
+                                className="skill-item"
+                                key={index}
+                            >
+
+                                <div className="skill-top">
+
+                                    <span>{suggestion}</span>
+
+                                </div>
+
+                            </div>
+
+                        ))
+                    }
+
                 </div>
 
             </div>
-
-
         </section>
     );
 }
