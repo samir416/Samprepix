@@ -7,6 +7,7 @@ public class StartInterviewResponse {
     private Long sessionId;
     private String status;
     private String message;
+    private String firstQuestion;
     private LocalDateTime startedAt;
 
     public StartInterviewResponse() {
@@ -15,10 +16,12 @@ public class StartInterviewResponse {
     public StartInterviewResponse(Long sessionId,
                                   String status,
                                   String message,
+                                  String firstQuestion,
                                   LocalDateTime startedAt) {
         this.sessionId = sessionId;
         this.status = status;
         this.message = message;
+        this.firstQuestion = firstQuestion;
         this.startedAt = startedAt;
     }
 
@@ -44,6 +47,14 @@ public class StartInterviewResponse {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getFirstQuestion() {
+        return firstQuestion;
+    }
+
+    public void setFirstQuestion(String firstQuestion) {
+        this.firstQuestion = firstQuestion;
     }
 
     public LocalDateTime getStartedAt() {

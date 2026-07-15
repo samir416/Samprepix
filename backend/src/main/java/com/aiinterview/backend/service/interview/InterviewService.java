@@ -1,11 +1,20 @@
 package com.aiinterview.backend.service.interview;
 
+import com.aiinterview.backend.dto.interview.InterviewQuestionRequest;
+import com.aiinterview.backend.dto.interview.InterviewQuestionResponse;
 import com.aiinterview.backend.dto.interview.StartInterviewRequest;
 import com.aiinterview.backend.dto.interview.StartInterviewResponse;
 import com.aiinterview.backend.entity.User;
 
 public interface InterviewService {
 
-    StartInterviewResponse startInterview(User user, StartInterviewRequest request);
+    StartInterviewResponse startInterview(
+            User user,
+            StartInterviewRequest request
+    );
 
+    InterviewQuestionResponse submitAnswer(
+            User user,
+            InterviewQuestionRequest request
+    );
 }

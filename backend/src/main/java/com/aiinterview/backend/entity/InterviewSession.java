@@ -18,10 +18,6 @@ public class InterviewSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * User who owns this interview session.
-     * Replace the type if your project uses a different User entity package.
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -34,6 +30,9 @@ public class InterviewSession {
 
     @Column(nullable = false)
     private Integer currentQuestion;
+
+    @Column(columnDefinition = "TEXT")
+    private String currentQuestionText;
 
     @Column(nullable = false)
     private Integer score;
