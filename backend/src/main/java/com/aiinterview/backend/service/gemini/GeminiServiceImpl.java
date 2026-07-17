@@ -104,30 +104,59 @@ public class GeminiServiceImpl implements GeminiService {
         return 0;
     }
 
-    private String callGemini(String prompt) {
+  private String callGemini(String prompt) {
 
-        GeminiRequest request = new GeminiRequest(
-                List.of(
-                        new Content(
-                                List.of(
-                                        new Part(prompt)
-                                )
-                        )
-                )
-        );
+    GeminiRequest request = new GeminiRequest(
+            List.of(
+                    new Content(
+                            List.of(
+                                    new Part(prompt)
+                            )
+                    )
+            )
+    );
 
-        GeminiResponse response = webClient
+    System.out.println("========== GEMINI DEBUG ==========");
+    System.out.println("URL = " + apiUrl);
+    System.out.println("KEY = " +
+            (apiKey == null ? "NULL" : apiKey.substring(0, 10) + "..."));
+    System.out.println("REQUEST CREATED");
+    System.out.println("==================================");
+
+    try {
+
+        String rawResponse = webClient
                 .post()
                 .uri(apiUrl + "?key=" + apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
-                .bodyToMono(GeminiResponse.class)
+                .bodyToMono(String.class)
                 .timeout(Duration.ofSeconds(60))
                 .block();
 
-        return extractResponse(response);
+        System.out.println("========== GEMINI RESPONSE ==========");
+        System.out.println(rawResponse);
+        System.out.println("=====================================");
+
+        return rawResponse;
+
+    } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+
+        System.out.println("========== GEMINI ERROR ==========");
+        System.out.println("STATUS : " + e.getStatusCode().value());
+        System.out.println("BODY   : " + e.getResponseBodyAsString());
+        System.out.println("==================================");
+
+        throw new RuntimeException(e);
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+        throw new RuntimeException(e);
     }
+}
 
         private String extractResponse(GeminiResponse response) {
 

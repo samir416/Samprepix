@@ -5,10 +5,11 @@ import com.aiinterview.backend.dto.interview.InterviewQuestionResponse;
 import com.aiinterview.backend.dto.interview.StartInterviewRequest;
 import com.aiinterview.backend.dto.interview.StartInterviewResponse;
 import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.service.interview.InterviewService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,28 +17,55 @@ import org.springframework.web.bind.annotation.*;
 public class InterviewController {
 
     private final InterviewService interviewService;
+    private final UserRepository userRepository;
 
-    public InterviewController(InterviewService interviewService) {
+    public InterviewController(
+            InterviewService interviewService,
+            UserRepository userRepository) {
+
         this.interviewService = interviewService;
+        this.userRepository = userRepository;
     }
 
-    @PostMapping("/start")
-    public ResponseEntity<StartInterviewResponse> startInterview(
-            @AuthenticationPrincipal User user,
-            @Valid @RequestBody StartInterviewRequest request) {
-
-        return ResponseEntity.ok(
-                interviewService.startInterview(user, request)
-        );
+    @GetMapping("/ping")
+    public String ping() {
+        return "Interview OK";
     }
 
+  @PostMapping("/start")
+public ResponseEntity<StartInterviewResponse> startInterview(
+        Authentication authentication,
+        @Valid @RequestBody StartInterviewRequest request) {
+
+    System.out.println("STEP 1");
+
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    System.out.println("STEP 2");
+
+    return ResponseEntity.ok(
+            interviewService.startInterview(user, request)
+    );
+}
     @PostMapping("/submit")
     public ResponseEntity<InterviewQuestionResponse> submitAnswer(
-            @AuthenticationPrincipal User user,
+            Authentication authentication,
             @Valid @RequestBody InterviewQuestionRequest request) {
 
-        return ResponseEntity.ok(
-                interviewService.submitAnswer(user, request)
-        );
+        try {
+
+            User user = userRepository.findByEmail(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            return ResponseEntity.ok(
+                    interviewService.submitAnswer(user, request)
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            throw e;
+        }
     }
 }
