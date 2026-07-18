@@ -9,7 +9,9 @@ import {
     FiPlay
 } from "react-icons/fi";
 
+import { startInterview, submitAnswer } from "../services/interviewService";
 import "../styles/mockInterview.css";
+import { SpeechSynthesisService, SpeechRecognitionService } from "../services/speech";
 
 export default function MockInterview() {
 
@@ -17,9 +19,182 @@ export default function MockInterview() {
 
     const [micMuted, setMicMuted] = useState(false);
 
+    const [isListening, setIsListening] = useState(false);
+
     const [speakerMuted, setSpeakerMuted] = useState(false);
 
     const [seconds, setSeconds] = useState(0);
+
+    const [sessionId, setSessionId] = useState(null);
+
+    const [currentQuestion, setCurrentQuestion] = useState("");
+
+    const [voiceEnabled, setVoiceEnabled] = useState(true);
+
+    const [questionNumber, setQuestionNumber] = useState(1);
+
+    const [loading, setLoading] = useState(false);
+
+    const [answer, setAnswer] = useState("");
+
+    const [submittedAnswer, setSubmittedAnswer] = useState("");
+
+
+    const toggleSpeaker = () => {
+
+    if (speakerMuted) {
+
+        setSpeakerMuted(false);
+
+        if (SpeechSynthesisService.isSpeaking()) {
+
+            SpeechSynthesisService.resume();
+
+        }
+
+    } else {
+
+        setSpeakerMuted(true);
+
+        SpeechSynthesisService.pause();
+
+    }
+
+};
+
+   const toggleMic = () => {
+
+    if (!SpeechRecognitionService.recognition) {
+
+        alert("Speech Recognition is not supported in this browser.");
+
+        return;
+
+    }
+
+    try {
+
+        if (SpeechRecognitionService.isListening) {
+
+            SpeechRecognitionService.stop();
+
+        } else {
+
+            SpeechRecognitionService.start();
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+};
+
+  useEffect(() => {
+
+    if (!started) {
+
+        return;
+
+    }
+
+    if (!voiceEnabled) {
+
+        return;
+
+    }
+
+    if (!currentQuestion?.trim()) {
+
+        return;
+
+    }
+
+    // Speaker OFF hai to new question read mat karo
+    if (speakerMuted) {
+
+        return;
+
+    }
+
+    // Agar pause hui speech chal rahi hai to resume karo
+    if (SpeechSynthesisService.isSpeaking()) {
+
+        return;
+
+    }
+
+    const timer = setTimeout(() => {
+
+        SpeechSynthesisService.speak(currentQuestion);
+
+    }, 250);
+
+    return () => {
+
+        clearTimeout(timer);
+
+    };
+
+}, [
+
+    started,
+
+    currentQuestion,
+
+    voiceEnabled
+
+]);
+
+    useEffect(() => {
+
+        SpeechRecognitionService.setTranscriptListener(
+
+            (text, isFinal) => {
+
+                if (!isFinal) return;
+
+                setAnswer((previousAnswer) => {
+
+                    if (!previousAnswer.trim()) {
+
+                        return text.trim();
+
+                    }
+
+                    return previousAnswer + " " + text.trim();
+
+                });
+
+            }
+
+        );
+        SpeechRecognitionService.setErrorListener(
+
+            (error) => {
+
+                console.error(error);
+
+            }
+
+        );
+
+        SpeechRecognitionService.setStateListener(
+
+    (listening) => {
+
+        setIsListening(listening);
+
+        setMicMuted(!listening);
+
+    }
+
+);
+
+    }, []);
+
 
     /* TIMER */
 
@@ -62,16 +237,49 @@ export default function MockInterview() {
 
     /* START */
 
-    const handleStart = () => {
+    const handleStart = async () => {
 
-        setStarted(true);
+        try {
 
-        setSeconds(0);
+            setLoading(true);
+
+            const response = await startInterview({
+
+                interviewType: "HR",
+                totalQuestions: 5
+
+            });
+
+            setSessionId(response.data.sessionId);
+
+            setCurrentQuestion(response.data.firstQuestion);
+
+            setQuestionNumber(1);
+
+            setStarted(true);
+
+            setSeconds(0);
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert("Failed to start interview.");
+
+        } finally {
+
+            setLoading(false);
+        }
     };
+
 
     /* END */
 
     const handleEnd = () => {
+
+        SpeechSynthesisService.stop();
+
+        SpeechRecognitionService.stop();
 
         setStarted(false);
 
@@ -80,7 +288,66 @@ export default function MockInterview() {
         setSpeakerMuted(false);
 
         setSeconds(0);
+
+        setSessionId(null);
+
+        setCurrentQuestion("");
+
+        setQuestionNumber(1);
+
+        setAnswer("");
     };
+
+    const handleSubmit = async () => {
+
+        if (!answer.trim()) {
+
+            return;
+        }
+
+        try {
+
+            setLoading(true);
+
+            setSubmittedAnswer(answer);
+
+            const response = await submitAnswer({
+
+                sessionId: sessionId,
+                answer: answer
+
+            });
+
+            if (response.data.completed) {
+
+                SpeechSynthesisService.stop();
+
+                SpeechRecognitionService.stop();
+
+                alert("Interview Completed!");
+
+                return;
+            }
+
+            setCurrentQuestion(response.data.nextQuestion);
+
+            setQuestionNumber((prev) => prev + 1);
+
+            setAnswer("");
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert("Failed to submit answer.");
+
+        } finally {
+
+            setLoading(false);
+        }
+
+    };
+
 
     return (
 
@@ -132,8 +399,7 @@ export default function MockInterview() {
 
                     <div className="question-badge">
 
-                        Question No-1
-
+                        Question No - {questionNumber}
                     </div>
 
                     {/* AI ORB */}
@@ -183,12 +449,10 @@ export default function MockInterview() {
                                     <button
                                         className="start-btn"
                                         onClick={handleStart}
+                                        disabled={loading}
                                     >
-
                                         <FiPlay />
-
-                                        Start Interview
-
+                                        {loading ? "Starting..." : "Start Interview"}
                                     </button>
 
                                 )
@@ -205,9 +469,7 @@ export default function MockInterview() {
                                                     ? "control-btn active-control"
                                                     : "control-btn"
                                             }
-                                            onClick={() =>
-                                                setMicMuted(!micMuted)
-                                            }
+                                            onClick={toggleMic}
                                         >
 
                                             {
@@ -226,9 +488,8 @@ export default function MockInterview() {
                                                     ? "control-btn active-control"
                                                     : "control-btn"
                                             }
-                                            onClick={() =>
-                                                setSpeakerMuted(!speakerMuted)
-                                            }
+                                            onClick={toggleSpeaker}
+
                                         >
 
                                             {
@@ -375,7 +636,7 @@ export default function MockInterview() {
                                 AI:
                             </span>
 
-                            Tell me about a time you led a tough project.
+                            {currentQuestion || "Click Start Interview to begin."}
 
                         </p>
 
@@ -385,15 +646,29 @@ export default function MockInterview() {
                                 You:
                             </span>
 
-                            Last semester I led a team of four to ship our college fest app...
+                            {submittedAnswer
+                                ? submittedAnswer.length > 120
+                                    ? submittedAnswer.substring(0, 120) + "..."
+                                    : submittedAnswer
+                                : "Your answer will appear here."
+                            }
 
                         </p>
 
-                        <div className="typing-box">
+                        <textarea
+                            className="typing-box"
+                            placeholder="Type your answer..."
+                            value={answer}
+                            onChange={(e) => setAnswer(e.target.value)}
+                        />
 
-                            Type instead
-
-                        </div>
+                        <button
+                            className="submit-answer-btn"
+                            onClick={handleSubmit}
+                            disabled={loading || !answer.trim()}
+                        >
+                            Submit Answer
+                        </button>
 
                     </div>
 
@@ -410,10 +685,7 @@ export default function MockInterview() {
                 </h4>
 
                 <p>
-
-                    “Tell me about a time you had to push back on a stakeholder.
-                    How did you handle it?”
-
+                    {currentQuestion || "Click Start Interview to begin."}
                 </p>
 
             </div>

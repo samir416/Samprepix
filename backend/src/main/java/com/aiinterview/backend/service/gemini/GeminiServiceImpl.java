@@ -125,22 +125,22 @@ public class GeminiServiceImpl implements GeminiService {
 
     try {
 
-        String rawResponse = webClient
-                .post()
-                .uri(apiUrl + "?key=" + apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(60))
-                .block();
+      GeminiResponse response = webClient
+        .post()
+        .uri(apiUrl + "?key=" + apiKey)
+        .contentType(MediaType.APPLICATION_JSON)
+        .accept(MediaType.APPLICATION_JSON)
+        .bodyValue(request)
+        .retrieve()
+        .bodyToMono(GeminiResponse.class)
+        .timeout(Duration.ofSeconds(60))
+        .block();
 
-        System.out.println("========== GEMINI RESPONSE ==========");
-        System.out.println(rawResponse);
-        System.out.println("=====================================");
+System.out.println("========== GEMINI RESPONSE ==========");
+System.out.println(response);
+System.out.println("=====================================");
 
-        return rawResponse;
+return extractResponse(response);
 
     } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
 

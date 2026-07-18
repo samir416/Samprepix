@@ -37,6 +37,21 @@ public class InterviewSession {
     @Column(nullable = false)
     private Integer score;
 
+    @Column
+    private Double percentage;
+
+    @Column(columnDefinition = "TEXT")
+    private String overallFeedback;
+
+    @Column(columnDefinition = "TEXT")
+    private String strengths;
+
+    @Column(columnDefinition = "TEXT")
+    private String weaknesses;
+
+    @Column(columnDefinition = "TEXT")
+    private String suggestions;
+
     @Column(nullable = false)
     private String status;
 

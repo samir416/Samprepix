@@ -2,6 +2,7 @@ package com.aiinterview.backend.controller;
 
 import com.aiinterview.backend.dto.interview.InterviewQuestionRequest;
 import com.aiinterview.backend.dto.interview.InterviewQuestionResponse;
+import com.aiinterview.backend.dto.interview.InterviewResultResponse;
 import com.aiinterview.backend.dto.interview.StartInterviewRequest;
 import com.aiinterview.backend.dto.interview.StartInterviewResponse;
 import com.aiinterview.backend.entity.User;
@@ -10,6 +11,7 @@ import com.aiinterview.backend.service.interview.InterviewService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import com.aiinterview.backend.dto.interview.InterviewProgressResponse;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -68,4 +70,31 @@ public ResponseEntity<StartInterviewResponse> startInterview(
             throw e;
         }
     }
+
+    @GetMapping("/result/{sessionId}")
+public ResponseEntity<InterviewResultResponse> getInterviewResult(
+        Authentication authentication,
+        @PathVariable Long sessionId) {
+
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    return ResponseEntity.ok(
+            interviewService.getInterviewResult(user, sessionId)
+    );
+}
+
+@GetMapping("/progress/{sessionId}")
+public ResponseEntity<InterviewProgressResponse> getInterviewProgress(
+        Authentication authentication,
+        @PathVariable Long sessionId) {
+
+    User user = userRepository.findByEmail(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    return ResponseEntity.ok(
+            interviewService.getInterviewProgress(user, sessionId)
+    );
+}
+
 }
