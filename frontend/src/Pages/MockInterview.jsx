@@ -10,8 +10,10 @@ import {
 } from "react-icons/fi";
 
 import { startInterview, submitAnswer } from "../services/interviewService";
+import { submitFeedback } from "../services/feedbackService";
 import "../styles/mockInterview.css";
 import { SpeechSynthesisService, SpeechRecognitionService } from "../services/speech";
+import FirstInterviewFeedbackModal from "../feedback/FirstInterviewFeedbackModal";
 
 export default function MockInterview() {
 
@@ -39,114 +41,120 @@ export default function MockInterview() {
 
     const [submittedAnswer, setSubmittedAnswer] = useState("");
 
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+
+    const [firstInterviewCompleted, setFirstInterviewCompleted] = useState(false);
+
+    const [answeredAtLeastOneQuestion, setAnsweredAtLeastOneQuestion] = useState(false);
+
 
     const toggleSpeaker = () => {
 
-    if (speakerMuted) {
+        if (speakerMuted) {
 
-        setSpeakerMuted(false);
+            setSpeakerMuted(false);
 
-        if (SpeechSynthesisService.isSpeaking()) {
+            if (SpeechSynthesisService.isSpeaking()) {
 
-            SpeechSynthesisService.resume();
+                SpeechSynthesisService.resume();
 
-        }
-
-    } else {
-
-        setSpeakerMuted(true);
-
-        SpeechSynthesisService.pause();
-
-    }
-
-};
-
-   const toggleMic = () => {
-
-    if (!SpeechRecognitionService.recognition) {
-
-        alert("Speech Recognition is not supported in this browser.");
-
-        return;
-
-    }
-
-    try {
-
-        if (SpeechRecognitionService.isListening) {
-
-            SpeechRecognitionService.stop();
+            }
 
         } else {
 
-            SpeechRecognitionService.start();
+            setSpeakerMuted(true);
+
+            SpeechSynthesisService.pause();
 
         }
 
-    } catch (error) {
+    };
 
-        console.error(error);
+    const toggleMic = () => {
 
-    }
+        if (!SpeechRecognitionService.recognition) {
 
-};
+            alert("Speech Recognition is not supported in this browser.");
 
-  useEffect(() => {
+            return;
 
-    if (!started) {
+        }
 
-        return;
+        try {
 
-    }
+            if (SpeechRecognitionService.isListening) {
 
-    if (!voiceEnabled) {
+                SpeechRecognitionService.stop();
 
-        return;
+            } else {
 
-    }
+                SpeechRecognitionService.start();
 
-    if (!currentQuestion?.trim()) {
+            }
 
-        return;
+        } catch (error) {
 
-    }
+            console.error(error);
 
-    // Speaker OFF hai to new question read mat karo
-    if (speakerMuted) {
-
-        return;
-
-    }
-
-    // Agar pause hui speech chal rahi hai to resume karo
-    if (SpeechSynthesisService.isSpeaking()) {
-
-        return;
-
-    }
-
-    const timer = setTimeout(() => {
-
-        SpeechSynthesisService.speak(currentQuestion);
-
-    }, 250);
-
-    return () => {
-
-        clearTimeout(timer);
+        }
 
     };
 
-}, [
+    useEffect(() => {
 
-    started,
+        if (!started) {
 
-    currentQuestion,
+            return;
 
-    voiceEnabled
+        }
 
-]);
+        if (!voiceEnabled) {
+
+            return;
+
+        }
+
+        if (!currentQuestion?.trim()) {
+
+            return;
+
+        }
+
+        // Speaker OFF hai to new question read mat karo
+        if (speakerMuted) {
+
+            return;
+
+        }
+
+        // Agar pause hui speech chal rahi hai to resume karo
+        if (SpeechSynthesisService.isSpeaking()) {
+
+            return;
+
+        }
+
+        const timer = setTimeout(() => {
+
+            SpeechSynthesisService.speak(currentQuestion);
+
+        }, 250);
+
+        return () => {
+
+            clearTimeout(timer);
+
+        };
+
+    }, [
+
+        started,
+
+        currentQuestion,
+
+        voiceEnabled
+
+    ]);
 
     useEffect(() => {
 
@@ -183,15 +191,15 @@ export default function MockInterview() {
 
         SpeechRecognitionService.setStateListener(
 
-    (listening) => {
+            (listening) => {
 
-        setIsListening(listening);
+                setIsListening(listening);
 
-        setMicMuted(!listening);
+                setMicMuted(!listening);
 
-    }
+            }
 
-);
+        );
 
     }, []);
 
@@ -272,10 +280,7 @@ export default function MockInterview() {
         }
     };
 
-
-    /* END */
-
-    const handleEnd = () => {
+    const resetInterview = () => {
 
         SpeechSynthesisService.stop();
 
@@ -296,6 +301,34 @@ export default function MockInterview() {
         setQuestionNumber(1);
 
         setAnswer("");
+
+        setSubmittedAnswer("");
+
+        setLoading(false);
+
+        setAnsweredAtLeastOneQuestion(false);
+    };
+
+    /* END */
+
+    const handleEnd = () => {
+
+        SpeechSynthesisService.stop();
+
+        SpeechRecognitionService.stop();
+
+        if (answeredAtLeastOneQuestion) {
+
+            setStarted(false);
+
+            setShowFeedbackModal(true);
+
+            return;
+
+        }
+
+        resetInterview();
+
     };
 
     const handleSubmit = async () => {
@@ -311,6 +344,8 @@ export default function MockInterview() {
 
             setSubmittedAnswer(answer);
 
+            setAnsweredAtLeastOneQuestion(true);
+
             const response = await submitAnswer({
 
                 sessionId: sessionId,
@@ -324,7 +359,11 @@ export default function MockInterview() {
 
                 SpeechRecognitionService.stop();
 
-                alert("Interview Completed!");
+                setStarted(false);
+
+                setFirstInterviewCompleted(true);
+
+                setShowFeedbackModal(true);
 
                 return;
             }
@@ -689,6 +728,49 @@ export default function MockInterview() {
                 </p>
 
             </div>
+
+            <FirstInterviewFeedbackModal
+
+                isOpen={showFeedbackModal}
+
+                onClose={() => {
+
+                    setShowFeedbackModal(false);
+
+                    resetInterview();
+
+                }}
+
+               onSubmit={async (feedback) => {
+
+    try {
+
+        await submitFeedback({
+
+            sessionId,
+
+            rating: feedback.rating,
+
+            suggestion: feedback.suggestion
+
+        });
+
+        console.log("Feedback submitted successfully.");
+
+    } catch (error) {
+
+        console.error("Feedback submission failed:", error);
+
+    } finally {
+
+        setShowFeedbackModal(false);
+
+        resetInterview();
+
+    }
+
+}}
+            />
 
         </section>
     );

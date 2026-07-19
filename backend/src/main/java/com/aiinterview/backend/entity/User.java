@@ -1,11 +1,6 @@
 package com.aiinterview.backend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "app_user")
@@ -15,14 +10,35 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
+
+    @Column(nullable = false, unique = true)
     private String email;
 
+    @Column
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuthenticationProvider provider = AuthenticationProvider.EMAIL;
+
+    @Column(length = 500)
+    private String profilePicture;
+
+    @Column(length = 100)
     private String name;
 
     public Long getId() {
         return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public void setId(Long id) {
@@ -43,6 +59,22 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public AuthenticationProvider getProvider() {
+        return provider;
+    }
+
+    public void setProvider(AuthenticationProvider provider) {
+        this.provider = provider;
+    }
+
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
     }
 
     public String getName() {

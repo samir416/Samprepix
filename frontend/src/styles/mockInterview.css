@@ -393,7 +393,7 @@
 /* CONTROLS */
 .controls-wrapper {
 
-    margin-top: 20px;
+    margin-top: 70px;
 
     display: flex;
 
@@ -1613,7 +1613,7 @@ body.dark-theme .typing-box:focus-visible{
 
     .controls-wrapper {
 
-        margin-top: 10px;
+        margin-top: 60px;
 
         width: 100%;
     }

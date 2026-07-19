@@ -43,7 +43,7 @@ export default function AuthModal() {
                     </h2>
 
                     <p className="auth-subtitle">
-                        Start your free 14-day pro trial
+                        Start your placement journey
                     </p>
 
                     {/* SOCIAL BUTTONS */}

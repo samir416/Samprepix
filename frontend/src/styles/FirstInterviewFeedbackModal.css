@@ -1,0 +1,414 @@
+/* ===========================================================
+   First Interview Feedback Modal
+   Professional Glass UI
+=========================================================== */
+
+.feedback-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(10, 15, 25, 0.68);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    animation: feedbackFade .25s ease;
+}
+
+.feedback-modal {
+    width: 100%;
+    max-width: 430px;
+
+    height: 102%;
+
+    background: rgba(22, 28, 39, .96);
+
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.04);
+
+    padding: 26px;
+
+    animation: feedbackPopup .28s ease;
+
+    color: #F8FAFC;
+
+    overflow: hidden;
+}
+
+/* ========================================= */
+
+.feedback-header{
+    text-align:center;
+}
+
+.feedback-icon{
+    width:58px;
+    height:58px;
+
+    margin:auto;
+    margin-bottom:18px;
+
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:rgba(59,130,246,.15);
+    color:#60A5FA;
+}
+
+.feedback-header h3{
+    margin:0;
+
+    font-size:24px;
+    font-weight:700;
+}
+
+.feedback-header p{
+    margin-top:10px;
+
+    color:#9CA3AF;
+
+    line-height:1.6;
+    font-size:14px;
+}
+
+/* ========================================= */
+
+.feedback-divider{
+    height:1px;
+
+    background:rgba(255,255,255,.06);
+
+    margin:22px 0;
+}
+
+/* ========================================= */
+
+.feedback-label{
+    display:block;
+
+    margin-bottom:16px;
+
+    font-size:15px;
+    font-weight:600;
+
+    text-align:center;
+}
+
+.feedback-stars{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+}
+
+.star-button{
+
+    background:none;
+    border:none;
+    outline:none;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.star-button:hover{
+    transform:translateY(-4px) scale(1.08);
+}
+
+.star-empty{
+    color:#475569;
+    transition:.25s;
+}
+
+.star-filled{
+    color:#FBBF24;
+    transition:.25s;
+}
+
+/* ========================================= */
+
+.rating-text{
+
+    display:block;
+
+    text-align:center;
+
+    margin-top:14px;
+
+    color:#60A5FA;
+
+    font-weight:600;
+}
+
+/* ========================================= */
+
+.feedback-input-section label{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    margin-bottom:12px;
+
+    font-weight:600;
+    font-size:15px;
+}
+
+.feedback-input-section textarea{
+
+    width:100%;
+    height:115px;
+
+    resize:none;
+
+    border-radius:14px;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    background:#111827;
+
+    color:#F8FAFC;
+
+    padding:14px;
+
+    font-size:14px;
+
+    outline:none;
+
+    transition:.25s;
+}
+
+.feedback-input-section textarea:focus{
+
+    border-color:#3B82F6;
+
+    box-shadow:0 0 0 3px rgba(59,130,246,.15);
+}
+
+.feedback-input-section textarea::placeholder{
+    color:#64748B;
+}
+
+.character-counter{
+
+    margin-top:8px;
+
+    text-align:right;
+
+    color:#64748B;
+
+    font-size:12px;
+}
+
+/* ========================================= */
+
+.feedback-actions{
+
+    display:flex;
+    justify-content:flex-end;
+
+    gap:12px;
+
+    margin-top:28px;
+}
+
+.feedback-later-btn{
+
+    min-width:110px;
+    height:45px;
+
+    border-radius:12px;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    background:transparent;
+
+    color:#CBD5E1;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.feedback-later-btn:hover{
+
+    background:rgba(255,255,255,.05);
+}
+
+.feedback-submit-btn{
+
+    min-width:165px;
+    height:45px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:#2563EB;
+
+    color:#fff;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.feedback-submit-btn:hover:not(:disabled){
+
+    transform:translateY(-2px);
+
+    background:#1D4ED8;
+
+    box-shadow:0 10px 25px rgba(37,99,235,.35);
+}
+
+.feedback-submit-btn:disabled{
+
+    opacity:.45;
+
+    cursor:not-allowed;
+}
+
+/* ========================================= */
+
+.feedback-success{
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+
+    padding:30px 10px;
+
+    text-align:center;
+}
+
+.success-icon{
+
+    color:#22C55E;
+
+    margin-bottom:18px;
+
+    animation:successPop .4s ease;
+}
+
+.feedback-success h3{
+
+    margin:0;
+
+    font-size:24px;
+}
+
+.feedback-success p{
+
+    margin-top:10px;
+
+    color:#94A3B8;
+}
+
+/* ========================================= */
+
+@keyframes feedbackPopup{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(20px) scale(.92);
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0) scale(1);
+    }
+
+}
+
+@keyframes feedbackFade{
+
+    from{
+
+        opacity:0;
+    }
+
+    to{
+
+        opacity:1;
+    }
+
+}
+
+@keyframes successPop{
+
+    from{
+
+        transform:scale(.5);
+
+        opacity:0;
+    }
+
+    to{
+
+        transform:scale(1);
+
+        opacity:1;
+    }
+
+}
+
+/* ========================================= */
+
+@media(max-width:576px){
+
+        .feedback-modal {
+        padding: 22px;
+        border-radius: 18px;
+        height: 80%;
+        margin-top: 65px;
+    }
+    
+
+    .feedback-header h3{
+
+        font-size:21px;
+    }
+
+    .feedback-stars{
+
+        gap:6px;
+    }
+
+    .star-button svg{
+
+        width:30px;
+        height:30px;
+    }
+
+    .feedback-actions{
+
+        flex-direction:column-reverse;
+    }
+
+    .feedback-actions button{
+
+        width:100%;
+    }
+
+}

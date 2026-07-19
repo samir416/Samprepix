@@ -2,36 +2,44 @@ package com.aiinterview.backend.service;
 
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.repository.UserRepository;
-import org.springframework.stereotype.Service;
+import com.aiinterview.backend.security.JwtUtil;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
-import com.aiinterview.backend.security.JwtUtil;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
 
+    private final BCryptPasswordEncoder passwordEncoder =
+            new BCryptPasswordEncoder();
+
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public String saveUser(User user) {
+   public String saveUser(User user) {
 
-        Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
-
-        if (existingUser.isPresent()) {
-            return "Email already exists!";
-        }
-
-        user.setPassword(
-                passwordEncoder.encode(
-                        user.getPassword()));
-
-        userRepository.save(user);
-        return "User saved successfully!";
+    if (userRepository.existsByEmail(user.getEmail())) {
+        return "Email already exists!";
     }
+
+    if (userRepository.existsByUsername(user.getUsername())) {
+        return "Username already exists!";
+    }
+
+    user.setPassword(
+            passwordEncoder.encode(user.getPassword())
+    );
+
+    userRepository.save(user);
+
+    return "User saved successfully!";
+}
+
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -39,61 +47,74 @@ public class UserService {
 
     public User getUserById(Long id) {
 
-        Optional<User> user = userRepository.findById(id);
-
-        return user.orElse(null);
+        return userRepository
+                .findById(id)
+                .orElse(null);
     }
 
     public User updateUser(Long id, User updatedUser) {
 
-        Optional<User> existingUser = userRepository.findById(id);
+        Optional<User> existingUser =
+                userRepository.findById(id);
 
-        if (existingUser.isPresent()) {
-
-            User user = existingUser.get();
-
-            user.setName(updatedUser.getName());
-            user.setEmail(updatedUser.getEmail());
-            user.setPassword(updatedUser.getPassword());
-
-            return userRepository.save(user);
+        if (existingUser.isEmpty()) {
+            return null;
         }
 
-        return null;
+        User user = existingUser.get();
+
+        if (!user.getUsername().equals(updatedUser.getUsername())
+                && userRepository.existsByUsername(updatedUser.getUsername())) {
+
+            throw new RuntimeException("Username already exists!");
+        }
+
+        if (!user.getEmail().equals(updatedUser.getEmail())
+                && userRepository.existsByEmail(updatedUser.getEmail())) {
+
+            throw new RuntimeException("Email already exists!");
+        }
+
+        user.setUsername(updatedUser.getUsername());
+        user.setEmail(updatedUser.getEmail());
+
+        if (updatedUser.getPassword() != null
+                && !updatedUser.getPassword().isBlank()) {
+
+            user.setPassword(
+                    passwordEncoder.encode(updatedUser.getPassword())
+            );
+        }
+
+        return userRepository.save(user);
     }
 
     public String deleteUser(Long id) {
 
-        if (userRepository.existsById(id)) {
-
-            userRepository.deleteById(id);
-
-            return "User deleted successfully!";
+        if (!userRepository.existsById(id)) {
+            return "User not found!";
         }
 
-        return "User not found!";
+        userRepository.deleteById(id);
+
+        return "User deleted successfully!";
     }
 
-   public String login(String email, String password) {
+    public String login(String email, String password) {
 
-    Optional<User> user =
-            userRepository.findByEmail(email);
+        Optional<User> optionalUser =
+                userRepository.findByEmail(email);
 
-    if (user.isPresent()) {
-
-        if (passwordEncoder.matches(
-                password,
-                user.get().getPassword())) {
-
-            return JwtUtil.generateToken(email);
+        if (optionalUser.isEmpty()) {
+            return "User not found!";
         }
 
-        return "Invalid password!";
+        User user = optionalUser.get();
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            return "Invalid password!";
+        }
+
+        return JwtUtil.generateToken(user.getEmail());
     }
-
-    return "User not found!";
-}
-
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
 }

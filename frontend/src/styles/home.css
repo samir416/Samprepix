@@ -867,6 +867,8 @@ body.dark-theme .theme-toggle {
         grid-template-columns: repeat(3, 1fr);
 
         gap: 22px;
+        
+        margin-bottom: -370px;
     }
 
     .feature-card {

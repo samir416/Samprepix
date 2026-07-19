@@ -48,6 +48,10 @@ export default function AppRoutes() {
                 element={<Login />}
             />
 
+            {/* OAUTH SUCCESS */}
+
+            
+
             {/* REGISTER */}
 
             <Route
