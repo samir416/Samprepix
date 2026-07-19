@@ -23,7 +23,8 @@ public class User {
     @Column(nullable = false)
     private AuthenticationProvider provider = AuthenticationProvider.EMAIL;
 
-    @Column(length = 500)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String profilePicture;
 
     @Column(length = 100)

@@ -75,27 +75,22 @@ export default function Login() {
                             type="button"
                             onClick={() => {
                                 window.location.href =
-                                    "http://localhost:8080/oauth2/authorization/github";
+                                    "http://localhost:8080/oauth2/authorize/github";
                             }}
                         >
-
                             <span>⌘</span>
-
                             GitHub
-
                         </button>
+                        
                         <button
                             type="button"
                             onClick={() => {
                                 window.location.href =
-                                    "http://localhost:8080/oauth2/authorization/google";
+                                    "http://localhost:8080/oauth2/authorize/google";
                             }}
                         >
-
                             <span>✉</span>
-
                             Google
-
                         </button>
 
                     </div>
@@ -159,9 +154,12 @@ export default function Login() {
                             <input
                                 type="email"
                                 placeholder="you@university.edu"
-                                autoComplete="off"
                                 value={email}
-                                name="login_email"
+                                name="oauth-login-email"
+                                autoComplete="new-password"
+                                spellCheck={false}
+                                autoCapitalize="off"
+                                autoCorrect="off"
                                 onChange={(e) => setEmail(e.target.value)}
                             />
 
@@ -176,12 +174,10 @@ export default function Login() {
                             <input
                                 type="password"
                                 placeholder="••••••••"
-                                autoComplete="off"
                                 value={password}
-                                name="login_password"
-                                onChange={(e) =>
-                                    setPassword(e.target.value)
-                                }
+                                name="oauth-login-password"
+                                autoComplete="new-password"
+                                onChange={(e) => setPassword(e.target.value)}
                             />
 
                         </div>

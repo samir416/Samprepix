@@ -6,6 +6,7 @@ import com.aiinterview.backend.repository.UserRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -30,52 +31,37 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String name = oAuth2User.getAttribute("name");
         String picture = oAuth2User.getAttribute("picture");
 
+        if (email == null || email.isBlank()) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("invalid_email"),
+                    "Unable to retrieve email from Google."
+            );
+        }
+
         Optional<User> existingUser = userRepository.findByEmail(email);
 
-        User user;
+        if (existingUser.isEmpty()) {
 
-        if (existingUser.isPresent()) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("account_not_found"),
+                    "Account not found. Please register first."
+            );
+        }
 
-            user = existingUser.get();
+        User user = existingUser.get();
 
-            user.setProvider(AuthenticationProvider.GOOGLE);
-            user.setName(name);
+        user.setName(name);
 
-            if (picture != null) {
-                user.setProfilePicture(picture);
-            }
-
-        } else {
-
-            user = new User();
-
-            user.setEmail(email);
-            user.setUsername(generateUsername(email));
-            user.setName(name);
-            user.setProvider(AuthenticationProvider.GOOGLE);
+        if (picture != null && !picture.isBlank()) {
             user.setProfilePicture(picture);
+        }
 
-            // OAuth users don't have password
-            user.setPassword(null);
+        if (user.getProvider() == AuthenticationProvider.EMAIL) {
+            user.setProvider(AuthenticationProvider.GOOGLE);
         }
 
         userRepository.save(user);
 
         return oAuth2User;
-    }
-
-    private String generateUsername(String email) {
-
-        String username = email.substring(0, email.indexOf("@"));
-
-        int count = 1;
-
-        while (userRepository.existsByUsername(username)) {
-
-            username = email.substring(0, email.indexOf("@")) + count;
-            count++;
-        }
-
-        return username;
     }
 }
