@@ -24,27 +24,27 @@ export default function Login() {
 
     useEffect(() => {
 
-    const token = searchParams.get("token");
-    const oauthError = searchParams.get("oauthError");
+        const token = searchParams.get("token");
+        const oauthError = searchParams.get("oauthError");
 
-    
 
-    if (token) {
 
-        localStorage.setItem("token", token);
+        if (token) {
 
-        navigate("/dashboard");
-        return;
-    }
+            localStorage.setItem("token", token);
 
-    if (oauthError) {
+            navigate("/dashboard");
+            return;
+        }
 
-        setError(decodeURIComponent(oauthError));
+        if (oauthError) {
 
-        window.history.replaceState({}, "", "/login");
-    }
+            setError(decodeURIComponent(oauthError));
 
-}, [searchParams, navigate]);
+            window.history.replaceState({}, "", "/login");
+        }
+
+    }, [searchParams, navigate]);
 
 
     return (
@@ -150,7 +150,7 @@ export default function Login() {
                                 console.log(err);
 
                                 setError(
-                                    "Invalid email or password"
+                                    "Please check your credentials and try again."
                                 );
                             }
                         }}
@@ -159,12 +159,12 @@ export default function Login() {
                         <div className="auth-input-group">
 
                             <label>
-                                Email
+                                Username or Email
                             </label>
 
                             <input
                                 type="email"
-                                placeholder="you@university.edu"
+                                placeholder="Enter your username or email"
                                 value={email}
                                 name="oauth-login-email"
                                 autoComplete="new-password"
@@ -203,7 +203,7 @@ export default function Login() {
                                     <div className="auth-error-content">
 
                                         <h6>
-                                            Sign In Failed
+                                            Unable to Sign In
                                         </h6>
 
                                         <p>
