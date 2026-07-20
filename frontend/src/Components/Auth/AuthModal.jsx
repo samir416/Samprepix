@@ -10,7 +10,7 @@ export default function AuthModal() {
 
     const navigate = useNavigate();
 
-    const [name, setName] = useState("");
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -97,11 +97,11 @@ export default function AuthModal() {
                             try {
 
                                 await registerUser(
-                                    name,
+                                    username,
                                     email,
                                     password
                                 );
-                                setName("");
+                                setUsername("");
                                 setEmail("");
                                 setPassword("");
                                 navigate("/login");
@@ -111,7 +111,7 @@ export default function AuthModal() {
                                 console.log(err);
 
                                 setError(
-                                    "Registration failed"
+                                    "Please review your details and try again."
                                 );
                             }
                         }}
@@ -119,18 +119,17 @@ export default function AuthModal() {
                         <div className="auth-input-group">
 
                             <label>
-                                Full name
+                                Username
                             </label>
 
                             <input
                                 type="text"
-                                placeholder="Aarav Mehta"
-                                value={name}
+                                placeholder="samir416"
+                                value={username}
                                 onChange={(e) =>
-                                    setName(e.target.value)
+                                    setUsername(e.target.value)
                                 }
                             />
-
                         </div>
 
                         <div className="auth-input-group">
@@ -168,9 +167,25 @@ export default function AuthModal() {
                         </div>
                         {
                             error && (
-                                <p>
-                                    {error}
-                                </p>
+                                <div className="auth-error-alert">
+
+                                    <div className="auth-error-icon">
+                                        !
+                                    </div>
+
+                                    <div className="auth-error-content">
+
+                                        <h6>
+                                            Unable to Create Account
+                                        </h6>
+
+                                        <p>
+                                            {error}
+                                        </p>
+
+                                    </div>
+
+                                </div>
                             )
                         }
 

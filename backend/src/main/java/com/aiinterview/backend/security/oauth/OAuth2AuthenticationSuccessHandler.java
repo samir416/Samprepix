@@ -29,10 +29,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         if (email == null || email.isBlank()) {
 
-            String errorUrl =
-                    "http://localhost:5173/login?oauthError="
-                            + URLEncoder.encode(
-                            "Unable to retrieve email from Google.",
+            String errorUrl = "http://localhost:5173/login?oauthError="
+                    + URLEncoder.encode(
+                            "Unable to retrieve email.",
                             StandardCharsets.UTF_8
                     );
 
@@ -47,9 +46,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         String token = JwtUtil.generateToken(email);
 
-        String redirectUrl =
-                "http://localhost:5173/login?token="
-                        + URLEncoder.encode(
+        String redirectUrl = "http://localhost:5173/login?token="
+                + URLEncoder.encode(
                         token,
                         StandardCharsets.UTF_8
                 );

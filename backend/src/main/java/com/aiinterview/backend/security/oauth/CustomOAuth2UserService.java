@@ -10,15 +10,26 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import java.util.Optional;
 
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final GitHubEmailService gitHubEmailService;
 
-    public CustomOAuth2UserService(UserRepository userRepository) {
+    public CustomOAuth2UserService(
+            UserRepository userRepository,
+            GitHubEmailService gitHubEmailService
+    ) {
         this.userRepository = userRepository;
+        this.gitHubEmailService = gitHubEmailService;
     }
 
     @Override
@@ -27,18 +38,56 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        String email = oAuth2User.getAttribute("email");
-        String name = oAuth2User.getAttribute("name");
-        String picture = oAuth2User.getAttribute("picture");
+        String registrationId =
+                userRequest.getClientRegistration()
+                        .getRegistrationId();
+
+        String email;
+        String name;
+        String picture;
+
+        if ("github".equalsIgnoreCase(registrationId)) {
+
+            email = oAuth2User.getAttribute("email");
+
+            // GitHub often returns null email
+            if (email == null || email.isBlank()) {
+
+                String accessToken =
+                        userRequest.getAccessToken().getTokenValue();
+
+                email =
+                        gitHubEmailService.getPrimaryEmail(accessToken);
+            }
+
+            name = oAuth2User.getAttribute("name");
+
+            if (name == null || name.isBlank()) {
+                name = oAuth2User.getAttribute("login");
+            }
+
+            picture = oAuth2User.getAttribute("avatar_url");
+
+        } else {
+
+            // Google
+
+            email = oAuth2User.getAttribute("email");
+            name = oAuth2User.getAttribute("name");
+            picture = oAuth2User.getAttribute("picture");
+        }
 
         if (email == null || email.isBlank()) {
+
             throw new OAuth2AuthenticationException(
                     new OAuth2Error("invalid_email"),
-                    "Unable to retrieve email from Google."
+                    "Unable to retrieve email from "
+                            + registrationId.toUpperCase()
             );
         }
 
-        Optional<User> existingUser = userRepository.findByEmail(email);
+        Optional<User> existingUser =
+                userRepository.findByEmail(email);
 
         if (existingUser.isEmpty()) {
 
@@ -50,18 +99,35 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         User user = existingUser.get();
 
-        user.setName(name);
+        if (name != null && !name.isBlank()) {
+            user.setName(name);
+        }
 
         if (picture != null && !picture.isBlank()) {
             user.setProfilePicture(picture);
         }
 
         if (user.getProvider() == AuthenticationProvider.EMAIL) {
-            user.setProvider(AuthenticationProvider.GOOGLE);
+
+            if ("github".equalsIgnoreCase(registrationId)) {
+                user.setProvider(AuthenticationProvider.GITHUB);
+            } else {
+                user.setProvider(AuthenticationProvider.GOOGLE);
+            }
         }
 
         userRepository.save(user);
 
-        return oAuth2User;
+        Map<String, Object> attributes = new HashMap<>(oAuth2User.getAttributes());
+
+attributes.put("email", email);
+attributes.put("name", name);
+attributes.put("picture", picture);
+
+return new DefaultOAuth2User(
+        List.of(new SimpleGrantedAuthority("ROLE_USER")),
+        attributes,
+        "email"
+);
     }
 }

@@ -24,16 +24,27 @@ export default function Login() {
 
     useEffect(() => {
 
-        const token = searchParams.get("token");
+    const token = searchParams.get("token");
+    const oauthError = searchParams.get("oauthError");
 
-        if (token) {
+    
 
-            localStorage.setItem("token", token);
+    if (token) {
 
-            navigate("/dashboard");
-        }
+        localStorage.setItem("token", token);
 
-    }, [searchParams, navigate]);
+        navigate("/dashboard");
+        return;
+    }
+
+    if (oauthError) {
+
+        setError(decodeURIComponent(oauthError));
+
+        window.history.replaceState({}, "", "/login");
+    }
+
+}, [searchParams, navigate]);
 
 
     return (
@@ -81,7 +92,7 @@ export default function Login() {
                             <span>⌘</span>
                             GitHub
                         </button>
-                        
+
                         <button
                             type="button"
                             onClick={() => {
@@ -183,9 +194,25 @@ export default function Login() {
                         </div>
                         {
                             error && (
-                                <p>
-                                    {error}
-                                </p>
+                                <div className="auth-error-alert">
+
+                                    <div className="auth-error-icon">
+                                        ⚠
+                                    </div>
+
+                                    <div className="auth-error-content">
+
+                                        <h6>
+                                            Sign In Failed
+                                        </h6>
+
+                                        <p>
+                                            {error}
+                                        </p>
+
+                                    </div>
+
+                                </div>
                             )
                         }
 
