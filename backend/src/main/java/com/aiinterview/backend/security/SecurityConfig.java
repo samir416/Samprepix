@@ -16,95 +16,89 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    private final JwtFilter jwtFilter;
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final OAuth2AuthenticationSuccessHandler successHandler;
-    private final OAuth2AuthenticationFailureHandler failureHandler;
+        private final JwtFilter jwtFilter;
+        private final CustomOAuth2UserService customOAuth2UserService;
+        private final OAuth2AuthenticationSuccessHandler successHandler;
+        private final OAuth2AuthenticationFailureHandler failureHandler;
 
-    public SecurityConfig(
-            JwtFilter jwtFilter,
-            CustomOAuth2UserService customOAuth2UserService,
-            OAuth2AuthenticationSuccessHandler successHandler,
-            OAuth2AuthenticationFailureHandler failureHandler) {
+        public SecurityConfig(
+                        JwtFilter jwtFilter,
+                        CustomOAuth2UserService customOAuth2UserService,
+                        OAuth2AuthenticationSuccessHandler successHandler,
+                        OAuth2AuthenticationFailureHandler failureHandler) {
 
-        this.jwtFilter = jwtFilter;
-        this.customOAuth2UserService = customOAuth2UserService;
-        this.successHandler = successHandler;
-        this.failureHandler = failureHandler;
-    }
+                this.jwtFilter = jwtFilter;
+                this.customOAuth2UserService = customOAuth2UserService;
+                this.successHandler = successHandler;
+                this.failureHandler = failureHandler;
+        }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http) throws Exception {
+        @Bean
+        public SecurityFilterChain securityFilterChain(
+                        HttpSecurity http) throws Exception {
 
-        http
-                .csrf(csrf -> csrf.disable())
+                http
+                                .csrf(csrf -> csrf.disable())
 
-                .cors(cors -> cors.configurationSource(request -> {
-                    CorsConfiguration config = new CorsConfiguration();
+                                .cors(cors -> cors.configurationSource(request -> {
+                                        CorsConfiguration config = new CorsConfiguration();
 
-                    config.setAllowedOrigins(List.of(
-                            "http://localhost:5173"
-                    ));
+                                        config.setAllowedOrigins(List.of(
+                                                        "http://localhost:5173"));
 
-                    config.setAllowedMethods(List.of(
-                            "GET",
-                            "POST",
-                            "PUT",
-                            "DELETE",
-                            "OPTIONS"
-                    ));
+                                        config.setAllowedMethods(List.of(
+                                                        "GET",
+                                                        "POST",
+                                                        "PUT",
+                                                        "DELETE",
+                                                        "OPTIONS"));
 
-                    config.setAllowedHeaders(List.of("*"));
-                    config.setAllowCredentials(true);
+                                        config.setAllowedHeaders(List.of("*"));
+                                        config.setAllowCredentials(true);
 
-                    return config;
-                }))
+                                        return config;
+                                }))
 
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS))
+                                .sessionManagement(session -> session.sessionCreationPolicy(
+                                                SessionCreationPolicy.STATELESS))
 
-                .oauth2Login(oauth -> oauth
+                                .oauth2Login(oauth -> oauth
 
-                        .authorizationEndpoint(endpoint ->
-                                endpoint.baseUri("/oauth2/authorize"))
+                                                .authorizationEndpoint(
+                                                                endpoint -> endpoint.baseUri("/oauth2/authorize"))
 
-                        .redirectionEndpoint(endpoint ->
-                                endpoint.baseUri("/login/oauth2/code/*"))
+                                                .redirectionEndpoint(
+                                                                endpoint -> endpoint.baseUri("/login/oauth2/code/*"))
 
-                        .userInfoEndpoint(user ->
-                                user.userService(customOAuth2UserService))
+                                                .userInfoEndpoint(user -> user.userService(customOAuth2UserService))
 
-                        .successHandler(successHandler)
+                                                .successHandler(successHandler)
 
-                        .failureHandler(failureHandler)
-                )
+                                                .failureHandler(failureHandler))
 
-                .authorizeHttpRequests(auth -> auth
+                                .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers(
-                                "/",
-                                "/test",
-                                "/login",
-                                "/register",
-                                "/api/auth/**",
-                                "/oauth2/**",
-                                "/login/oauth2/**",
-                                "/api/feedback/approve",
-                                "/api/feedback/reject",
-                                "/api/feedback/public"
-                        ).permitAll()
+                                                .requestMatchers(
+                                                                "/",
+                                                                "/test",
+                                                                "/login",
+                                                                "/register",
+                                                                "/forgot-password",
+                                                                "/reset-password",
+                                                                "/api/auth/**",
+                                                                "/oauth2/**",
+                                                                "/login/oauth2/**",
+                                                                "/api/feedback/approve",
+                                                                "/api/feedback/reject",
+                                                                "/api/feedback/public")
+                                                .permitAll()
+                                                .anyRequest()
+                                                .authenticated())
 
-                        .anyRequest()
-                        .authenticated()
-                )
+                                .addFilterBefore(
+                                                jwtFilter,
+                                                UsernamePasswordAuthenticationFilter.class);
 
-                .addFilterBefore(
-                        jwtFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
-
-        return http.build();
-    }
+                return http.build();
+        }
 }

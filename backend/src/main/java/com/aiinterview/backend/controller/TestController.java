@@ -17,6 +17,7 @@ import com.aiinterview.backend.model.RegisterRequest;
 import com.aiinterview.backend.model.ApiResponse;
 import com.aiinterview.backend.model.ForgotPasswordRequest;
 import com.aiinterview.backend.entity.AuthenticationProvider;
+import com.aiinterview.backend.model.ResetPasswordRequest;
 
 @RestController
 public class TestController {
@@ -90,26 +91,47 @@ public class TestController {
 
         @PostMapping("/forgot-password")
         public ResponseEntity<ApiResponse> forgotPassword(
-
                         @Valid @RequestBody ForgotPasswordRequest request) {
 
-                Optional<User> user = userRepository.findByEmail(
+                String response = userService.forgotPassword(
                                 request.getEmail());
 
-                if (user.isEmpty()) {
+                if (response.equals("Email not found!")) {
 
                         return ResponseEntity
                                         .badRequest()
-                                        .body(
-                                                        new ApiResponse(
-                                                                        false,
-                                                                        "Email not found!"));
+                                        .body(new ApiResponse(
+                                                        false,
+                                                        response));
                 }
 
                 return ResponseEntity.ok(
                                 new ApiResponse(
                                                 true,
-                                                "Reset link sent successfully!"));
+                                                response));
+        }
+
+        @PostMapping("/reset-password")
+        public ResponseEntity<ApiResponse> resetPassword(
+                        @Valid @RequestBody ResetPasswordRequest request) {
+
+                String response = userService.resetPassword(
+                                request.getToken(),
+                                request.getPassword());
+
+                if (!response.equals("Password reset successfully!")) {
+
+                        return ResponseEntity
+                                        .badRequest()
+                                        .body(new ApiResponse(
+                                                        false,
+                                                        response));
+                }
+
+                return ResponseEntity.ok(
+                                new ApiResponse(
+                                                true,
+                                                response));
         }
 
         @GetMapping("/users")

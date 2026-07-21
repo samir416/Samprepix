@@ -13,7 +13,10 @@ import Pricing from "../Pages/Pricing";
 
 import AuthModal from "../Components/Auth/AuthModal";
 import ProtectedRoute from "../Components/Auth/ProtectedRoute";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 
+    
 export default function AppRoutes() {
 
     return (
@@ -48,9 +51,18 @@ export default function AppRoutes() {
                 element={<Login />}
             />
 
-            {/* OAUTH SUCCESS */}
+            {/* FORGOT PASSWORD */}
+            <Route
+                path="/forgot-password"
+                element={<ForgotPasswordPage />}
+            />
+            {/* RESET PASSWORD */}
+            <Route
+                path="/reset-password"
+                element={<ResetPasswordPage />}
+            />
 
-            
+
 
             {/* REGISTER */}
 

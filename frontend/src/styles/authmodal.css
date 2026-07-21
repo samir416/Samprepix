@@ -349,6 +349,64 @@
     gap:9px;
 }
 
+/* PASSWORD OPTIONS */
+
+.auth-options{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    margin-top:-6px;
+
+    margin-bottom:6px;
+}
+
+.auth-remember{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    font-size:14px;
+
+    color:#6b7280;
+}
+
+.auth-remember input{
+
+    width:16px;
+
+    height:16px;
+
+    cursor:pointer;
+}
+
+.auth-forgot{
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:#4f46e5;
+
+    text-decoration:none;
+
+    transition:.2s;
+}
+
+.auth-forgot:hover{
+
+    color:#06b6d4;
+
+    text-decoration:underline;
+}
+
+
 /* LABEL */
 
 .auth-input-group label{
@@ -433,6 +491,17 @@
     0 12px 24px rgba(6,182,212,0.18);
 }
 
+.auth-submit-btn:disabled{
+
+    opacity:.75;
+
+    cursor:not-allowed;
+
+    transform:none;
+
+    box-shadow:none;
+}
+
 /* FOOTER */
 
 .auth-bottom-text{
@@ -498,6 +567,21 @@ body.dark-theme .auth-page {
             #081226,
             #0f172a
         );
+}
+
+body.dark-theme .auth-remember{
+
+    color:rgba(255,255,255,.68);
+}
+
+body.dark-theme .auth-forgot{
+
+    color:#7dd3fc;
+}
+
+body.dark-theme .auth-forgot:hover{
+
+    color:#22d3ee;
 }
 
 /* CARD */

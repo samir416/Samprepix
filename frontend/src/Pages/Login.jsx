@@ -191,6 +191,28 @@ export default function Login() {
                                 onChange={(e) => setPassword(e.target.value)}
                             />
 
+
+                        </div>
+
+                        <div className="auth-options">
+
+                            <label className="auth-remember">
+
+                                <input
+                                    type="checkbox"
+                                />
+
+                                <span>Remember me</span>
+
+                            </label>
+
+                            <Link
+                                to="/forgot-password"
+                                className="auth-forgot"
+                            >
+                                Forgot Password?
+                            </Link>
+
                         </div>
                         {
                             error && (
