@@ -4,7 +4,7 @@ import Logo from "../../assets/Logo.png";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { registerUser } from "../../services/authService";
+import { registerUser, verifyOtp, resendOtp } from "../../services/authService";
 
 export default function AuthModal() {
 
@@ -14,6 +14,10 @@ export default function AuthModal() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [otp, setOtp] = useState("");
+    const [registeredEmail, setRegisteredEmail] = useState("");
+    const [loading, setLoading] = useState(false);
 
     return (
 
@@ -96,23 +100,30 @@ export default function AuthModal() {
 
                             try {
 
-                                await registerUser(
+                                setLoading(true);
+
+                                const response = await registerUser(
                                     username,
                                     email,
                                     password
                                 );
-                                setUsername("");
-                                setEmail("");
-                                setPassword("");
-                                navigate("/login");
+
+                                setRegisteredEmail(response.email);
+                                setShowOtpModal(true);
+                                setError("");
 
                             } catch (err) {
 
-                                console.log(err);
-
                                 setError(
+                                    err?.response?.data?.message ||
+                                    err?.response?.data ||
                                     "Please review your details and try again."
                                 );
+
+                            } finally {
+
+                                setLoading(false);
+
                             }
                         }}
                     >
@@ -164,7 +175,7 @@ export default function AuthModal() {
                                 }
                             />
 
-                            
+
 
                         </div>
                         {
@@ -194,12 +205,16 @@ export default function AuthModal() {
                         <button
                             type="submit"
                             className="auth-submit-btn"
+                            disabled={loading}
                         >
 
-                            Create account
+                            {
+                                loading
+                                    ? "Creating..."
+                                    : "Create account"
+                            }
 
                         </button>
-
                     </form>
 
                     {/* FOOTER */}
@@ -223,6 +238,105 @@ export default function AuthModal() {
                 </div>
 
             </section>
+
+            {
+                showOtpModal && (
+
+                    <div className="otp-modal-overlay">
+
+                        <div className="otp-modal">
+
+                            <h3>Verify Email</h3>
+
+                            <p>
+
+                                Enter the OTP sent to
+
+                                <br />
+
+                                <strong>{registeredEmail}</strong>
+
+                            </p>
+
+                            <input
+                                type="text"
+                                maxLength={4}
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                placeholder="Enter OTP"
+                            />
+
+                            <button
+
+                                onClick={async () => {
+
+                                    try {
+
+                                        const response = await verifyOtp(
+                                            registeredEmail,
+                                            otp
+                                        );
+
+                                        localStorage.setItem(
+                                            "token",
+                                            response.token
+                                        );
+
+                                        navigate("/dashboard");
+
+                                    } catch (err) {
+
+                                        alert(
+                                            err?.response?.data?.message ||
+                                            err?.response?.data ||
+                                            "Invalid OTP"
+                                        );
+
+                                    }
+
+                                }}
+
+                            >
+
+                                Verify OTP
+
+                            </button>
+
+                            <button
+
+                                onClick={async () => {
+
+                                    try {
+
+                                        const response = await resendOtp(
+                                            registeredEmail
+                                        );
+
+                                        alert(response.message);
+
+                                    } catch (err) {
+
+                                        alert(
+                                            err?.response?.data?.message ||
+                                            err?.response?.data
+                                        );
+
+                                    }
+
+                                }}
+
+                            >
+
+                                Resend OTP
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                )
+            }
 
         </>
     );

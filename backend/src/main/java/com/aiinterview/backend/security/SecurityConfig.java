@@ -83,14 +83,16 @@ public class SecurityConfig {
                                                                 "/test",
                                                                 "/login",
                                                                 "/register",
+                                                                "/verify-otp",
+                                                                "/resend-otp",
                                                                 "/forgot-password",
                                                                 "/reset-password",
                                                                 "/api/auth/**",
                                                                 "/oauth2/**",
                                                                 "/login/oauth2/**",
+                                                                "/api/feedback/public",
                                                                 "/api/feedback/approve",
-                                                                "/api/feedback/reject",
-                                                                "/api/feedback/public")
+                                                                "/api/feedback/reject")
                                                 .permitAll()
                                                 .anyRequest()
                                                 .authenticated())

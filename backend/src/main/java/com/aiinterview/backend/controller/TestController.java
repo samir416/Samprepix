@@ -18,6 +18,11 @@ import com.aiinterview.backend.model.ApiResponse;
 import com.aiinterview.backend.model.ForgotPasswordRequest;
 import com.aiinterview.backend.entity.AuthenticationProvider;
 import com.aiinterview.backend.model.ResetPasswordRequest;
+import com.aiinterview.backend.model.VerifyOtpRequest;
+import com.aiinterview.backend.model.RegisterResponse;
+import org.springframework.security.core.Authentication;
+import com.aiinterview.backend.model.ResendOtpRequest;
+import com.aiinterview.backend.model.UserResponse;
 
 @RestController
 public class TestController {
@@ -51,7 +56,9 @@ public class TestController {
                                 loginRequest.getPassword());
 
                 if (response.equals("Invalid password!")
-                                || response.equals("User not found!")) {
+                                || response.equals("User not found!")
+                                || response.equals("Please verify your email first!")
+                                || response.equals("Account is not active!")) {
 
                         return ResponseEntity
                                         .status(HttpStatus.UNAUTHORIZED)
@@ -63,7 +70,7 @@ public class TestController {
         }
 
         @PostMapping("/register")
-        public ResponseEntity<ApiResponse> register(
+        public ResponseEntity<RegisterResponse> register(
                         @Valid @RequestBody RegisterRequest request) {
 
                 User user = new User();
@@ -81,12 +88,56 @@ public class TestController {
 
                         return ResponseEntity
                                         .badRequest()
-                                        .body(new ApiResponse(false, response));
+                                        .body(new RegisterResponse(false, response, null));
                 }
 
                 return ResponseEntity
                                 .status(HttpStatus.CREATED)
-                                .body(new ApiResponse(true, response));
+                                .body(new RegisterResponse(true, response, user.getEmail()));
+        }
+
+        @PostMapping("/verify-otp")
+        public ResponseEntity<?> verifyOtp(
+                        @Valid @RequestBody VerifyOtpRequest request) {
+
+                String response = userService.verifyOtp(
+                                request.getEmail(),
+                                request.getOtp());
+
+                switch (response) {
+
+                        case "User not found!",
+                                        "OTP not found!",
+                                        "OTP has already been used!",
+                                        "OTP has expired!",
+                                        "Invalid OTP!" -> {
+
+                                return ResponseEntity
+                                                .badRequest()
+                                                .body(new ApiResponse(
+                                                                false,
+                                                                response));
+                        }
+
+                        default -> {
+
+                                return ResponseEntity.ok(
+                                                new LoginResponse(response));
+                        }
+                }
+
+        }
+
+        @PostMapping("/resend-otp")
+        public ResponseEntity<ApiResponse> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
+
+                String response = userService.resendOtp(request.getEmail());
+
+                if (response.equals("User not found!") || response.equals("Email is already verified!")) {
+                        return ResponseEntity.badRequest().body(new ApiResponse(false, response));
+                }
+
+                return ResponseEntity.ok(new ApiResponse(true, response));
         }
 
         @PostMapping("/forgot-password")
@@ -190,6 +241,22 @@ public class TestController {
         @PostMapping("/login-test")
         public String loginTest() {
                 return "working";
+        }
+
+        @GetMapping("/me")
+        public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+
+                if (authentication == null) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+                }
+
+                UserResponse user = userService.getCurrentUser(authentication.getName());
+
+                if (user == null) {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found!");
+                }
+
+                return ResponseEntity.ok(user);
         }
 
         @GetMapping("/profile")

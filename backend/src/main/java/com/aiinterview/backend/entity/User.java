@@ -1,6 +1,7 @@
 package com.aiinterview.backend.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "app_user")
@@ -29,6 +30,18 @@ public class User {
 
     @Column(length = 100)
     private String name;
+
+    @Column(nullable = false)
+    private boolean emailVerified = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AccountStatus accountStatus = AccountStatus.PENDING;
+
+    @Column(length = 4)
+    private String otp;
+
+    private LocalDateTime otpExpiry;
 
     public Long getId() {
         return id;
@@ -85,4 +98,37 @@ public class User {
     public void setName(String name) {
         this.name = name;
     }
+
+    public boolean isEmailVerified() {
+    return emailVerified;
+}
+
+public void setEmailVerified(boolean emailVerified) {
+    this.emailVerified = emailVerified;
+}
+
+public AccountStatus getAccountStatus() {
+    return accountStatus;
+}
+
+public void setAccountStatus(AccountStatus accountStatus) {
+    this.accountStatus = accountStatus;
+}
+
+public String getOtp() {
+    return otp;
+}
+
+public void setOtp(String otp) {
+    this.otp = otp;
+}
+
+public LocalDateTime getOtpExpiry() {
+    return otpExpiry;
+}
+
+public void setOtpExpiry(LocalDateTime otpExpiry) {
+    this.otpExpiry = otpExpiry;
+}
+
 }

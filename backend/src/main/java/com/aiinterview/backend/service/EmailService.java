@@ -7,4 +7,11 @@ public interface EmailService {
             String username,
             String resetLink
     );
+
+    void sendOtpEmail(
+        String to,
+        String username,
+        String otp
+);
+
 }

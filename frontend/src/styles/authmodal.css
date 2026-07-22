@@ -737,3 +737,211 @@ body.dark-theme .auth-error-content p{
 
     color:rgba(255,255,255,0.72);
 }
+
+/* ===========================
+   OTP MODAL
+=========================== */
+
+.otp-modal-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(15,23,42,.55);
+
+    backdrop-filter:blur(6px);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:9999;
+}
+
+.otp-modal{
+
+    width:430px;
+
+    background:#ffffff;
+
+    border-radius:24px;
+
+    padding:34px;
+
+    box-shadow:0 25px 60px rgba(15,23,42,.18);
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+    animation:authUp .25s ease;
+}
+
+.otp-modal h3{
+
+    margin:0;
+
+    text-align:center;
+
+    font-size:24px;
+
+    font-weight:700;
+
+    color:#111827;
+}
+
+.otp-modal p{
+
+    margin:0;
+
+    text-align:center;
+
+    color:#6b7280;
+
+    line-height:1.6;
+}
+
+.otp-modal strong{
+
+    color:#111827;
+}
+
+.otp-modal input{
+
+    height:58px;
+
+    border-radius:16px;
+
+    border:1px solid rgba(15,23,42,.08);
+
+    outline:none;
+
+    text-align:center;
+
+    font-size:24px;
+
+    font-weight:700;
+
+    letter-spacing:10px;
+
+    transition:.2s;
+}
+
+.otp-modal input:focus{
+
+    border-color:#06b6d4;
+
+    box-shadow:0 0 0 4px rgba(6,182,212,.08);
+}
+
+.otp-modal button{
+
+    height:54px;
+
+    border:none;
+
+    border-radius:16px;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+.otp-modal button:first-of-type{
+
+    color:#fff;
+
+    background:linear-gradient(
+        135deg,
+        #6366f1,
+        #06b6d4
+    );
+}
+
+.otp-modal button:first-of-type:hover{
+
+    transform:translateY(-2px);
+}
+
+.otp-modal button:last-of-type{
+
+    background:#eef2ff;
+
+    color:#4f46e5;
+}
+
+.otp-modal button:last-of-type:hover{
+
+    background:#e0e7ff;
+}
+
+/* ===========================
+   DARK THEME
+=========================== */
+
+body.dark-theme .otp-modal{
+
+    background:#0f172a;
+
+    border:1px solid rgba(255,255,255,.06);
+}
+
+body.dark-theme .otp-modal h3{
+
+    color:#fff;
+}
+
+body.dark-theme .otp-modal p{
+
+    color:rgba(255,255,255,.65);
+}
+
+body.dark-theme .otp-modal strong{
+
+    color:#fff;
+}
+
+body.dark-theme .otp-modal input{
+
+    background:rgba(255,255,255,.05);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    color:#fff;
+}
+
+body.dark-theme .otp-modal input::placeholder{
+
+    color:rgba(255,255,255,.3);
+}
+
+body.dark-theme .otp-modal button:last-of-type{
+
+    background:rgba(99,102,241,.15);
+
+    color:#a5b4fc;
+}
+
+body.dark-theme .otp-modal button:last-of-type:hover{
+
+    background:rgba(99,102,241,.22);
+}
+
+@media(max-width:500px){
+
+    .otp-modal{
+
+        width:92%;
+
+        padding:24px;
+    }
+}
