@@ -47,6 +47,8 @@ export default function Topbar() {
     const [openSettings, setOpenSettings] =
         useState(false);
 
+    const [user, setUser] = useState(null);
+
     /* =========================
        REFS
     ========================= */
@@ -78,6 +80,8 @@ export default function Topbar() {
         }
 
     }, []);
+
+
 
     /* =========================
        OUTSIDE CLICK
@@ -167,13 +171,29 @@ export default function Topbar() {
         );
     };
 
+    useEffect(() => {
+
+        const storedUser = localStorage.getItem("user");
+
+        if (storedUser) {
+
+            setUser(
+                JSON.parse(storedUser)
+            );
+
+        }
+
+    }, []);
+
     const navigate = useNavigate();
 
     const handleLogout = () => {
 
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
 
         navigate("/login");
+
     };
 
     return (
@@ -446,8 +466,10 @@ export default function Topbar() {
 
                     </div>
 
-                    <ProfileDropdown />
-
+                    <ProfileDropdown
+                        user={user}
+                        onLogout={handleLogout}
+                    />
                 </div>
             }
 
@@ -509,13 +531,13 @@ export default function Topbar() {
                     >
 
                         <button
-                            className="notification-btn" 
+                            className="notification-btn"
                             onClick={() =>
                                 setOpenNotifications(
                                     !openNotifications
                                 )
-                            } 
-                            >
+                            }
+                        >
 
                             🔔
 
@@ -552,13 +574,23 @@ export default function Topbar() {
                             }
                         >
 
-                            S
+                            {
+                                user?.username?.charAt(0)?.toUpperCase()
+                                ||
+                                user?.name?.charAt(0)?.toUpperCase()
+                                ||
+                                "U"
+                            }
 
                         </div>
 
                         {
                             openDesktopProfile &&
-                            <ProfileDropdown />
+
+                            <ProfileDropdown
+                                user={user}
+                                onLogout={handleLogout}
+                            />
                         }
 
                     </div>

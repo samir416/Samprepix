@@ -1,5 +1,6 @@
 package com.aiinterview.backend.security.oauth;
 
+import com.aiinterview.backend.entity.AccountStatus;
 import com.aiinterview.backend.entity.AuthenticationProvider;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.repository.UserRepository;
@@ -26,8 +27,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     public CustomOAuth2UserService(
             UserRepository userRepository,
-            GitHubEmailService gitHubEmailService
-    ) {
+            GitHubEmailService gitHubEmailService) {
         this.userRepository = userRepository;
         this.gitHubEmailService = gitHubEmailService;
     }
@@ -38,9 +38,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        String registrationId =
-                userRequest.getClientRegistration()
-                        .getRegistrationId();
+        String registrationId = userRequest.getClientRegistration()
+                .getRegistrationId();
 
         String email;
         String name;
@@ -53,11 +52,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // GitHub often returns null email
             if (email == null || email.isBlank()) {
 
-                String accessToken =
-                        userRequest.getAccessToken().getTokenValue();
+                String accessToken = userRequest.getAccessToken().getTokenValue();
 
-                email =
-                        gitHubEmailService.getPrimaryEmail(accessToken);
+                email = gitHubEmailService.getPrimaryEmail(accessToken);
             }
 
             name = oAuth2User.getAttribute("name");
@@ -82,52 +79,86 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             throw new OAuth2AuthenticationException(
                     new OAuth2Error("invalid_email"),
                     "Unable to retrieve email from "
-                            + registrationId.toUpperCase()
-            );
+                            + registrationId.toUpperCase());
         }
 
-        Optional<User> existingUser =
-                userRepository.findByEmail(email);
+        Optional<User> existingUser = userRepository.findByEmail(email);
 
-        if (existingUser.isEmpty()) {
+        User user = existingUser.orElse(null);
+        if (user != null) {
 
-            throw new OAuth2AuthenticationException(
-                    new OAuth2Error("account_not_found"),
-                    "Account not found. Please register first."
-            );
-        }
+            if (name != null && !name.isBlank()) {
+                user.setName(name);
+            }
 
-        User user = existingUser.get();
+            if (picture != null && !picture.isBlank()) {
+                user.setProfilePicture(picture);
+            }
 
-        if (name != null && !name.isBlank()) {
-            user.setName(name);
-        }
+            if (user.getProvider() == AuthenticationProvider.EMAIL) {
 
-        if (picture != null && !picture.isBlank()) {
-            user.setProfilePicture(picture);
-        }
+                if ("github".equalsIgnoreCase(registrationId)) {
+                    user.setProvider(AuthenticationProvider.GITHUB);
+                } else {
+                    user.setProvider(AuthenticationProvider.GOOGLE);
+                }
+            }
 
-        if (user.getProvider() == AuthenticationProvider.EMAIL) {
+            userRepository.save(user);
+
+        } else {
+
+            User newUser = new User();
+
+            newUser.setEmail(email);
+            newUser.setName(name);
+
+            String username;
+
+            if (name != null && !name.isBlank()) {
+
+                username = name
+                        .trim()
+                        .toLowerCase()
+                        .replaceAll("[^a-z0-9]", "");
+
+                if (username.isBlank()) {
+                    username = email.split("@")[0];
+                }
+
+            } else {
+
+                username = email.split("@")[0];
+            }
+
+            while (userRepository.existsByUsername(username)) {
+                username = username + System.currentTimeMillis() % 10000;
+            }
+
+            newUser.setUsername(username);
+
+            newUser.setProfilePicture(picture);
+            newUser.setEmailVerified(true);
+            newUser.setAccountStatus(AccountStatus.ACTIVE);
 
             if ("github".equalsIgnoreCase(registrationId)) {
-                user.setProvider(AuthenticationProvider.GITHUB);
+                newUser.setProvider(AuthenticationProvider.GITHUB);
             } else {
-                user.setProvider(AuthenticationProvider.GOOGLE);
+                newUser.setProvider(AuthenticationProvider.GOOGLE);
             }
-        }
 
-        userRepository.save(user);
+            userRepository.save(newUser);
+        }
 
         Map<String, Object> attributes = new HashMap<>(oAuth2User.getAttributes());
 
-attributes.put("email", email);
-attributes.put("name", name);
-attributes.put("picture", picture);
+        attributes.put("email", email);
+        attributes.put("name", name);
+        attributes.put("picture", picture);
 
-return new DefaultOAuth2User(
-        List.of(new SimpleGrantedAuthority("ROLE_USER")),
-        attributes,
-        "email"
-);
+        return new DefaultOAuth2User(
+                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                attributes,
+                "email");
     }
 }

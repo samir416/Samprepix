@@ -4,7 +4,7 @@ import Logo from "../assets/Logo.png";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { loginUser } from "../services/authService";
+import { loginUser, getCurrentUser } from "../services/authService";
 import { useSearchParams } from "react-router-dom";
 
 export default function Login() {
@@ -14,6 +14,7 @@ export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
 
@@ -27,14 +28,36 @@ export default function Login() {
         const token = searchParams.get("token");
         const oauthError = searchParams.get("oauthError");
 
-
-
-        if (token) {
+        const loadUser = async () => {
 
             localStorage.setItem("token", token);
 
-            navigate("/dashboard");
+            try {
+
+                const user = await getCurrentUser();
+
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(user)
+                );
+
+                navigate("/dashboard");
+
+            } catch {
+
+                localStorage.removeItem("token");
+
+                setError("Unable to fetch user details.");
+
+            }
+
+        };
+
+        if (token) {
+
+            loadUser();
             return;
+
         }
 
         if (oauthError) {
@@ -42,10 +65,10 @@ export default function Login() {
             setError(decodeURIComponent(oauthError));
 
             window.history.replaceState({}, "", "/login");
+
         }
 
     }, [searchParams, navigate]);
-
 
     return (
 
@@ -97,7 +120,7 @@ export default function Login() {
                             type="button"
                             onClick={() => {
                                 window.location.href =
-                                    "http://localhost:8080/oauth2/authorize/google";
+    "http://localhost:8080/oauth2/login/google";
                             }}
                         >
                             <span>✉</span>
@@ -131,27 +154,43 @@ export default function Login() {
 
                             try {
 
-                                const data =
-                                    await loginUser(
-                                        email,
-                                        password
-                                    );
+                                setLoading(true);
+
+                                const data = await loginUser(
+                                    email,
+                                    password
+                                );
 
                                 localStorage.setItem(
                                     "token",
                                     data.token
                                 );
 
-                                console.log(data);
+                                const user = await getCurrentUser();
+
+                                localStorage.setItem(
+                                    "user",
+                                    JSON.stringify(user)
+                                );
 
                                 navigate("/dashboard");
+
                             } catch (err) {
 
-                                console.log(err);
-
                                 setError(
+
+                                    err?.response?.data?.message ||
+
+                                    err?.response?.data ||
+
                                     "Please check your credentials and try again."
+
                                 );
+
+                            } finally {
+
+                                setLoading(false);
+
                             }
                         }}
                     >
@@ -241,9 +280,14 @@ export default function Login() {
                         <button
                             type="submit"
                             className="auth-submit-btn"
+                            disabled={loading}
                         >
 
-                            Sign in
+                            {
+                                loading
+                                    ? "Signing in..."
+                                    : "Sign in"
+                            }
 
                         </button>
 

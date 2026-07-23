@@ -1,0 +1,326 @@
+.ai-loader-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:999999;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    overflow:hidden;
+
+    isolation:isolate;
+
+    background:
+    rgba(7,12,24,.50);
+
+    backdrop-filter:
+    blur(26px)
+    saturate(180%);
+
+    -webkit-backdrop-filter:
+    blur(26px)
+    saturate(180%);
+
+}
+
+.ai-loader-background{
+
+    position:absolute;
+
+    inset:0;
+
+    overflow:hidden;
+
+}
+
+.ai-loader-orb{
+
+    position:absolute;
+
+    border-radius:50%;
+
+    filter:blur(80px);
+
+    opacity:.55;
+
+    animation:
+    aiOrbFloat 16s ease-in-out infinite alternate;
+
+}
+
+.ai-loader-orb-onep{
+
+    width:420px;
+
+    height:420px;
+
+    top:-120px;
+
+    left:-80px;
+
+    background:
+    radial-gradient(
+        circle,
+        rgba(99,102,241,.90),
+        transparent 72%
+    );
+
+}
+
+.ai-loader-orb-two{
+
+    width:380px;
+
+    height:380px;
+
+    right:-80px;
+
+    top:8%;
+
+    background:
+    radial-gradient(
+        circle,
+        rgba(6,182,212,.85),
+        transparent 72%
+    );
+
+    animation-duration:20s;
+
+}
+
+.ai-loader-orb-three{
+
+    width:320px;
+
+    height:320px;
+
+    bottom:-80px;
+
+    left:42%;
+
+    transform:translateX(-50%);
+
+    background:
+    radial-gradient(
+        circle,
+        rgba(168,85,247,.75),
+        transparent 72%
+    );
+
+    animation-duration:18s;
+
+}
+
+.ai-loader-content{
+
+    position:relative;
+
+    z-index:3;
+
+    width:560px;
+
+    max-width:92%;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    text-align:center;
+
+}
+
+.ai-loader-logo-wrapper{
+
+    position:relative;
+
+    width:240px;
+
+    height:240px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+.ai-loader-logo-glow{
+
+    position:absolute;
+
+    width:240px;
+
+    height:240px;
+
+    border-radius:50%;
+
+    background:
+
+    radial-gradient(
+
+        circle,
+
+        rgba(99,102,241,.42),
+
+        rgba(6,182,212,.28),
+
+        transparent 70%
+
+    );
+
+    filter:blur(55px);
+
+    animation:
+
+    aiGlow 3.5s ease-in-out infinite;
+
+}
+
+.ai-loader-logo{
+
+    position:relative;
+
+    width:440px;
+
+    height:440px;
+
+    object-fit:contain;
+
+    user-select:none;
+
+    pointer-events:none;
+
+   filter:
+        drop-shadow(0 0 35px rgba(99,102,241,.45))
+        drop-shadow(0 0 60px rgba(6,182,212,.18));
+
+
+}
+
+.ai-loader-content h2{
+
+    margin-top:-30px;
+
+    margin-bottom:10px;
+
+    color:#ffffff;
+
+    font-size:46px;
+
+    font-weight:700;
+
+    line-height:1.1;
+
+    letter-spacing:-1.6px;
+
+}
+
+.ai-loader-content p{
+
+    margin:0;
+
+    color:rgba(255,255,255,.72);
+
+    font-size:17px;
+
+    line-height:1.8;
+
+}
+
+@media (max-width:768px){
+
+    .ai-loader-overlay{
+
+        padding:24px;
+
+        backdrop-filter:blur(18px) saturate(160%);
+        -webkit-backdrop-filter:blur(18px) saturate(160%);
+
+    }
+
+    .orb-one{
+
+        width:260px;
+        height:260px;
+        top:-80px;
+        left:-80px;
+        filter:blur(60px);
+
+    }
+
+    .orb-two{
+
+        width:240px;
+        height:240px;
+        right:-70px;
+        top:10%;
+        filter:blur(60px);
+
+    }
+
+    .orb-three{
+
+        width:220px;
+        height:220px;
+        bottom:-70px;
+        left:50%;
+        filter:blur(60px);
+
+    }
+
+    .ai-loader-content{
+
+        width:100%;
+        max-width:340px;
+
+    }
+
+    .ai-loader-logo-wrapper{
+
+        width:170px;
+        height:170px;
+
+    }
+
+    .ai-loader-logo-glow{
+
+        width:170px;
+        height:170px;
+        filter:blur(40px);
+
+    }
+
+    .ai-loader-logo{
+
+        width:260px;
+        height:260px;
+
+    }
+
+    .ai-loader-content h2{
+
+        margin-top:-18px;
+        margin-bottom:8px;
+        font-size:30px;
+        letter-spacing:-1px;
+
+    }
+
+    .ai-loader-content p{
+
+        font-size:15px;
+        line-height:1.6;
+        padding:0 10px;
+
+    }
+
+}

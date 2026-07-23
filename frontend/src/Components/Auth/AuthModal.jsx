@@ -54,7 +54,12 @@ export default function AuthModal() {
 
                     <div className="auth-socials">
 
-                        <button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                window.location.href =
+                                    "http://localhost:8080/oauth2/register/github";
+                            }}>
 
                             <span>
                                 ⌘
@@ -64,7 +69,14 @@ export default function AuthModal() {
 
                         </button>
 
-                        <button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                window.location.href =
+                                    "http://localhost:8080/oauth2/register/google";
+                            }}
+
+                        >
 
                             <span>
                                 ✉
@@ -135,7 +147,7 @@ export default function AuthModal() {
 
                             <input
                                 type="text"
-                                placeholder="samir416"
+                                placeholder="John Doe"
                                 value={username}
                                 onChange={(e) =>
                                     setUsername(e.target.value)
@@ -151,7 +163,7 @@ export default function AuthModal() {
 
                             <input
                                 type="email"
-                                placeholder="you@university.edu"
+                                placeholder="john@example.com"
                                 value={email}
                                 onChange={(e) =>
                                     setEmail(e.target.value)

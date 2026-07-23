@@ -21,28 +21,63 @@
     animation: feedbackFade .25s ease;
 }
 
-.feedback-modal {
-    width: 100%;
-    max-width: 430px;
+.feedback-modal{
 
-    height: 102%;
+    width:100%;
+    max-width:430px;
 
-    background: rgba(22, 28, 39, .96);
+    max-height:90vh;
 
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 20px;
+    display:flex;
+
+    flex-direction:column;
+
+    background:rgba(22,28,39,.96);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:20px;
 
     box-shadow:
         0 20px 60px rgba(0,0,0,.35),
         inset 0 1px 0 rgba(255,255,255,.04);
 
-    padding: 26px;
+    padding:26px;
 
-    animation: feedbackPopup .28s ease;
+    color:#F8FAFC;
 
-    color: #F8FAFC;
+    overflow-y:auto;
 
-    overflow: hidden;
+    overflow-x:hidden;
+
+    animation:feedbackPopup .28s ease;
+
+    scrollbar-width:thin;
+
+    scrollbar-color:
+        rgba(255,255,255,.15)
+        transparent;
+
+}
+
+.feedback-modal::-webkit-scrollbar{
+
+    width:6px;
+
+}
+
+.feedback-modal::-webkit-scrollbar-track{
+
+    background:transparent;
+
+}
+
+.feedback-modal::-webkit-scrollbar-thumb{
+
+    background:rgba(255,255,255,.18);
+
+    border-radius:999px;
+
 }
 
 /* ========================================= */
@@ -377,12 +412,17 @@
 
 @media(max-width:576px){
 
-        .feedback-modal {
-        padding: 22px;
-        border-radius: 18px;
-        height: 80%;
-        margin-top: 65px;
-    }
+       .feedback-modal{
+
+    max-height:88vh;
+
+    padding:22px;
+
+    border-radius:18px;
+
+    margin-top:0;
+
+}
     
 
     .feedback-header h3{

@@ -748,10 +748,6 @@ body.dark-theme .auth-error-content p{
 
     inset:0;
 
-    background:rgba(15,23,42,.55);
-
-    backdrop-filter:blur(6px);
-
     display:flex;
 
     justify-content:center;
@@ -759,6 +755,14 @@ body.dark-theme .auth-error-content p{
     align-items:center;
 
     z-index:9999;
+
+    background:rgba(15,23,42,.62);
+
+    backdrop-filter:blur(18px) saturate(160%);
+
+    -webkit-backdrop-filter:blur(18px) saturate(160%);
+
+    transition:backdrop-filter .25s ease, background .25s ease;
 }
 
 .otp-modal{
