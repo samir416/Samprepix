@@ -41,6 +41,9 @@ public class User {
     @Column(length = 4)
     private String otp;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserProfile profile;
+
     private LocalDateTime otpExpiry;
 
     public Long getId() {
@@ -100,35 +103,43 @@ public class User {
     }
 
     public boolean isEmailVerified() {
-    return emailVerified;
-}
+        return emailVerified;
+    }
 
-public void setEmailVerified(boolean emailVerified) {
-    this.emailVerified = emailVerified;
-}
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
 
-public AccountStatus getAccountStatus() {
-    return accountStatus;
-}
+    public AccountStatus getAccountStatus() {
+        return accountStatus;
+    }
 
-public void setAccountStatus(AccountStatus accountStatus) {
-    this.accountStatus = accountStatus;
-}
+    public void setAccountStatus(AccountStatus accountStatus) {
+        this.accountStatus = accountStatus;
+    }
 
-public String getOtp() {
-    return otp;
-}
+    public String getOtp() {
+        return otp;
+    }
 
-public void setOtp(String otp) {
-    this.otp = otp;
-}
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
 
-public LocalDateTime getOtpExpiry() {
-    return otpExpiry;
-}
+    public LocalDateTime getOtpExpiry() {
+        return otpExpiry;
+    }
 
-public void setOtpExpiry(LocalDateTime otpExpiry) {
-    this.otpExpiry = otpExpiry;
-}
+    public void setOtpExpiry(LocalDateTime otpExpiry) {
+        this.otpExpiry = otpExpiry;
+    }
+
+    public UserProfile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(UserProfile profile) {
+        this.profile = profile;
+    }
 
 }

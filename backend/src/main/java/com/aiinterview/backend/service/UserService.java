@@ -4,6 +4,7 @@ import com.aiinterview.backend.entity.PasswordResetToken;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.model.UserResponse;
 import com.aiinterview.backend.repository.PasswordResetTokenRepository;
+import com.aiinterview.backend.repository.UserProfileRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,12 +19,14 @@ import java.util.UUID;
 import com.aiinterview.backend.entity.AccountStatus;
 import com.aiinterview.backend.entity.EmailVerificationToken;
 import com.aiinterview.backend.repository.EmailVerificationTokenRepository;
+import com.aiinterview.backend.entity.UserProfile;
 import java.util.Random;
 
 @Service
 public class UserService {
 
         private final UserRepository userRepository;
+        private final UserProfileRepository userProfileRepository;
         private final PasswordResetTokenRepository tokenRepository;
         private final EmailVerificationTokenRepository emailVerificationTokenRepository;
         private final EmailService emailService;
@@ -35,11 +38,13 @@ public class UserService {
 
         public UserService(
                         UserRepository userRepository,
+                        UserProfileRepository userProfileRepository,
                         PasswordResetTokenRepository tokenRepository,
                         EmailService emailService,
                         EmailVerificationTokenRepository emailVerificationTokenRepository) {
 
                 this.userRepository = userRepository;
+                this.userProfileRepository = userProfileRepository;
                 this.tokenRepository = tokenRepository;
                 this.emailService = emailService;
                 this.emailVerificationTokenRepository = emailVerificationTokenRepository;
@@ -62,6 +67,14 @@ public class UserService {
                 user.setAccountStatus(AccountStatus.PENDING);
 
                 userRepository.save(user);
+
+                UserProfile profile = new UserProfile();
+
+                profile.setUser(user);
+
+                user.setProfile(profile);
+
+                userProfileRepository.save(profile);
 
                 emailVerificationTokenRepository.findByUser(user)
                                 .ifPresent(emailVerificationTokenRepository::delete);
@@ -353,7 +366,9 @@ public class UserService {
                                 user.getUsername(),
                                 user.getName(),
                                 user.getEmail(),
-                                user.getProfilePicture());
+                                user.getProfilePicture(),
+                                user.getProfile() != null &&
+                                                user.getProfile().isProfileCompleted());
         }
 
 }

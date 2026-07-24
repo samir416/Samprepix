@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+
 public class UserResponse {
 
     private Long id;
@@ -16,4 +17,6 @@ public class UserResponse {
     private String name;
     private String email;
     private String profilePicture;
+    private boolean profileCompleted;
+
 }

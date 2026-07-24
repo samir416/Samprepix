@@ -16,19 +16,24 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import com.aiinterview.backend.entity.UserProfile;
+import com.aiinterview.backend.repository.UserProfileRepository;
 import java.util.Optional;
 
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
     private final GitHubEmailService gitHubEmailService;
 
     public CustomOAuth2UserService(
             UserRepository userRepository,
+            UserProfileRepository userProfileRepository,
             GitHubEmailService gitHubEmailService) {
+
         this.userRepository = userRepository;
+        this.userProfileRepository = userProfileRepository;
         this.gitHubEmailService = gitHubEmailService;
     }
 
@@ -148,6 +153,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             }
 
             userRepository.save(newUser);
+
+            UserProfile profile = new UserProfile();
+
+            profile.setUser(newUser);
+
+            newUser.setProfile(profile);
+
+            userProfileRepository.save(profile);
         }
 
         Map<String, Object> attributes = new HashMap<>(oAuth2User.getAttributes());
