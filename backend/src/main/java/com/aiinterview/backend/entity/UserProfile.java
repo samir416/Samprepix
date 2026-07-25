@@ -27,7 +27,7 @@ public class UserProfile {
     private String targetRole;
 
     @Column(length = 50)
-    private String preferredLanguage;
+    private String experienceLevel;
 
     @Column(length = 20)
     private Double yearsOfExperience;
@@ -123,13 +123,13 @@ public class UserProfile {
         this.targetRole = targetRole;
     }
 
-    public String getPreferredLanguage() {
-        return preferredLanguage;
-    }
+    public String getExperienceLevel() {
+    return experienceLevel;
+}
 
-    public void setPreferredLanguage(String preferredLanguage) {
-        this.preferredLanguage = preferredLanguage;
-    }
+public void setExperienceLevel(String experienceLevel) {
+    this.experienceLevel = experienceLevel;
+}
 
     public Double getYearsOfExperience() {
         return yearsOfExperience;

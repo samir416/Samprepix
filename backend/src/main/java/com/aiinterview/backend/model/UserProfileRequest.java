@@ -13,7 +13,7 @@ public class UserProfileRequest {
 
     private String targetRole;
 
-    private String preferredLanguage;
+    private String experienceLevel;
 
     private Double yearsOfExperience;
 

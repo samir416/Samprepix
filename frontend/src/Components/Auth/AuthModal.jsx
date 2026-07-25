@@ -4,8 +4,7 @@ import Logo from "../../assets/Logo.png";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { registerUser, verifyOtp, resendOtp } from "../../services/authService";
-
+import {registerUser,verifyOtp,resendOtp,getCurrentUser} from "../../services/authService";
 export default function AuthModal() {
 
     const navigate = useNavigate();
@@ -294,8 +293,22 @@ export default function AuthModal() {
                                             response.token
                                         );
 
-                                        navigate("/dashboard");
+                                        const user = await getCurrentUser();
 
+                                        localStorage.setItem(
+                                            "user",
+                                            JSON.stringify(user)
+                                        );
+
+                                        if (user.profileCompleted) {
+
+                                            navigate("/dashboard");
+
+                                        } else {
+
+                                            navigate("/onboarding");
+
+                                        }
                                     } catch (err) {
 
                                         alert(

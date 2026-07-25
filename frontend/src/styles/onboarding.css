@@ -1,0 +1,996 @@
+body{
+
+    font-family:"Inter",sans-serif;
+
+}
+
+.onboarding-page {
+
+    position: fixed;
+
+    inset: 0;
+
+    overflow-y: auto;
+
+    overflow-x: hidden;
+
+    background: var(--bg-primary);
+
+    transition:
+        background .35s ease,
+        color .35s ease;
+
+}
+
+.onboarding-wrapper {
+
+    position: relative;
+
+    min-height: 100vh;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: flex-start;
+
+    padding: 40px 20px;
+
+}
+
+.onboarding-background {
+
+    position: fixed;
+
+    inset: 0;
+
+    overflow: hidden;
+
+    z-index: 0;
+
+    background:
+        radial-gradient(circle at top left, #5b5fff22 0%, transparent 35%),
+        radial-gradient(circle at bottom right, #00d4ff18 0%, transparent 35%),
+        radial-gradient(circle at center, #8b5cf615 0%, transparent 45%),
+        linear-gradient(135deg,
+            #060913,
+            #0b1020,
+            #10182c);
+
+}
+
+.light-theme .onboarding-background {
+
+    background:
+        radial-gradient(circle at top left, #6d5cff14 0%, transparent 35%),
+        radial-gradient(circle at bottom right, #00b8ff10 0%, transparent 35%),
+        linear-gradient(135deg,
+            #f8fbff,
+            #eef4ff,
+            #f6f9ff);
+
+}
+
+.onboarding-background::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 520px;
+
+    height: 520px;
+
+    border-radius: 50%;
+
+    top: -180px;
+
+    left: -140px;
+
+    filter: blur(120px);
+
+    background: #6d5cff25;
+
+    animation: floatOne 12s ease-in-out infinite;
+
+}
+
+.light-theme .onboarding-background::before {
+
+    background: #7c6cff18;
+
+}
+
+.onboarding-background::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 420px;
+
+    height: 420px;
+
+    border-radius: 50%;
+
+    right: -120px;
+
+    bottom: -120px;
+
+    filter: blur(120px);
+
+    background: #00d4ff20;
+
+    animation: floatTwo 14s ease-in-out infinite;
+
+}
+
+.light-theme .onboarding-background::after {
+
+    background: #00bfff18;
+
+}
+
+.onboarding-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1;
+
+    backdrop-filter:
+        blur(26px) saturate(180%);
+
+    -webkit-backdrop-filter:
+        blur(26px) saturate(180%);
+
+}
+
+.onboarding-container {
+
+    position: relative;
+
+    z-index: 2;
+
+    width: 100%;
+
+    max-width: 860px;
+
+    margin: auto;
+
+    padding: 34px;
+
+    border-radius: 28px;
+
+    background: var(--card-bg);
+
+    border: 1px solid var(--border-color);
+
+    backdrop-filter:
+        blur(30px);
+
+    -webkit-backdrop-filter:
+        blur(30px);
+
+    box-shadow:
+        0 25px 80px rgba(0, 0, 0, .18);
+
+}
+
+.light-theme .onboarding-container {
+
+    box-shadow:
+        0 20px 60px rgba(15, 23, 42, .08);
+
+}
+
+.onboarding-header {
+
+    text-align: center;
+
+    margin-bottom: 34px;
+
+}
+
+.onboarding-header h1 {
+
+    font-size: 34px;
+
+    font-weight: 700;
+
+    color: var(--text-primary);
+
+    margin-bottom: 10px;
+
+    line-height: 1.2;
+
+}
+
+.onboarding-header p {
+
+    color: var(--text-secondary);
+
+    font-size: 15px;
+
+    line-height: 1.7;
+
+    max-width: 560px;
+
+    margin: auto;
+
+}
+
+.progress-wrapper {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    margin-bottom: 36px;
+
+}
+
+.progress-node {
+
+    width: 48px;
+
+    height: 48px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    color: var(--text-secondary);
+
+    background: var(--card-bg);
+
+    border: 1px solid var(--border-color);
+
+    transition: .35s;
+
+}
+
+.progress-node.active {
+
+    color: #fff;
+
+    background:
+
+        linear-gradient(135deg,
+
+            #6366f1,
+
+            #8b5cf6);
+
+    border-color: transparent;
+
+    box-shadow:
+
+        0 10px 28px rgba(99, 102, 241, .35);
+
+}
+
+.progress-line {
+
+    width: 110px;
+
+    height: 4px;
+
+    margin: 0 10px;
+
+    border-radius: 999px;
+
+    background:
+
+        rgba(148, 163, 184, .18);
+
+    transition: .35s;
+
+}
+
+.progress-line.active {
+
+    background:
+
+        linear-gradient(90deg,
+
+            #6366f1,
+
+            #00d4ff);
+
+}
+
+.step-container {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    animation: fadeUp .35s ease;
+
+}
+
+.step-badge {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 8px 18px;
+
+    border-radius: 999px;
+
+    margin-bottom: 18px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    color: #8ab4ff;
+
+    background:
+
+        rgba(99, 102, 241, .10);
+
+    border:
+
+        1px solid rgba(99, 102, 241, .20);
+
+}
+
+.light-theme .step-badge {
+
+    color: #4f46e5;
+
+    background:
+
+        rgba(99, 102, 241, .08);
+
+}
+
+.step-container h2 {
+
+    font-size: 30px;
+
+    font-weight: 700;
+
+    color: var(--text-primary);
+
+    text-align: center;
+
+    margin-bottom: 12px;
+
+}
+
+.step-container>p {
+
+    max-width: 620px;
+
+    text-align: center;
+
+    color: var(--text-secondary);
+
+    line-height: 1.7;
+
+    margin-bottom: 30px;
+
+}
+
+.journey-grid {
+
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 22px;
+
+    margin-bottom: 30px;
+
+}
+
+.journey-card {
+
+    position: relative;
+
+    overflow: hidden;
+
+    cursor: pointer;
+
+    padding: 28px;
+
+    border-radius: 22px;
+
+    background: var(--card-bg);
+
+    border: 1px solid var(--border-color);
+
+    transition: .30s;
+
+}
+
+.journey-card::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    opacity: 0;
+
+    transition: .30s;
+
+    background:
+
+        linear-gradient(135deg,
+
+            rgba(99, 102, 241, .14),
+
+            rgba(0, 212, 255, .06));
+
+}
+
+.journey-card:hover {
+
+    transform:
+
+        translateY(-6px);
+
+    border-color: #6366f1;
+
+    box-shadow:
+
+        0 18px 36px rgba(99, 102, 241, .18);
+
+}
+
+.journey-card:hover::before {
+
+    opacity: 1;
+
+}
+
+.journey-card.active {
+
+    border-color: #6366f1;
+
+    background:
+
+        rgba(99, 102, 241, .08);
+
+    box-shadow:
+
+        0 0 0 1px rgba(99, 102, 241, .18),
+
+        0 18px 36px rgba(99, 102, 241, .18);
+
+}
+
+.light-theme .journey-card.active {
+
+    background:
+
+        rgba(99, 102, 241, .05);
+
+}
+
+.journey-icon {
+
+    width: 68px;
+
+    height: 68px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    border-radius: 18px;
+
+    margin-bottom: 20px;
+
+    font-size: 30px;
+
+    background:
+
+        linear-gradient(135deg,
+
+            #6366f1,
+
+            #8b5cf6);
+
+    box-shadow:
+
+        0 12px 28px rgba(99, 102, 241, .28);
+
+}
+
+.journey-card h3 {
+
+    color: var(--text-primary);
+
+    font-size: 22px;
+
+    font-weight: 700;
+
+    margin-bottom: 10px;
+
+}
+
+.journey-card p {
+
+    color: var(--text-secondary);
+
+    font-size: 15px;
+
+    line-height: 1.7;
+
+}
+
+.onboarding-form {
+
+    width: 100%;
+
+    display: grid;
+
+    gap: 24px;
+
+}
+
+.form-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+
+}
+
+.form-group label {
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: var(--text-primary);
+
+    margin-left: 8px;
+
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+
+    color: var(--text-secondary);
+
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+
+    border-color:
+
+        rgba(99, 102, 241, .35);
+
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+
+    border-color: #6366f1;
+
+    box-shadow:
+
+        0 0 0 4px rgba(99, 102, 241, .12);
+
+}
+
+.form-group select {
+
+    cursor: pointer;
+
+    appearance: none;
+
+    -webkit-appearance: none;
+
+    -moz-appearance: none;
+
+}
+
+.form-group select option{
+
+    background:#0f172a;
+
+    color:#f8fafc;
+
+}
+
+.form-group select option:checked{
+
+    background:#6366f1;
+
+    color:#ffffff;
+
+}
+
+.form-group select option:hover{
+
+    background:#1e293b;
+
+    color:#ffffff;
+
+}
+
+.form-group textarea {
+
+    min-height: 140px;
+
+}
+
+.form-group input[type="number"] {
+
+    appearance: textfield;
+
+    -moz-appearance: textfield;
+
+}
+
+.form-group input[type="number"]::-webkit-inner-spin-button,
+.form-group input[type="number"]::-webkit-outer-spin-button {
+
+    appearance: none;
+
+    margin: 0;
+
+}
+
+.step-actions {
+
+    width: 100%;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 16px;
+
+    margin-top: 30px;
+
+}
+
+.back-btn,
+.continue-btn {
+
+    border: none;
+
+    outline: none;
+
+    cursor: pointer;
+
+   font-family:"Inter",sans-serif;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    border-radius: 14px;
+
+    padding: 15px 28px;
+
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease,
+        background .25s ease,
+        opacity .25s ease;
+
+}
+
+.back-btn {
+
+    color: var(--text-primary);
+
+    background: var(--card-bg);
+
+    border: 1px solid var(--border-color);
+
+}
+
+.back-btn:hover {
+
+    transform:
+
+        translateY(-2px);
+
+    box-shadow:
+
+        0 10px 20px rgba(0, 0, 0, .08);
+
+}
+
+.continue-btn {
+
+    color: #fff;
+
+    background:
+
+        linear-gradient(135deg,
+
+            #6366f1,
+
+            #8b5cf6);
+
+    box-shadow:
+
+        0 18px 36px rgba(99, 102, 241, .28);
+
+}
+
+.continue-btn:hover {
+
+    transform:
+
+        translateY(-3px);
+
+    box-shadow:
+
+        0 22px 42px rgba(99, 102, 241, .38);
+
+}
+
+.back-btn:disabled,
+.continue-btn:disabled {
+
+    opacity: .55;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+    box-shadow: none;
+
+}
+
+
+.form-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+
+}
+
+
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+
+    width: 100%;
+
+    border: none;
+
+    outline: none;
+
+    resize: none;
+
+    font-size: 15px;
+
+    font-family:"Inter",sans-serif;
+
+    color: var(--text-primary);
+
+    background: rgba(18, 27, 52, .82);
+
+    border: 1px solid rgba(99, 102, 241, .28);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .03),
+        0 8px 24px rgba(0, 0, 0, .18);
+
+    border-radius: 16px;
+
+    padding: 16px 18px;
+
+    transition:
+        border-color .25s ease,
+        box-shadow .25s ease,
+        background .25s ease,
+        color .25s ease;
+
+}
+
+
+
+::-webkit-scrollbar {
+
+    width: 8px;
+
+}
+
+::-webkit-scrollbar-track {
+
+    background: transparent;
+
+}
+
+::-webkit-scrollbar-thumb {
+
+    background: #6366f1;
+
+    border-radius: 999px;
+
+}
+
+::-webkit-scrollbar-thumb:hover {
+
+    background: #4f46e5;
+
+}
+
+.light-theme .progress-node {
+
+    background: #ffffff;
+
+    border-color: #dbe3f0;
+
+    color: #64748b;
+
+}
+
+.light-theme .progress-line {
+
+    background: #dbe3f0;
+
+}
+
+.light-theme .journey-card {
+
+    background: #ffffff;
+
+    border-color: #dbe3f0;
+
+}
+
+.light-theme .journey-card:hover {
+
+    border-color: #6366f1;
+
+}
+
+.light-theme .form-group input,
+.light-theme .form-group select,
+.light-theme .form-group textarea {
+
+    background: #ffffff;
+
+    border-color: #dbe3f0;
+
+    color: #0f172a;
+
+}
+
+.light-theme .form-group input::placeholder,
+.light-theme .form-group textarea::placeholder {
+
+    color: #64748b;
+
+}
+
+.light-theme .back-btn {
+
+    background: #ffffff;
+
+    border-color: #dbe3f0;
+
+    color: #0f172a;
+
+}
+
+.light-theme .back-btn:hover {
+
+    background: #f8fafc;
+
+}
+
+.light-theme .onboarding-container {
+
+    background: rgba(255, 255, 255, .82);
+
+    border: 1px solid rgba(226, 232, 240, .9);
+
+}
+
+.dark-theme .onboarding-container {
+
+    background: rgba(15, 23, 42, .78);
+
+}
+
+.dark-theme .journey-card {
+
+    background: rgba(15, 23, 42, .55);
+
+}
+
+.dark-theme .form-group input,
+.dark-theme .form-group select,
+.dark-theme .form-group textarea {
+
+    background: rgba(15, 23, 42, .55);
+
+}
+
+.onboarding-container,
+.journey-card,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.back-btn,
+.continue-btn,
+.progress-node,
+.progress-line {
+
+    transition:
+
+        background .30s ease,
+
+        color .30s ease,
+
+        border-color .30s ease,
+
+        box-shadow .30s ease,
+
+        transform .30s ease;
+
+}
+
+.onboarding-goal {
+
+    width: 100%;
+
+
+
+}
+
+.goal-select-wrapper {
+
+    position: relative;
+
+    width: 100%;
+
+}
+
+.goal-select-wrapper select {
+
+    width: 100%;
+
+    min-height: 56px;
+
+    padding: 16px 18px;
+
+}

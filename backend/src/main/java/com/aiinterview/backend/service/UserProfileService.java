@@ -45,9 +45,13 @@ public class UserProfileService {
             .findByEmail(email)
             .orElseThrow();
 
-    UserProfile profile = userProfileRepository
-            .findByUser(user)
-            .orElseThrow();
+   UserProfile profile = userProfileRepository
+        .findByUser(user)
+        .orElseGet(() -> {
+            UserProfile newProfile = new UserProfile();
+            newProfile.setUser(user);
+            return newProfile;
+        });
 
     profile.setJourneyType(
             request.getJourneyType());
@@ -55,8 +59,8 @@ public class UserProfileService {
     profile.setTargetRole(
             request.getTargetRole());
 
-    profile.setPreferredLanguage(
-            request.getPreferredLanguage());
+    profile.setExperienceLevel(
+        request.getExperienceLevel());
 
     profile.setYearsOfExperience(
             request.getYearsOfExperience());

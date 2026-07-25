@@ -15,8 +15,9 @@ import AuthModal from "../Components/Auth/AuthModal";
 import ProtectedRoute from "../Components/Auth/ProtectedRoute";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import Onboarding from "../Pages/Onboarding";
 
-    
+
 export default function AppRoutes() {
 
     return (
@@ -78,6 +79,15 @@ export default function AppRoutes() {
                 element={<AuthModal />}
             />
 
+            <Route
+                path="/onboarding"
+                element={
+                    <ProtectedRoute>
+                        <Onboarding />
+                    </ProtectedRoute>
+                }
+            />
+
             {/* DASHBOARD */}
 
             <Route
@@ -127,6 +137,15 @@ export default function AppRoutes() {
                 element={<ProtectedRoute>
                     <Dashboard />
                 </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute>
+                        <Dashboard />
+                    </ProtectedRoute>
                 }
             />
         </Routes>

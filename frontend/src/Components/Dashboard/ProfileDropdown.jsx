@@ -1,33 +1,44 @@
 import "../../styles/profileDropdown.css";
+import { useNavigate } from "react-router-dom";
 
 export default function ProfileDropdown({
     user,
-    onLogout
+    onLogout,
+    onClose
+
 }) {
+
+    const navigate = useNavigate();
+
     const menuItems = [
 
         {
             icon: "👤",
-            label: "Profile"
-        },  
+            label: "Profile",
+            path: "/profile"
+        },
 
         {
             icon: "⚙️",
-            label: "Settings"
+            label: "Settings",
+            path: "/settings"
         },
 
         {
             icon: "📊",
-            label: "Analytics"
+            label: "Analytics",
+            path: "/performance"
         },
 
         {
             icon: "💳",
-            label: "Billing"
+            label: "Billing",
+            path: "/billing"
         }
+
     ];
 
-    
+
 
     return (
 
@@ -39,35 +50,35 @@ export default function ProfileDropdown({
 
                 <div className="profile-avatar">
 
-    {
-        user?.username?.charAt(0)?.toUpperCase()
-        ||
-        user?.name?.charAt(0)?.toUpperCase()
-        ||
-        "U"
-    }
+                    {
+                        user?.username?.charAt(0)?.toUpperCase()
+                        ||
+                        user?.name?.charAt(0)?.toUpperCase()
+                        ||
+                        "U"
+                    }
 
-</div>
+                </div>
 
                 <div className="profile-user-info">
 
-                   <h3>
-    {
-        user?.username
-        ||
-        user?.name
-        ||
-        "User"
-    }
-</h3>
+                    <h3>
+                        {
+                            user?.username
+                            ||
+                            user?.name
+                            ||
+                            "User"
+                        }
+                    </h3>
 
-                   <p>
-    {
-        user?.email
-        ||
-        "No email"
-    }
-</p>
+                    <p>
+                        {
+                            user?.email
+                            ||
+                            "No email"
+                        }
+                    </p>
 
                 </div>
 
@@ -83,6 +94,17 @@ export default function ProfileDropdown({
                         <button
                             key={index}
                             className="profile-menu-btn"
+                            onClick={() => {
+
+                                navigate(item.path);
+
+                                if (onClose) {
+
+                                    onClose();
+
+                                }
+
+                            }}
                         >
 
                             <span className="menu-emoji">
@@ -109,7 +131,7 @@ export default function ProfileDropdown({
 
                 <button
                     className="logout-btn"
-                  onClick={onLogout}
+                    onClick={onLogout}
                 >
 
                     <span className="menu-emoji">

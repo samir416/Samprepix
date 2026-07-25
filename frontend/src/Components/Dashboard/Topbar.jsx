@@ -469,6 +469,7 @@ export default function Topbar() {
                     <ProfileDropdown
                         user={user}
                         onLogout={handleLogout}
+                        onClose={() => setOpenMobileProfile(false)}
                     />
                 </div>
             }
@@ -566,7 +567,7 @@ export default function Topbar() {
                     >
 
                         <div
-                            className="profile-circle"
+                            className="profile-card"
                             onClick={() =>
                                 setOpenDesktopProfile(
                                     !openDesktopProfile
@@ -574,22 +575,52 @@ export default function Topbar() {
                             }
                         >
 
-                            {
-                                user?.username?.charAt(0)?.toUpperCase()
-                                ||
-                                user?.name?.charAt(0)?.toUpperCase()
-                                ||
-                                "U"
-                            }
+                            <div className="profile-circle">
+
+                                {
+                                    user?.username?.charAt(0)?.toUpperCase()
+                                    ||
+                                    user?.name?.charAt(0)?.toUpperCase()
+                                    ||
+                                    "U"
+                                }
+
+                            </div>
+
+                            <div className="profile-info">
+
+                                <h4>
+
+                                    {
+                                        user?.username
+                                        ||
+                                        user?.name
+                                        ||
+                                        "User"
+                                    }
+
+                                </h4>
+
+                                <span>
+
+                                    {
+                                        user?.email
+                                        ||
+                                        "No Email"
+                                    }
+
+                                </span>
+
+                            </div>
 
                         </div>
-
                         {
                             openDesktopProfile &&
 
                             <ProfileDropdown
                                 user={user}
                                 onLogout={handleLogout}
+                                onClose={() => setOpenDesktopProfile(false)}
                             />
                         }
 

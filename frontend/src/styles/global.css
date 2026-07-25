@@ -1,0 +1,10 @@
+*{
+    font-family:"Inter",sans-serif;
+}
+
+html,
+body,
+#root{
+    font-family:"Inter",sans-serif;
+    font-weight:500;
+}

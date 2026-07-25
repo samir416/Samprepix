@@ -41,7 +41,15 @@ export default function Login() {
                     JSON.stringify(user)
                 );
 
-                navigate("/dashboard");
+                if (user.profileCompleted) {
+
+                    navigate("/dashboard");
+
+                } else {
+
+                    navigate("/onboarding");
+
+                }
 
             } catch {
 
@@ -120,7 +128,7 @@ export default function Login() {
                             type="button"
                             onClick={() => {
                                 window.location.href =
-    "http://localhost:8080/oauth2/login/google";
+                                    "http://localhost:8080/oauth2/login/google";
                             }}
                         >
                             <span>✉</span>
@@ -173,7 +181,15 @@ export default function Login() {
                                     JSON.stringify(user)
                                 );
 
-                                navigate("/dashboard");
+                                if (user.profileCompleted) {
+
+                                    navigate("/dashboard");
+
+                                } else {
+
+                                    navigate("/onboarding");
+
+                                }
 
                             } catch (err) {
 

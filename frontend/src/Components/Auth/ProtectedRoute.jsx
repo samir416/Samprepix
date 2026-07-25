@@ -1,11 +1,13 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
-export default function ProtectedRoute(
-    { children }
-) {
+export default function ProtectedRoute({ children }) {
 
-    const token =
-        localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+
+    const onboardingCompleted =
+        localStorage.getItem("onboardingCompleted") === "true";
+
+    const location = useLocation();
 
     if (!token) {
 
@@ -15,7 +17,43 @@ export default function ProtectedRoute(
                 replace
             />
         );
+
+    }
+
+    if (
+
+        !onboardingCompleted &&
+
+        location.pathname !== "/onboarding"
+
+    ) {
+
+        return (
+            <Navigate
+                to="/onboarding"
+                replace
+            />
+        );
+
+    }
+
+    if (
+
+        onboardingCompleted &&
+
+        location.pathname === "/onboarding"
+
+    ) {
+
+        return (
+            <Navigate
+                to="/dashboard"
+                replace
+            />
+        );
+
     }
 
     return children;
+
 }
