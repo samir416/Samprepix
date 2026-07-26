@@ -49,9 +49,7 @@ export default function Profile() {
 
         careerGoal: "",
 
-
     });
-
 
     useEffect(() => {
 
@@ -105,6 +103,7 @@ export default function Profile() {
                     yearsOfExperience: currentUser.yearsOfExperience || "",
 
                     careerGoal: currentUser.careerGoal || "",
+
                 });
 
             }
@@ -171,7 +170,6 @@ export default function Profile() {
 
     }, []);
 
-
     const avatarLetter =
         user?.name?.charAt(0)?.toUpperCase()
         ||
@@ -190,8 +188,6 @@ export default function Profile() {
             [name]: value
 
         }));
-
-
 
     };
 
@@ -247,7 +243,6 @@ export default function Profile() {
                 portfolioUrl: formData.portfolioUrl
 
             });
-
 
             localStorage.setItem(
                 "user",
@@ -308,8 +303,6 @@ export default function Profile() {
 
     };
 
-
-
     return (
 
         <div className="profile-page">
@@ -332,11 +325,10 @@ export default function Profile() {
 
                 </div>
 
-                <div
-                    className="profile-actions"
-                >
+                <div className="profile-actions">
 
                     {
+
                         isEditing &&
 
                         <button
@@ -347,6 +339,7 @@ export default function Profile() {
                             Save Changes
 
                         </button>
+
                     }
 
                     <button
@@ -360,52 +353,149 @@ export default function Profile() {
 
                 </div>
 
-
             </div>
 
-            <div className="profile-card">
+            <div className="profile-page-card">
 
-                <div className="profile-cover">
+                <div className="profile-page-cover"></div>
+
+                <div className="profile-page-hero">
+
+                    <div className="profile-page-avatar-wrapper">
+
+                        {
+
+                            selectedImage ?
+
+                                <img
+                                    src={selectedImage}
+                                    alt="Profile"
+                                    className="profile-page-avatar-large"
+                                />
+
+                                :
+
+                                user?.profilePicture ?
+
+                                    <img
+                                        src={user.profilePicture}
+                                        alt="Profile"
+                                        className="profile-page-avatar-large"
+                                    />
+
+                                    :
+
+                                    <div className="profile-page-avatar-large">
+
+                                        {avatarLetter}
+
+                                    </div>
+
+                        }
+
+                        {
+
+                            isEditing &&
+
+                            <label className="profile-page-camera-btn">
+
+                                📷
+
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    hidden
+                                    onChange={handleImageChange}
+                                />
+
+                            </label>
+
+                        }
+
+                    </div>
+
+                    <div className="profile-page-hero-content">
+
+                        <h2>
+
+                            {formData.name || "Your Name"}
+
+                        </h2>
+
+
+                    </div>
 
                 </div>
 
-                <div className="profile-stats">
+                <div className="profile-page-stats">
 
-                    <div className="profile-stat-card">
+                    <div className="profile-page-stat-card">
 
-                        <h3>65%</h3>
+                        <h3>
 
-                        <span>Profile Completion</span>
+                            65%
 
-                    </div>
+                        </h3>
 
-                    <div className="profile-stat-card">
+                        <span>
 
-                        <h3>0</h3>
+                            Profile Completion
 
-                        <span>Mock Interviews</span>
-
-                    </div>
-
-                    <div className="profile-stat-card">
-
-                        <h3>0</h3>
-
-                        <span>Coding Tests</span>
+                        </span>
 
                     </div>
 
-                    <div className="profile-stat-card">
+                    <div className="profile-page-stat-card">
 
-                        <h3>0</h3>
+                        <h3>
 
-                        <span>Achievements</span>
+                            0
+
+                        </h3>
+
+                        <span>
+
+                            Mock Interviews
+
+                        </span>
+
+                    </div>
+
+                    <div className="profile-page-stat-card">
+
+                        <h3>
+
+                            0
+
+                        </h3>
+
+                        <span>
+
+                            Coding Tests
+
+                        </span>
+
+                    </div>
+
+                    <div className="profile-page-stat-card">
+
+                        <h3>
+
+                            0
+
+                        </h3>
+
+                        <span>
+
+                            Achievements
+
+                        </span>
 
                     </div>
 
                 </div>
 
-                <div className="profile-card-header">
+                <div className="profile-page-card-header">
 
                     <h2>
 
@@ -415,62 +505,11 @@ export default function Profile() {
 
                 </div>
 
-                <div className="profile-card-body profile-card-body-top">
+                <div className="profile-page-card-body">
 
-                    <div className="profile-avatar-wrapper">
+                    <div className="profile-page-info-grid">
 
-                        {
-                            selectedImage
-                                ?
-
-                                <img
-                                    src={selectedImage}
-                                    alt="Profile"
-                                    className="profile-avatar-large"
-                                />
-
-                                :
-
-                                user?.profilePicture
-                                    ?
-
-                                    <img
-                                        src={user.profilePicture}
-                                        alt="Profile"
-                                        className="profile-avatar-large"
-                                    />
-
-                                    :
-
-                                    <div className="profile-avatar-large">
-
-                                        {avatarLetter}
-
-                                    </div>
-                        }
-
-                        {
-                            isEditing &&
-
-                            <label className="profile-camera-btn">
-
-                                📷
-
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    hidden
-                                />
-
-                            </label>
-                        }
-
-                    </div>
-
-                    <div className="profile-info-grid">
-
-                        <div className="profile-info-item">
+                        <div className="profile-page-info-item">
 
                             <label>
 
@@ -479,15 +518,15 @@ export default function Profile() {
                             </label>
 
                             {
-                                isEditing
-                                    ?
+
+                                isEditing ?
 
                                     <input
                                         type="text"
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
-                                        className="profile-input"
+                                        className="profile-page-input"
                                     />
 
                                     :
@@ -497,11 +536,12 @@ export default function Profile() {
                                         {formData.name || "-"}
 
                                     </span>
+
                             }
 
                         </div>
 
-                        <div className="profile-info-item">
+                        <div className="profile-page-info-item">
 
                             <label>
 
@@ -510,15 +550,15 @@ export default function Profile() {
                             </label>
 
                             {
-                                isEditing
-                                    ?
+
+                                isEditing ?
 
                                     <input
                                         type="text"
                                         name="username"
                                         value={formData.username}
                                         onChange={handleChange}
-                                        className="profile-input"
+                                        className="profile-page-input"
                                     />
 
                                     :
@@ -528,11 +568,12 @@ export default function Profile() {
                                         {formData.username || "-"}
 
                                     </span>
+
                             }
 
                         </div>
 
-                        <div className="profile-info-item">
+                        <div className="profile-page-info-item">
 
                             <label>
 
@@ -541,15 +582,15 @@ export default function Profile() {
                             </label>
 
                             {
-                                isEditing
-                                    ?
+
+                                isEditing ?
 
                                     <input
                                         type="email"
                                         name="email"
                                         value={formData.email}
                                         onChange={handleChange}
-                                        className="profile-input"
+                                        className="profile-page-input"
                                     />
 
                                     :
@@ -559,11 +600,12 @@ export default function Profile() {
                                         {formData.email || "-"}
 
                                     </span>
+
                             }
 
                         </div>
 
-                        <div className="profile-info-item">
+                        <div className="profile-page-info-item">
 
                             <label>
 
@@ -572,14 +614,14 @@ export default function Profile() {
                             </label>
 
                             {
-                                isEditing
-                                    ?
+
+                                isEditing ?
 
                                     <select
                                         name="journeyType"
                                         value={formData.journeyType}
                                         onChange={handleChange}
-                                        className="profile-select"
+                                        className="profile-page-select"
                                     >
 
                                         <option value="">
@@ -615,12 +657,45 @@ export default function Profile() {
                                         {formData.journeyType || "-"}
 
                                     </span>
-                            }
 
+                            }
 
                         </div>
 
-                        <div className="profile-info-item">
+                        <div className="profile-page-info-item">
+
+                            <label>
+
+                                Target Role
+
+                            </label>
+
+                            {
+
+                                isEditing ?
+
+                                    <input
+                                        type="text"
+                                        name="targetRole"
+                                        value={formData.targetRole}
+                                        onChange={handleChange}
+                                        className="profile-page-input"
+                                        placeholder="Enter Target Role"
+                                    />
+
+                                    :
+
+                                    <span>
+
+                                        {formData.targetRole || "-"}
+
+                                    </span>
+
+                            }
+
+                        </div>
+
+                        <div className="profile-page-info-item">
 
                             <label>
 
@@ -629,15 +704,15 @@ export default function Profile() {
                             </label>
 
                             {
-                                isEditing
-                                    ?
+
+                                isEditing ?
 
                                     <input
                                         type="text"
                                         name="currentRole"
                                         value={formData.currentRole}
                                         onChange={handleChange}
-                                        className="profile-input"
+                                        className="profile-page-input"
                                         placeholder="Enter Current Role"
                                     />
 
@@ -648,11 +723,12 @@ export default function Profile() {
                                         {formData.currentRole || "-"}
 
                                     </span>
+
                             }
 
                         </div>
 
-                        <div className="profile-info-item">
+                        <div className="profile-page-info-item">
 
                             <label>
 
@@ -661,51 +737,27 @@ export default function Profile() {
                             </label>
 
                             {
-                                isEditing
-                                    ?
+
+                                isEditing ?
 
                                     <select
                                         name="careerGoal"
                                         value={formData.careerGoal}
                                         onChange={handleChange}
-                                        className="profile-select"
+                                        className="profile-page-select"
                                     >
 
-                                        <option value="">
+                                        <option value="">Select Career Goal</option>
 
-                                            Select Career Goal
+                                        <option value="JOB">Get a Job</option>
 
-                                        </option>
+                                        <option value="COMPANY_SWITCH">Switch Company</option>
 
-                                        <option value="JOB">
+                                        <option value="DOMAIN_SWITCH">Switch Domain</option>
 
-                                            Get a Job
+                                        <option value="PROMOTION">Promotion</option>
 
-                                        </option>
-
-                                        <option value="COMPANY_SWITCH">
-
-                                            Switch Company
-
-                                        </option>
-
-                                        <option value="DOMAIN_SWITCH">
-
-                                            Switch Domain
-
-                                        </option>
-
-                                        <option value="PROMOTION">
-
-                                            Promotion
-
-                                        </option>
-
-                                        <option value="INTERVIEW_PRACTICE">
-
-                                            Interview Practice
-
-                                        </option>
+                                        <option value="INTERVIEW_PRACTICE">Interview Practice</option>
 
                                     </select>
 
@@ -716,10 +768,12 @@ export default function Profile() {
                                         {formData.careerGoal || "-"}
 
                                     </span>
+
                             }
 
                         </div>
-                        <div className="profile-info-item">
+
+                        <div className="profile-page-info-item">
 
                             <label>
 
@@ -728,47 +782,28 @@ export default function Profile() {
                             </label>
 
                             {
-                                isEditing
-                                    ?
+
+                                isEditing ?
 
                                     <select
                                         name="experienceLevel"
                                         value={formData.experienceLevel}
                                         onChange={handleChange}
-                                        className="profile-select"
+                                        className="profile-page-select"
                                     >
 
-                                        <option value="">
+                                        <option value="">Select Experience Level</option>
 
-                                            Select Experience Level
+                                        <option value="FRESHER">Fresher</option>
 
-                                        </option>
+                                        <option value="BEGINNER">Beginner</option>
 
-                                        <option value="FRESHER">
+                                        <option value="INTERMEDIATE">Intermediate</option>
 
-                                            Fresher
-
-                                        </option>
-
-                                        <option value="BEGINNER">
-
-                                            Beginner
-
-                                        </option>
-
-                                        <option value="INTERMEDIATE">
-
-                                            Intermediate
-
-                                        </option>
-
-                                        <option value="ADVANCED">
-
-                                            Advanced
-
-                                        </option>
+                                        <option value="ADVANCED">Advanced</option>
 
                                     </select>
+
                                     :
 
                                     <span>
@@ -776,12 +811,85 @@ export default function Profile() {
                                         {formData.experienceLevel || "-"}
 
                                     </span>
-                            }
 
+                            }
 
                         </div>
 
-                        <div className="profile-info-item">
+                        <div className="profile-page-info-item">
+
+                            <label>
+
+                                Phone
+
+                            </label>
+
+                            {
+
+                                isEditing ?
+
+                                    <input
+                                        type="text"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        className="profile-page-input"
+                                    />
+
+                                    :
+
+                                    <span>
+
+                                        {formData.phone || "-"}
+
+                                    </span>
+
+                            }
+
+                        </div>
+
+                        <div className="profile-page-info-item">
+
+                            <label>
+
+                                Gender
+
+                            </label>
+
+                            {
+
+                                isEditing ?
+
+                                    <select
+                                        name="gender"
+                                        value={formData.gender}
+                                        onChange={handleChange}
+                                        className="profile-page-select"
+                                    >
+
+                                        <option value="">Select Gender</option>
+
+                                        <option value="MALE">Male</option>
+
+                                        <option value="FEMALE">Female</option>
+
+                                        <option value="OTHER">Other</option>
+
+                                    </select>
+
+                                    :
+
+                                    <span>
+
+                                        {formData.gender || "-"}
+
+                                    </span>
+
+                            }
+
+                        </div>
+
+                        <div className="profile-page-info-item">
 
                             <label>
 
@@ -797,16 +905,18 @@ export default function Profile() {
                                         ? `${formData.yearsOfExperience} Year${Number(formData.yearsOfExperience) === 1 ? "" : "s"}`
                                         : "-"
                                 }
+
                             </span>
 
                         </div>
 
                         {
+
                             formData.journeyType === "STUDENT" &&
 
                             <>
 
-                                <div className="profile-info-item">
+                                <div className="profile-page-info-item">
 
                                     <label>
 
@@ -815,15 +925,15 @@ export default function Profile() {
                                     </label>
 
                                     {
-                                        isEditing
-                                            ?
+
+                                        isEditing ?
 
                                             <input
                                                 type="text"
                                                 name="collegeName"
                                                 value={formData.collegeName}
                                                 onChange={handleChange}
-                                                className="profile-input"
+                                                className="profile-page-input"
                                                 placeholder="Enter College Name"
                                             />
 
@@ -834,11 +944,12 @@ export default function Profile() {
                                                 {formData.collegeName || "-"}
 
                                             </span>
+
                                     }
 
                                 </div>
 
-                                <div className="profile-info-item">
+                                <div className="profile-page-info-item">
 
                                     <label>
 
@@ -847,15 +958,15 @@ export default function Profile() {
                                     </label>
 
                                     {
-                                        isEditing
-                                            ?
+
+                                        isEditing ?
 
                                             <input
                                                 type="text"
                                                 name="degree"
                                                 value={formData.degree}
                                                 onChange={handleChange}
-                                                className="profile-input"
+                                                className="profile-page-input"
                                                 placeholder="Enter Degree"
                                             />
 
@@ -866,11 +977,12 @@ export default function Profile() {
                                                 {formData.degree || "-"}
 
                                             </span>
+
                                     }
 
                                 </div>
 
-                                <div className="profile-info-item">
+                                <div className="profile-page-info-item">
 
                                     <label>
 
@@ -879,14 +991,14 @@ export default function Profile() {
                                     </label>
 
                                     {
-                                        isEditing
-                                            ?
+
+                                        isEditing ?
 
                                             <select
                                                 name="graduationYear"
                                                 value={formData.graduationYear}
                                                 onChange={handleChange}
-                                                className="profile-select"
+                                                className="profile-page-select"
                                             >
 
                                                 <option value="">Select Graduation Year</option>
@@ -912,7 +1024,9 @@ export default function Profile() {
                                                 {formData.graduationYear || "-"}
 
                                             </span>
+
                                     }
+
                                 </div>
 
                             </>
@@ -920,11 +1034,12 @@ export default function Profile() {
                         }
 
                         {
+
                             formData.journeyType === "WORKING_PROFESSIONAL" &&
 
                             <>
 
-                                <div className="profile-info-item">
+                                <div className="profile-page-info-item">
 
                                     <label>
 
@@ -933,15 +1048,15 @@ export default function Profile() {
                                     </label>
 
                                     {
-                                        isEditing
-                                            ?
+
+                                        isEditing ?
 
                                             <input
                                                 type="text"
                                                 name="currentCompany"
                                                 value={formData.currentCompany}
                                                 onChange={handleChange}
-                                                className="profile-input"
+                                                className="profile-page-input"
                                                 placeholder="Enter Company Name"
                                             />
 
@@ -952,13 +1067,12 @@ export default function Profile() {
                                                 {formData.currentCompany || "-"}
 
                                             </span>
-                                    }
 
+                                    }
 
                                 </div>
 
-
-                                <div className="profile-info-item">
+                                <div className="profile-page-info-item">
 
                                     <label>
 
@@ -967,14 +1081,14 @@ export default function Profile() {
                                     </label>
 
                                     {
-                                        isEditing
-                                            ?
+
+                                        isEditing ?
 
                                             <select
                                                 name="yearsOfExperience"
                                                 value={formData.yearsOfExperience}
                                                 onChange={handleChange}
-                                                className="profile-select"
+                                                className="profile-page-select"
                                             >
 
                                                 <option value="">Select Experience</option>
@@ -1003,7 +1117,9 @@ export default function Profile() {
                                                         ? `${formData.yearsOfExperience} Year${Number(formData.yearsOfExperience) === 1 ? "" : "s"}`
                                                         : "-"
                                                 }
+
                                             </span>
+
                                     }
 
                                 </div>
@@ -1013,11 +1129,12 @@ export default function Profile() {
                         }
 
                         {
+
                             formData.journeyType === "OTHER" &&
 
                             <>
 
-                                <div className="profile-info-item">
+                                <div className="profile-page-info-item">
 
                                     <label>
 
@@ -1026,15 +1143,15 @@ export default function Profile() {
                                     </label>
 
                                     {
-                                        isEditing
-                                            ?
+
+                                        isEditing ?
 
                                             <input
                                                 type="text"
                                                 name="collegeName"
                                                 value={formData.collegeName}
                                                 onChange={handleChange}
-                                                className="profile-input"
+                                                className="profile-page-input"
                                                 placeholder="Enter Institute / Organization"
                                             />
 
@@ -1045,11 +1162,12 @@ export default function Profile() {
                                                 {formData.collegeName || "-"}
 
                                             </span>
+
                                     }
 
                                 </div>
 
-                                <div className="profile-info-item">
+                                <div className="profile-page-info-item">
 
                                     <label>
 
@@ -1058,15 +1176,15 @@ export default function Profile() {
                                     </label>
 
                                     {
-                                        isEditing
-                                            ?
+
+                                        isEditing ?
 
                                             <input
                                                 type="text"
                                                 name="degree"
                                                 value={formData.degree}
                                                 onChange={handleChange}
-                                                className="profile-input"
+                                                className="profile-page-input"
                                                 placeholder="Enter Course / Program"
                                             />
 
@@ -1077,58 +1195,7 @@ export default function Profile() {
                                                 {formData.degree || "-"}
 
                                             </span>
-                                    }
 
-                                </div>
-
-
-                                <div className="profile-info-item">
-
-                                    <label>
-
-                                        Experience Level
-
-                                    </label>
-
-                                    {
-                                        isEditing
-                                            ?
-
-                                            <select
-                                                name="experienceLevel"
-                                                value={formData.experienceLevel}
-                                                onChange={handleChange}
-                                                className="profile-select"
-                                            >
-
-                                                <option value="">
-                                                    Select Experience Level
-                                                </option>
-
-                                                <option value="FRESHER">
-                                                    Fresher
-                                                </option>
-
-                                                <option value="BEGINNER">
-                                                    Beginner
-                                                </option>
-
-                                                <option value="INTERMEDIATE">
-                                                    Intermediate
-                                                </option>
-
-                                                <option value="ADVANCED">
-                                                    Advanced
-                                                </option>
-                                            </select>
-
-                                            :
-
-                                            <span>
-
-                                                {formData.experienceLevel || "-"}
-
-                                            </span>
                                     }
 
                                 </div>
@@ -1136,7 +1203,158 @@ export default function Profile() {
                             </>
 
                         }
+                        <div className="profile-page-info-item">
 
+                            <label>
+
+                                GitHub
+
+                            </label>
+
+                            {
+
+                                isEditing ?
+
+                                    <input
+                                        type="url"
+                                        name="githubUrl"
+                                        value={formData.githubUrl}
+                                        onChange={handleChange}
+                                        className="profile-page-input"
+                                        placeholder="https://github.com/username"
+                                    />
+
+                                    :
+
+                                    <span>
+
+                                        {
+
+                                            formData.githubUrl ?
+
+                                                <a
+                                                    href={formData.githubUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+
+                                                    {formData.githubUrl}
+
+                                                </a>
+
+                                                :
+
+                                                "-"
+
+                                        }
+
+                                    </span>
+
+                            }
+
+                        </div>
+
+                        <div className="profile-page-info-item">
+
+                            <label>
+
+                                LinkedIn
+
+                            </label>
+
+                            {
+
+                                isEditing ?
+
+                                    <input
+                                        type="url"
+                                        name="linkedinUrl"
+                                        value={formData.linkedinUrl}
+                                        onChange={handleChange}
+                                        className="profile-page-input"
+                                        placeholder="https://linkedin.com/in/username"
+                                    />
+
+                                    :
+
+                                    <span>
+
+                                        {
+
+                                            formData.linkedinUrl ?
+
+                                                <a
+                                                    href={formData.linkedinUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+
+                                                    {formData.linkedinUrl}
+
+                                                </a>
+
+                                                :
+
+                                                "-"
+
+                                        }
+
+                                    </span>
+
+                            }
+
+                        </div>
+
+                        <div className="profile-page-info-item">
+
+                            <label>
+
+                                Portfolio
+
+                            </label>
+
+                            {
+
+                                isEditing ?
+
+                                    <input
+                                        type="url"
+                                        name="portfolioUrl"
+                                        value={formData.portfolioUrl}
+                                        onChange={handleChange}
+                                        className="profile-page-input"
+                                        placeholder="https://yourportfolio.com"
+                                    />
+
+                                    :
+
+                                    <span>
+
+                                        {
+
+                                            formData.portfolioUrl ?
+
+                                                <a
+                                                    href={formData.portfolioUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+
+                                                    {formData.portfolioUrl}
+
+                                                </a>
+
+                                                :
+
+                                                "-"
+
+                                        }
+
+                                    </span>
+
+                            }
+
+                        </div>
 
                     </div>
 
@@ -1144,10 +1362,7 @@ export default function Profile() {
 
             </div>
 
-
-
         </div>
 
     );
-
 }
