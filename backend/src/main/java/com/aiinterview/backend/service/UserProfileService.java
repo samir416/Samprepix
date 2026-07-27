@@ -6,6 +6,7 @@ import com.aiinterview.backend.repository.UserProfileRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import com.aiinterview.backend.model.UserProfileRequest;
+import com.aiinterview.backend.model.UserProfileResponse;
 
 import java.util.Optional;
 
@@ -23,19 +24,48 @@ public class UserProfileService {
         this.userProfileRepository = userProfileRepository;
     }
 
-    public UserProfile getProfile(String email) {
+   public UserProfileResponse getProfile(String email) {
 
-        Optional<User> optionalUser =
-                userRepository.findByEmail(email);
+    User user = userRepository
+            .findByEmail(email)
+            .orElse(null);
 
-        if (optionalUser.isEmpty()) {
-            return null;
-        }
-
-        return userProfileRepository
-                .findByUser(optionalUser.get())
-                .orElse(null);
+    if (user == null) {
+        return null;
     }
+
+    UserProfile profile = userProfileRepository
+            .findByUser(user)
+            .orElse(new UserProfile());
+
+    UserProfileResponse response = new UserProfileResponse();
+
+    response.setName(user.getName());
+    response.setUsername(user.getUsername());
+    response.setEmail(user.getEmail());
+    response.setProfilePicture(user.getProfilePicture());
+
+    response.setJourneyType(profile.getJourneyType());
+    response.setTargetRole(profile.getTargetRole());
+    response.setCurrentRole(profile.getCurrentRole());
+    response.setExperienceLevel(profile.getExperienceLevel());
+    response.setYearsOfExperience(profile.getYearsOfExperience());
+    response.setCareerGoal(profile.getCareerGoal());
+
+    response.setCollege(profile.getCollege());
+    response.setCourse(profile.getCourse());
+    response.setGraduationYear(profile.getGraduationYear());
+    response.setCurrentCompany(profile.getCurrentCompany());
+
+    response.setPhone(profile.getPhone());
+    response.setGender(profile.getGender());
+
+    response.setGithubUrl(profile.getGithubUrl());
+    response.setLinkedinUrl(profile.getLinkedinUrl());
+    response.setPortfolioUrl(profile.getPortfolioUrl());
+
+    return response;
+}
 
     public UserProfile saveProfile(
         String email,
