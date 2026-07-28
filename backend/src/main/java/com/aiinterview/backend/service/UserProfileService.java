@@ -7,6 +7,8 @@ import com.aiinterview.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import com.aiinterview.backend.model.UserProfileRequest;
 import com.aiinterview.backend.model.UserProfileResponse;
+import com.aiinterview.backend.service.FileStorageService;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -14,15 +16,18 @@ import java.util.Optional;
 public class UserProfileService {
 
     private final UserRepository userRepository;
+    private final FileStorageService fileStorageService;
     private final UserProfileRepository userProfileRepository;
 
-    public UserProfileService(
-            UserRepository userRepository,
-            UserProfileRepository userProfileRepository) {
+   public UserProfileService(
+        UserRepository userRepository,
+        UserProfileRepository userProfileRepository,
+        FileStorageService fileStorageService) {
 
-        this.userRepository = userRepository;
-        this.userProfileRepository = userProfileRepository;
-    }
+    this.userRepository = userRepository;
+    this.userProfileRepository = userProfileRepository;
+    this.fileStorageService = fileStorageService;
+}
 
    public UserProfileResponse getProfile(String email) {
 
@@ -130,8 +135,32 @@ public class UserProfileService {
 
     profile.setProfileCompleted(true);
 
-    return userProfileRepository.save(profile);
+   return userProfileRepository.save(profile);
 
 }
 
+public String uploadProfilePicture(String email, MultipartFile file) throws Exception {
+
+    User user = userRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    if (user.getProfilePicture() != null &&
+            !user.getProfilePicture().isBlank()) {
+
+        fileStorageService.deleteProfilePicture(
+                user.getProfilePicture());
+    }
+
+    String imageUrl =
+            fileStorageService.saveProfilePicture(file);
+
+    user.setProfilePicture(imageUrl);
+
+    userRepository.save(user);
+
+    return imageUrl;
 }
+
+}
+

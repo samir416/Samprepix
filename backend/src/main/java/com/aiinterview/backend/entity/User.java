@@ -28,6 +28,9 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String profilePicture;
 
+    @Column(length = 255)
+    private String profilePicturePublicId;
+
     @Column(length = 100)
     private String name;
 
@@ -92,6 +95,14 @@ public class User {
 
     public void setProfilePicture(String profilePicture) {
         this.profilePicture = profilePicture;
+    }
+
+    public String getProfilePicturePublicId() {
+        return profilePicturePublicId;
+    }
+
+    public void setProfilePicturePublicId(String profilePicturePublicId) {
+        this.profilePicturePublicId = profilePicturePublicId;
     }
 
     public String getName() {

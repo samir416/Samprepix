@@ -72,19 +72,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         } else {
 
-            // Google
+           // Google
 
-            email = oAuth2User.getAttribute("email");
-            name = oAuth2User.getAttribute("name");
-            picture = oAuth2User.getAttribute("picture");
+email = oAuth2User.getAttribute("email");
+name = oAuth2User.getAttribute("name");
+picture = oAuth2User.getAttribute("picture");
 
-            // Google
-
-            email = oAuth2User.getAttribute("email");
-            name = oAuth2User.getAttribute("name");
-            picture = oAuth2User.getAttribute("picture");
-
-            System.out.println("Google Picture URL = " + picture);
 
         }
 
