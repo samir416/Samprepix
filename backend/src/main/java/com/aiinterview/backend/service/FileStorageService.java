@@ -50,14 +50,19 @@ public class FileStorageService {
         return "/" + uploadDir + "/" + fileName;
     }
 
-    public void deleteProfilePicture(String imagePath) throws IOException {
+   public void deleteProfilePicture(String imagePath) throws IOException {
 
-        if (imagePath == null || imagePath.isBlank()) {
-            return;
-        }
-
-        String fileName = Path.of(imagePath).getFileName().toString();
-
-        Files.deleteIfExists(uploadPath.resolve(fileName));
+    if (imagePath == null || imagePath.isBlank()) {
+        return;
     }
+
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+        return;
+    }
+
+    String fileName = Path.of(imagePath).getFileName().toString();
+
+    Files.deleteIfExists(uploadPath.resolve(fileName));
+}
+
 }

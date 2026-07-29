@@ -29,6 +29,16 @@ public class UserProfileResponse {
     private String linkedinUrl;
     private String portfolioUrl;
 
+private String personalWebsite;
+
+private String university;
+
+private String designation;
+
+private String employmentType;
+
+private String dateOfBirth;
+
     public String getName() {
         return name;
     }
@@ -180,4 +190,45 @@ public class UserProfileResponse {
     public void setPortfolioUrl(String portfolioUrl) {
         this.portfolioUrl = portfolioUrl;
     }
+
+    public String getPersonalWebsite() {
+    return personalWebsite;
+}
+
+public void setPersonalWebsite(String personalWebsite) {
+    this.personalWebsite = personalWebsite;
+}
+
+public String getUniversity() {
+    return university;
+}
+
+public void setUniversity(String university) {
+    this.university = university;
+}
+
+public String getDesignation() {
+    return designation;
+}
+
+public void setDesignation(String designation) {
+    this.designation = designation;
+}
+
+public String getEmploymentType() {
+    return employmentType;
+}
+
+public void setEmploymentType(String employmentType) {
+    this.employmentType = employmentType;
+}
+
+public String getDateOfBirth() {
+    return dateOfBirth;
+}
+
+public void setDateOfBirth(String dateOfBirth) {
+    this.dateOfBirth = dateOfBirth;
+}
+
 }

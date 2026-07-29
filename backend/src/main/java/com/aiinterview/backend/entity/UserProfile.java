@@ -54,10 +54,23 @@ public class UserProfile {
     @Column(length = 20)
     private String phone;
 
-    private LocalDate dob;
 
     @Column(length = 20)
-    private String gender;
+private String gender;
+
+private LocalDate dob;
+
+@Column(length = 150)
+private String university;
+
+@Column(length = 100)
+private String designation;
+
+@Column(length = 30)
+private String employmentType;
+
+@Column(length = 255)
+private String personalWebsite;
 
     @Column(length = 255)
     private String githubUrl;
@@ -195,21 +208,55 @@ public void setExperienceLevel(String experienceLevel) {
         this.phone = phone;
     }
 
-    public LocalDate getDob() {
-        return dob;
-    }
 
-    public void setDob(LocalDate dob) {
-        this.dob = dob;
-    }
+ public String getGender() {
+    return gender;
+}
 
-    public String getGender() {
-        return gender;
-    }
+public void setGender(String gender) {
+    this.gender = gender;
+}
 
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
+public LocalDate getDob() {
+    return dob;
+}
+
+public void setDob(LocalDate dob) {
+    this.dob = dob;
+}
+
+public String getUniversity() {
+    return university;
+}
+
+public void setUniversity(String university) {
+    this.university = university;
+}
+
+public String getDesignation() {
+    return designation;
+}
+
+public void setDesignation(String designation) {
+    this.designation = designation;
+}
+
+public String getEmploymentType() {
+    return employmentType;
+}
+
+public void setEmploymentType(String employmentType) {
+    this.employmentType = employmentType;
+}
+
+public String getPersonalWebsite() {
+    return personalWebsite;
+}
+
+public void setPersonalWebsite(String personalWebsite) {
+    this.personalWebsite = personalWebsite;
+}
+
 
     public String getGithubUrl() {
         return githubUrl;

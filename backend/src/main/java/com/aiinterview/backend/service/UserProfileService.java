@@ -9,8 +9,10 @@ import com.aiinterview.backend.model.UserProfileRequest;
 import com.aiinterview.backend.model.UserProfileResponse;
 import com.aiinterview.backend.service.FileStorageService;
 import org.springframework.web.multipart.MultipartFile;
+import com.aiinterview.backend.entity.JourneyType;
 
 import java.util.Optional;
+import java.time.LocalDate;
 
 @Service
 public class UserProfileService {
@@ -68,6 +70,20 @@ public class UserProfileService {
     response.setGithubUrl(profile.getGithubUrl());
     response.setLinkedinUrl(profile.getLinkedinUrl());
     response.setPortfolioUrl(profile.getPortfolioUrl());
+
+response.setPersonalWebsite(profile.getPersonalWebsite());
+
+response.setUniversity(profile.getUniversity());
+
+response.setDesignation(profile.getDesignation());
+
+response.setEmploymentType(profile.getEmploymentType());
+
+response.setDateOfBirth(
+        profile.getDob() != null
+                ? profile.getDob().toString()
+                : null
+);
 
     return response;
 }
@@ -130,14 +146,105 @@ public class UserProfileService {
     profile.setLinkedinUrl(
             request.getLinkedinUrl());
 
-    profile.setPortfolioUrl(
-            request.getPortfolioUrl());
+  profile.setPortfolioUrl(
+        request.getPortfolioUrl());
 
-    profile.setProfileCompleted(true);
+profile.setPersonalWebsite(
+        request.getPersonalWebsite());
 
-   return userProfileRepository.save(profile);
+profile.setUniversity(
+        request.getUniversity());
+
+profile.setDesignation(
+        request.getDesignation());
+
+profile.setEmploymentType(
+        request.getEmploymentType());
+
+if (request.getDateOfBirth() != null &&
+        !request.getDateOfBirth().isBlank()) {
+
+    profile.setDob(
+            LocalDate.parse(request.getDateOfBirth()));
+
+} else {
+
+    profile.setDob(null);
 
 }
+
+updateProfileCompletion(user, profile);
+return userProfileRepository.save(profile);
+
+}
+
+private void updateProfileCompletion(User user, UserProfile profile) {
+
+    boolean profileCompleted =
+
+           profile.getJourneyType() != null &&
+
+            profile.getTargetRole() != null &&
+            !profile.getTargetRole().isBlank() &&
+
+            profile.getExperienceLevel() != null &&
+            !profile.getExperienceLevel().isBlank() &&
+
+            profile.getPhone() != null &&
+            !profile.getPhone().isBlank() &&
+
+            profile.getGithubUrl() != null &&
+            !profile.getGithubUrl().isBlank() &&
+
+            profile.getLinkedinUrl() != null &&
+            !profile.getLinkedinUrl().isBlank() &&
+
+            profile.getDob() != null &&
+
+            user.getProfilePicture() != null &&
+            !user.getProfilePicture().isBlank();
+
+if (profile.getJourneyType() == JourneyType.STUDENT) {
+
+        profileCompleted = profileCompleted &&
+
+                profile.getCollege() != null &&
+                !profile.getCollege().isBlank() &&
+
+                profile.getCourse() != null &&
+                !profile.getCourse().isBlank() &&
+
+                profile.getGraduationYear() != null &&
+                !profile.getGraduationYear().isBlank() &&
+
+                profile.getUniversity() != null &&
+                !profile.getUniversity().isBlank();
+
+    }
+
+    if (profile.getJourneyType() == JourneyType.WORKING_PROFESSIONAL) {
+
+        profileCompleted = profileCompleted &&
+
+                profile.getCurrentCompany() != null &&
+                !profile.getCurrentCompany().isBlank() &&
+
+                profile.getDesignation() != null &&
+                !profile.getDesignation().isBlank() &&
+
+                profile.getEmploymentType() != null &&
+                !profile.getEmploymentType().isBlank() &&
+
+                profile.getYearsOfExperience() != null;
+
+    }
+
+  profile.setProfileCompleted(profileCompleted);
+
+userProfileRepository.save(profile);
+
+}
+
 
 public String uploadProfilePicture(String email, MultipartFile file) throws Exception {
 
@@ -157,9 +264,48 @@ public String uploadProfilePicture(String email, MultipartFile file) throws Exce
 
     user.setProfilePicture(imageUrl);
 
-    userRepository.save(user);
+  userRepository.save(user);
 
-    return imageUrl;
+UserProfile profile = userProfileRepository
+        .findByUser(user)
+        .orElse(null);
+
+if (profile != null) {
+
+    updateProfileCompletion(user, profile);
+
+}
+
+return imageUrl + "?t=" + System.currentTimeMillis();
+}
+
+public void removeProfilePicture(String email) throws Exception {
+
+    User user = userRepository
+            .findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    if (user.getProfilePicture() != null &&
+            !user.getProfilePicture().isBlank()) {
+
+        fileStorageService.deleteProfilePicture(
+                user.getProfilePicture());
+
+       user.setProfilePicture(null);
+
+userRepository.save(user);
+
+UserProfile profile = userProfileRepository
+        .findByUser(user)
+        .orElse(null);
+
+if (profile != null) {
+
+    updateProfileCompletion(user, profile);
+
+}
+    }
+
 }
 
 }

@@ -39,4 +39,14 @@ public class UserProfileRequest {
 
     private String portfolioUrl;
 
+    private String personalWebsite;
+
+    private String university;
+
+    private String designation;
+
+    private String employmentType;
+
+    private String dateOfBirth;
+
 }

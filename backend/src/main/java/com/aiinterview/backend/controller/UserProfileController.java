@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -69,6 +70,16 @@ public ResponseEntity<String> uploadProfilePicture(
             file);
 
     return ResponseEntity.ok(imageUrl);
+}
+
+@DeleteMapping("/remove-photo")
+public ResponseEntity<Void> removeProfilePicture(
+        Authentication authentication) throws Exception {
+
+    userProfileService.removeProfilePicture(
+            authentication.getName());
+
+    return ResponseEntity.noContent().build();
 }
 
 }

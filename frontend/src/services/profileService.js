@@ -3,6 +3,27 @@ import axios from "axios";
 const API =
     "http://localhost:8080/api/profile";
 
+
+    export async function getProfile() {
+
+    const token =
+        localStorage.getItem("token");
+
+    const response =
+        await axios.get(
+            API,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+    return response.data;
+
+}
+
+
 export async function updateProfile(data) {
 
     const token =
@@ -48,3 +69,19 @@ export const uploadProfilePicture = async (file) => {
 
     return await response.text();
 };
+
+export const removeProfilePicture = async () => {
+
+    const token = localStorage.getItem("token");
+
+ await axios.delete(
+    `${API}/remove-photo`,
+    {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    }
+);
+
+};
+
