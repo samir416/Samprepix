@@ -637,20 +637,21 @@ export default function Profile() {
 
             setImageError(false);
 
-            setHasChanges(false);
+            setHasChanges(true);
 
             setUser(prev => ({
                 ...prev,
-                profilePicture: ""
+                profilePicture: null
             }));
 
             localStorage.setItem(
                 "user",
                 JSON.stringify({
                     ...user,
-                    profilePicture: ""
+                    profilePicture: null
                 })
             );
+
 
             setMessage({
                 type: "success",
@@ -1224,10 +1225,9 @@ export default function Profile() {
                                         className="profile-page-remove-btn"
                                         onClick={handleRemovePhoto}
                                     >
-
-                                        Remove
-
+                                        🗑
                                     </button>
+
 
                                 }
 
