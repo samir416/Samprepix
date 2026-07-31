@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import DifficultyModal from "./DifficultyModal";
+import InterviewCountdown from "./InterviewCountdown";
 
 import {
     FiMic,
@@ -25,6 +27,8 @@ export default function MockInterview() {
 
     const [speakerMuted, setSpeakerMuted] = useState(false);
 
+    const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+
     const [seconds, setSeconds] = useState(0);
 
     const [sessionId, setSessionId] = useState(null);
@@ -46,6 +50,16 @@ export default function MockInterview() {
     const [firstInterviewCompleted, setFirstInterviewCompleted] = useState(false);
 
     const [answeredAtLeastOneQuestion, setAnsweredAtLeastOneQuestion] = useState(false);
+
+    const [showDifficultyModal, setShowDifficultyModal] = useState(false);
+
+    const [selectedDifficulty, setSelectedDifficulty] = useState("");
+
+    const [showCountdown, setShowCountdown] = useState(false);
+
+    const [countdown, setCountdown] = useState(4);
+
+    const [pendingInterview, setPendingInterview] = useState(null);
 
 
     const toggleSpeaker = () => {
@@ -74,7 +88,8 @@ export default function MockInterview() {
 
         if (!SpeechRecognitionService.recognition) {
 
-            alert("Speech Recognition is not supported in this browser.");
+            console.log("Speech Recognition is not supported in this browser.");
+            
 
             return;
 
@@ -136,9 +151,32 @@ export default function MockInterview() {
 
         const timer = setTimeout(() => {
 
-            SpeechSynthesisService.speak(currentQuestion);
+         SpeechSynthesisService.speak(
 
-        }, 250);
+    currentQuestion,
+
+    () => {
+
+        if (
+
+            SpeechRecognitionService.recognition &&
+
+            !SpeechRecognitionService.isListening &&
+
+            !micMuted
+
+        ) {
+
+            SpeechRecognitionService.start();
+
+        }
+
+    }
+
+);
+
+
+        }, 700);
 
         return () => {
 
@@ -158,27 +196,53 @@ export default function MockInterview() {
 
     useEffect(() => {
 
-        SpeechRecognitionService.setTranscriptListener(
+      SpeechRecognitionService.setTranscriptListener(
 
-            (text, isFinal) => {
+    (text, isFinal) => {
 
-                if (!isFinal) return;
+        if (!isFinal) {
 
-                setAnswer((previousAnswer) => {
+            return;
 
-                    if (!previousAnswer.trim()) {
+        }
 
-                        return text.trim();
+        setAnswer((previousAnswer) => {
 
-                    }
+            const cleanText = text.trim();
 
-                    return previousAnswer + " " + text.trim();
+            if (!cleanText) {
 
-                });
+                return previousAnswer;
 
             }
 
-        );
+            if (
+
+                previousAnswer
+
+                    .toLowerCase()
+
+                    .includes(cleanText.toLowerCase())
+
+            ) {
+
+                return previousAnswer;
+
+            }
+
+            if (!previousAnswer.trim()) {
+
+                return cleanText;
+
+            }
+
+            return previousAnswer + " " + cleanText;
+
+        });
+
+    }
+
+);
         SpeechRecognitionService.setErrorListener(
 
             (error) => {
@@ -200,6 +264,18 @@ export default function MockInterview() {
             }
 
         );
+
+     SpeechSynthesisService.setSpeakingStateListener(
+
+    (speaking) => {
+
+        console.log("AI Speaking:", speaking);
+
+        setIsAiSpeaking(speaking);
+
+    }
+
+);
 
     }, []);
 
@@ -228,6 +304,46 @@ export default function MockInterview() {
 
     }, [started]);
 
+    useEffect(() => {
+
+    if (!showCountdown) {
+
+        return;
+
+    }
+
+   if (countdown === 0) {
+
+    setShowCountdown(false);
+
+    setTimeout(() => {
+
+        startInterviewSession();
+
+    }, 350);
+
+    return;
+
+}
+
+
+    const timer = setTimeout(() => {
+
+        setCountdown((prev) => prev - 1);
+
+    }, 1000);
+
+    return () => clearTimeout(timer);
+
+}, [
+
+    showCountdown,
+
+    countdown
+
+]);
+
+
     /* FORMAT TIMER */
 
     const formatTime = () => {
@@ -245,40 +361,79 @@ export default function MockInterview() {
 
     /* START */
 
-    const handleStart = async () => {
+    const startInterviewSession = () => {
 
-        try {
+    if (!pendingInterview) {
 
-            setLoading(true);
+        return;
 
-            const response = await startInterview({
+    }
 
-                interviewType: "HR",
-                totalQuestions: 5
+    setSessionId(pendingInterview.sessionId);
 
-            });
+   setSessionId(pendingInterview.sessionId);
 
-            setSessionId(response.data.sessionId);
+setQuestionNumber(1);
 
-            setCurrentQuestion(response.data.firstQuestion);
+setSeconds(0);
 
-            setQuestionNumber(1);
+setStarted(true);
 
-            setStarted(true);
+setAnswer("");
 
-            setSeconds(0);
+setSubmittedAnswer("");
 
-        } catch (error) {
+setCurrentQuestion(pendingInterview.firstQuestion);
 
-            console.error(error);
 
-            alert("Failed to start interview.");
+    setPendingInterview(null);
 
-        } finally {
+};
 
-            setLoading(false);
-        }
+
+    const handleStart = () => {
+
+        setShowDifficultyModal(true);
+
     };
+
+  const handleDifficultyStart = async () => {
+
+    try {
+
+
+        const response = await startInterview({
+
+            interviewType: "HR",
+
+            totalQuestions: 5
+
+        });
+
+        setPendingInterview(response.data);
+
+        setShowDifficultyModal(false);
+
+        setCountdown(3);
+
+        setShowCountdown(true);
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        console.log("Failed to start interview", error);
+        
+    }
+
+
+
+};
+
+
+
 
     const resetInterview = () => {
 
@@ -313,9 +468,9 @@ export default function MockInterview() {
 
     const handleEnd = () => {
 
+        SpeechRecognitionService.stop();
         SpeechSynthesisService.stop();
 
-        SpeechRecognitionService.stop();
 
         if (answeredAtLeastOneQuestion) {
 
@@ -332,6 +487,8 @@ export default function MockInterview() {
     };
 
     const handleSubmit = async () => {
+
+        SpeechRecognitionService.stop();
 
         if (!answer.trim()) {
 
@@ -368,11 +525,13 @@ export default function MockInterview() {
                 return;
             }
 
-            setCurrentQuestion(response.data.nextQuestion);
+           SpeechRecognitionService.stop();
 
-            setQuestionNumber((prev) => prev + 1);
+setCurrentQuestion(response.data.nextQuestion);
 
-            setAnswer("");
+setQuestionNumber((prev) => prev + 1);
+
+setAnswer("");
 
         } catch (error) {
 
@@ -390,7 +549,18 @@ export default function MockInterview() {
 
     return (
 
-        <section className="mock-page">
+        <>
+
+       <section
+    className={
+        showDifficultyModal
+            ? "mock-page modal-open"
+            : "mock-page"
+    }
+>
+
+    
+
 
             {/* HEADER */}
 
@@ -445,7 +615,19 @@ export default function MockInterview() {
 
                     <div className="ai-orb-wrapper">
 
-                        <div className="ai-orb">
+                        <div
+
+    className={
+
+        isAiSpeaking
+
+            ? "ai-orb speaking"
+
+            : "ai-orb"
+
+    }
+
+>
 
                             <span>
                                 AI
@@ -455,7 +637,6 @@ export default function MockInterview() {
 
                     </div>
 
-                    {/* STATUS */}
 
                     {/* STATUS */}
 
@@ -485,14 +666,14 @@ export default function MockInterview() {
 
                                 ? (
 
-                                    <button
-                                        className="start-btn"
-                                        onClick={handleStart}
-                                        disabled={loading}
-                                    >
-                                        <FiPlay />
-                                        {loading ? "Starting..." : "Start Interview"}
-                                    </button>
+                                   <button
+    className="start-btn"
+    onClick={handleStart}
+    disabled={showCountdown}
+>
+    <FiPlay />
+    Start Interview
+</button>
 
                                 )
 
@@ -729,49 +910,91 @@ export default function MockInterview() {
 
             </div>
 
-            <FirstInterviewFeedbackModal
 
-                isOpen={showFeedbackModal}
+        </section>
 
-                onClose={() => {
+        <DifficultyModal
 
-                    setShowFeedbackModal(false);
+    open={showDifficultyModal}
 
-                    resetInterview();
+    selectedDifficulty={selectedDifficulty}
 
-                }}
+    setSelectedDifficulty={setSelectedDifficulty}
 
-               onSubmit={async (feedback) => {
+    loading={false}
 
-    try {
+    onClose={() => {
 
-        await submitFeedback({
+        setShowDifficultyModal(false);
 
-            sessionId,
+    }}
 
-            rating: feedback.rating,
+    onStart={handleDifficultyStart}
 
-            suggestion: feedback.suggestion
+/>
 
-        });
+{
 
-        console.log("Feedback submitted successfully.");
+    showCountdown && (
 
-    } catch (error) {
+        <InterviewCountdown
 
-        console.error("Feedback submission failed:", error);
+            count={countdown}
 
-    } finally {
+        />
+
+    )
+
+}
+
+<FirstInterviewFeedbackModal
+
+    isOpen={showFeedbackModal}
+
+    onClose={() => {
 
         setShowFeedbackModal(false);
 
         resetInterview();
 
-    }
+    }}
 
-}}
-            />
+    onSubmit={async (feedback) => {
 
-        </section>
+        try {
+
+            await submitFeedback({
+
+                sessionId,
+
+                rating: feedback.rating,
+
+                suggestion: feedback.suggestion
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+        }
+
+        finally {
+
+            setShowFeedbackModal(false);
+
+            resetInterview();
+
+        }
+
+    }}
+
+/>
+
+        </>
+
+        
     );
 }

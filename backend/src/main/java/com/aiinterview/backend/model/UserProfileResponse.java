@@ -12,7 +12,6 @@ public class UserProfileResponse {
 
     private JourneyType journeyType;
     private String targetRole;
-    private String currentRole;
     private String experienceLevel;
     private Double yearsOfExperience;
     private CareerGoal careerGoal;
@@ -87,13 +86,6 @@ private String dateOfBirth;
         this.targetRole = targetRole;
     }
 
-    public String getCurrentRole() {
-        return currentRole;
-    }
-
-    public void setCurrentRole(String currentRole) {
-        this.currentRole = currentRole;
-    }
 
     public String getExperienceLevel() {
         return experienceLevel;

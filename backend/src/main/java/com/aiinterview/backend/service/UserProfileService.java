@@ -54,7 +54,6 @@ public class UserProfileService {
 
     response.setJourneyType(profile.getJourneyType());
     response.setTargetRole(profile.getTargetRole());
-    response.setCurrentRole(profile.getCurrentRole());
     response.setExperienceLevel(profile.getExperienceLevel());
     response.setYearsOfExperience(profile.getYearsOfExperience());
     response.setCareerGoal(profile.getCareerGoal());
@@ -128,8 +127,6 @@ response.setDateOfBirth(
     profile.setGraduationYear(
             request.getGraduationYear());
 
-    profile.setCurrentRole(
-            request.getCurrentRole());
 
     profile.setCurrentCompany(
             request.getCurrentCompany());
@@ -276,7 +273,7 @@ if (profile != null) {
 
 }
 
-return imageUrl + "?t=" + System.currentTimeMillis();
+return imageUrl;
 }
 
 public void removeProfilePicture(String email) throws Exception {

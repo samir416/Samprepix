@@ -20,7 +20,7 @@ class SpeechRecognitionService {
 
         this.recognition.lang = "en-IN";
 
-        this.recognition.continuous = true;
+        this.recognition.continuous = false;
 
         this.recognition.interimResults = true;
 

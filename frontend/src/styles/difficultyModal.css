@@ -1,0 +1,530 @@
+.difficulty-overlay{
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 9999;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 40px;
+
+    background: rgba(15,23,42,.38);
+
+    backdrop-filter: blur(18px);
+
+    animation: overlayFade .28s ease;
+
+    overflow-y: auto;
+
+}
+
+.difficulty-modal{
+
+    position: relative;
+
+    width: min(620px,100%);
+
+    max-height: 80vh;
+
+    overflow-y: auto;
+
+    scrollbar-width: none;
+
+    border-radius: 32px;
+
+    padding: 30px;
+
+    background: rgba(255,255,255,.82);
+
+    backdrop-filter: blur(26px);
+
+    border: 1px solid rgba(255,255,255,.45);
+
+    box-shadow:
+
+        0 30px 70px rgba(15,23,42,.18),
+
+        0 10px 25px rgba(0,0,0,.08);
+
+    animation: modalScale .3s ease;
+
+}
+.difficulty-modal::-webkit-scrollbar{
+
+    display: none;
+
+}
+
+.difficulty-close{
+
+    position:absolute;
+
+    top:20px;
+
+    right:20px;
+
+    width:44px;
+
+    height:44px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.75);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+
+    font-size:20px;
+
+    color:#334155;
+
+    transition:.25s;
+
+}
+
+.difficulty-close:hover{
+
+    transform:rotate(90deg);
+
+    background:#ffffff;
+
+}
+
+.difficulty-header{
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+}
+
+.difficulty-header h2{
+
+    font-size:32px;
+
+    font-weight:700;
+
+    color:#0f172a;
+
+    margin-bottom:10px;
+
+}
+
+.difficulty-header p{
+
+    font-size:15px;
+
+    line-height:1.8;
+
+    color:#64748b;
+
+}
+
+.difficulty-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+
+}
+
+.difficulty-card{
+
+    position:relative;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:24px;
+
+    border-radius:24px;
+
+    cursor:pointer;
+
+    border:1px solid rgba(226,232,240,.9);
+
+    background:rgba(255,255,255,.72);
+
+    transition:
+
+        transform .28s,
+
+        border-color .28s,
+
+        box-shadow .28s,
+
+        background .28s;
+
+}
+
+.difficulty-card:hover{
+
+    transform:
+
+        translateY(-6px)
+
+        scale(1.015);
+
+    border-color:#6d63ff;
+
+    box-shadow:
+
+        0 20px 45px rgba(109,99,255,.18),
+
+        0 0 0 1px rgba(109,99,255,.15);
+
+}
+
+.difficulty-card.active{
+
+    border:1px solid rgba(109,99,255,.45);
+
+    background:
+
+        linear-gradient(
+
+            135deg,
+
+            rgba(109,99,255,.16),
+
+            rgba(0,194,255,.10)
+
+        );
+
+    box-shadow:
+
+        0 24px 55px rgba(109,99,255,.20);
+
+}
+
+.difficulty-title{
+
+    font-size:22px;
+
+    font-weight:700;
+
+    color:#111827;
+
+    margin-bottom:6px;
+
+}
+
+.difficulty-subtitle{
+
+    font-size:15px;
+
+    color:#475569;
+
+    margin-bottom:10px;
+
+}
+
+.difficulty-duration{
+
+    font-size:13px;
+
+    color:#94a3b8;
+
+}
+
+.difficulty-check{
+
+    width:52px;
+
+    height:52px;
+
+    border-radius:50%;
+
+    background:linear-gradient(
+
+        135deg,
+
+        #6d63ff,
+
+        #00c2ff
+
+    );
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    color:#fff;
+
+    font-size:22px;
+
+    box-shadow:
+
+        0 10px 25px rgba(0,194,255,.28);
+
+}
+
+.difficulty-footer{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:16px;
+
+    margin-top:22px;
+
+}
+
+.difficulty-cancel-btn{
+
+    min-width:130px;
+
+    height:54px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:rgba(241,245,249,.9);
+
+    color:#334155;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.difficulty-cancel-btn:hover{
+
+    transform:translateY(-2px);
+
+}
+
+.difficulty-start-btn{
+
+    min-width:190px;
+
+    height:54px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:linear-gradient(
+
+        135deg,
+
+        #6d63ff,
+
+        #00c2ff
+
+    );
+
+    color:#fff;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    box-shadow:
+
+        0 15px 35px rgba(0,194,255,.25);
+
+}
+
+.difficulty-start-btn:hover:not(:disabled){
+
+    transform:translateY(-2px);
+
+}
+
+.difficulty-start-btn:disabled{
+
+    opacity:.55;
+
+    cursor:not-allowed;
+
+    box-shadow:none;
+
+}
+
+@keyframes overlayFade{
+
+    from{
+
+        opacity:0;
+
+    }
+
+    to{
+
+        opacity:1;
+
+    }
+
+}
+
+@keyframes modalScale{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(20px) scale(.95);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0) scale(1);
+
+    }
+
+}
+
+body.dark-theme .difficulty-modal{
+
+    background:rgba(9,15,35,.92);
+
+    border:1px solid rgba(255,255,255,.08);
+
+}
+
+body.dark-theme .difficulty-close{
+
+    background:rgba(255,255,255,.08);
+
+    color:#fff;
+
+}
+
+body.dark-theme .difficulty-header h2{
+
+    color:#fff;
+
+}
+
+body.dark-theme .difficulty-header p{
+
+    color:#94a3b8;
+
+}
+
+body.dark-theme .difficulty-card{
+
+    background:rgba(255,255,255,.05);
+
+    border:1px solid rgba(255,255,255,.08);
+
+}
+
+body.dark-theme .difficulty-card.active{
+
+    background:linear-gradient(
+
+        135deg,
+
+        rgba(109,99,255,.22),
+
+        rgba(0,194,255,.14)
+
+    );
+
+}
+
+body.dark-theme .difficulty-title{
+
+    color:#fff;
+
+}
+
+body.dark-theme .difficulty-subtitle{
+
+    color:#cbd5e1;
+
+}
+
+body.dark-theme .difficulty-duration{
+
+    color:#94a3b8;
+
+}
+
+body.dark-theme .difficulty-cancel-btn{
+
+    background:rgba(255,255,255,.08);
+
+    color:#fff;
+
+}
+
+@media (max-width:768px){
+
+    .difficulty-modal{
+
+        padding:24px;
+
+        border-radius:24px;
+
+    }
+
+    .difficulty-header h2{
+
+        font-size:26px;
+
+    }
+
+    .difficulty-card{
+
+        padding:18px;
+
+    }
+
+    .difficulty-title{
+
+        font-size:19px;
+
+    }
+
+    .difficulty-footer{
+
+        flex-direction:column;
+
+    }
+
+    .difficulty-cancel-btn,
+
+    .difficulty-start-btn{
+
+        width:100%;
+
+    }
+
+}

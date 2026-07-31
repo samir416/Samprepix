@@ -98,9 +98,14 @@ picture = oAuth2User.getAttribute("picture");
                 user.setName(name);
             }
 
-            if (picture != null && !picture.isBlank()) {
-                user.setProfilePicture(picture);
-            }
+           if ((user.getProfilePicture() == null || user.getProfilePicture().isBlank())
+        && picture != null
+        && !picture.isBlank()) {
+
+    user.setProfilePicture(picture);
+
+}
+
 
             if (user.getProvider() == AuthenticationProvider.EMAIL) {
 

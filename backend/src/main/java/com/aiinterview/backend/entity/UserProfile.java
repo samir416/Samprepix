@@ -45,9 +45,6 @@ public class UserProfile {
     @Column(length = 20)
     private String graduationYear;
 
-    @Column(length = 100)
-    private String currentRole;
-
     @Column(length = 150)
     private String currentCompany;
 
@@ -128,14 +125,6 @@ private String personalWebsite;
         this.journeyType = journeyType;
     }
 
-    public String getTargetRole() {
-        return targetRole;
-    }
-
-    public void setTargetRole(String targetRole) {
-        this.targetRole = targetRole;
-    }
-
     public String getExperienceLevel() {
     return experienceLevel;
 }
@@ -184,13 +173,13 @@ public void setExperienceLevel(String experienceLevel) {
         this.graduationYear = graduationYear;
     }
 
-    public String getCurrentRole() {
-        return currentRole;
-    }
+   public String getTargetRole() {
+    return targetRole;
+}
 
-    public void setCurrentRole(String currentRole) {
-        this.currentRole = currentRole;
-    }
+public void setTargetRole(String targetRole) {
+    this.targetRole = targetRole;
+}
 
     public String getCurrentCompany() {
         return currentCompany;

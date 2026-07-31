@@ -25,8 +25,6 @@ public class UserProfileRequest {
 
     private String graduationYear;
 
-    private String currentRole;
-
     private String currentCompany;
 
     private String phone;

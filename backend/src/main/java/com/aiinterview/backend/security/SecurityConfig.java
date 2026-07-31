@@ -89,6 +89,7 @@ public class SecurityConfig {
                                                                 "/api/auth/**",
                                                                 "/oauth2/**",
                                                                 "/login/oauth2/**",
+                                                                "/uploads/**",
                                                                 "/api/feedback/public",
                                                                 "/api/feedback/approve",
                                                                 "/api/feedback/reject")
@@ -103,5 +104,4 @@ public class SecurityConfig {
                 return http.build();
         }
 
-      
 }

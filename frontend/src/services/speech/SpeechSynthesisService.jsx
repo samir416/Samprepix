@@ -12,6 +12,8 @@ class SpeechSynthesisService {
 
         this.loadVoices();
 
+        this.onSpeakingStateChange = null;
+
     }
 
     loadVoices() {
@@ -89,7 +91,7 @@ class SpeechSynthesisService {
 
     }
 
-    speak(text) {
+    speak(text, onComplete = null) {
 
         console.log("Speaking :", text);
 
@@ -122,25 +124,46 @@ class SpeechSynthesisService {
 
             }
 
-            this.currentUtterance.lang = "en-US";
+           this.currentUtterance.lang = "en-US";
 
-            this.currentUtterance.rate = 1;
+this.currentUtterance.rate = 0.9;
 
-            this.currentUtterance.pitch = 1;
+this.currentUtterance.pitch = 0.95;
 
-            this.currentUtterance.volume = 1;
+this.currentUtterance.volume = 1;
 
-            this.currentUtterance.onstart = () => {
+          this.currentUtterance.onstart = () => {
 
-                console.log("Speech Started");
+    console.log("Speech Started");
 
-            };
+    if (this.onSpeakingStateChange) {
 
-            this.currentUtterance.onend = () => {
+        this.onSpeakingStateChange(true);
 
-                console.log("Speech Finished");
+    }
 
-            };
+};
+
+
+        this.currentUtterance.onend = () => {
+
+    console.log("Speech Finished");
+
+    if (this.onSpeakingStateChange) {
+
+        this.onSpeakingStateChange(false);
+
+    }
+
+    if (typeof onComplete === "function") {
+
+        onComplete();
+
+    }
+
+};
+
+
 
             this.currentUtterance.onerror = (event) => {
 
@@ -217,6 +240,12 @@ class SpeechSynthesisService {
    isSpeaking() {
 
     return this.synth.speaking || this.synth.paused;
+
+}
+
+setSpeakingStateListener(callback) {
+
+    this.onSpeakingStateChange = callback;
 
 }
 
