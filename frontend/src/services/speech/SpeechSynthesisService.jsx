@@ -132,34 +132,42 @@ this.currentUtterance.pitch = 0.95;
 
 this.currentUtterance.volume = 1;
 
-          this.currentUtterance.onstart = () => {
+     this.currentUtterance.onstart = () => {
 
     console.log("Speech Started");
 
     if (this.onSpeakingStateChange) {
 
-        this.onSpeakingStateChange(true);
+        requestAnimationFrame(() => {
+
+            this.onSpeakingStateChange(true);
+
+        });
 
     }
 
 };
 
 
-        this.currentUtterance.onend = () => {
+      this.currentUtterance.onend = () => {
 
     console.log("Speech Finished");
 
-    if (this.onSpeakingStateChange) {
+    setTimeout(() => {
 
-        this.onSpeakingStateChange(false);
+        if (this.onSpeakingStateChange) {
 
-    }
+            this.onSpeakingStateChange(false);
 
-    if (typeof onComplete === "function") {
+        }
 
-        onComplete();
+        if (typeof onComplete === "function") {
 
-    }
+            onComplete();
+
+        }
+
+    }, 600);
 
 };
 

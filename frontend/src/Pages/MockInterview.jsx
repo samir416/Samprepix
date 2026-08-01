@@ -14,8 +14,11 @@ import {
 import { startInterview, submitAnswer } from "../services/interviewService";
 import { submitFeedback } from "../services/feedbackService";
 import "../styles/mockInterview.css";
+import "../styles/AIOrb.css";
+import AIOrb from "./AIOrb";
 import { SpeechSynthesisService, SpeechRecognitionService } from "../services/speech";
 import FirstInterviewFeedbackModal from "../feedback/FirstInterviewFeedbackModal";
+
 
 export default function MockInterview() {
 
@@ -615,25 +618,13 @@ setAnswer("");
 
                     <div className="ai-orb-wrapper">
 
-                        <div
+                     <AIOrb
 
-    className={
+    speaking={isAiSpeaking}
 
-        isAiSpeaking
+    listening={isListening}
 
-            ? "ai-orb speaking"
-
-            : "ai-orb"
-
-    }
-
->
-
-                            <span>
-                                AI
-                            </span>
-
-                        </div>
+/>
 
                     </div>
 
