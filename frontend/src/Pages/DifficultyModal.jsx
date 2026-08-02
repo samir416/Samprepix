@@ -1,26 +1,21 @@
-import { FiCheck, FiX } from "react-icons/fi";
+import { FiCheck } from "react-icons/fi";
 import "../styles/difficultyModal.css";
 
 const difficulties = [
     {
         id: "easy",
-        title: "Easy",
-        subtitle: "Beginner Friendly Interview",
-        duration: "Approx. 8 - 10 Minutes"
+        title: "Easy"
     },
     {
         id: "medium",
-        title: "Medium",
-        subtitle: "Balanced Interview Experience",
-        duration: "Approx. 10 - 15 Minutes"
+        title: "Medium"
     },
     {
         id: "hard",
-        title: "Hard",
-        subtitle: "Advanced Level Challenge",
-        duration: "Approx. 15 - 20 Minutes"
+        title: "Hard"
     }
 ];
+
 
 export default function DifficultyModal({
     open,
@@ -45,12 +40,6 @@ export default function DifficultyModal({
                 onClick={(e) => e.stopPropagation()}
             >
 
-                <button
-                    className="difficulty-close"
-                    onClick={onClose}
-                >
-                    <FiX />
-                </button>
 
                 <div className="difficulty-header">
 
@@ -58,78 +47,45 @@ export default function DifficultyModal({
                         Choose Difficulty
                     </h2>
 
-                    <p>
-                        Select your preferred interview difficulty.
-                        This only affects question complexity.
-                    </p>
 
                 </div>
 
-                <div className="difficulty-list">
+               <div className="difficulty-segment">
 
-                    {
+    {
 
-                        difficulties.map((item) => (
+        difficulties.map((item) => (
 
-                            <div
+            <button
 
-                                key={item.id}
+                key={item.id}
 
-                                className={
-                                    selectedDifficulty === item.id
-                                        ? "difficulty-card active"
-                                        : "difficulty-card"
-                                }
+              className={
+selectedDifficulty === item.id
+? "difficulty-option active"
+: "difficulty-option"
+}
 
-                                onClick={() =>
-                                    setSelectedDifficulty(item.id)
-                                }
+                onClick={() =>
+                    setSelectedDifficulty(item.id)
+                }
 
-                            >
+            >
 
-                                <div className="difficulty-info">
+               <span>
 
-                                    <div className="difficulty-title">
+{item.title}
 
-                                        {item.title}
+</span>
 
-                                    </div>
+            </button>
 
-                                    <div className="difficulty-subtitle">
+        ))
 
-                                        {item.subtitle}
+    }
 
-                                    </div>
+</div>
 
-                                    <div className="difficulty-duration">
-
-                                        {item.duration}
-
-                                    </div>
-
-                                </div>
-
-                                {
-
-                                    selectedDifficulty === item.id && (
-
-                                        <div className="difficulty-check">
-
-                                            <FiCheck />
-
-                                        </div>
-
-                                    )
-
-                                }
-
-                            </div>
-
-                        ))
-
-                    }
-
-                </div>
 
                 <div className="difficulty-footer">
 
