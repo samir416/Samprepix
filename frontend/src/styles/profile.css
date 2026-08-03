@@ -483,6 +483,12 @@ body.dark-theme .profile-page-stat-card::after{
     transition:all var(--profile-transition);
 }
 
+.profile-page-skills-item{
+
+    grid-column:1 / -1;
+
+}
+
 .profile-page-info-item:hover{
     transform:translateY(-4px);
     border-color:rgba(99,102,241,.25);
@@ -625,6 +631,68 @@ body.dark-theme .profile-page-input,
 body.dark-theme .profile-page-select{
     background:var(--profile-surface);
     color:var(--profile-text);
+}
+
+body.dark-theme .profile-page-skills-input-wrapper{
+
+    background:var(--profile-surface-2);
+
+    border:1px solid var(--profile-border);
+
+}
+
+body.dark-theme .profile-page-skills-input-wrapper:hover{
+
+    background:var(--profile-surface-2);
+
+    border-color:rgba(99,102,241,.35);
+
+    transform:translateY(-2px);
+
+    box-shadow:var(--profile-shadow);
+
+}
+
+body.dark-theme .profile-page-skill-suggestions{
+
+    background:rgba(16,27,44,.96);
+
+    border:1px solid rgba(255,255,255,.08);
+
+}
+
+body.dark-theme .profile-page-skill-chip{
+
+    background:linear-gradient(
+
+        135deg,
+
+        rgba(99,102,241,.18),
+
+        rgba(6,182,212,.12)
+
+    );
+
+    border-color:rgba(99,102,241,.28);
+
+}
+
+body.dark-theme .profile-page-skill-chip button{
+
+    color:#cbd5e1;
+
+}
+
+body.dark-theme .profile-page-skill-chip button:hover{
+
+    color:#ef4444;
+
+}
+
+body.dark-theme .profile-page-skill-suggestion{
+
+    color:#f8fafc;
+
 }
 
 body.dark-theme .profile-page-select option{
@@ -996,9 +1064,47 @@ html{
 
 .profile-page-section{
 
-    margin-bottom:48px;
+    position:relative;
 
-    padding-bottom:8px;
+    margin-bottom:40px;
+
+    padding:28px;
+
+    border:1px solid var(--profile-border);
+
+    border-radius:24px;
+
+    background:var(--profile-surface);
+
+    box-shadow:var(--profile-shadow-sm);
+
+    transition:all var(--profile-transition);
+
+}
+
+.profile-page-section:hover{
+
+    transform:translateY(-4px);
+
+    border-color:rgba(99,102,241,.18);
+
+    box-shadow:
+
+        0 20px 40px rgba(15,23,42,.08),
+
+        0 8px 20px rgba(99,102,241,.08);
+
+}
+
+body.dark-theme .profile-page-section:hover{
+
+    border-color:rgba(99,102,241,.30);
+
+    box-shadow:
+
+        0 20px 45px rgba(0,0,0,.35),
+
+        0 0 0 1px rgba(99,102,241,.14);
 
 }
 
@@ -1079,6 +1185,327 @@ html{
 .image-crop-footer button:last-of-type {
     background: #4f7cff;
     color: white;
+}
+
+
+.profile-page-skills-wrapper{
+
+    position:relative;
+
+    width:100%;
+
+    margin-top:8px;
+
+}
+
+.profile-page-skills-input-wrapper{
+
+    position:relative;
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    align-items:center;
+
+    gap:10px;
+
+    width:100%;
+
+    min-height:54px;
+
+    padding:8px 12px;
+
+    border:1px solid var(--profile-border);
+
+    border-radius:16px;
+
+    background:var(--profile-surface);
+
+    transition:all var(--profile-transition);
+
+}
+
+.profile-page-skills-input-wrapper:hover{
+
+    border-color:rgba(99,102,241,.28);
+
+    box-shadow:0 8px 22px rgba(15,23,42,.05);
+
+}
+
+.profile-page-skills-input-wrapper:focus-within{
+
+    border-color:var(--profile-primary);
+
+    box-shadow:
+
+        0 0 0 4px rgba(99,102,241,.12),
+
+        0 10px 25px rgba(99,102,241,.08);
+
+}
+
+.profile-page-skill-input{
+
+    flex:1;
+
+    min-width:180px;
+
+    height:36px;
+
+    border:none;
+
+    outline:none;
+
+    background:transparent;
+
+    color:var(--profile-text);
+
+    font-size:15px;
+
+    font-weight:500;
+
+    padding:0 4px;
+
+}
+
+.profile-page-skill-input::placeholder{
+
+    color:var(--profile-text-light);
+
+}
+
+.profile-page-skill-input:disabled{
+
+    cursor:not-allowed;
+
+    opacity:.6;
+
+}
+
+.profile-page-skill-chip{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    height:34px;
+
+    padding:0 12px;
+
+    border-radius:999px;
+
+    background:rgba(99,102,241,.08);
+
+    border:1px solid rgba(99,102,241,.15);
+
+    color:var(--profile-text);
+
+    font-size:13px;
+
+    font-weight:600;
+
+    transition:all var(--profile-transition);
+
+}
+
+.profile-page-skill-chip:hover{
+
+    border-color:rgba(99,102,241,.28);
+
+    background:rgba(99,102,241,.12);
+
+}
+
+.profile-page-skill-chip.readonly{
+
+    cursor:default;
+
+}
+
+.profile-page-skill-chip button{
+
+    width:18px;
+
+    height:18px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:none;
+
+    color:var(--profile-text-light);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.profile-page-skill-chip button:hover{
+
+    color:#ef4444;
+
+    transform:rotate(90deg);
+
+}
+
+.profile-page-skill-suggestions{
+
+    position:absolute;
+
+    top:calc(100% + 8px);
+
+    left:0;
+
+    width:100%;
+
+    max-height:240px;
+
+    overflow-y:auto;
+
+    background:var(--profile-surface);
+
+    border:1px solid var(--profile-border);
+
+    border-radius:16px;
+
+    box-shadow:var(--profile-shadow);
+
+    padding:8px;
+
+    z-index:50;
+
+    animation:profileSkillDropdown .2s ease;
+
+}
+
+.profile-page-skill-suggestion{
+
+    width:100%;
+
+    display:flex;
+
+    align-items:center;
+
+    padding:12px 14px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:none;
+
+    color:var(--profile-text);
+
+    text-align:left;
+
+    cursor:pointer;
+
+    transition:all var(--profile-transition);
+
+}
+
+.profile-page-skill-suggestion:hover,
+
+.profile-page-skill-suggestion.active{
+
+    background:rgba(99,102,241,.08);
+
+    color:var(--profile-primary);
+
+}
+
+.profile-page-skills-preview{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:10px;
+
+}
+
+.profile-page-skills-empty{
+
+    width:100%;
+
+    min-height:54px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:16px;
+
+    color:var(--profile-text-light);
+
+    background:var(--profile-surface-2);
+
+    font-weight: 700;
+
+    font-size: 13px;
+    
+    text-transform: uppercase;
+
+}
+
+body.dark-theme .profile-page-skills-input-wrapper{
+
+    background:var(--profile-surface);
+
+}
+
+body.dark-theme .profile-page-skills-input-wrapper:hover{
+
+    border-color:rgba(99,102,241,.35);
+
+}
+
+body.dark-theme .profile-page-skill-suggestions{
+
+    background:var(--profile-surface);
+
+}
+
+body.dark-theme .profile-page-skill-chip{
+
+    background:rgba(99,102,241,.16);
+
+    border-color:rgba(99,102,241,.24);
+
+}
+
+@keyframes profileSkillDropdown{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(-6px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
 }
 
 @keyframes cropFade {
