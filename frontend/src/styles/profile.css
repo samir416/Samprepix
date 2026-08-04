@@ -834,6 +834,64 @@ body.dark-theme .profile-page-select:disabled{
         padding:18px;
     }
 
+    .profile-page-section{
+
+    overflow:visible;
+
+}
+
+.profile-page-info-item{
+
+    overflow:visible;
+
+}
+
+.profile-page-skills-item{
+
+    position:relative;
+
+    overflow:visible;
+
+    z-index:500;
+
+}
+
+.profile-page-skills-wrapper{
+
+    position:relative;
+
+    overflow:visible;
+
+    isolation:isolate;
+
+}
+
+.profile-page-skill-suggestions{
+
+    position:absolute;
+
+    top:calc(100% + 4px);
+
+    left:0;
+
+    right:0;
+
+    width:100%;
+
+    height:220px;
+
+    max-height:220px;
+
+    z-index:99999;
+
+    box-shadow:
+
+        0 24px 70px rgba(15,23,42,.18),
+
+        0 8px 20px rgba(15,23,42,.08);
+
+}
+
 }
 
 @media (max-width:576px){
@@ -847,10 +905,14 @@ body.dark-theme .profile-page-select:disabled{
     }
 
     .profile-page-hero{
-        margin-top:-55px;
-        gap:20px;
-        padding:0 15px 20px;
-    }
+
+    margin-top:-62px;
+
+    gap:12px;
+
+    padding:0 15px 8px;
+
+}
 
     .profile-page-avatar-large{
         width:110px;
@@ -891,6 +953,68 @@ body.dark-theme .profile-page-select:disabled{
         height:48px;
         font-size:14px;
     }
+
+
+    .profile-page-section{
+
+    overflow:visible;
+
+}
+
+.profile-page-info-item{
+
+    overflow:visible;
+
+}
+
+.profile-page-skills-item{
+
+    position:relative;
+
+    overflow:visible;
+
+    z-index:1000;
+
+}
+
+.profile-page-skills-wrapper{
+
+    position:relative;
+
+    overflow:visible;
+
+    isolation:isolate;
+
+}
+
+.profile-page-skill-suggestions{
+
+    position:fixed;
+
+    left:12px;
+
+    right:12px;
+
+    bottom:16px;
+
+    top:auto;
+
+    width:auto;
+
+    height:260px;
+
+    max-height:260px;
+
+    border-radius:22px;
+
+    z-index:999999;
+
+    box-shadow:
+
+        0 30px 80px rgba(15,23,42,.25);
+
+}
+
 
 }
 
@@ -1370,9 +1494,17 @@ body.dark-theme .profile-page-section:hover{
 
     width:100%;
 
-    max-height:240px;
+height:216px;
 
-    overflow-y:auto;
+overflow-y:auto;
+
+overflow-x:hidden;
+
+scroll-behavior:smooth;
+
+scroll-padding-block:72px;
+
+overscroll-behavior:contain;
 
     background:var(--profile-surface);
 
@@ -1382,7 +1514,7 @@ body.dark-theme .profile-page-section:hover{
 
     box-shadow:var(--profile-shadow);
 
-    padding:8px;
+    padding:10px;
 
     z-index:50;
 
@@ -1398,11 +1530,11 @@ body.dark-theme .profile-page-section:hover{
 
     align-items:center;
 
-    padding:12px 14px;
+    padding:16px 18px;
 
     border:none;
 
-    border-radius:12px;
+    border-radius:14px;
 
     background:none;
 
@@ -1414,15 +1546,50 @@ body.dark-theme .profile-page-section:hover{
 
     transition:all var(--profile-transition);
 
+    min-height:58px;
+
+    margin-bottom:6px;
+
+
 }
 
 .profile-page-skill-suggestion:hover,
 
 .profile-page-skill-suggestion.active{
 
-    background:rgba(99,102,241,.08);
+    background:rgba(99,102,241,.12);
 
-    color:var(--profile-primary);
+color:var(--profile-primary);
+
+transform:translateX(6px);
+
+font-weight:700;
+
+}
+
+.profile-page-skill-suggestions::-webkit-scrollbar{
+
+    width:8px;
+
+}
+
+.profile-page-skill-suggestions::-webkit-scrollbar-track{
+
+    background:transparent;
+
+}
+
+.profile-page-skill-suggestions::-webkit-scrollbar-thumb{
+
+    background:rgba(99,102,241,.45);
+
+    border-radius:999px;
+
+}
+
+.profile-page-skill-suggestions::-webkit-scrollbar-thumb:hover{
+
+    background:rgba(99,102,241,.70);
 
 }
 

@@ -85,3 +85,38 @@ export const removeProfilePicture = async () => {
 
 };
 
+
+export const getSkillSuggestions = async (role, query, signal) => {
+
+    const token = localStorage.getItem("token");
+
+    const response = await axios.get(
+
+        `${API}/skills/suggestions`,
+
+        {
+
+            params: {
+
+                role,
+
+                query
+
+            },
+
+            signal,
+
+            headers: {
+
+                Authorization: `Bearer ${token}`
+
+            }
+
+        }
+
+    );
+
+    return response.data;
+
+};
+

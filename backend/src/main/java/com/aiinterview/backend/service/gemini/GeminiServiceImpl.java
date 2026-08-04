@@ -1,10 +1,13 @@
 package com.aiinterview.backend.service.gemini;
 
+import com.aiinterview.backend.dto.ai.SkillSuggestionResponse;
 import com.aiinterview.backend.dto.gemini.Candidate;
 import com.aiinterview.backend.dto.gemini.Content;
 import com.aiinterview.backend.dto.gemini.GeminiRequest;
 import com.aiinterview.backend.dto.gemini.GeminiResponse;
 import com.aiinterview.backend.dto.gemini.Part;
+import com.aiinterview.backend.service.ai.PromptBuilder;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -14,6 +17,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class GeminiServiceImpl implements GeminiService {
@@ -85,6 +89,29 @@ public class GeminiServiceImpl implements GeminiService {
         return callGemini(prompt);
     }
 
+   @Override
+public List<String> generateSkillSuggestions(
+
+        String role,
+
+        String query
+
+) {
+
+    String prompt = PromptBuilder.buildSkillSuggestionPrompt(
+
+            role,
+
+            query
+
+    );
+
+    String response = callGemini(prompt);
+
+    return parseSkillSuggestions(response);
+
+}
+
         @Override
     public int extractScore(String evaluation) {
 
@@ -103,6 +130,10 @@ public class GeminiServiceImpl implements GeminiService {
 
         return 0;
     }
+
+   private static final ObjectMapper OBJECT_MAPPER =
+
+        new ObjectMapper();
 
   private String callGemini(String prompt) {
 
@@ -156,6 +187,50 @@ return extractResponse(response);
         e.printStackTrace();
         throw new RuntimeException(e);
     }
+}
+
+private java.util.List<String> parseSkillSuggestions(
+
+        String json
+
+) {
+
+    try {
+
+    
+
+        SkillSuggestionResponse response =
+
+        OBJECT_MAPPER.readValue(
+
+                json,
+
+                SkillSuggestionResponse.class
+
+        );
+
+        if (
+
+                response.getSkills() == null
+
+        ) {
+
+            return java.util.Collections.emptyList();
+
+        }
+
+        return response.getSkills();
+
+    }
+
+    catch (Exception exception) {
+
+        exception.printStackTrace();
+
+        return java.util.Collections.emptyList();
+
+    }
+
 }
 
         private String extractResponse(GeminiResponse response) {

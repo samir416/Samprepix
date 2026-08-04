@@ -47,4 +47,7 @@ public class UserProfileRequest {
 
     private String dateOfBirth;
 
+    private java.util.List<String> skills;
+
+    
 }

@@ -38,6 +38,8 @@ private String employmentType;
 
 private String dateOfBirth;
 
+private java.util.List<String> skills;
+
     public String getName() {
         return name;
     }
@@ -217,6 +219,22 @@ public void setEmploymentType(String employmentType) {
 
 public String getDateOfBirth() {
     return dateOfBirth;
+}
+
+public java.util.List<String> getSkills() {
+
+    return skills;
+
+}
+
+public void setSkills(
+
+        java.util.List<String> skills
+
+) {
+
+    this.skills = skills;
+
 }
 
 public void setDateOfBirth(String dateOfBirth) {

@@ -78,6 +78,20 @@ private String personalWebsite;
     @Column(length = 255)
     private String portfolioUrl;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+
+@CollectionTable(
+
+        name = "user_profile_skills",
+
+        joinColumns = @JoinColumn(name = "profile_id")
+
+)
+
+@Column(name = "skill")
+
+private java.util.List<String> skills = new java.util.ArrayList<>();
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -270,6 +284,22 @@ public void setPersonalWebsite(String personalWebsite) {
     public void setPortfolioUrl(String portfolioUrl) {
         this.portfolioUrl = portfolioUrl;
     }
+
+    public java.util.List<String> getSkills() {
+
+    return skills;
+
+}
+
+public void setSkills(
+
+        java.util.List<String> skills
+
+) {
+
+    this.skills = skills;
+
+}
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

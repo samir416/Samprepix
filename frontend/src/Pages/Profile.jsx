@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     getProfile,
     updateProfile,
     uploadProfilePicture,
     removeProfilePicture,
+    getSkillSuggestions
 } from "../services/profileService";
 
 import {
@@ -63,6 +64,16 @@ export default function Profile() {
     const [activeSkillIndex, setActiveSkillIndex] = useState(-1);
 
     const [skillValidation, setSkillValidation] = useState("");
+
+    const [isSkillLoading, setIsSkillLoading] = useState(false);
+
+    const [skillSearchTimer, setSkillSearchTimer] = useState(null);
+
+    const [skillAbortController, setSkillAbortController] = useState(null);
+
+    const activeSuggestionRef = useRef(null);
+
+    const skillCache = useRef(new Map());
 
     const [formData, setFormData] = useState({
 
@@ -202,6 +213,7 @@ export default function Profile() {
 
                 const storedUser = localStorage.getItem("user");
 
+
                 if (storedUser) {
 
                     const parsedUser = JSON.parse(storedUser);
@@ -268,6 +280,28 @@ export default function Profile() {
         loadUser();
 
     }, []);
+
+    useEffect(() => {
+
+    return () => {
+
+        if (skillAbortController) {
+
+            skillAbortController.abort();
+
+        }
+
+        if (skillSearchTimer) {
+
+            clearTimeout(skillSearchTimer);
+
+        }
+
+    };
+
+}, [skillAbortController, skillSearchTimer]);
+
+
 
     useEffect(() => {
 
@@ -405,11 +439,110 @@ export default function Profile() {
 
         }
 
-        setSkillInput(e.target.value);
 
-        setShowSkillSuggestions(true);
+        const value = e.target.value;
+
+        const cacheKey =
+    `${formData.targetRole}_${value.trim().toLowerCase()}`;
+
+        setSkillInput(value);
 
         setActiveSkillIndex(-1);
+
+        if (skillSearchTimer) {
+
+            clearTimeout(skillSearchTimer);
+
+        }
+
+        if (value.trim().length < 2) {
+
+            setSkillSuggestions([]);
+
+            setShowSkillSuggestions(false);
+
+            setIsSkillLoading(false);
+
+            return;
+
+        }
+
+
+        if (skillCache.current.has(cacheKey)) {
+
+    setSkillSuggestions(
+        skillCache.current.get(cacheKey)
+    );
+
+    setShowSkillSuggestions(true);
+
+    setIsSkillLoading(false);
+
+    return;
+}
+
+
+        setIsSkillLoading(true);
+
+        const timer = setTimeout(async () => {
+
+          try {
+
+    if (skillAbortController) {
+
+        skillAbortController.abort();
+
+    }
+
+    const controller = new AbortController();
+
+    setSkillAbortController(controller);
+
+    const suggestions = await getSkillSuggestions(
+
+        formData.targetRole,
+
+        value,
+
+        controller.signal
+
+    );
+
+    skillCache.current.set(
+    cacheKey,
+    suggestions
+);
+
+
+    setSkillSuggestions(suggestions);
+
+    setShowSkillSuggestions(true);
+
+}
+
+catch (error) {
+
+    if (error.name !== "CanceledError") {
+
+        console.error(error);
+
+        setSkillSuggestions([]);
+
+        setShowSkillSuggestions(false);
+
+    }
+
+}
+
+finally {
+
+    setIsSkillLoading(false);
+
+}
+
+        }, 300);
+
+        setSkillSearchTimer(timer);
 
     };
 
@@ -559,6 +692,36 @@ export default function Profile() {
 
     };
 
+
+   useEffect(() => {
+
+    if (!showSkillSuggestions) {
+
+        return;
+
+    }
+
+    requestAnimationFrame(() => {
+
+        activeSuggestionRef.current?.scrollIntoView({
+
+            behavior: "smooth",
+
+            block: "center",
+
+            inline: "nearest"
+
+        });
+
+    });
+
+}, [
+
+    activeSkillIndex,
+
+    showSkillSuggestions
+
+]);
 
 
     const handleChange = (e) => {
@@ -990,6 +1153,20 @@ export default function Profile() {
             };
 
             setUser(updatedUser);
+
+            setSelectedSkills(
+
+    updatedUser.skills || []
+
+);
+
+setFormData(prev => ({
+
+    ...prev,
+
+    skills: updatedUser.skills || []
+
+}));
 
             localStorage.setItem(
                 "user",
@@ -2601,38 +2778,97 @@ export default function Profile() {
 
                                                     {
 
-                                                        selectedSkills.map((skill) => (
+    showSkillSuggestions && (
 
-                                                            <div
-                                                                key={skill}
-                                                                className="profile-page-skill-chip"
-                                                            >
+        <div className="profile-page-skill-suggestions">
 
-                                                                <span>
+            {
 
-                                                                    {skill}
+                isSkillLoading ? (
 
-                                                                </span>
+                    <div className="profile-page-skill-loading">
 
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleSkillRemove(skill)
-                                                                    }
-                                                                >
+                        Searching skills...
 
-                                                                    ×
+                    </div>
 
-                                                                </button>
+                ) : skillSuggestions.length === 0 ? (
 
-                                                            </div>
+                    <div className="profile-page-skill-empty">
 
-                                                        ))
+                        No matching skills found.
 
-                                                    }
+                    </div>
 
-                                                    <input
-                                                        type="text"
+                ) : (
+
+                    skillSuggestions.map((skill, index) => (
+
+                        <button
+                            ref={
+                                index === activeSkillIndex
+                                    ? activeSuggestionRef
+                                    : null
+                            }
+                            key={skill}
+                            type="button"
+                            className={
+                                index === activeSkillIndex
+                                    ? "profile-page-skill-suggestion active"
+                                    : "profile-page-skill-suggestion"
+                            }
+                            onMouseDown={(e) => {
+
+                                e.preventDefault();
+
+                                handleSkillSelect(skill);
+
+                            }}
+                        >
+
+                            {skill}
+
+                        </button>
+
+                    ))
+
+                )
+
+            }
+
+        </div>
+
+    )
+
+}
+
+{
+
+    selectedSkills.map((skill) => (
+
+        <div
+            key={skill}
+            className="profile-page-skill-chip"
+        >
+
+            <span>{skill}</span>
+
+            <button
+                type="button"
+                onClick={() => handleSkillRemove(skill)}
+            >
+
+                ×
+
+            </button>
+
+        </div>
+
+    ))
+
+}
+
+<input                                                        type="text"
                                                         value={skillInput}
                                                         onChange={handleSkillInputChange}
                                                         onKeyDown={handleSkillKeyDown}
@@ -2665,9 +2901,17 @@ export default function Profile() {
 
                                                         className="profile-page-skill-input"
                                                         placeholder={
-                                                            formData.targetRole
-                                                                ? "Search and add skills..."
-                                                                : "Select target role first"
+
+                                                            !formData.targetRole
+
+                                                                ? "Select target role first"
+
+                                                                : isSkillLoading
+
+                                                                    ? "Searching skills..."
+
+                                                                    : "Search technical skills"
+
                                                         }
                                                         disabled={!formData.targetRole.trim()}
                                                         autoComplete="off"
@@ -2679,27 +2923,88 @@ export default function Profile() {
 
                                                     {
 
-                                                        showSkillSuggestions &&
-
-                                                        skillSuggestions.length > 0 && (
+                                                        showSkillSuggestions && (
 
                                                             <div className="profile-page-skill-suggestions">
 
                                                                 {
 
+                                                                    isSkillLoading && (
+
+                                                                        <div className="profile-page-skill-loading">
+
+                                                                            Searching skills...
+
+                                                                        </div>
+
+                                                                    )
+
+                                                                }
+
+                                                                {
+
+                                                                    !isSkillLoading &&
+
+                                                                    skillSuggestions.length === 0 && (
+
+                                                                        <div className="profile-page-skill-empty">
+
+                                                                            No matching skills found.
+
+                                                                        </div>
+
+                                                                    )
+
+                                                                }
+
+                                                                {
+
+                                                                    !isSkillLoading &&
+
                                                                     skillSuggestions.map((skill, index) => (
 
                                                                         <button
-                                                                            key={skill}
+
+    ref={
+
+        index === activeSkillIndex
+
+            ?
+
+            activeSuggestionRef
+
+            :
+
+            null
+
+    }
+
+    key={skill}
+
                                                                             type="button"
+
                                                                             className={
+
                                                                                 index === activeSkillIndex
-                                                                                    ? "profile-page-skill-suggestion active"
-                                                                                    : "profile-page-skill-suggestion"
+
+                                                                                    ?
+
+                                                                                    "profile-page-skill-suggestion active"
+
+                                                                                    :
+
+                                                                                    "profile-page-skill-suggestion"
+
                                                                             }
-                                                                            onClick={() =>
-                                                                                handleSkillSelect(skill)
-                                                                            }
+
+                                                                            onMouseDown={(e) => {
+
+    e.preventDefault();
+
+    handleSkillSelect(skill);
+
+}}
+
                                                                         >
 
                                                                             {skill}
@@ -2716,7 +3021,7 @@ export default function Profile() {
 
                                                     }
 
-                                                    {
+                                                                                                        {
 
                                                         skillValidation && (
 
@@ -2774,57 +3079,57 @@ export default function Profile() {
                                     }
 
                                 </div>
-                                </div>
-                                </div>
+                            </div>
+                        </div>
 
-                            </>
+                    </>
 
-                        </form>
-
-                    </div>
-
-                    <ImageCropModal
-                        isOpen={isCropOpen}
-                        image={cropImage}
-                        onClose={() => {
-                            if (cropImage) {
-                                URL.revokeObjectURL(cropImage);
-                            }
-                            setCropImage(null);
-
-                            setOriginalImageFile(null);
-
-                            setIsCropOpen(false);
-
-                        }}
-                        onSave={(file) => {
-
-                            const preview = URL.createObjectURL(file);
-
-                            setSelectedFile(file);
-
-                            setSelectedImage(preview);
-
-                            setHasChanges(true);
-
-                            setImageError(false);
-
-                            if (cropImage) {
-                                URL.revokeObjectURL(cropImage);
-                            }
-
-                            setCropImage(null);
-
-                            setOriginalImageFile(null);
-
-                            setIsCropOpen(false);
-
-                        }}
-                    />
+                </form>
 
             </div>
 
-            );
+            <ImageCropModal
+                isOpen={isCropOpen}
+                image={cropImage}
+                onClose={() => {
+                    if (cropImage) {
+                        URL.revokeObjectURL(cropImage);
+                    }
+                    setCropImage(null);
+
+                    setOriginalImageFile(null);
+
+                    setIsCropOpen(false);
+
+                }}
+                onSave={(file) => {
+
+                    const preview = URL.createObjectURL(file);
+
+                    setSelectedFile(file);
+
+                    setSelectedImage(preview);
+
+                    setHasChanges(true);
+
+                    setImageError(false);
+
+                    if (cropImage) {
+                        URL.revokeObjectURL(cropImage);
+                    }
+
+                    setCropImage(null);
+
+                    setOriginalImageFile(null);
+
+                    setIsCropOpen(false);
+
+                }}
+            />
+
+        </div>
+
+    );
 
 
 }

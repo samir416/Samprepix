@@ -14,4 +14,12 @@ public interface GeminiService {
     );
 
     int extractScore(String evaluation);
+
+    java.util.List<String> generateSkillSuggestions(
+
+        String role,
+
+        String query
+
+);
 }

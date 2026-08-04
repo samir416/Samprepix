@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.aiinterview.backend.model.UserProfileRequest;
 import com.aiinterview.backend.model.UserProfileResponse;
 import org.springframework.http.ResponseEntity;
+import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -80,6 +81,30 @@ public ResponseEntity<Void> removeProfilePicture(
             authentication.getName());
 
     return ResponseEntity.noContent().build();
+}
+
+
+@GetMapping("/skills/suggestions")
+public ResponseEntity<List<String>> getSkillSuggestions(
+
+        @RequestParam String role,
+
+        @RequestParam String query
+
+) {
+
+    return ResponseEntity.ok(
+
+            userProfileService.getSkillSuggestions(
+
+                    role,
+
+                    query
+
+            )
+
+    );
+
 }
 
 }

@@ -107,4 +107,80 @@ Question:
 Answer:
 """ + answer;
     }
+
+
+  public static String buildSkillSuggestionPrompt(
+
+        String role,
+
+        String query
+
+) {
+
+    return """
+You are a senior software architect, technical interviewer and hiring manager.
+
+Your task is to suggest technical skills only.
+
+Rules:
+
+1. Return ONLY valid JSON.
+2. Never return Markdown.
+3. Never return explanations.
+4. Never return numbering.
+5. Maximum 10 skills.
+6. Ignore unrelated technologies.
+7. Skills must match the target role.
+8. Predict incomplete user input.
+
+Examples
+
+Role:
+Java Full Stack Developer
+
+Search:
+spr
+
+Result
+
+{
+"skills":[
+"Spring Boot",
+"Spring Security",
+"Spring MVC",
+"Spring Data JPA",
+"Spring Cloud"
+]
+}
+
+Role:
+React Developer
+
+Search:
+rea
+
+Result
+
+{
+"skills":[
+"React",
+"React Router",
+"React Query",
+"React Hook Form"
+]
+}
+
+Now generate response.
+
+Role:
+
+""" + role + """
+
+User Search:
+
+""" + query;
+
+}
+
+
 }
