@@ -42,6 +42,8 @@ export default function Profile() {
 
     const [hasChanges, setHasChanges] = useState(false);
 
+    const [originalProfile, setOriginalProfile] = useState(null);
+
     const [errors, setErrors] = useState({});
 
     const [imageError, setImageError] = useState(false);
@@ -52,6 +54,8 @@ export default function Profile() {
         type: "",
         text: ""
     });
+
+    const [showDiscardModal, setShowDiscardModal] = useState(false);
 
     const [selectedSkills, setSelectedSkills] = useState([]);
 
@@ -150,6 +154,15 @@ export default function Profile() {
                 );
 
                 setUser(currentUser);
+
+                setOriginalProfile({
+
+                    ...currentUser,
+
+                    skills: currentUser.skills || []
+
+                });
+
                 setImageError(false);
 
                 setFormData({
@@ -220,6 +233,14 @@ export default function Profile() {
 
                     setUser(parsedUser);
 
+setOriginalProfile({
+
+    ...parsedUser,
+
+    skills: parsedUser.skills || []
+
+});
+
                     setFormData({
 
                         name: parsedUser.name || "",
@@ -283,23 +304,23 @@ export default function Profile() {
 
     useEffect(() => {
 
-    return () => {
+        return () => {
 
-        if (skillAbortController) {
+            if (skillAbortController) {
 
-            skillAbortController.abort();
+                skillAbortController.abort();
 
-        }
+            }
 
-        if (skillSearchTimer) {
+            if (skillSearchTimer) {
 
-            clearTimeout(skillSearchTimer);
+                clearTimeout(skillSearchTimer);
 
-        }
+            }
 
-    };
+        };
 
-}, [skillAbortController, skillSearchTimer]);
+    }, [skillAbortController, skillSearchTimer]);
 
 
 
@@ -334,6 +355,69 @@ export default function Profile() {
         };
 
     }, [hasChanges]);
+
+
+    const checkForChanges = (updatedForm, updatedSkills = selectedSkills) => {
+
+    if (!originalProfile) {
+
+        return false;
+
+    }
+
+    const normalize = (value) =>
+
+        value === null || value === undefined
+            ? ""
+            : String(value).trim();
+
+    const changed =
+
+        normalize(updatedForm.targetRole) !== normalize(originalProfile.targetRole) ||
+
+        normalize(updatedForm.experienceLevel) !== normalize(originalProfile.experienceLevel) ||
+
+        normalize(updatedForm.phone) !== normalize(originalProfile.phone) ||
+
+        normalize(updatedForm.gender) !== normalize(originalProfile.gender) ||
+
+        normalize(updatedForm.githubUrl) !== normalize(originalProfile.githubUrl) ||
+
+        normalize(updatedForm.linkedinUrl) !== normalize(originalProfile.linkedinUrl) ||
+
+        normalize(updatedForm.portfolioUrl) !== normalize(originalProfile.portfolioUrl) ||
+
+        normalize(updatedForm.personalWebsite) !== normalize(originalProfile.personalWebsite) ||
+
+        normalize(updatedForm.dateOfBirth) !== normalize(originalProfile.dateOfBirth) ||
+
+        normalize(updatedForm.careerGoal) !== normalize(originalProfile.careerGoal) ||
+
+        normalize(updatedForm.journeyType) !== normalize(originalProfile.journeyType) ||
+
+        normalize(updatedForm.collegeName) !== normalize(originalProfile.college) ||
+
+        normalize(updatedForm.degree) !== normalize(originalProfile.course) ||
+
+        normalize(updatedForm.graduationYear) !== normalize(originalProfile.graduationYear) ||
+
+        normalize(updatedForm.currentCompany) !== normalize(originalProfile.currentCompany) ||
+
+        normalize(updatedForm.university) !== normalize(originalProfile.university) ||
+
+        normalize(updatedForm.designation) !== normalize(originalProfile.designation) ||
+
+        normalize(updatedForm.employmentType) !== normalize(originalProfile.employmentType) ||
+
+        normalize(updatedForm.yearsOfExperience) !== normalize(originalProfile.yearsOfExperience) ||
+
+        JSON.stringify(updatedSkills) !==
+
+        JSON.stringify(originalProfile.skills || []);
+
+    setHasChanges(changed);
+
+};
 
 
     const avatarLetter =
@@ -443,7 +527,7 @@ export default function Profile() {
         const value = e.target.value;
 
         const cacheKey =
-    `${formData.targetRole}_${value.trim().toLowerCase()}`;
+            `${formData.targetRole}_${value.trim().toLowerCase()}`;
 
         setSkillInput(value);
 
@@ -470,75 +554,75 @@ export default function Profile() {
 
         if (skillCache.current.has(cacheKey)) {
 
-    setSkillSuggestions(
-        skillCache.current.get(cacheKey)
-    );
+            setSkillSuggestions(
+                skillCache.current.get(cacheKey)
+            );
 
-    setShowSkillSuggestions(true);
+            setShowSkillSuggestions(true);
 
-    setIsSkillLoading(false);
+            setIsSkillLoading(false);
 
-    return;
-}
+            return;
+        }
 
 
         setIsSkillLoading(true);
 
         const timer = setTimeout(async () => {
 
-          try {
+            try {
 
-    if (skillAbortController) {
+                if (skillAbortController) {
 
-        skillAbortController.abort();
+                    skillAbortController.abort();
 
-    }
+                }
 
-    const controller = new AbortController();
+                const controller = new AbortController();
 
-    setSkillAbortController(controller);
+                setSkillAbortController(controller);
 
-    const suggestions = await getSkillSuggestions(
+                const suggestions = await getSkillSuggestions(
 
-        formData.targetRole,
+                    formData.targetRole,
 
-        value,
+                    value,
 
-        controller.signal
+                    controller.signal
 
-    );
+                );
 
-    skillCache.current.set(
-    cacheKey,
-    suggestions
-);
+                skillCache.current.set(
+                    cacheKey,
+                    suggestions
+                );
 
 
-    setSkillSuggestions(suggestions);
+                setSkillSuggestions(suggestions);
 
-    setShowSkillSuggestions(true);
+                setShowSkillSuggestions(true);
 
-}
+            }
 
-catch (error) {
+            catch (error) {
 
-    if (error.name !== "CanceledError") {
+                if (error.name !== "CanceledError") {
 
-        console.error(error);
+                    console.error(error);
 
-        setSkillSuggestions([]);
+                    setSkillSuggestions([]);
 
-        setShowSkillSuggestions(false);
+                    setShowSkillSuggestions(false);
 
-    }
+                }
 
-}
+            }
 
-finally {
+            finally {
 
-    setIsSkillLoading(false);
+                setIsSkillLoading(false);
 
-}
+            }
 
         }, 300);
 
@@ -556,69 +640,70 @@ finally {
 
         setSelectedSkills(updatedSkills);
 
-        setFormData({
+       const updatedForm = {
 
-            ...formData,
+    ...formData,
 
-            skills: updatedSkills
+    skills: updatedSkills
 
-        });
+};
 
-        setHasChanges(true);
+setFormData(updatedForm);
+
+checkForChanges(updatedForm, updatedSkills);
         setSkillValidation("");
 
     };
 
     const handleSkillSelect = (skill) => {
 
-        if (selectedSkills.length >= 10) {
+    if (selectedSkills.length >= 10) {
 
-            showSkillMessage(
+        showSkillMessage(
+            "You can add up to 10 skills."
+        );
 
-                "You can add up to 10 skills."
+        return;
 
-            );
+    }
 
-            return;
+    if (selectedSkills.includes(skill)) {
 
-        }
+        return;
 
-        if (selectedSkills.includes(skill)) {
+    }
 
-            return;
+    const updatedSkills = [
 
-        }
+        ...selectedSkills,
 
-        const updatedSkills = [
+        skill
 
-            ...selectedSkills,
+    ];
 
-            skill
+    const updatedForm = {
 
-        ];
+        ...formData,
 
-        setSelectedSkills(updatedSkills);
-
-        setFormData({
-
-            ...formData,
-
-            skills: updatedSkills
-
-        });
-
-        setSkillInput("");
-
-        setShowSkillSuggestions(false);
-
-        setSkillSuggestions([]);
-
-        setActiveSkillIndex(-1);
-
-        setHasChanges(true);
+        skills: updatedSkills
 
     };
 
+    setSelectedSkills(updatedSkills);
+
+    setFormData(updatedForm);
+
+    checkForChanges(updatedForm, updatedSkills);
+
+    setSkillInput("");
+
+    setShowSkillSuggestions(false);
+
+    setSkillSuggestions([]);
+
+    setActiveSkillIndex(-1);
+
+};
 
     const handleSkillKeyDown = (e) => {
 
@@ -693,35 +778,35 @@ finally {
     };
 
 
-   useEffect(() => {
+    useEffect(() => {
 
-    if (!showSkillSuggestions) {
+        if (!showSkillSuggestions) {
 
-        return;
+            return;
 
-    }
+        }
 
-    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
 
-        activeSuggestionRef.current?.scrollIntoView({
+            activeSuggestionRef.current?.scrollIntoView({
 
-            behavior: "smooth",
+                behavior: "smooth",
 
-            block: "center",
+                block: "center",
 
-            inline: "nearest"
+                inline: "nearest"
+
+            });
 
         });
 
-    });
+    }, [
 
-}, [
+        activeSkillIndex,
 
-    activeSkillIndex,
+        showSkillSuggestions
 
-    showSkillSuggestions
-
-]);
+    ]);
 
 
     const handleChange = (e) => {
@@ -736,9 +821,9 @@ finally {
 
         };
 
-        setFormData(updatedForm);
+       setFormData(updatedForm);
 
-        setHasChanges(true);
+checkForChanges(updatedForm);
 
         const newErrors = {
 
@@ -1154,20 +1239,69 @@ finally {
 
             setUser(updatedUser);
 
-            setSelectedSkills(
+setOriginalProfile({
+
+    ...updatedUser,
+
+    skills: updatedUser.skills || []
+
+});
+
+setSelectedSkills(
 
     updatedUser.skills || []
 
 );
 
-setFormData(prev => ({
+setFormData({
 
-    ...prev,
+    name: updatedUser.name || "",
 
-    skills: updatedUser.skills || []
+    username: updatedUser.username || "",
 
-}));
+    email: updatedUser.email || "",
 
+    journeyType: updatedUser.journeyType || "",
+
+    targetRole: updatedUser.targetRole || "",
+
+    experienceLevel: updatedUser.experienceLevel || "",
+
+    collegeName: updatedUser.college || "",
+
+    degree: updatedUser.course || "",
+
+    graduationYear: updatedUser.graduationYear || "",
+
+    currentCompany: updatedUser.currentCompany || "",
+
+    university: updatedUser.university || "",
+
+    designation: updatedUser.designation || "",
+
+    employmentType: updatedUser.employmentType || "",
+
+    skills: updatedUser.skills || [],
+
+    phone: updatedUser.phone || "",
+
+    gender: updatedUser.gender || "",
+
+    githubUrl: updatedUser.githubUrl || "",
+
+    linkedinUrl: updatedUser.linkedinUrl || "",
+
+    portfolioUrl: updatedUser.portfolioUrl || "",
+
+    personalWebsite: updatedUser.personalWebsite || "",
+
+    dateOfBirth: updatedUser.dateOfBirth || "",
+
+    yearsOfExperience: updatedUser.yearsOfExperience || "",
+
+    careerGoal: updatedUser.careerGoal || ""
+
+});
             localStorage.setItem(
                 "user",
                 JSON.stringify(updatedUser)
@@ -1370,10 +1504,14 @@ setFormData(prev => ({
 
                         isEditing &&
                         <button
-                            className="profile-save-btn"
-                            onClick={handleSave}
-                            disabled={isSaving || !hasChanges || Object.keys(errors).length > 0}
-                        >
+    className={`profile-save-btn ${!hasChanges ? "disabled" : ""}`}
+    onClick={handleSave}
+    disabled={
+        isSaving ||
+        !hasChanges ||
+        Object.keys(errors).length > 0
+    }
+>
                             {isSaving ? "Saving..." : "Save Changes"}
 
                         </button>
@@ -1386,22 +1524,13 @@ setFormData(prev => ({
 
                             if (isEditing) {
 
-                                if (hasChanges) {
+                               if (hasChanges) {
 
-                                    const discard = window.confirm(
+    setShowDiscardModal(true);
 
-                                        "You have unsaved changes. Do you want to discard them?"
+    return;
 
-                                    );
-
-                                    if (!discard) {
-
-                                        return;
-
-                                    }
-
-                                }
-
+}
                                 if (selectedImage) {
 
                                     URL.revokeObjectURL(selectedImage);
@@ -2776,99 +2905,37 @@ setFormData(prev => ({
                                                     }}
                                                 >
 
+
+
+
+
                                                     {
 
-    showSkillSuggestions && (
+                                                        selectedSkills.map((skill) => (
 
-        <div className="profile-page-skill-suggestions">
+                                                            <div
+                                                                key={skill}
+                                                                className="profile-page-skill-chip"
+                                                            >
 
-            {
+                                                                <span>{skill}</span>
 
-                isSkillLoading ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSkillRemove(skill)}
+                                                                >
 
-                    <div className="profile-page-skill-loading">
+                                                                    ×
 
-                        Searching skills...
+                                                                </button>
 
-                    </div>
+                                                            </div>
 
-                ) : skillSuggestions.length === 0 ? (
+                                                        ))
 
-                    <div className="profile-page-skill-empty">
+                                                    }
 
-                        No matching skills found.
-
-                    </div>
-
-                ) : (
-
-                    skillSuggestions.map((skill, index) => (
-
-                        <button
-                            ref={
-                                index === activeSkillIndex
-                                    ? activeSuggestionRef
-                                    : null
-                            }
-                            key={skill}
-                            type="button"
-                            className={
-                                index === activeSkillIndex
-                                    ? "profile-page-skill-suggestion active"
-                                    : "profile-page-skill-suggestion"
-                            }
-                            onMouseDown={(e) => {
-
-                                e.preventDefault();
-
-                                handleSkillSelect(skill);
-
-                            }}
-                        >
-
-                            {skill}
-
-                        </button>
-
-                    ))
-
-                )
-
-            }
-
-        </div>
-
-    )
-
-}
-
-{
-
-    selectedSkills.map((skill) => (
-
-        <div
-            key={skill}
-            className="profile-page-skill-chip"
-        >
-
-            <span>{skill}</span>
-
-            <button
-                type="button"
-                onClick={() => handleSkillRemove(skill)}
-            >
-
-                ×
-
-            </button>
-
-        </div>
-
-    ))
-
-}
-
-<input                                                        type="text"
+                                                    <input type="text"
                                                         value={skillInput}
                                                         onChange={handleSkillInputChange}
                                                         onKeyDown={handleSkillKeyDown}
@@ -2965,21 +3032,21 @@ setFormData(prev => ({
 
                                                                         <button
 
-    ref={
+                                                                            ref={
 
-        index === activeSkillIndex
+                                                                                index === activeSkillIndex
 
-            ?
+                                                                                    ?
 
-            activeSuggestionRef
+                                                                                    activeSuggestionRef
 
-            :
+                                                                                    :
 
-            null
+                                                                                    null
 
-    }
+                                                                            }
 
-    key={skill}
+                                                                            key={skill}
 
                                                                             type="button"
 
@@ -2999,11 +3066,11 @@ setFormData(prev => ({
 
                                                                             onMouseDown={(e) => {
 
-    e.preventDefault();
+                                                                                e.preventDefault();
 
-    handleSkillSelect(skill);
+                                                                                handleSkillSelect(skill);
 
-}}
+                                                                            }}
 
                                                                         >
 
@@ -3021,7 +3088,7 @@ setFormData(prev => ({
 
                                                     }
 
-                                                                                                        {
+                                                    {
 
                                                         skillValidation && (
 
@@ -3108,11 +3175,13 @@ setFormData(prev => ({
 
                     setSelectedFile(file);
 
-                    setSelectedImage(preview);
+setSelectedImage(preview);
 
-                    setHasChanges(true);
+checkForChanges(formData, selectedSkills);
 
-                    setImageError(false);
+setHasChanges(true);
+
+setImageError(false);
 
                     if (cropImage) {
                         URL.revokeObjectURL(cropImage);
@@ -3126,6 +3195,102 @@ setFormData(prev => ({
 
                 }}
             />
+
+
+            <ConfirmationModal
+    isOpen={showDiscardModal}
+    title="Discard Changes?"
+    message="You have unsaved changes. Are you sure you want to discard them?"
+    confirmText="Discard"
+    cancelText="Keep Editing"
+    onCancel={() => setShowDiscardModal(false)}
+    onConfirm={async () => {
+
+        setShowDiscardModal(false);
+
+        if (selectedImage) {
+            URL.revokeObjectURL(selectedImage);
+        }
+
+        setSelectedImage(null);
+
+        setSelectedFile(null);
+
+        setHasChanges(false);
+
+        setImageError(false);
+
+        setErrors({});
+
+        setMessage({
+            type: "",
+            text: ""
+        });
+
+        try {
+
+            const basicUser = await getCurrentUser();
+
+            const profile = await getProfile();
+
+            const currentUser = {
+
+                ...basicUser,
+
+                ...profile
+
+            };
+
+            setUser(currentUser);
+
+            setOriginalProfile({
+
+                ...currentUser,
+
+                skills: currentUser.skills || []
+
+            });
+
+            setSelectedSkills(currentUser.skills || []);
+
+            setFormData({
+
+                name: currentUser.name || "",
+                username: currentUser.username || "",
+                email: currentUser.email || "",
+                journeyType: currentUser.journeyType || "",
+                targetRole: currentUser.targetRole || "",
+                experienceLevel: currentUser.experienceLevel || "",
+                collegeName: currentUser.college || "",
+                degree: currentUser.course || "",
+                graduationYear: currentUser.graduationYear || "",
+                currentCompany: currentUser.currentCompany || "",
+                university: currentUser.university || "",
+                designation: currentUser.designation || "",
+                employmentType: currentUser.employmentType || "",
+                skills: currentUser.skills || [],
+                phone: currentUser.phone || "",
+                gender: currentUser.gender || "",
+                githubUrl: currentUser.githubUrl || "",
+                linkedinUrl: currentUser.linkedinUrl || "",
+                portfolioUrl: currentUser.portfolioUrl || "",
+                personalWebsite: currentUser.personalWebsite || "",
+                dateOfBirth: currentUser.dateOfBirth || "",
+                yearsOfExperience: currentUser.yearsOfExperience || "",
+                careerGoal: currentUser.careerGoal || ""
+
+            });
+
+            setIsEditing(false);
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }}
+/>
 
         </div>
 
