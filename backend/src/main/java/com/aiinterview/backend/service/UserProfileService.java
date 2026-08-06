@@ -102,6 +102,7 @@ public class UserProfileService {
                 User user = userRepository
                                 .findByEmail(email)
                                 .orElseThrow();
+                user.setName(request.getName());
 
                 UserProfile profile = userProfileRepository
                                 .findByUser(user)
@@ -183,7 +184,10 @@ public class UserProfileService {
 
                 }
 
+                userRepository.save(user);
+
                 updateProfileCompletion(user, profile);
+
                 return userProfileRepository.save(profile);
 
         }

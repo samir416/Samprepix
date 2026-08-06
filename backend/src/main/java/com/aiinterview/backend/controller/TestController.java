@@ -75,8 +75,8 @@ public class TestController {
 
                 User user = new User();
 
-                user.setUsername(request.getUsername());
-                user.setName(request.getUsername()); // Temporary compatibility
+               user.setUsername(request.getUsername());
+user.setName(request.getName());
                 user.setEmail(request.getEmail());
                 user.setPassword(request.getPassword());
                 user.setProvider(AuthenticationProvider.EMAIL);

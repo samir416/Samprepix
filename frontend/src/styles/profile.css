@@ -573,6 +573,79 @@ body.dark-theme .profile-page-info-item:hover{
     appearance:none;
 }
 
+
+.profile-page-username-box{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+    padding:16px 18px;
+
+    border:1px solid var(--profile-border);
+
+    border-radius:16px;
+
+    background:var(--profile-surface);
+
+    transition:all var(--profile-transition);
+
+}
+
+.profile-page-username-box:hover{
+
+    border-color:rgba(99,102,241,.25);
+
+    box-shadow:0 10px 24px rgba(99,102,241,.08);
+
+}
+
+.profile-page-username-value{
+
+    font-size:18px;
+
+    font-weight:700;
+
+    color:var(--profile-text);
+
+    word-break:break-word;
+
+}
+
+.profile-page-username-lock{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    width:max-content;
+
+    padding:6px 12px;
+
+    border-radius:999px;
+
+    background:rgba(99,102,241,.12);
+
+    color:var(--profile-primary);
+
+    font-size:12px;
+
+    font-weight:700;
+
+}
+
+.profile-page-username-note{
+
+    color:var(--profile-text-light);
+
+    font-size:12px;
+
+    line-height:1.5;
+
+}
+
 .profile-page-input::placeholder{
     color:var(--profile-text-light);
     opacity:.75;
@@ -1702,3 +1775,26 @@ body.dark-theme .profile-page-skill-chip{
 
 }
 
+.profile-page-react-select{
+
+    width:100%;
+
+}
+
+.profile-select__control{
+
+    background:transparent !important;
+
+    border:none !important;
+
+    box-shadow:none !important;
+
+}
+
+.profile-select__menu{
+
+    overflow:hidden;
+
+    border-radius:16px;
+
+}

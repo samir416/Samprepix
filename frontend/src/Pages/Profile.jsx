@@ -371,7 +371,11 @@ setOriginalProfile({
             ? ""
             : String(value).trim();
 
+            
+
     const changed =
+
+        normalize(updatedForm.name) !== normalize(originalProfile.name) ||
 
         normalize(updatedForm.targetRole) !== normalize(originalProfile.targetRole) ||
 
@@ -419,6 +423,7 @@ setOriginalProfile({
 
 };
 
+ 
 
     const avatarLetter =
         user?.name?.charAt(0)?.toUpperCase()
@@ -1180,6 +1185,9 @@ checkForChanges(updatedForm);
             }
 
             await updateProfile({
+
+                name: formData.name,
+
                 journeyType: formData.journeyType,
 
                 targetRole: formData.targetRole,
@@ -1890,12 +1898,14 @@ setFormData({
                                     {
                                         isEditing ?
 
-                                            <input
-                                                type="text"
-                                                value={formData.name}
-                                                className="profile-page-input"
-                                                readOnly
-                                            />
+<input
+    type="text"
+    name="name"
+    value={formData.name}
+    onChange={handleChange}
+    className="profile-page-input"
+    placeholder="Enter Full Name"
+/>
 
                                             :
 
@@ -1909,36 +1919,51 @@ setFormData({
 
                                 </div>
 
-                                <div className="profile-page-info-item">
+                               <div className="profile-page-info-item">
 
-                                    <label>
+    <label>
 
-                                        Username
+        Username
 
-                                    </label>
+    </label>
 
-                                    {
-                                        isEditing ?
+    {
 
-                                            <input
-                                                type="text"
-                                                value={formData.username}
-                                                className="profile-page-input"
-                                                readOnly
-                                            />
+        isEditing ?
 
-                                            :
+            <div className="profile-page-username-box">
 
-                                            <span>
+                <div className="profile-page-username-value">
 
-                                                {formData.username || "-"}
+                    {formData.username || "username"}
 
-                                            </span>
+                </div>
 
-                                    }
+                <div className="profile-page-username-lock">
 
-                                </div>
+                    🔒 Permanent
 
+                </div>
+
+                <small className="profile-page-username-note">
+
+                    Username cannot be changed after account creation.
+
+                </small>
+
+            </div>
+
+            :
+
+            <span>
+
+                {formData.username || "-"}
+
+            </span>
+
+    }
+
+</div>
                                 <div className="profile-page-info-item">
 
                                     <label>
@@ -2134,23 +2159,28 @@ setFormData({
 
                                             <>
 
-                                                <select
-                                                    name="journeyType"
-                                                    value={formData.journeyType}
-                                                    onChange={handleChange}
-                                                    className="profile-page-select"
-                                                >
+                                              <select
+    name="journeyType"
+    value={formData.journeyType}
+    onChange={handleChange}
+    className="profile-page-select"
+>
 
-                                                    <option value="">Select Journey</option>
+    <option value="">Select Journey</option>
 
-                                                    <option value="STUDENT">Student</option>
+    <option value="STUDENT">
+        Student
+    </option>
 
-                                                    <option value="WORKING_PROFESSIONAL">Working Professional</option>
+    <option value="WORKING_PROFESSIONAL">
+        Working Professional
+    </option>
 
-                                                    <option value="OTHER">Other</option>
+    <option value="OTHER">
+        Other
+    </option>
 
-                                                </select>
-
+</select>
                                                 {
 
                                                     errors.journeyType &&

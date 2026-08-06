@@ -9,6 +9,8 @@ import lombok.Setter;
 @Setter
 public class UserProfileRequest {
 
+    private String name;
+
     private JourneyType journeyType;
 
     private String targetRole;
@@ -49,5 +51,4 @@ public class UserProfileRequest {
 
     private java.util.List<String> skills;
 
-    
 }

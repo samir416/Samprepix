@@ -4,11 +4,12 @@ import Logo from "../../assets/Logo.png";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import {registerUser,verifyOtp,resendOtp,getCurrentUser} from "../../services/authService";
+import { registerUser, verifyOtp, resendOtp, getCurrentUser } from "../../services/authService";
 export default function AuthModal() {
 
     const navigate = useNavigate();
 
+    const [name, setName] = useState("");
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -140,19 +141,37 @@ export default function AuthModal() {
                     >
                         <div className="auth-input-group">
 
-                            <label>
-                                Username
-                            </label>
+    <label>
+        Full Name
+    </label>
 
-                            <input
-                                type="text"
-                                placeholder="John Doe"
-                                value={username}
-                                onChange={(e) =>
-                                    setUsername(e.target.value)
-                                }
-                            />
-                        </div>
+    <input
+        type="text"
+        placeholder="John Doe"
+        value={name}
+        onChange={(e) =>
+            setName(e.target.value)
+        }
+    />
+
+</div>
+
+<div className="auth-input-group">
+
+    <label>
+        Username
+    </label>
+
+    <input
+        type="text"
+        placeholder="john416"
+        value={username}
+        onChange={(e) =>
+            setUsername(e.target.value)
+        }
+    />
+
+</div>
 
                         <div className="auth-input-group">
 
