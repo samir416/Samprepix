@@ -751,7 +751,8 @@ setAnswer("");
                             <div className="feedback-top">
 
                                 <span>
-                                    Clarity
+                                    Technical Accuracy
+
                                 </span>
 
                                 <span>
@@ -780,7 +781,7 @@ setAnswer("");
                             <div className="feedback-top">
 
                                 <span>
-                                    Confidence
+                                    Completeness
                                 </span>
 
                                 <span>
@@ -809,7 +810,7 @@ setAnswer("");
                             <div className="feedback-top">
 
                                 <span>
-                                    Structure
+                                    Communication
                                 </span>
 
                                 <span>
