@@ -1,25 +1,53 @@
 package com.aiinterview.backend.service.gemini;
 
+import java.util.List;
+
 public interface GeminiService {
 
     String generateQuestion(
-            String interviewType,
-            int questionNumber,
-            int totalQuestions
-    );
 
-    String evaluateAnswer(
-            String question,
-            String answer
-    );
+        String targetRole,
 
-    int extractScore(String evaluation);
+        List<String> skills,
 
-    java.util.List<String> generateSkillSuggestions(
+        String experienceLevel,
 
-        String role,
+        List<String> previousQuestions,
 
-        String query
+        List<String> previousAnswers,
+
+        List<String> weakAreas,
+
+        List<String> strongAreas
 
 );
+
+    String evaluateAnswer(
+
+        String targetRole,
+
+        String experienceLevel,
+
+        List<String> skills,
+
+        String question,
+
+        String candidateAnswer,
+
+        List<String> previousQuestions,
+
+        List<String> previousAnswers,
+
+        String idealAnswer
+
+);
+
+    List<String> generateSkillSuggestions(
+
+            String role,
+
+            String query
+
+    );
+
 }

@@ -11,13 +11,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InterviewAnswerResponse {
-
-    private Integer questionNumber;
-
-    private String question;
-
-    private String answer;
+public class InterviewEvaluationResponse {
 
     private Integer technicalAccuracy;
 
@@ -29,11 +23,13 @@ public class InterviewAnswerResponse {
 
     private String performance;
 
-    private String difficulty;
-
     private String idealAnswer;
 
     private String feedback;
+
+    private String nextFocusSkill;
+
+    private String difficulty;
 
     private List<String> strengths;
 

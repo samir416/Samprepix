@@ -23,34 +23,55 @@ public class InterviewSession {
     private User user;
 
     @Column(nullable = false)
-    private String interviewType;
+    private String targetRole;
 
     @Column(nullable = false)
-    private Integer totalQuestions;
+    private String experienceLevel;
 
-    @Column(nullable = false)
-    private Integer currentQuestion;
+    @Column(columnDefinition = "LONGTEXT")
+    private String selectedSkills;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String weakAreas;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String strongAreas;
 
     @Column(columnDefinition = "TEXT")
-    private String currentQuestionText;
+    private String currentQuestion;
 
-    @Column(nullable = false)
-    private Integer score;
+    @Column(columnDefinition = "LONGTEXT")
+    private String previousQuestions;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String previousAnswers;
 
     @Column
-    private Double percentage;
+    private Integer questionsAnswered;
 
-    @Column(columnDefinition = "TEXT")
-    private String overallFeedback;
+    @Column
+    private Integer overallScore;
 
-    @Column(columnDefinition = "TEXT")
-    private String strengths;
+    @Column
+    private Integer technicalAccuracy;
 
-    @Column(columnDefinition = "TEXT")
-    private String weaknesses;
+    @Column
+    private Integer completeness;
 
-    @Column(columnDefinition = "TEXT")
-    private String suggestions;
+    @Column
+    private Integer communication;
+
+    @Column
+    private Boolean interviewEndedByUser;
+
+    @Column
+    private Boolean reportGenerated;
+
+    @Column
+    private String nextFocusSkill;
+
+    @Column
+    private String difficulty;
 
     @Column(nullable = false)
     private String status;
@@ -60,20 +81,67 @@ public class InterviewSession {
 
     private LocalDateTime completedAt;
 
-    @PrePersist
+        @PrePersist
     public void onCreate() {
-        this.startedAt = LocalDateTime.now();
 
-        if (this.currentQuestion == null) {
-            this.currentQuestion = 0;
+        startedAt = LocalDateTime.now();
+
+        if (questionsAnswered == null) {
+            questionsAnswered = 0;
         }
 
-        if (this.score == null) {
-            this.score = 0;
+        if (overallScore == null) {
+            overallScore = 0;
         }
 
-        if (this.status == null) {
-            this.status = "IN_PROGRESS";
+        if (technicalAccuracy == null) {
+            technicalAccuracy = 0;
         }
+
+        if (completeness == null) {
+            completeness = 0;
+        }
+
+        if (communication == null) {
+            communication = 0;
+        }
+
+        if (interviewEndedByUser == null) {
+            interviewEndedByUser = false;
+        }
+
+        if (reportGenerated == null) {
+            reportGenerated = false;
+        }
+
+        if (previousQuestions == null) {
+            previousQuestions = "";
+        }
+
+        if (previousAnswers == null) {
+            previousAnswers = "";
+        }
+
+        if (selectedSkills == null) {
+            selectedSkills = "";
+        }
+
+        if (weakAreas == null) {
+            weakAreas = "";
+        }
+
+        if (strongAreas == null) {
+            strongAreas = "";
+        }
+
+        if (difficulty == null) {
+            difficulty = "Easy";
+        }
+
+        if (status == null) {
+            status = "IN_PROGRESS";
+        }
+
     }
+
 }

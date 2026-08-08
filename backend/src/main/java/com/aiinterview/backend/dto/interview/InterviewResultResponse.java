@@ -2,37 +2,41 @@ package com.aiinterview.backend.dto.interview;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+
 import java.util.List;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class InterviewResultResponse {
 
     private Long sessionId;
 
     private String status;
 
-    private String interviewType;
+    private String targetRole;
 
-    private Integer totalQuestions;
+    private String experienceLevel;
 
-    private Integer score;
+    private List<String> skills;
 
-    private Double percentage;
+    private Integer questionsAnswered;
 
-    private String overallFeedback;
+    private Integer overallScore;
 
-    private String strengths;
+    private Integer technicalAccuracy;
 
-    private String weaknesses;
+    private Integer completeness;
 
-    private String suggestions;
+    private Integer communication;
+
+    private String nextFocusSkill;
+
+    private String difficulty;
 
     private List<InterviewAnswerResponse> answers;
+
 }

@@ -2,6 +2,7 @@ package com.aiinterview.backend.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "app_user")
@@ -46,6 +47,13 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile profile;
+
+    @OneToMany(
+        mappedBy = "user",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+)
+private List<InterviewSession> interviewSessions;
 
     private LocalDateTime otpExpiry;
 
@@ -152,5 +160,13 @@ public class User {
     public void setProfile(UserProfile profile) {
         this.profile = profile;
     }
+
+    public List<InterviewSession> getInterviewSessions() {
+    return interviewSessions;
+}
+
+public void setInterviewSessions(List<InterviewSession> interviewSessions) {
+    this.interviewSessions = interviewSessions;
+}
 
 }

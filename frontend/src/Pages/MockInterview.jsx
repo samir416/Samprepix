@@ -22,6 +22,7 @@ import FirstInterviewFeedbackModal from "../feedback/FirstInterviewFeedbackModal
 
 export default function MockInterview() {
 
+
     const [started, setStarted] = useState(false);
 
     const [micMuted, setMicMuted] = useState(false);
@@ -62,7 +63,9 @@ export default function MockInterview() {
 
     const [countdown, setCountdown] = useState(4);
 
-    const [pendingInterview, setPendingInterview] = useState(null);
+   const [pendingInterview, setPendingInterview] = useState(null);
+
+const currentUser = JSON.parse(localStorage.getItem("user"));
 
 
     const toggleSpeaker = () => {
@@ -394,26 +397,34 @@ setCurrentQuestion(pendingInterview.firstQuestion);
 };
 
 
-    const handleStart = () => {
+   const handleStart = () => {
 
-        setShowDifficultyModal(true);
+    setShowDifficultyModal(true);
 
-    };
+};
+
+
 
   const handleDifficultyStart = async () => {
 
     try {
 
 
-        const response = await startInterview({
+       const currentUser = JSON.parse(localStorage.getItem("user"));
 
-            interviewType: "HR",
+const response = await startInterview({
 
-            totalQuestions: 5
+    targetRole: currentUser.targetRole,
 
-        });
+    experienceLevel: currentUser.experienceLevel,
+
+    skills: currentUser.skills
+
+});
+
 
         setPendingInterview(response.data);
+
 
         setShowDifficultyModal(false);
 
@@ -513,26 +524,26 @@ setCurrentQuestion(pendingInterview.firstQuestion);
 
             });
 
-            if (response.data.completed) {
+            if (response.data.interviewCompleted) {
 
-                SpeechSynthesisService.stop();
+    SpeechSynthesisService.stop();
 
-                SpeechRecognitionService.stop();
+    SpeechRecognitionService.stop();
 
-                setStarted(false);
+    setStarted(false);
 
-                setFirstInterviewCompleted(true);
+    setFirstInterviewCompleted(true);
 
-                setShowFeedbackModal(true);
+    setShowFeedbackModal(true);
 
-                return;
-            }
+    return;
+}
 
            SpeechRecognitionService.stop();
 
 setCurrentQuestion(response.data.nextQuestion);
 
-setQuestionNumber((prev) => prev + 1);
+setQuestionNumber(response.data.questionNumber);
 
 setAnswer("");
 
@@ -572,13 +583,12 @@ setAnswer("");
                 <div>
 
                     <h1>
-                        AI Mock Interview
-                    </h1>
+    {currentUser?.targetRole || "AI Mock Interview"}
+</h1>
 
-                    <p>
-                        Behavioral · Frontend Engineer · Google
-                    </p>
-
+                   <p>
+    {(currentUser?.skills || []).join(" • ")}
+</p>
                 </div>
 
                 {/* TIMER */}
@@ -738,101 +748,76 @@ setAnswer("");
 
                     {/* FEEDBACK */}
 
-                    <div className="feedback-card">
+                   <div className="feedback-card">
 
-                        <h3>
-                            Real-time feedback
-                        </h3>
+    <h3>
+        Real-time Feedback
+    </h3>
 
-                        {/* ITEM */}
+    <div className="feedback-item">
 
-                        <div className="feedback-item">
+        <div className="feedback-top">
 
-                            <div className="feedback-top">
+            <span>Technical Accuracy</span>
 
-                                <span>
-                                    Technical Accuracy
+            <span>--</span>
 
-                                </span>
+        </div>
 
-                                <span>
-                                    84
-                                </span>
+        <div className="feedback-bar">
 
-                            </div>
+            <div
+                className="feedback-fill"
+                style={{ width: "0%" }}
+            />
 
-                            <div className="feedback-bar">
+        </div>
 
-                                <div
-                                    className="feedback-fill"
-                                    style={{
-                                        width: "84%"
-                                    }}
-                                ></div>
+    </div>
 
-                            </div>
+    <div className="feedback-item">
 
-                        </div>
+        <div className="feedback-top">
 
-                        {/* ITEM */}
+            <span>Completeness</span>
 
-                        <div className="feedback-item">
+            <span>--</span>
 
-                            <div className="feedback-top">
+        </div>
 
-                                <span>
-                                    Completeness
-                                </span>
+        <div className="feedback-bar">
 
-                                <span>
-                                    72
-                                </span>
+            <div
+                className="feedback-fill"
+                style={{ width: "0%" }}
+            />
 
-                            </div>
+        </div>
 
-                            <div className="feedback-bar">
+    </div>
 
-                                <div
-                                    className="feedback-fill"
-                                    style={{
-                                        width: "72%"
-                                    }}
-                                ></div>
+    <div className="feedback-item">
 
-                            </div>
+        <div className="feedback-top">
 
-                        </div>
+            <span>Communication</span>
 
-                        {/* ITEM */}
+            <span>--</span>
 
-                        <div className="feedback-item">
+        </div>
 
-                            <div className="feedback-top">
+        <div className="feedback-bar">
 
-                                <span>
-                                    Communication
-                                </span>
+            <div
+                className="feedback-fill"
+                style={{ width: "0%" }}
+            />
 
-                                <span>
-                                    90
-                                </span>
+        </div>
 
-                            </div>
+    </div>
 
-                            <div className="feedback-bar">
-
-                                <div
-                                    className="feedback-fill"
-                                    style={{
-                                        width: "90%"
-                                    }}
-                                ></div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
+</div>
 
                     {/* TRANSCRIPT */}
 

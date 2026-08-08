@@ -2,30 +2,46 @@ package com.aiinterview.backend.dto.interview;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class InterviewProgressResponse {
 
     private Long sessionId;
 
     private String status;
 
-    private Integer currentQuestion;
+    private Integer questionsAnswered;
 
-    private Integer totalQuestions;
+    private Integer overallScore;
 
-    private Integer answeredQuestions;
+    private Integer technicalAccuracy;
 
-    private Integer remainingQuestions;
+    private Integer completeness;
 
-    private Integer score;
+    private Integer communication;
 
-    private Double percentage;
+    private String currentQuestion;
+
+    private String targetRole;
+
+    private String experienceLevel;
+
+    private List<String> skills;
+
+    private Boolean interviewEndedByUser;
+
+    private Boolean reportGenerated;
+
+    private LocalDateTime startedAt;
+
+    private LocalDateTime completedAt;
+
 }

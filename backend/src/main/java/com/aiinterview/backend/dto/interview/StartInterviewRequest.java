@@ -1,31 +1,27 @@
 package com.aiinterview.backend.dto.interview;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class StartInterviewRequest {
 
-    @NotBlank(message = "Interview type is required")
-    private String interviewType;
+    @NotBlank(message = "Target role is required.")
+    private String targetRole;
 
-    @Min(value = 1, message = "Total questions must be at least 1")
-    @Max(value = 20, message = "Maximum 20 questions are allowed")
-    private Integer totalQuestions;
+    @NotBlank(message = "Experience level is required.")
+    private String experienceLevel;
 
-    public String getInterviewType() {
-        return interviewType;
-    }
+    @NotEmpty(message = "At least one skill must be selected.")
+    private List<String> skills;
 
-    public void setInterviewType(String interviewType) {
-        this.interviewType = interviewType;
-    }
-
-    public Integer getTotalQuestions() {
-        return totalQuestions;
-    }
-
-    public void setTotalQuestions(Integer totalQuestions) {
-        this.totalQuestions = totalQuestions;
-    }
 }

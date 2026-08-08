@@ -11,5 +11,9 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
 
     List<InterviewSession> findByUser(User user);
 
-    Optional<InterviewSession> findByIdAndUser(Long id, User user);
+    Optional<InterviewSession> findByIdAndUser(
+            Long id,
+            User user
+    );
+
 }

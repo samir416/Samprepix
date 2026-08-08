@@ -29,10 +29,6 @@ public class InterviewController {
         this.userRepository = userRepository;
     }
 
-    @GetMapping("/ping")
-    public String ping() {
-        return "Interview OK";
-    }
 
   @PostMapping("/start")
 public ResponseEntity<StartInterviewResponse> startInterview(

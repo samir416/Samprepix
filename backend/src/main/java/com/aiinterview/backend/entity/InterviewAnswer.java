@@ -25,23 +25,97 @@ public class InterviewAnswer {
     @Column(nullable = false)
     private Integer questionNumber;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String question;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String answer;
 
-    @Column(columnDefinition = "TEXT")
-    private String evaluation;
+    @Column
+    private Integer technicalAccuracy;
 
-    @Column(nullable = false)
-    private Integer score;
+    @Column
+    private Integer completeness;
+
+    @Column
+    private Integer communication;
+
+    @Column
+    private Integer overallScore;
+
+    @Column(length = 50)
+    private String performance;
+
+    @Column(length = 30)
+    private String difficulty;
+
+    @Column(length = 100)
+    private String nextFocusSkill;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String idealAnswer;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String feedback;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String strengths;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String missingConcepts;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime answeredAt;
 
-    @PrePersist
+        @PrePersist
     public void onCreate() {
+
         answeredAt = LocalDateTime.now();
+
+        if (technicalAccuracy == null) {
+            technicalAccuracy = 0;
+        }
+
+        if (completeness == null) {
+            completeness = 0;
+        }
+
+        if (communication == null) {
+            communication = 0;
+        }
+
+        if (overallScore == null) {
+            overallScore = 0;
+        }
+
+        if (performance == null) {
+            performance = "Not Evaluated";
+        }
+
+        if (difficulty == null) {
+            difficulty = "Easy";
+        }
+
+        if (nextFocusSkill == null) {
+            nextFocusSkill = "";
+        }
+
+        if (idealAnswer == null) {
+            idealAnswer = "";
+        }
+
+        if (feedback == null) {
+            feedback = "";
+        }
+
+        if (strengths == null) {
+            strengths = "";
+        }
+
+        if (missingConcepts == null) {
+            missingConcepts = "";
+        }
+
     }
+
 }
