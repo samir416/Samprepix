@@ -254,6 +254,8 @@
             0 10px 35px rgba(0, 194, 255, 0.24);
     }
 
+
+
     .controls-row {
 
         display: flex;
@@ -1675,4 +1677,20 @@
     }
 
 
-  
+  .start-btn-disabled {
+
+    opacity: .45;
+
+    cursor: not-allowed;
+
+    filter: grayscale(.15);
+
+}
+
+.start-btn-disabled:hover {
+
+    transform: none !important;
+
+    box-shadow: inherit !important;
+
+}

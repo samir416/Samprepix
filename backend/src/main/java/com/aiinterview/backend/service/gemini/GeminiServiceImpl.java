@@ -103,23 +103,40 @@ Interview Rules
 
 6. Prefer weak areas before strong areas.
 
-7. Gradually increase the difficulty.
+7. STRICT DIFFICULTY RULE:
+   The selected Experience Level is the exact difficulty level for the current question.
 
-8. Ask interview theory questions only.
+   If Experience Level is Easy:
+   Ask ONLY Easy-level questions.
+   Focus on fundamentals, definitions, basic concepts and simple practical understanding.
 
-9. Never ask coding questions.
+   If Experience Level is Medium:
+   Ask ONLY Medium-level questions.
+   Focus on deeper concepts, practical application, problem-solving and common real-world scenarios.
 
-10. Mix conceptual, practical, real-world and scenario-based questions.
+   If Experience Level is Hard:
+   Ask ONLY Hard-level questions.
+   Focus on advanced concepts, architecture, trade-offs, complex scenarios and senior-level reasoning.
 
-11. Ask natural follow-up questions whenever appropriate.
+8. NEVER increase or decrease the difficulty level during the interview.
 
-12. Avoid asking the same concept twice.
+9. NEVER generate a question above or below the selected Experience Level.
 
-13. Never mention previous scores, evaluation or feedback.
+10. Ask interview theory questions only.
 
-14. Keep the question concise.
+11. Never ask coding questions.
 
-15. Return ONLY the interview question.
+12. Mix conceptual, practical, real-world and scenario-based questions according to the selected difficulty level.
+
+13. Ask natural follow-up questions whenever appropriate, but keep the same selected difficulty level.
+
+14. Avoid asking the same concept twice.
+
+15. Never mention previous scores, evaluation or feedback.
+
+16. Keep the question concise.
+
+17. Return ONLY the interview question.
 
 """.formatted(
 
@@ -268,7 +285,10 @@ Rules for JSON:
 - communication = 0-100
 - overallScore = 0-100
 - performance = Outstanding | Excellent | Good | Average | Needs Improvement
-- difficulty = Easy | Medium | Hard
+- difficulty = MUST exactly match the selected Experience Level
+- If Experience Level is Easy, difficulty must be Easy
+- If Experience Level is Medium, difficulty must be Medium
+- If Experience Level is Hard, difficulty must be Hard
 
 Return JSON only.
 

@@ -26,6 +26,9 @@ public class InterviewSession {
     private String targetRole;
 
     @Column(nullable = false)
+private String interviewType;
+
+    @Column(nullable = false)
     private String experienceLevel;
 
     @Column(columnDefinition = "LONGTEXT")

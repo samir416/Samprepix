@@ -18,983 +18,853 @@ import java.util.List;
 @Service
 public class InterviewServiceImpl implements InterviewService {
 
-    private final InterviewSessionRepository interviewSessionRepository;
+        private final InterviewSessionRepository interviewSessionRepository;
 
-    private final InterviewAnswerRepository interviewAnswerRepository;
+        private final InterviewAnswerRepository interviewAnswerRepository;
 
-    private final GeminiService geminiService;
+        private final GeminiService geminiService;
 
-    private static final ObjectMapper OBJECT_MAPPER =
-            new ObjectMapper();
+        private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    public InterviewServiceImpl(
+        public InterviewServiceImpl(
 
-            InterviewSessionRepository interviewSessionRepository,
+                        InterviewSessionRepository interviewSessionRepository,
 
-            InterviewAnswerRepository interviewAnswerRepository,
+                        InterviewAnswerRepository interviewAnswerRepository,
 
-            GeminiService geminiService
+                        GeminiService geminiService
 
-    ) {
+        ) {
 
-        this.interviewSessionRepository =
-                interviewSessionRepository;
+                this.interviewSessionRepository = interviewSessionRepository;
 
-        this.interviewAnswerRepository =
-                interviewAnswerRepository;
+                this.interviewAnswerRepository = interviewAnswerRepository;
 
-        this.geminiService =
-                geminiService;
+                this.geminiService = geminiService;
 
-    }
-
-    @Override
-    public StartInterviewResponse startInterview(
-
-            User user,
-
-            StartInterviewRequest request
-
-    ) {
-
-        List<String> skills =
-                request.getSkills();
-
-        List<String> weakAreas =
-                new ArrayList<>();
-
-        List<String> strongAreas =
-                new ArrayList<>();
-
-        String firstQuestion =
-                geminiService.generateQuestion(
-
-                        request.getTargetRole(),
-
-                        skills,
-
-                        request.getExperienceLevel(),
-
-                        List.of(),
-
-                        List.of(),
-
-                        weakAreas,
-
-                        strongAreas
-
-                );
-
-        InterviewSession session =
-                InterviewSession.builder()
-
-                        .user(user)
-
-                        .targetRole(
-                                request.getTargetRole()
-                        )
-
-                        .experienceLevel(
-                                request.getExperienceLevel()
-                        )
-
-                        .selectedSkills(
-                                writeJson(skills)
-                        )
-
-                        .weakAreas(
-                                writeJson(weakAreas)
-                        )
-
-                        .strongAreas(
-                                writeJson(strongAreas)
-                        )
-
-                        .currentQuestion(
-                                firstQuestion
-                        )
-
-                        .previousQuestions(
-                                writeJson(new ArrayList<>())
-                        )
-
-                        .previousAnswers(
-                                writeJson(new ArrayList<>())
-                        )
-
-                        .questionsAnswered(0)
-
-                        .overallScore(0)
-
-                        .technicalAccuracy(0)
-
-                        .completeness(0)
-
-                        .communication(0)
-
-                        .status("IN_PROGRESS")
-
-                        .build();
-
-        session =
-                interviewSessionRepository.save(session);
-
-        return StartInterviewResponse.builder()
-
-                .sessionId(
-                        session.getId()
-                )
-
-                .status(
-                        session.getStatus()
-                )
-
-                .question(
-                        firstQuestion
-                )
-
-                .startedAt(
-                        session.getStartedAt()
-                )
-
-                .build();
-
-    }
+        }
 
         @Override
-    public InterviewQuestionResponse submitAnswer(
+        public StartInterviewResponse startInterview(
 
-            User user,
+                        User user,
 
-            InterviewQuestionRequest request
+                        StartInterviewRequest request
 
-    ) {
+        ) {
 
-        InterviewSession session =
-                interviewSessionRepository
+                List<String> skills = request.getSkills();
 
-                        .findByIdAndUser(
+                List<String> weakAreas = new ArrayList<>();
 
-                                request.getSessionId(),
+                List<String> strongAreas = new ArrayList<>();
 
-                                user
+                String firstQuestion = geminiService.generateQuestion(
 
-                        )
+                                request.getTargetRole(),
 
-                        .orElseThrow(() ->
+                                skills,
 
-                                new RuntimeException(
+                                request.getExperienceLevel(),
 
-                                        "Interview session not found."
+                                List.of(),
 
-                                )
+                                List.of(),
 
-                        );
+                                weakAreas,
 
-        List<String> skills =
-                readJson(session.getSelectedSkills());
-
-        List<String> previousQuestions =
-                readJson(session.getPreviousQuestions());
-
-        List<String> previousAnswers =
-                readJson(session.getPreviousAnswers());
-
-        List<String> weakAreas =
-                readJson(session.getWeakAreas());
-
-        List<String> strongAreas =
-                readJson(session.getStrongAreas());
-
-        String evaluationJson =
-                geminiService.evaluateAnswer(
-
-                        session.getTargetRole(),
-
-                        session.getExperienceLevel(),
-
-                        skills,
-
-                        session.getCurrentQuestion(),
-
-                        request.getAnswer(),
-
-                        previousQuestions,
-
-                        previousAnswers,
-
-                        ""
+                                strongAreas
 
                 );
 
-        InterviewEvaluationResponse evaluation =
-                readEvaluation(evaluationJson);
+                InterviewSession session = InterviewSession.builder()
 
-        InterviewAnswer answer =
-                InterviewAnswer.builder()
+                .user(user)
 
-                        .session(session)
+                .interviewType(
+                                request.getInterviewType())
 
-                        .questionNumber(
+                .targetRole(
+                                request.getTargetRole())
 
-                                session.getQuestionsAnswered() + 1
+                .experienceLevel(
+                                request.getExperienceLevel())
 
-                        )
+                .selectedSkills(
+                                writeJson(skills))
+                                
+                                .weakAreas(
+                                                writeJson(weakAreas))
 
-                        .question(
+                                .strongAreas(
+                                                writeJson(strongAreas))
 
-                                session.getCurrentQuestion()
+                                .currentQuestion(
+                                                firstQuestion)
 
-                        )
+                                .previousQuestions(
+                                                writeJson(new ArrayList<>()))
 
-                        .answer(
+                                .previousAnswers(
+                                                writeJson(new ArrayList<>()))
 
-                                request.getAnswer()
+                                .questionsAnswered(0)
 
-                        )
+                                .overallScore(0)
 
-                        .technicalAccuracy(
+                                .technicalAccuracy(0)
 
-                                evaluation.getTechnicalAccuracy()
+                                .completeness(0)
 
-                        )
+                                .communication(0)
 
-                        .completeness(
+                                .status("IN_PROGRESS")
 
-                                evaluation.getCompleteness()
+                                .build();
 
-                        )
+                session = interviewSessionRepository.save(session);
 
-                        .communication(
+                return StartInterviewResponse.builder()
 
-                                evaluation.getCommunication()
+                                .sessionId(
+                                                session.getId())
 
-                        )
+                                .status(
+                                                session.getStatus())
 
-                        .overallScore(
+                                .question(
 
-                                evaluation.getOverallScore()
-
-                        )
-
-                        .performance(
-
-                                evaluation.getPerformance()
-
-                        )
-
-                        .difficulty(
-
-                                evaluation.getDifficulty()
-
-                        )
-
-                        .nextFocusSkill(
-
-                                evaluation.getNextFocusSkill()
-
-                        )
-
-                        .idealAnswer(
-
-                                evaluation.getIdealAnswer()
-
-                        )
-
-                        .feedback(
-
-                                evaluation.getFeedback()
-
-                        )
-
-                        .strengths(
-
-                                writeJson(
-
-                                        evaluation.getStrengths()
+                                                firstQuestion
 
                                 )
+                                .startedAt(
+                                                session.getStartedAt())
 
-                        )
+                                .build();
 
-                        .missingConcepts(
+        }
 
-                                writeJson(
+        @Override
+        public InterviewQuestionResponse submitAnswer(
 
-                                        evaluation.getMissingConcepts()
+                        User user,
 
-                                )
+                        InterviewQuestionRequest request
 
-                        )
+        ) {
 
-                        .build();
+                InterviewSession session = interviewSessionRepository
+                                .findByIdAndUser(
+                                                request.getSessionId(),
+                                                user)
+                                .orElseThrow(() -> new RuntimeException(
+                                                "Interview session not found."));
 
-        interviewAnswerRepository.save(answer);
+                List<String> skills = readJson(session.getSelectedSkills());
 
-        previousQuestions.add(
+                List<String> previousQuestions = readJson(session.getPreviousQuestions());
 
-                session.getCurrentQuestion()
+                List<String> previousAnswers = readJson(session.getPreviousAnswers());
 
-        );
+                List<String> weakAreas = readJson(session.getWeakAreas());
 
-        previousAnswers.add(
+                List<String> strongAreas = readJson(session.getStrongAreas());
 
-                request.getAnswer()
+                String evaluationJson = geminiService.evaluateAnswer(
 
-        );
+                                session.getTargetRole(),
 
-        if (
+                                session.getExperienceLevel(),
+
+                                skills,
+
+                                session.getCurrentQuestion(),
+
+                                request.getAnswer(),
+
+                                previousQuestions,
+
+                                previousAnswers,
+
+                                ""
+
+                );
+
+                InterviewEvaluationResponse evaluation = readEvaluation(evaluationJson);
+
+                InterviewAnswer answer = InterviewAnswer.builder()
+
+                                .session(session)
+
+                                .questionNumber(
+                                                session.getQuestionsAnswered() + 1)
+
+                                .question(
+                                                session.getCurrentQuestion())
+
+                                .answer(
+                                                request.getAnswer())
+
+                                .technicalAccuracy(
+                                                evaluation.getTechnicalAccuracy())
+
+                                .completeness(
+                                                evaluation.getCompleteness())
+
+                                .communication(
+                                                evaluation.getCommunication())
+
+                                .overallScore(
+                                                evaluation.getOverallScore())
+
+                                .performance(
+                                                evaluation.getPerformance())
+
+                                .difficulty(
+                                                evaluation.getDifficulty())
+
+                                .nextFocusSkill(
+                                                evaluation.getNextFocusSkill())
+
+                                .idealAnswer(
+                                                evaluation.getIdealAnswer())
+
+                                .feedback(
+                                                evaluation.getFeedback())
+
+                                .strengths(
+                                                writeJson(
+                                                                evaluation.getStrengths()))
+
+                                .missingConcepts(
+                                                writeJson(
+                                                                evaluation.getMissingConcepts()))
+
+                                .build();
+
+                interviewAnswerRepository.save(answer);
+
+                previousQuestions.add(
+                                session.getCurrentQuestion());
+
+                previousAnswers.add(
+                                request.getAnswer());
+
+                if (
 
                 evaluation.getNextFocusSkill() != null &&
 
-                !evaluation.getNextFocusSkill().isBlank()
+                                !evaluation.getNextFocusSkill().isBlank()
 
-        ) {
+                ) {
 
-            weakAreas.add(
+                        weakAreas.add(
+                                        evaluation.getNextFocusSkill());
 
-                    evaluation.getNextFocusSkill()
+                }
 
-            );
+                String nextQuestion = geminiService.generateQuestion(
 
-        }
+                                session.getTargetRole(),
 
-        String nextQuestion =
-                geminiService.generateQuestion(
+                                skills,
 
-                        session.getTargetRole(),
+                                session.getExperienceLevel(),
 
-                        skills,
+                                previousQuestions,
 
-                        session.getExperienceLevel(),
+                                previousAnswers,
 
-                        previousQuestions,
+                                weakAreas,
 
-                        previousAnswers,
-
-                        weakAreas,
-
-                        strongAreas
+                                strongAreas
 
                 );
 
-        session.setQuestionsAnswered(
+                session.setQuestionsAnswered(
 
-                session.getQuestionsAnswered() + 1
+                                session.getQuestionsAnswered() + 1
 
-        );
+                );
 
-        session.setCurrentQuestion(
+                session.setCurrentQuestion(
 
-                nextQuestion
+                                nextQuestion
 
-        );
+                );
 
-        session.setPreviousQuestions(
+                session.setPreviousQuestions(
 
-                writeJson(previousQuestions)
+                                writeJson(previousQuestions)
 
-        );
+                );
 
-        session.setPreviousAnswers(
+                session.setPreviousAnswers(
 
-                writeJson(previousAnswers)
+                                writeJson(previousAnswers)
 
-        );
+                );
 
-        session.setWeakAreas(
+                session.setWeakAreas(
 
-                writeJson(weakAreas)
+                                writeJson(weakAreas)
 
-        );
+                );
 
-        session.setTechnicalAccuracy(
+                session.setTechnicalAccuracy(
 
-                evaluation.getTechnicalAccuracy()
+                                evaluation.getTechnicalAccuracy()
 
-        );
+                );
 
-        session.setCompleteness(
+                session.setCompleteness(
 
-                evaluation.getCompleteness()
+                                evaluation.getCompleteness()
 
-        );
+                );
 
-        session.setCommunication(
+                session.setCommunication(
 
-                evaluation.getCommunication()
+                                evaluation.getCommunication()
 
-        );
+                );
 
-        session.setOverallScore(
+                session.setOverallScore(
 
-                evaluation.getOverallScore()
+                                evaluation.getOverallScore()
 
-        );
+                );
 
-        session.setDifficulty(
+                session.setDifficulty(
 
-                evaluation.getDifficulty()
+                                evaluation.getDifficulty()
 
-        );
+                );
 
-        session.setNextFocusSkill(
+                session.setNextFocusSkill(
 
-                evaluation.getNextFocusSkill()
+                                evaluation.getNextFocusSkill()
 
-        );
+                );
 
-        interviewSessionRepository.save(session);
+                interviewSessionRepository.save(
 
-        return InterviewQuestionResponse.builder()
+                                session
 
-                .evaluation(
+                );
 
-                        evaluation.getFeedback()
+                return InterviewQuestionResponse.builder()
 
-                )
+                                .evaluation(
 
-                .nextQuestion(
-
-                        nextQuestion
-
-                )
-
-                .questionNumber(
-
-                        session.getQuestionsAnswered() + 1
-
-                )
-
-                .score(
-
-                        evaluation.getOverallScore()
-
-                )
-
-                .interviewCompleted(false)
-
-                .build();
-
-    }
-
-        @Override
-    public InterviewResultResponse getInterviewResult(
-
-            User user,
-
-            Long sessionId
-
-    ) {
-
-        InterviewSession session =
-
-                interviewSessionRepository
-
-                        .findByIdAndUser(
-
-                                sessionId,
-
-                                user
-
-                        )
-
-                        .orElseThrow(() ->
-
-                                new RuntimeException(
-
-                                        "Interview session not found."
+                                                evaluation.getFeedback()
 
                                 )
 
-                        );
+                                .nextQuestion(
 
-        List<InterviewAnswer> answers =
+                                                nextQuestion
 
-                interviewAnswerRepository
+                                )
 
-                        .findBySessionIdOrderByQuestionNumberAsc(
+                                .questionNumber(
 
-                                sessionId
+                                                session.getQuestionsAnswered() + 1
 
-                        );
+                                )
 
-        List<InterviewAnswerResponse> answerResponses =
+                                .score(
 
-                new ArrayList<>();
+                                                evaluation.getOverallScore()
 
-        for (
+                                )
 
-                InterviewAnswer answer : answers
+                                .interviewCompleted(
+
+                                                false
+
+                                )
+
+                                .build();
+
+        }
+
+        @Override
+        public InterviewResultResponse getInterviewResult(
+
+                        User user,
+
+                        Long sessionId
 
         ) {
 
-            answerResponses.add(
+                InterviewSession session =
 
-                    InterviewAnswerResponse.builder()
+                                interviewSessionRepository
 
-                            .questionNumber(
+                                                .findByIdAndUser(
 
-                                    answer.getQuestionNumber()
+                                                                sessionId,
 
-                            )
+                                                                user
 
-                            .question(
+                                                )
 
-                                    answer.getQuestion()
+                                                .orElseThrow(() ->
 
-                            )
+                                                new RuntimeException(
 
-                            .answer(
+                                                                "Interview session not found."
 
-                                    answer.getAnswer()
+                                                )
 
-                            )
+                                                );
 
-                            .technicalAccuracy(
+                List<InterviewAnswer> answers =
 
-                                    answer.getTechnicalAccuracy()
+                                interviewAnswerRepository
 
-                            )
+                                                .findBySessionIdOrderByQuestionNumberAsc(
 
-                            .completeness(
+                                                                sessionId
 
-                                    answer.getCompleteness()
+                                                );
 
-                            )
+                List<InterviewAnswerResponse> answerResponses =
 
-                            .communication(
+                                new ArrayList<>();
 
-                                    answer.getCommunication()
+                for (
 
-                            )
+                InterviewAnswer answer : answers
 
-                            .overallScore(
+                ) {
 
-                                    answer.getOverallScore()
+                        answerResponses.add(
 
-                            )
+                                        InterviewAnswerResponse.builder()
 
-                            .performance(
+                                                        .questionNumber(
 
-                                    answer.getPerformance()
+                                                                        answer.getQuestionNumber()
 
-                            )
+                                                        )
 
-                            .difficulty(
+                                                        .question(
 
-                                    answer.getDifficulty()
+                                                                        answer.getQuestion()
 
-                            )
+                                                        )
 
-                            .idealAnswer(
+                                                        .answer(
 
-                                    answer.getIdealAnswer()
+                                                                        answer.getAnswer()
 
-                            )
+                                                        )
 
-                            .feedback(
+                                                        .technicalAccuracy(
 
-                                    answer.getFeedback()
+                                                                        answer.getTechnicalAccuracy()
 
-                            )
+                                                        )
 
-                            .strengths(
+                                                        .completeness(
 
-                                    readJson(
+                                                                        answer.getCompleteness()
 
-                                            answer.getStrengths()
+                                                        )
 
-                                    )
+                                                        .communication(
 
-                            )
+                                                                        answer.getCommunication()
 
-                            .missingConcepts(
+                                                        )
 
-                                    readJson(
+                                                        .overallScore(
 
-                                            answer.getMissingConcepts()
+                                                                        answer.getOverallScore()
 
-                                    )
+                                                        )
 
-                            )
+                                                        .performance(
 
-                            .build()
+                                                                        answer.getPerformance()
 
-            );
+                                                        )
+
+                                                        .difficulty(
+
+                                                                        answer.getDifficulty()
+
+                                                        )
+
+                                                        .idealAnswer(
+
+                                                                        answer.getIdealAnswer()
+
+                                                        )
+
+                                                        .feedback(
+
+                                                                        answer.getFeedback()
+
+                                                        )
+
+                                                        .strengths(
+
+                                                                        readJson(answer.getStrengths())
+
+                                                        )
+
+                                                        .missingConcepts(
+
+                                                                        readJson(answer.getMissingConcepts())
+
+                                                        )
+
+                                                        .build()
+
+                        );
+
+                }
+
+                return InterviewResultResponse.builder()
+
+                                .sessionId(
+
+                                                session.getId()
+
+                                )
+
+                                .status(
+
+                                                session.getStatus()
+
+                                )
+
+                                .targetRole(
+
+                                                session.getTargetRole()
+
+                                )
+
+                                .experienceLevel(
+
+                                                session.getExperienceLevel()
+
+                                )
+
+                                .skills(
+
+                                                readJson(session.getSelectedSkills())
+
+                                )
+
+                                .questionsAnswered(
+
+                                                session.getQuestionsAnswered()
+
+                                )
+
+                                .overallScore(
+
+                                                session.getOverallScore()
+
+                                )
+
+                                .technicalAccuracy(
+
+                                                session.getTechnicalAccuracy()
+
+                                )
+
+                                .completeness(
+
+                                                session.getCompleteness()
+
+                                )
+
+                                .communication(
+
+                                                session.getCommunication()
+
+                                )
+
+                                .nextFocusSkill(
+
+                                                session.getNextFocusSkill()
+
+                                )
+
+                                .difficulty(
+
+                                                session.getDifficulty()
+
+                                )
+
+                                .answers(
+
+                                                answerResponses
+
+                                )
+
+                                .build();
 
         }
 
-        session.setReportGenerated(true);
-
-        interviewSessionRepository.save(session);
-
-        return InterviewResultResponse.builder()
-
-                .sessionId(
-
-                        session.getId()
-
-                )
-
-                .status(
-
-                        session.getStatus()
-
-                )
-
-                .targetRole(
-
-                        session.getTargetRole()
-
-                )
-
-                .experienceLevel(
-
-                        session.getExperienceLevel()
-
-                )
-
-                .skills(
-
-                        readJson(
-
-                                session.getSelectedSkills()
-
-                        )
-
-                )
-
-                .questionsAnswered(
-
-                        session.getQuestionsAnswered()
-
-                )
-
-                .overallScore(
-
-                        session.getOverallScore()
-
-                )
-
-                .technicalAccuracy(
-
-                        session.getTechnicalAccuracy()
-
-                )
-
-                .completeness(
-
-                        session.getCompleteness()
-
-                )
-
-                .communication(
-
-                        session.getCommunication()
-
-                )
-
-                .nextFocusSkill(
-
-                        session.getNextFocusSkill()
-
-                )
-
-                .difficulty(
-
-                        session.getDifficulty()
-
-                )
-
-                .answers(
-
-                        answerResponses
-
-                )
-
-                .build();
-
-    }
-
         @Override
-    public InterviewProgressResponse getInterviewProgress(
+        public InterviewProgressResponse getInterviewProgress(
 
-            User user,
+                        User user,
 
-            Long sessionId
+                        Long sessionId
 
-    ) {
+        ) {
 
-        InterviewSession session =
+                InterviewSession session =
 
-                interviewSessionRepository
+                                interviewSessionRepository
 
-                        .findByIdAndUser(
+                                                .findByIdAndUser(
 
-                                sessionId,
+                                                                sessionId,
 
-                                user
+                                                                user
 
-                        )
+                                                )
 
-                        .orElseThrow(() ->
+                                                .orElseThrow(() ->
 
-                                new RuntimeException(
+                                                new RuntimeException(
 
-                                        "Interview session not found."
+                                                                "Interview session not found."
+
+                                                )
+
+                                                );
+
+                return InterviewProgressResponse.builder()
+
+                                .sessionId(
+
+                                                session.getId()
 
                                 )
 
-                        );
+                                .status(
 
-        return InterviewProgressResponse.builder()
-
-                .sessionId(
-
-                        session.getId()
-
-                )
-
-                .status(
-
-                        session.getStatus()
-
-                )
-
-                .questionsAnswered(
-
-                        session.getQuestionsAnswered()
-
-                )
-
-                .overallScore(
-
-                        session.getOverallScore()
-
-                )
-
-                .technicalAccuracy(
-
-                        session.getTechnicalAccuracy()
-
-                )
-
-                .completeness(
-
-                        session.getCompleteness()
-
-                )
-
-                .communication(
-
-                        session.getCommunication()
-
-                )
-
-                .currentQuestion(
-
-                        session.getCurrentQuestion()
-
-                )
-
-                .targetRole(
-
-                        session.getTargetRole()
-
-                )
-
-                .experienceLevel(
-
-                        session.getExperienceLevel()
-
-                )
-
-                .skills(
-
-                        readJson(
-
-                                session.getSelectedSkills()
-
-                        )
-
-                )
-
-                .interviewEndedByUser(
-
-                        session.getInterviewEndedByUser()
-
-                )
-
-                .reportGenerated(
-
-                        session.getReportGenerated()
-
-                )
-
-                .startedAt(
-
-                        session.getStartedAt()
-
-                )
-
-                .completedAt(
-
-                        session.getCompletedAt()
-
-                )
-
-                .build();
-
-    }
-
-    public void endInterview(
-
-            Long sessionId,
-
-            User user
-
-    ) {
-
-        InterviewSession session =
-
-                interviewSessionRepository
-
-                        .findByIdAndUser(
-
-                                sessionId,
-
-                                user
-
-                        )
-
-                        .orElseThrow(() ->
-
-                                new RuntimeException(
-
-                                        "Interview session not found."
+                                                session.getStatus()
 
                                 )
 
-                        );
+                                .questionsAnswered(
 
-        session.setInterviewEndedByUser(true);
+                                                session.getQuestionsAnswered()
 
-        session.setStatus("COMPLETED");
+                                )
 
-        session.setCompletedAt(
+                                .overallScore(
 
-                LocalDateTime.now()
+                                                session.getOverallScore()
 
-        );
+                                )
 
-        interviewSessionRepository.save(
+                                .technicalAccuracy(
 
-                session
+                                                session.getTechnicalAccuracy()
 
-        );
+                                )
 
-    }
+                                .completeness(
+
+                                                session.getCompleteness()
+
+                                )
+
+                                .communication(
+
+                                                session.getCommunication()
+
+                                )
+
+                                .currentQuestion(
+
+                                                session.getCurrentQuestion()
+
+                                )
+
+                                .targetRole(
+
+                                                session.getTargetRole()
+
+                                )
+
+                                .experienceLevel(
+
+                                                session.getExperienceLevel()
+
+                                )
+
+                                .skills(
+
+                                                readJson(session.getSelectedSkills())
+
+                                )
+
+                                .interviewEndedByUser(
+
+                                                session.getInterviewEndedByUser()
+
+                                )
+
+                                .reportGenerated(
+
+                                                session.getReportGenerated()
+
+                                )
+
+                                .startedAt(
+
+                                                session.getStartedAt()
+
+                                )
+
+                                .completedAt(
+
+                                                session.getCompletedAt()
+
+                                )
+
+                                .build();
+
+        }
 
         private List<String> readJson(
 
-            String json
+                        String json
 
-    ) {
+        ) {
 
-        try {
+                try {
 
-            if (
+                        if (
 
-                    json == null ||
+                        json == null ||
 
-                    json.isBlank()
+                                        json.isBlank()
 
-            ) {
+                        ) {
 
-                return new ArrayList<>();
+                                return new ArrayList<>();
 
-            }
+                        }
 
-            return OBJECT_MAPPER.readValue(
+                        return OBJECT_MAPPER.readValue(
 
-                    json,
+                                        json,
 
-                    new TypeReference<List<String>>() {
-                    }
+                                        new TypeReference<List<String>>() {
+                                        }
 
-            );
+                        );
 
-        }
+                }
 
-        catch (Exception exception) {
+                catch (Exception exception) {
 
-            return new ArrayList<>();
+                        return new ArrayList<>();
 
-        }
-
-    }
-
-    private String writeJson(
-
-            List<String> list
-
-    ) {
-
-        try {
-
-            if (list == null) {
-
-                list = new ArrayList<>();
-
-            }
-
-            return OBJECT_MAPPER.writeValueAsString(
-
-                    list
-
-            );
+                }
 
         }
 
-        catch (Exception exception) {
+        private String writeJson(
 
-            return "[]";
+                        List<String> list
 
-        }
+        ) {
 
-    }
+                try {
 
-    private InterviewEvaluationResponse readEvaluation(
+                        if (
 
-            String json
+                        list == null
 
-    ) {
+                        ) {
 
-        try {
+                                list = new ArrayList<>();
 
-            return OBJECT_MAPPER.readValue(
+                        }
 
-                    json,
+                        return OBJECT_MAPPER.writeValueAsString(
 
-                    InterviewEvaluationResponse.class
+                                        list
 
-            );
+                        );
 
-        }
+                }
 
-        catch (Exception exception) {
+                catch (Exception exception) {
 
-            throw new RuntimeException(
+                        return "[]";
 
-                    "Failed to parse Gemini evaluation response.",
-
-                    exception
-
-            );
+                }
 
         }
 
-    }
+        @Override
+        public void endInterview(
+
+                        Long sessionId,
+
+                        User user
+
+        ) {
+
+                InterviewSession session = interviewSessionRepository
+                                .findByIdAndUser(sessionId, user)
+                                .orElseThrow(() -> new RuntimeException("Interview session not found."));
+
+                session.setInterviewEndedByUser(true);
+
+                session.setStatus("COMPLETED");
+
+                session.setCompletedAt(LocalDateTime.now());
+
+                interviewSessionRepository.save(session);
+
+        }
+
+        private InterviewEvaluationResponse readEvaluation(
+
+                        String json
+
+        ) {
+
+                try {
+
+                        return OBJECT_MAPPER.readValue(
+
+                                        json,
+
+                                        InterviewEvaluationResponse.class
+
+                        );
+
+                }
+
+                catch (Exception exception) {
+
+                        throw new RuntimeException(
+
+                                        "Failed to parse Gemini evaluation response.",
+
+                                        exception
+
+                        );
+
+                }
+
+        }
 
 }

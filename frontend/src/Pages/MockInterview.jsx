@@ -1,403 +1,479 @@
-import { useEffect, useState } from "react";
-import DifficultyModal from "./DifficultyModal";
-import InterviewCountdown from "./InterviewCountdown";
+    import { useState, useEffect } from "react";
+    import { toast } from "react-toastify";
+    import DifficultyModal from "./DifficultyModal";
+    import InterviewCountdown from "./InterviewCountdown";
 
-import {
-    FiMic,
-    FiMicOff,
-    FiVolume2,
-    FiVolumeX,
-    FiPhoneOff,
-    FiPlay
-} from "react-icons/fi";
+    import {
+        FiMic,
+        FiMicOff,
+        FiVolume2,
+        FiVolumeX,
+        FiPhoneOff,
+        FiPlay
+    } from "react-icons/fi";
 
-import { startInterview, submitAnswer } from "../services/interviewService";
-import { submitFeedback } from "../services/feedbackService";
-import "../styles/mockInterview.css";
-import "../styles/AIOrb.css";
-import AIOrb from "./AIOrb";
-import { SpeechSynthesisService, SpeechRecognitionService } from "../services/speech";
-import FirstInterviewFeedbackModal from "../feedback/FirstInterviewFeedbackModal";
-
-
-export default function MockInterview() {
-
-
-    const [started, setStarted] = useState(false);
-
-    const [micMuted, setMicMuted] = useState(false);
-
-    const [isListening, setIsListening] = useState(false);
-
-    const [speakerMuted, setSpeakerMuted] = useState(false);
-
-    const [isAiSpeaking, setIsAiSpeaking] = useState(false);
-
-    const [seconds, setSeconds] = useState(0);
-
-    const [sessionId, setSessionId] = useState(null);
-
-    const [currentQuestion, setCurrentQuestion] = useState("");
-
-    const [voiceEnabled, setVoiceEnabled] = useState(true);
-
-    const [questionNumber, setQuestionNumber] = useState(1);
-
-    const [loading, setLoading] = useState(false);
-
-    const [answer, setAnswer] = useState("");
-
-    const [submittedAnswer, setSubmittedAnswer] = useState("");
-
-    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-
-    const [firstInterviewCompleted, setFirstInterviewCompleted] = useState(false);
-
-    const [answeredAtLeastOneQuestion, setAnsweredAtLeastOneQuestion] = useState(false);
-
-    const [showDifficultyModal, setShowDifficultyModal] = useState(false);
-
-    const [selectedDifficulty, setSelectedDifficulty] = useState("");
-
-    const [showCountdown, setShowCountdown] = useState(false);
-
-    const [countdown, setCountdown] = useState(4);
-
-   const [pendingInterview, setPendingInterview] = useState(null);
-
-const currentUser = JSON.parse(localStorage.getItem("user"));
+    import { startInterview, submitAnswer } from "../services/interviewService";
+    import { getProfile } from "../services/profileService";
+    import { submitFeedback } from "../services/feedbackService";
+    import "../styles/mockInterview.css";
+    import "../styles/AIOrb.css";
+    import AIOrb from "./AIOrb";
+    import { SpeechSynthesisService, SpeechRecognitionService } from "../services/speech";
+    import FirstInterviewFeedbackModal from "../feedback/FirstInterviewFeedbackModal";
 
 
-    const toggleSpeaker = () => {
+    export default function MockInterview() {
 
-        if (speakerMuted) {
 
-            setSpeakerMuted(false);
+        const [started, setStarted] = useState(false);
 
-            if (SpeechSynthesisService.isSpeaking()) {
+        const [micMuted, setMicMuted] = useState(false);
 
-                SpeechSynthesisService.resume();
+        const [isListening, setIsListening] = useState(false);
 
-            }
+        const [speakerMuted, setSpeakerMuted] = useState(false);
 
-        } else {
+        const [isAiSpeaking, setIsAiSpeaking] = useState(false);
 
-            setSpeakerMuted(true);
+        const [seconds, setSeconds] = useState(0);
 
-            SpeechSynthesisService.pause();
+        const [sessionId, setSessionId] = useState(null);
 
-        }
+        const [currentQuestion, setCurrentQuestion] = useState("");
 
-    };
+        const [voiceEnabled, setVoiceEnabled] = useState(true);
 
-    const toggleMic = () => {
+        const [questionNumber, setQuestionNumber] = useState(1);
 
-        if (!SpeechRecognitionService.recognition) {
+        const [loading, setLoading] = useState(false);
 
-            console.log("Speech Recognition is not supported in this browser.");
-            
+        const [answer, setAnswer] = useState("");
 
-            return;
+        const [submittedAnswer, setSubmittedAnswer] = useState("");
 
-        }
+        const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
-        try {
+        const [firstInterviewCompleted, setFirstInterviewCompleted] = useState(false);
 
-            if (SpeechRecognitionService.isListening) {
+        const [answeredAtLeastOneQuestion, setAnsweredAtLeastOneQuestion] = useState(false);
 
-                SpeechRecognitionService.stop();
+        const [showDifficultyModal, setShowDifficultyModal] = useState(false);
+
+        const [selectedDifficulty, setSelectedDifficulty] = useState("");
+
+        const [showCountdown, setShowCountdown] = useState(false);
+
+        const [countdown, setCountdown] = useState(4);
+
+        const [pendingInterview, setPendingInterview] = useState(null);
+
+    const [currentUser, setCurrentUser] = useState(() =>
+        JSON.parse(localStorage.getItem("user")) || {}
+    );
+
+    const [profileLoading, setProfileLoading] = useState(true);
+
+const technicalSkills = Array.isArray(currentUser?.skills)
+    ? currentUser.skills
+    : typeof currentUser?.skills === "string"
+        ? currentUser.skills
+            .split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean)
+        : [];
+
+const profileCompleted =
+    Boolean(currentUser?.targetRole?.trim()) &&
+    technicalSkills.length > 0;
+    
+
+        const toggleSpeaker = () => {
+
+            if (speakerMuted) {
+
+                setSpeakerMuted(false);
+
+                if (SpeechSynthesisService.isSpeaking()) {
+
+                    SpeechSynthesisService.resume();
+
+                }
 
             } else {
 
-                SpeechRecognitionService.start();
+                setSpeakerMuted(true);
+
+                SpeechSynthesisService.pause();
 
             }
-
-        } catch (error) {
-
-            console.error(error);
-
-        }
-
-    };
-
-    useEffect(() => {
-
-        if (!started) {
-
-            return;
-
-        }
-
-        if (!voiceEnabled) {
-
-            return;
-
-        }
-
-        if (!currentQuestion?.trim()) {
-
-            return;
-
-        }
-
-        // Speaker OFF hai to new question read mat karo
-        if (speakerMuted) {
-
-            return;
-
-        }
-
-        // Agar pause hui speech chal rahi hai to resume karo
-        if (SpeechSynthesisService.isSpeaking()) {
-
-            return;
-
-        }
-
-        const timer = setTimeout(() => {
-
-         SpeechSynthesisService.speak(
-
-    currentQuestion,
-
-    () => {
-
-        if (
-
-            SpeechRecognitionService.recognition &&
-
-            !SpeechRecognitionService.isListening &&
-
-            !micMuted
-
-        ) {
-
-            SpeechRecognitionService.start();
-
-        }
-
-    }
-
-);
-
-
-        }, 700);
-
-        return () => {
-
-            clearTimeout(timer);
 
         };
 
-    }, [
+        const toggleMic = () => {
 
-        started,
+            if (!SpeechRecognitionService.recognition) {
 
-        currentQuestion,
+                console.log("Speech Recognition is not supported in this browser.");
 
-        voiceEnabled
 
-    ]);
-
-    useEffect(() => {
-
-      SpeechRecognitionService.setTranscriptListener(
-
-    (text, isFinal) => {
-
-        if (!isFinal) {
-
-            return;
-
-        }
-
-        setAnswer((previousAnswer) => {
-
-            const cleanText = text.trim();
-
-            if (!cleanText) {
-
-                return previousAnswer;
+                return;
 
             }
 
-            if (
+            try {
 
-                previousAnswer
+                if (SpeechRecognitionService.isListening) {
 
-                    .toLowerCase()
+                    SpeechRecognitionService.stop();
 
-                    .includes(cleanText.toLowerCase())
+                } else {
 
-            ) {
+                    SpeechRecognitionService.start();
 
-                return previousAnswer;
+                }
 
-            }
-
-            if (!previousAnswer.trim()) {
-
-                return cleanText;
-
-            }
-
-            return previousAnswer + " " + cleanText;
-
-        });
-
-    }
-
-);
-        SpeechRecognitionService.setErrorListener(
-
-            (error) => {
+            } catch (error) {
 
                 console.error(error);
 
             }
 
-        );
+        };
 
-        SpeechRecognitionService.setStateListener(
+        useEffect(() => {
 
-            (listening) => {
+            if (!started) {
 
-                setIsListening(listening);
-
-                setMicMuted(!listening);
+                return;
 
             }
 
-        );
+            if (!voiceEnabled) {
 
-     SpeechSynthesisService.setSpeakingStateListener(
+                return;
 
-    (speaking) => {
+            }
 
-        console.log("AI Speaking:", speaking);
+            if (!currentQuestion?.trim()) {
 
-        setIsAiSpeaking(speaking);
+                return;
 
-    }
+            }
 
-);
+            if (speakerMuted) {
+
+                return;
+
+            }
+
+            if (SpeechSynthesisService.isSpeaking()) {
+
+                return;
+
+            }
+
+            const timer = setTimeout(() => {
+
+                SpeechSynthesisService.speak(
+
+                    currentQuestion,
+
+                    () => {
+
+                        if (
+
+                            SpeechRecognitionService.recognition &&
+
+                            !SpeechRecognitionService.isListening &&
+
+                            !micMuted
+
+                        ) {
+
+                            SpeechRecognitionService.start();
+
+                        }
+
+                    }
+
+                );
+
+
+            }, 700);
+
+            return () => {
+
+                clearTimeout(timer);
+
+            };
+
+        }, [
+
+            started,
+
+            currentQuestion,
+
+            voiceEnabled
+
+        ]);
+
+        useEffect(() => {
+
+            SpeechRecognitionService.setTranscriptListener(
+
+                (text, isFinal) => {
+
+                    if (!isFinal) {
+
+                        return;
+
+                    }
+
+                    setAnswer((previousAnswer) => {
+
+                        const cleanText = text.trim();
+
+                        if (!cleanText) {
+
+                            return previousAnswer;
+
+                        }
+
+                        if (
+
+                            previousAnswer
+
+                                .toLowerCase()
+
+                                .includes(cleanText.toLowerCase())
+
+                        ) {
+
+                            return previousAnswer;
+
+                        }
+
+                        if (!previousAnswer.trim()) {
+
+                            return cleanText;
+
+                        }
+
+                        return previousAnswer + " " + cleanText;
+
+                    });
+
+                }
+
+            );
+            SpeechRecognitionService.setErrorListener(
+
+                (error) => {
+
+                    console.error(error);
+
+                }
+
+            );
+
+            SpeechRecognitionService.setStateListener(
+
+                (listening) => {
+
+                    setIsListening(listening);
+
+                    setMicMuted(!listening);
+
+                }
+
+            );
+
+            SpeechSynthesisService.setSpeakingStateListener(
+
+                (speaking) => {
+
+                    console.log("AI Speaking:", speaking);
+
+                    setIsAiSpeaking(speaking);
+
+                }
+
+            );
+
+        }, []);
+
+    useEffect(() => {
+
+        const loadLatestProfile = async () => {
+
+            try {
+
+                const profile = await getProfile();
+
+                const latestUser =
+                    JSON.parse(localStorage.getItem("user")) || {};
+
+                const updatedUser = {
+
+                    ...latestUser,
+
+                    ...profile
+
+                };
+
+                setCurrentUser(updatedUser);
+
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(updatedUser)
+                );
+
+            } catch (error) {
+
+                console.error(error);
+
+            } finally {
+
+                setProfileLoading(false);
+
+            }
+
+        };
+
+        loadLatestProfile();
 
     }, []);
 
 
-    /* TIMER */
+        /* TIMER */
 
-    useEffect(() => {
+        useEffect(() => {
 
-        let interval = null;
+            let interval = null;
 
-        if (started) {
+            if (started) {
 
-            interval = setInterval(() => {
+                interval = setInterval(() => {
 
-                setSeconds((prev) => prev + 1);
+                    setSeconds((prev) => prev + 1);
+
+                }, 1000);
+            }
+
+            else {
+
+                clearInterval(interval);
+            }
+
+            return () => clearInterval(interval);
+
+        }, [started]);
+
+        useEffect(() => {
+
+            if (!showCountdown) {
+
+                return;
+
+            }
+
+            if (countdown === 0) {
+
+                setShowCountdown(false);
+
+                setTimeout(() => {
+
+                    startInterviewSession();
+
+                }, 350);
+
+                return;
+
+            }
+
+
+            const timer = setTimeout(() => {
+
+                setCountdown((prev) => prev - 1);
 
             }, 1000);
-        }
 
-        else {
+            return () => clearTimeout(timer);
 
-            clearInterval(interval);
-        }
+        }, [
 
-        return () => clearInterval(interval);
+            showCountdown,
 
-    }, [started]);
+            countdown
 
-    useEffect(() => {
+        ]);
 
-    if (!showCountdown) {
+
+        /* FORMAT TIMER */
+
+        const formatTime = () => {
+
+            const mins = String(
+                Math.floor(seconds / 60)
+            ).padStart(2, "0");
+
+            const secs = String(
+                seconds % 60
+            ).padStart(2, "0");
+
+            return `${mins}:${secs}`;
+        };
+
+        /* START */
+
+        const startInterviewSession = () => {
+
+            if (!pendingInterview) {
+
+                return;
+
+            }
+
+            setSessionId(pendingInterview.sessionId);
+
+
+            setQuestionNumber(1);
+
+            setSeconds(0);
+
+            setStarted(true);
+
+            setAnswer("");
+
+            setSubmittedAnswer("");
+
+            setCurrentQuestion(pendingInterview.question);
+
+
+            setPendingInterview(null);
+
+        };
+
+
+    
+       const handleStart = () => {
+
+    if (profileLoading) {
+        return;
+    }
+
+    if (!profileCompleted) {
+
+        toast.warning(
+                "Add at least one technical skill to unlock AI interviews.",
+            {
+                autoClose: 2200
+            }
+        );
 
         return;
 
     }
-
-   if (countdown === 0) {
-
-    setShowCountdown(false);
-
-    setTimeout(() => {
-
-        startInterviewSession();
-
-    }, 350);
-
-    return;
-
-}
-
-
-    const timer = setTimeout(() => {
-
-        setCountdown((prev) => prev - 1);
-
-    }, 1000);
-
-    return () => clearTimeout(timer);
-
-}, [
-
-    showCountdown,
-
-    countdown
-
-]);
-
-
-    /* FORMAT TIMER */
-
-    const formatTime = () => {
-
-        const mins = String(
-            Math.floor(seconds / 60)
-        ).padStart(2, "0");
-
-        const secs = String(
-            seconds % 60
-        ).padStart(2, "0");
-
-        return `${mins}:${secs}`;
-    };
-
-    /* START */
-
-    const startInterviewSession = () => {
-
-    if (!pendingInterview) {
-
-        return;
-
-    }
-
-    setSessionId(pendingInterview.sessionId);
-
-   setSessionId(pendingInterview.sessionId);
-
-setQuestionNumber(1);
-
-setSeconds(0);
-
-setStarted(true);
-
-setAnswer("");
-
-setSubmittedAnswer("");
-
-setCurrentQuestion(pendingInterview.firstQuestion);
-
-
-    setPendingInterview(null);
-
-};
-
-
-   const handleStart = () => {
 
     setShowDifficultyModal(true);
 
@@ -405,26 +481,27 @@ setCurrentQuestion(pendingInterview.firstQuestion);
 
 
 
-  const handleDifficultyStart = async () => {
+      const handleDifficultyStart = async () => {
+
+    if (loading || !selectedDifficulty) {
+        return;
+    }
 
     try {
 
+        setLoading(true);
 
-       const currentUser = JSON.parse(localStorage.getItem("user"));
-
-const response = await startInterview({
+       const response = await startInterview({
 
     targetRole: currentUser.targetRole,
 
-    experienceLevel: currentUser.experienceLevel,
+    experienceLevel: selectedDifficulty,
 
-    skills: currentUser.skills
+    skills: technicalSkills
 
 });
 
-
         setPendingInterview(response.data);
-
 
         setShowDifficultyModal(false);
 
@@ -438,540 +515,555 @@ const response = await startInterview({
 
         console.error(error);
 
-        console.log("Failed to start interview", error);
-        
+        toast.error(
+            "Unable to start the interview. Please try again."
+        );
+
     }
 
+    finally {
 
+        setLoading(false);
+
+    }
 
 };
 
 
 
 
-    const resetInterview = () => {
+        const resetInterview = () => {
 
-        SpeechSynthesisService.stop();
+            SpeechSynthesisService.stop();
 
-        SpeechRecognitionService.stop();
-
-        setStarted(false);
-
-        setMicMuted(false);
-
-        setSpeakerMuted(false);
-
-        setSeconds(0);
-
-        setSessionId(null);
-
-        setCurrentQuestion("");
-
-        setQuestionNumber(1);
-
-        setAnswer("");
-
-        setSubmittedAnswer("");
-
-        setLoading(false);
-
-        setAnsweredAtLeastOneQuestion(false);
-    };
-
-    /* END */
-
-    const handleEnd = () => {
-
-        SpeechRecognitionService.stop();
-        SpeechSynthesisService.stop();
-
-
-        if (answeredAtLeastOneQuestion) {
+            SpeechRecognitionService.stop();
 
             setStarted(false);
+
+            setMicMuted(false);
+
+            setSpeakerMuted(false);
+
+            setSeconds(0);
+
+            setSessionId(null);
+
+            setCurrentQuestion("");
+
+            setQuestionNumber(1);
+
+            setAnswer("");
+
+            setSubmittedAnswer("");
+
+            setLoading(false);
+
+            setAnsweredAtLeastOneQuestion(false);
+        };
+
+        /* END */
+
+        const handleEnd = () => {
+
+    SpeechRecognitionService.stop();
+
+    SpeechSynthesisService.stop();
+
+    if (!answeredAtLeastOneQuestion) {
+
+        resetInterview();
+
+        return;
+
+    }
+
+    setStarted(false);
+
+    setShowFeedbackModal(true);
+
+};
+
+      const handleSubmit = async () => {
+
+    SpeechRecognitionService.stop();
+
+    if (!answer.trim()) {
+
+        return;
+    }
+
+    try {
+
+        setLoading(true);
+
+        const response = await submitAnswer({
+
+            sessionId: sessionId,
+            answer: answer
+
+        });
+
+        setSubmittedAnswer(answer);
+
+        setAnsweredAtLeastOneQuestion(true);
+
+        if (response.data.interviewCompleted) {
+
+            SpeechSynthesisService.stop();
+
+            SpeechRecognitionService.stop();
+
+            setStarted(false);
+
+            setFirstInterviewCompleted(true);
 
             setShowFeedbackModal(true);
 
             return;
-
         }
-
-        resetInterview();
-
-    };
-
-    const handleSubmit = async () => {
 
         SpeechRecognitionService.stop();
 
-        if (!answer.trim()) {
+        setCurrentQuestion(response.data.nextQuestion);
 
-            return;
-        }
+        setQuestionNumber(response.data.questionNumber);
 
-        try {
+        setAnswer("");
 
-            setLoading(true);
+    } catch (error) {
 
-            setSubmittedAnswer(answer);
+        console.error(error);
 
-            setAnsweredAtLeastOneQuestion(true);
+        toast.error(
+            "Unable to submit your answer. Please try again."
+        );
 
-            const response = await submitAnswer({
+    } finally {
 
-                sessionId: sessionId,
-                answer: answer
+        setLoading(false);
 
-            });
-
-            if (response.data.interviewCompleted) {
-
-    SpeechSynthesisService.stop();
-
-    SpeechRecognitionService.stop();
-
-    setStarted(false);
-
-    setFirstInterviewCompleted(true);
-
-    setShowFeedbackModal(true);
-
-    return;
-}
-
-           SpeechRecognitionService.stop();
-
-setCurrentQuestion(response.data.nextQuestion);
-
-setQuestionNumber(response.data.questionNumber);
-
-setAnswer("");
-
-        } catch (error) {
-
-            console.error(error);
-
-            alert("Failed to submit answer.");
-
-        } finally {
-
-            setLoading(false);
-        }
-
-    };
-
-
-    return (
-
-        <>
-
-       <section
-    className={
-        showDifficultyModal
-            ? "mock-page modal-open"
-            : "mock-page"
     }
->
 
-    
+};
 
 
-            {/* HEADER */}
+        return (
 
-            <div className="mock-header">
+            <>
 
-                <div>
+                <section
+                    className={
+                        showDifficultyModal
+                            ? "mock-page modal-open"
+                            : "mock-page"
+                    }
+                >
 
-                    <h1>
-    {currentUser?.targetRole || "AI Mock Interview"}
-</h1>
 
-                   <p>
-    {(currentUser?.skills || []).join(" • ")}
-</p>
-                </div>
 
-                {/* TIMER */}
 
-                {
+                    {/* HEADER */}
 
-                    started && (
+                    <div className="mock-header">
 
-                        <div className="timer-box">
+                        <div>
 
-                            {formatTime()}
+                            <h1>
+                                {currentUser?.targetRole || "AI Mock Interview"}
+                            </h1>
 
+                            <p>
+                                {(currentUser?.skills || []).join(" • ")}
+                            </p>
                         </div>
 
-                    )
-
-                }
-
-            </div>
-
-            {/* MAIN */}
-
-            <div className="mock-grid">
-
-                {/* LEFT */}
-
-                <div className="ai-panel">
-
-                    {/* QUESTION */}
-
-                    <div className="question-badge">
-
-                        Question No - {questionNumber}
-                    </div>
-
-                    {/* AI ORB */}
-
-                    <div className="ai-orb-wrapper">
-
-                     <AIOrb
-
-    speaking={isAiSpeaking}
-
-    listening={isListening}
-
-/>
-
-                    </div>
 
 
-                    {/* STATUS */}
-
-                    {
-
-                        started && (
-
-                            <div className="listening-box">
-
-                                <div className="green-dot"></div>
-
-                                Listening...
-
-                            </div>
-
-                        )
-
-                    }
-
-                    {/* CONTROLS */}
-
-                    <div className="controls-wrapper">
+                        {/* TIMER */}
 
                         {
 
-                            !started
+                            started && (
 
-                                ? (
+                                <div className="timer-box">
 
-                                   <button
-    className="start-btn"
-    onClick={handleStart}
-    disabled={showCountdown}
->
-    <FiPlay />
-    Start Interview
-</button>
+                                    {formatTime()}
 
-                                )
+                                </div>
 
-                                : (
-
-                                    <div className="controls-row">
-
-                                        {/* MIC */}
-
-                                        <button
-                                            className={
-                                                micMuted
-                                                    ? "control-btn active-control"
-                                                    : "control-btn"
-                                            }
-                                            onClick={toggleMic}
-                                        >
-
-                                            {
-                                                micMuted
-                                                    ? <FiMicOff />
-                                                    : <FiMic />
-                                            }
-
-                                        </button>
-
-                                        {/* SPEAKER */}
-
-                                        <button
-                                            className={
-                                                speakerMuted
-                                                    ? "control-btn active-control"
-                                                    : "control-btn"
-                                            }
-                                            onClick={toggleSpeaker}
-
-                                        >
-
-                                            {
-                                                speakerMuted
-                                                    ? <FiVolumeX />
-                                                    : <FiVolume2 />
-                                            }
-
-                                        </button>
-
-                                        {/* END */}
-
-                                        <button
-                                            className="end-btn"
-                                            onClick={handleEnd}
-                                        >
-
-                                            <FiPhoneOff />
-
-                                        </button>
-
-                                    </div>
-
-                                )
+                            )
 
                         }
 
                     </div>
 
-                </div>
+                    {/* MAIN */}
 
-                {/* RIGHT */}
+                    <div className="mock-grid">
 
-                <div className="feedback-column">
+                        {/* LEFT */}
 
-                    {/* FEEDBACK */}
+                        <div className="ai-panel">
 
-                   <div className="feedback-card">
+                            {/* QUESTION */}
 
-    <h3>
-        Real-time Feedback
-    </h3>
+                            <div className="question-badge">
 
-    <div className="feedback-item">
+                                Question No - {questionNumber}
+                            </div>
 
-        <div className="feedback-top">
+                            {/* AI ORB */}
 
-            <span>Technical Accuracy</span>
+                            <div className="ai-orb-wrapper">
 
-            <span>--</span>
+                                <AIOrb
 
-        </div>
+                                    speaking={isAiSpeaking}
 
-        <div className="feedback-bar">
+                                    listening={isListening}
 
-            <div
-                className="feedback-fill"
-                style={{ width: "0%" }}
-            />
+                                />
 
-        </div>
+                            </div>
 
-    </div>
 
-    <div className="feedback-item">
+                            {/* STATUS */}
 
-        <div className="feedback-top">
+                            {
 
-            <span>Completeness</span>
+                                started && (
 
-            <span>--</span>
+                                    <div className="listening-box">
 
-        </div>
+                                        <div className="green-dot"></div>
 
-        <div className="feedback-bar">
+                                        Listening...
 
-            <div
-                className="feedback-fill"
-                style={{ width: "0%" }}
-            />
+                                    </div>
 
-        </div>
+                                )
 
-    </div>
-
-    <div className="feedback-item">
-
-        <div className="feedback-top">
-
-            <span>Communication</span>
-
-            <span>--</span>
-
-        </div>
-
-        <div className="feedback-bar">
-
-            <div
-                className="feedback-fill"
-                style={{ width: "0%" }}
-            />
-
-        </div>
-
-    </div>
-
-</div>
-
-                    {/* TRANSCRIPT */}
-
-                    <div className="transcript-card">
-
-                        <h3>
-                            Transcript
-                        </h3>
-
-                        <p>
-
-                            <span>
-                                AI:
-                            </span>
-
-                            {currentQuestion || "Click Start Interview to begin."}
-
-                        </p>
-
-                        <p>
-
-                            <span>
-                                You:
-                            </span>
-
-                            {submittedAnswer
-                                ? submittedAnswer.length > 120
-                                    ? submittedAnswer.substring(0, 120) + "..."
-                                    : submittedAnswer
-                                : "Your answer will appear here."
                             }
 
-                        </p>
+                            {/* CONTROLS */}
 
-                        <textarea
-                            className="typing-box"
-                            placeholder="Type your answer..."
-                            value={answer}
-                            onChange={(e) => setAnswer(e.target.value)}
-                        />
+                            <div className="controls-wrapper">
 
-                        <button
-                            className="submit-answer-btn"
-                            onClick={handleSubmit}
-                            disabled={loading || !answer.trim()}
-                        >
-                            Submit Answer
-                        </button>
+                                {
+
+                                    !started
+
+                                        ? (
+
+                                            <button
+        className={`start-btn ${!profileCompleted ? "start-btn-disabled" : ""}`}
+        onClick={handleStart}
+        disabled={
+    profileLoading ||
+    !profileCompleted ||
+    showCountdown
+}
+    >
+                                                <FiPlay />
+                                                Start Interview
+                                            </button>
+
+                                        )
+
+                                        : (
+
+                                            <div className="controls-row">
+
+                                                {/* MIC */}
+
+                                                <button
+                                                    className={
+                                                        micMuted
+                                                            ? "control-btn active-control"
+                                                            : "control-btn"
+                                                    }
+                                                    onClick={toggleMic}
+                                                >
+
+                                                    {
+                                                        micMuted
+                                                            ? <FiMicOff />
+                                                            : <FiMic />
+                                                    }
+
+                                                </button>
+
+                                                {/* SPEAKER */}
+
+                                                <button
+                                                    className={
+                                                        speakerMuted
+                                                            ? "control-btn active-control"
+                                                            : "control-btn"
+                                                    }
+                                                    onClick={toggleSpeaker}
+
+                                                >
+
+                                                    {
+                                                        speakerMuted
+                                                            ? <FiVolumeX />
+                                                            : <FiVolume2 />
+                                                    }
+
+                                                </button>
+
+                                                {/* END */}
+
+                                                <button
+                                                    className="end-btn"
+                                                    onClick={handleEnd}
+                                                >
+
+                                                    <FiPhoneOff />
+
+                                                </button>
+
+                                            </div>
+
+                                        )
+
+                                }
+
+                            </div>
+
+                        </div>
+
+                        {/* RIGHT */}
+
+                        <div className="feedback-column">
+
+                            {/* FEEDBACK */}
+
+                            <div className="feedback-card">
+
+                                <h3>
+                                    Real-time Feedback
+                                </h3>
+
+                                <div className="feedback-item">
+
+                                    <div className="feedback-top">
+
+                                        <span>Technical Accuracy</span>
+
+                                        <span>--</span>
+
+                                    </div>
+
+                                    <div className="feedback-bar">
+
+                                        <div
+                                            className="feedback-fill"
+                                            style={{ width: "0%" }}
+                                        />
+
+                                    </div>
+
+                                </div>
+
+                                <div className="feedback-item">
+
+                                    <div className="feedback-top">
+
+                                        <span>Completeness</span>
+
+                                        <span>--</span>
+
+                                    </div>
+
+                                    <div className="feedback-bar">
+
+                                        <div
+                                            className="feedback-fill"
+                                            style={{ width: "0%" }}
+                                        />
+
+                                    </div>
+
+                                </div>
+
+                                <div className="feedback-item">
+
+                                    <div className="feedback-top">
+
+                                        <span>Communication</span>
+
+                                        <span>--</span>
+
+                                    </div>
+
+                                    <div className="feedback-bar">
+
+                                        <div
+                                            className="feedback-fill"
+                                            style={{ width: "0%" }}
+                                        />
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            {/* TRANSCRIPT */}
+
+                            <div className="transcript-card">
+
+                                <h3>
+                                    Transcript
+                                </h3>
+
+                                <p>
+
+                                    <span>
+                                        AI:
+                                    </span>
+
+                                    {currentQuestion || "Click Start Interview to begin."}
+
+                                </p>
+
+                                <p>
+
+                                    <span>
+                                        You:
+                                    </span>
+
+                                    {submittedAnswer
+                                        ? submittedAnswer.length > 120
+                                            ? submittedAnswer.substring(0, 120) + "..."
+                                            : submittedAnswer
+                                        : "Your answer will appear here."
+                                    }
+
+                                </p>
+
+                                <textarea
+                                    className="typing-box"
+                                    placeholder="Type your answer..."
+                                    value={answer}
+                                    onChange={(e) => setAnswer(e.target.value)}
+                                />
+
+                                <button
+                                    className="submit-answer-btn"
+                                    onClick={handleSubmit}
+                                    disabled={loading || !answer.trim()}
+                                >
+                                    Submit Answer
+                                </button>
+
+                            </div>
+
+                        </div>
 
                     </div>
 
-                </div>
+                    {/* CURRENT QUESTION */}
 
-            </div>
+                    <div className="current-question-card">
 
-            {/* CURRENT QUESTION */}
+                        <h4>
+                            Current Question
+                        </h4>
 
-            <div className="current-question-card">
+                        <p>
+                            {currentQuestion || "Click Start Interview to begin."}
+                        </p>
 
-                <h4>
-                    Current Question
-                </h4>
-
-                <p>
-                    {currentQuestion || "Click Start Interview to begin."}
-                </p>
-
-            </div>
+                    </div>
 
 
-        </section>
+                </section>
 
-        <DifficultyModal
+                <DifficultyModal
 
-    open={showDifficultyModal}
+                    open={showDifficultyModal}
 
-    selectedDifficulty={selectedDifficulty}
+                    selectedDifficulty={selectedDifficulty}
 
-    setSelectedDifficulty={setSelectedDifficulty}
+                    setSelectedDifficulty={setSelectedDifficulty}
 
-    loading={false}
+                    loading={loading}
 
-    onClose={() => {
+                    onClose={() => {
 
-        setShowDifficultyModal(false);
+                        setShowDifficultyModal(false);
 
-    }}
+                    }}
 
-    onStart={handleDifficultyStart}
+                    onStart={handleDifficultyStart}
 
-/>
+                />
 
-{
+                {
 
-    showCountdown && (
+                    showCountdown && (
 
-        <InterviewCountdown
+                        <InterviewCountdown
 
-            count={countdown}
+                            count={countdown}
 
-        />
+                        />
 
-    )
+                    )
 
-}
+                }
 
-<FirstInterviewFeedbackModal
+                <FirstInterviewFeedbackModal
 
-    isOpen={showFeedbackModal}
+                    isOpen={showFeedbackModal}
 
-    onClose={() => {
+                    onClose={() => {
 
-        setShowFeedbackModal(false);
+                        setShowFeedbackModal(false);
 
-        resetInterview();
+                        resetInterview();
 
-    }}
+                    }}
 
-    onSubmit={async (feedback) => {
+                    onSubmit={async (feedback) => {
 
-        try {
+                        try {
 
-            await submitFeedback({
+                            await submitFeedback({
 
-                sessionId,
+                                sessionId,
 
-                rating: feedback.rating,
+                                rating: feedback.rating,
 
-                suggestion: feedback.suggestion
+                                suggestion: feedback.suggestion
 
-            });
+                            });
 
-        }
+                        }
 
-        catch (error) {
+                        catch (error) {
 
-            console.error(error);
+                            console.error(error);
 
-        }
+                        }
 
-        finally {
+                        finally {
 
-            setShowFeedbackModal(false);
+                            setShowFeedbackModal(false);
 
-            resetInterview();
+                            resetInterview();
 
-        }
+                        }
 
-    }}
+                    }}
 
-/>
+                />
 
-        </>
+            </>
 
-        
-    );
-}
+
+        );
+    }

@@ -15,6 +15,9 @@ import java.util.List;
 @AllArgsConstructor
 public class StartInterviewRequest {
 
+    @NotBlank(message = "Interview type is required.")
+    private String interviewType;
+
     @NotBlank(message = "Target role is required.")
     private String targetRole;
 
