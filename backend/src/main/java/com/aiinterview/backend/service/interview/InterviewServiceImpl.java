@@ -79,20 +79,20 @@ public class InterviewServiceImpl implements InterviewService {
 
                 InterviewSession session = InterviewSession.builder()
 
-                .user(user)
+                                .user(user)
 
-                .interviewType(
-                                request.getInterviewType())
+                                .interviewType(
+                                                request.getInterviewType())
 
-                .targetRole(
-                                request.getTargetRole())
+                                .targetRole(
+                                                request.getTargetRole())
 
-                .experienceLevel(
-                                request.getExperienceLevel())
+                                .experienceLevel(
+                                                request.getExperienceLevel())
 
-                .selectedSkills(
-                                writeJson(skills))
-                                
+                                .selectedSkills(
+                                                writeJson(skills))
+
                                 .weakAreas(
                                                 writeJson(weakAreas))
 
@@ -528,85 +528,86 @@ public class InterviewServiceImpl implements InterviewService {
 
                 }
 
+                int overallScore = 0;
+                int technicalAccuracy = 0;
+                int completeness = 0;
+                int communication = 0;
+
+                if (!answers.isEmpty()) {
+
+                        overallScore = (int) Math.round(
+                                        answers.stream()
+                                                        .mapToInt(answer -> answer.getOverallScore() == null
+                                                                        ? 0
+                                                                        : answer.getOverallScore())
+                                                        .average()
+                                                        .orElse(0));
+
+                        technicalAccuracy = (int) Math.round(
+                                        answers.stream()
+                                                        .mapToInt(answer -> answer.getTechnicalAccuracy() == null
+                                                                        ? 0
+                                                                        : answer.getTechnicalAccuracy())
+                                                        .average()
+                                                        .orElse(0));
+
+                        completeness = (int) Math.round(
+                                        answers.stream()
+                                                        .mapToInt(answer -> answer.getCompleteness() == null
+                                                                        ? 0
+                                                                        : answer.getCompleteness())
+                                                        .average()
+                                                        .orElse(0));
+
+                        communication = (int) Math.round(
+                                        answers.stream()
+                                                        .mapToInt(answer -> answer.getCommunication() == null
+                                                                        ? 0
+                                                                        : answer.getCommunication())
+                                                        .average()
+                                                        .orElse(0));
+                }
+
                 return InterviewResultResponse.builder()
 
                                 .sessionId(
-
-                                                session.getId()
-
-                                )
+                                                session.getId())
 
                                 .status(
-
-                                                session.getStatus()
-
-                                )
+                                                session.getStatus())
 
                                 .targetRole(
-
-                                                session.getTargetRole()
-
-                                )
+                                                session.getTargetRole())
 
                                 .experienceLevel(
-
-                                                session.getExperienceLevel()
-
-                                )
+                                                session.getExperienceLevel())
 
                                 .skills(
-
-                                                readJson(session.getSelectedSkills())
-
-                                )
+                                                readJson(session.getSelectedSkills()))
 
                                 .questionsAnswered(
-
-                                                session.getQuestionsAnswered()
-
-                                )
+                                                answers.size())
 
                                 .overallScore(
-
-                                                session.getOverallScore()
-
-                                )
+                                                overallScore)
 
                                 .technicalAccuracy(
-
-                                                session.getTechnicalAccuracy()
-
-                                )
+                                                technicalAccuracy)
 
                                 .completeness(
-
-                                                session.getCompleteness()
-
-                                )
+                                                completeness)
 
                                 .communication(
-
-                                                session.getCommunication()
-
-                                )
+                                                communication)
 
                                 .nextFocusSkill(
-
-                                                session.getNextFocusSkill()
-
-                                )
+                                                session.getNextFocusSkill())
 
                                 .difficulty(
-
-                                                session.getDifficulty()
-
-                                )
+                                                session.getDifficulty())
 
                                 .answers(
-
-                                                answerResponses
-
-                                )
+                                                answerResponses)
 
                                 .build();
 
@@ -829,10 +830,11 @@ public class InterviewServiceImpl implements InterviewService {
 
                 session.setStatus("COMPLETED");
 
+                session.setReportGenerated(true);
+
                 session.setCompletedAt(LocalDateTime.now());
 
                 interviewSessionRepository.save(session);
-
         }
 
         private InterviewEvaluationResponse readEvaluation(

@@ -26,3 +26,6 @@ export const getProgress = (sessionId) =>
 
 export const getResult = (sessionId) =>
     API.get(`/result/${sessionId}`);
+
+export const endInterview = (sessionId) =>
+API.post(`/end/${sessionId}`);

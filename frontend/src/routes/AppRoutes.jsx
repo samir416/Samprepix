@@ -7,6 +7,7 @@ import Dashboard from "../Pages/Dashboard";
 import ResumeAnalyzer from "../Pages/ResumeAnalyzer";
 import MockInterview from "../Pages/MockInterview";
 import Performance from "../Pages/Performance";
+import InterviewResult from "../Pages/InterviewResult";
 import CodingArena from "../Pages/CodingArena";
 import Features from "../Pages/Features";
 import Pricing from "../Pages/Pricing";
@@ -126,6 +127,15 @@ export default function AppRoutes() {
                 element={
                     <ProtectedRoute>
                         <Dashboard />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/interview-result"
+                element={
+                    <ProtectedRoute>
+                        <InterviewResult />
                     </ProtectedRoute>
                 }
             />

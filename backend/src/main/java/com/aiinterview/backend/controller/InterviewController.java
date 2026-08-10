@@ -67,6 +67,30 @@ public ResponseEntity<StartInterviewResponse> startInterview(
         }
     }
 
+
+    @PostMapping("/end/{sessionId}")
+public ResponseEntity<?> endInterview(
+        Authentication authentication,
+        @PathVariable Long sessionId) {
+
+    try {
+
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        interviewService.endInterview(sessionId, user);
+
+        return ResponseEntity.ok().build();
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+        throw e;
+    }
+}
+    
+
     @GetMapping("/result/{sessionId}")
 public ResponseEntity<InterviewResultResponse> getInterviewResult(
         Authentication authentication,

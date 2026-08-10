@@ -19,16 +19,12 @@ const FirstInterviewFeedbackModal = ({
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
+    document.body.style.overflow = "auto";
 
     return () => {
-      document.body.style.overflow = "auto";
+        document.body.style.overflow = "auto";
     };
-  }, [isOpen]);
+}, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
