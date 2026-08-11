@@ -379,6 +379,18 @@ public class InterviewServiceImpl implements InterviewService {
 
                                 )
 
+                                .technicalAccuracy(
+        evaluation.getTechnicalAccuracy()
+)
+
+.completeness(
+        evaluation.getCompleteness()
+)
+
+.communication(
+        evaluation.getCommunication()
+)
+
                                 .interviewCompleted(
 
                                                 false
@@ -386,6 +398,8 @@ public class InterviewServiceImpl implements InterviewService {
                                 )
 
                                 .build();
+
+                                
 
         }
 

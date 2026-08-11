@@ -65,6 +65,12 @@ export default function MockInterview() {
 
     const [answeredAtLeastOneQuestion, setAnsweredAtLeastOneQuestion] = useState(false);
 
+    const [technicalAccuracy, setTechnicalAccuracy] = useState(null);
+
+    const [completeness, setCompleteness] = useState(null);
+
+    const [communication, setCommunication] = useState(null);
+
     const [showDifficultyModal, setShowDifficultyModal] = useState(false);
 
     const [selectedDifficulty, setSelectedDifficulty] = useState("");
@@ -472,13 +478,12 @@ export default function MockInterview() {
 
         if (!profileCompleted) {
 
-            toast.warning(
-                "Add at least one technical skill to unlock AI interviews.",
-                {
-                    autoClose: 1500,
-                }
-            );
-
+           const toastId = toast.warning(
+    "Add at least one technical skill to unlock AI interviews.",
+    {
+        autoClose: 100
+    }
+);
             return;
 
         }
@@ -570,60 +575,66 @@ export default function MockInterview() {
         setLoading(false);
 
         setAnsweredAtLeastOneQuestion(false);
+
+        setTechnicalAccuracy(null);
+
+        setCompleteness(null);
+
+        setCommunication(null);
     };
 
     /* END */
 
     const handleEnd = async () => {
 
-    SpeechRecognitionService.stop();
+        SpeechRecognitionService.stop();
 
-    SpeechSynthesisService.stop();
+        SpeechSynthesisService.stop();
 
-    if (!answeredAtLeastOneQuestion) {
+        if (!answeredAtLeastOneQuestion) {
 
-        resetInterview();
+            resetInterview();
 
-        return;
+            return;
 
-    }
+        }
 
-    if (!sessionId) {
+        if (!sessionId) {
 
-        resetInterview();
+            resetInterview();
 
-        return;
+            return;
 
-    }
+        }
 
-    try {
+        try {
 
-        setLoading(true);
+            setLoading(true);
 
-        await endInterview(sessionId);
+            await endInterview(sessionId);
 
-        setStarted(false);
+            setStarted(false);
 
-        setShowFeedbackModal(true);
+            setShowFeedbackModal(true);
 
-    } catch (error) {
+        } catch (error) {
 
-        console.error(error);
+            console.error(error);
 
-        toast.error(
-            "Unable to end the interview. Please try again.",
-            {
-                autoClose: 1500
-            }
-        );
+            toast.error(
+                "Unable to end the interview. Please try again.",
+                {
+                    autoClose: 100
+                }
+            );
 
-    } finally {
+        } finally {
 
-        setLoading(false);
+            setLoading(false);
 
-    }
+        }
 
-};
+    };
 
 
     const handleSubmit = async () => {
@@ -649,6 +660,18 @@ export default function MockInterview() {
             setSubmittedAnswer(answer);
 
             setAnsweredAtLeastOneQuestion(true);
+
+            setTechnicalAccuracy(
+                response.data.technicalAccuracy ?? null
+            );
+
+            setCompleteness(
+                response.data.completeness ?? null
+            );
+
+            setCommunication(
+                response.data.communication ?? null
+            );
 
             if (response.data.interviewCompleted) {
 
@@ -890,7 +913,11 @@ export default function MockInterview() {
 
                                     <span>Technical Accuracy</span>
 
-                                    <span>--</span>
+                                    <span>
+                                        {technicalAccuracy === null
+                                            ? "--"
+                                            : `${technicalAccuracy}%`}
+                                    </span>
 
                                 </div>
 
@@ -898,7 +925,12 @@ export default function MockInterview() {
 
                                     <div
                                         className="feedback-fill"
-                                        style={{ width: "0%" }}
+                                        style={{
+                                            width:
+                                                technicalAccuracy === null
+                                                    ? "0%"
+                                                    : `${technicalAccuracy}%`
+                                        }}
                                     />
 
                                 </div>
@@ -911,7 +943,11 @@ export default function MockInterview() {
 
                                     <span>Completeness</span>
 
-                                    <span>--</span>
+                                    <span>
+                                        {completeness === null
+                                            ? "--"
+                                            : `${completeness}%`}
+                                    </span>
 
                                 </div>
 
@@ -919,7 +955,12 @@ export default function MockInterview() {
 
                                     <div
                                         className="feedback-fill"
-                                        style={{ width: "0%" }}
+                                        style={{
+                                            width:
+                                                completeness === null
+                                                    ? "0%"
+                                                    : `${completeness}%`
+                                        }}
                                     />
 
                                 </div>
@@ -932,7 +973,11 @@ export default function MockInterview() {
 
                                     <span>Communication</span>
 
-                                    <span>--</span>
+                                    <span>
+                                        {communication === null
+                                            ? "--"
+                                            : `${communication}%`}
+                                    </span>
 
                                 </div>
 
@@ -940,7 +985,12 @@ export default function MockInterview() {
 
                                     <div
                                         className="feedback-fill"
-                                        style={{ width: "0%" }}
+                                        style={{
+                                            width:
+                                                communication === null
+                                                    ? "0%"
+                                                    : `${communication}%`
+                                        }}
                                     />
 
                                 </div>

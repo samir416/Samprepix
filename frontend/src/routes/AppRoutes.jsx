@@ -11,7 +11,6 @@ import InterviewResult from "../Pages/InterviewResult";
 import CodingArena from "../Pages/CodingArena";
 import Features from "../Pages/Features";
 import Pricing from "../Pages/Pricing";
-
 import AuthModal from "../Components/Auth/AuthModal";
 import ProtectedRoute from "../Components/Auth/ProtectedRoute";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";

@@ -19,6 +19,12 @@ public class InterviewQuestionResponse {
 
     private Integer score;
 
+    private Integer technicalAccuracy;
+
+private Integer completeness;
+
+private Integer communication;
+
     private Boolean interviewCompleted;
 
 }
