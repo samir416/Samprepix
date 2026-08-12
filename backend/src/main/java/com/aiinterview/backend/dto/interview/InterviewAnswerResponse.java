@@ -38,5 +38,4 @@ public class InterviewAnswerResponse {
     private List<String> strengths;
 
     private List<String> missingConcepts;
-
 }

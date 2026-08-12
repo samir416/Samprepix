@@ -67,7 +67,7 @@ public class InterviewAnswer {
     @Column(nullable = false, updatable = false)
     private LocalDateTime answeredAt;
 
-        @PrePersist
+    @PrePersist
     public void onCreate() {
 
         answeredAt = LocalDateTime.now();
@@ -115,7 +115,5 @@ public class InterviewAnswer {
         if (missingConcepts == null) {
             missingConcepts = "";
         }
-
     }
-
 }

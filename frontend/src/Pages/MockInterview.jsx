@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import DifficultyModal from "./DifficultyModal";
 import InterviewCountdown from "./InterviewCountdown";
@@ -24,14 +24,16 @@ import { submitFeedback } from "../services/feedbackService";
 import "../styles/mockInterview.css";
 import "../styles/AIOrb.css";
 import AIOrb from "./AIOrb";
-import { SpeechSynthesisService, SpeechRecognitionService } from "../services/speech";
+import {
+    SpeechSynthesisService,
+    SpeechRecognitionService
+} from "../services/speech";
 import FirstInterviewFeedbackModal from "../feedback/FirstInterviewFeedbackModal";
-
 
 export default function MockInterview() {
 
     const navigate = useNavigate();
-
+    const location = useLocation();
 
     const [started, setStarted] = useState(false);
 
@@ -100,6 +102,35 @@ export default function MockInterview() {
         Boolean(currentUser?.targetRole?.trim()) &&
         technicalSkills.length > 0;
 
+    useEffect(() => {
+
+        if (
+            location.state?.openFeedback &&
+            location.state?.sessionId
+        ) {
+
+            const feedbackSessionId =
+                location.state.sessionId;
+
+            setSessionId(feedbackSessionId);
+
+            setShowFeedbackModal(true);
+
+            navigate(
+                location.pathname,
+                {
+                    replace: true,
+                    state: null
+                }
+            );
+
+        }
+
+    }, [
+        location.state,
+        location.pathname,
+        navigate
+    ]);
 
     const toggleSpeaker = () => {
 
@@ -127,8 +158,9 @@ export default function MockInterview() {
 
         if (!SpeechRecognitionService.recognition) {
 
-            console.log("Speech Recognition is not supported in this browser.");
-
+            console.log(
+                "Speech Recognition is not supported in this browser."
+            );
 
             return;
 
@@ -212,7 +244,6 @@ export default function MockInterview() {
 
             );
 
-
         }, 700);
 
         return () => {
@@ -227,7 +258,10 @@ export default function MockInterview() {
 
         currentQuestion,
 
-        voiceEnabled
+        voiceEnabled,
+
+        speakerMuted,
+        micMuted
 
     ]);
 
@@ -280,6 +314,7 @@ export default function MockInterview() {
             }
 
         );
+
         SpeechRecognitionService.setErrorListener(
 
             (error) => {
@@ -306,7 +341,10 @@ export default function MockInterview() {
 
             (speaking) => {
 
-                console.log("AI Speaking:", speaking);
+                console.log(
+                    "AI Speaking:",
+                    speaking
+                );
 
                 setIsAiSpeaking(speaking);
 
@@ -325,7 +363,9 @@ export default function MockInterview() {
                 const profile = await getProfile();
 
                 const latestUser =
-                    JSON.parse(localStorage.getItem("user")) || {};
+                    JSON.parse(
+                        localStorage.getItem("user")
+                    ) || {};
 
                 const updatedUser = {
 
@@ -358,9 +398,6 @@ export default function MockInterview() {
 
     }, []);
 
-
-    /* TIMER */
-
     useEffect(() => {
 
         let interval = null;
@@ -369,17 +406,20 @@ export default function MockInterview() {
 
             interval = setInterval(() => {
 
-                setSeconds((prev) => prev + 1);
+                setSeconds(
+                    (prev) => prev + 1
+                );
 
             }, 1000);
-        }
 
-        else {
+        } else {
 
             clearInterval(interval);
+
         }
 
-        return () => clearInterval(interval);
+        return () =>
+            clearInterval(interval);
 
     }, [started]);
 
@@ -405,14 +445,16 @@ export default function MockInterview() {
 
         }
 
-
         const timer = setTimeout(() => {
 
-            setCountdown((prev) => prev - 1);
+            setCountdown(
+                (prev) => prev - 1
+            );
 
         }, 1000);
 
-        return () => clearTimeout(timer);
+        return () =>
+            clearTimeout(timer);
 
     }, [
 
@@ -421,9 +463,6 @@ export default function MockInterview() {
         countdown
 
     ]);
-
-
-    /* FORMAT TIMER */
 
     const formatTime = () => {
 
@@ -436,9 +475,8 @@ export default function MockInterview() {
         ).padStart(2, "0");
 
         return `${mins}:${secs}`;
-    };
 
-    /* START */
+    };
 
     const startInterviewSession = () => {
 
@@ -448,8 +486,16 @@ export default function MockInterview() {
 
         }
 
-        setSessionId(pendingInterview.sessionId);
+        setSessionId(
+            pendingInterview.sessionId
+        );
 
+        localStorage.setItem(
+            "lastInterviewSessionId",
+            String(
+                pendingInterview.sessionId
+            )
+        );
 
         setQuestionNumber(1);
 
@@ -461,29 +507,39 @@ export default function MockInterview() {
 
         setSubmittedAnswer("");
 
-        setCurrentQuestion(pendingInterview.question);
+        setTechnicalAccuracy(null);
 
+        setCompleteness(null);
+
+        setCommunication(null);
+
+        setAnsweredAtLeastOneQuestion(false);
+
+        setCurrentQuestion(
+            pendingInterview.question
+        );
 
         setPendingInterview(null);
 
     };
 
-
-
     const handleStart = () => {
 
         if (profileLoading) {
+
             return;
+
         }
 
         if (!profileCompleted) {
 
-           const toastId = toast.warning(
-    "Add at least one technical skill to unlock AI interviews.",
-    {
-        autoClose: 100
-    }
-);
+            toast.warning(
+                "Add at least one technical skill to unlock AI interviews.",
+                {
+                    autoClose: 100
+                }
+            );
+
             return;
 
         }
@@ -492,32 +548,41 @@ export default function MockInterview() {
 
     };
 
-
-
     const handleDifficultyStart = async () => {
 
-        if (loading || !selectedDifficulty) {
+        if (
+            loading ||
+            !selectedDifficulty
+        ) {
+
             return;
+
         }
 
         try {
 
             setLoading(true);
 
-            const response = await startInterview({
+            const response =
+                await startInterview({
 
-                interviewType: "TECHNICAL",
+                    interviewType:
+                        "TECHNICAL",
 
-                targetRole: currentUser.targetRole,
+                    targetRole:
+                        currentUser.targetRole,
 
-                experienceLevel: selectedDifficulty,
+                    experienceLevel:
+                        selectedDifficulty,
 
-                skills: technicalSkills
+                    skills:
+                        technicalSkills
 
-            });
+                });
 
-
-            setPendingInterview(response.data);
+            setPendingInterview(
+                response.data
+            );
 
             setShowDifficultyModal(false);
 
@@ -525,9 +590,7 @@ export default function MockInterview() {
 
             setShowCountdown(true);
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.error(error);
 
@@ -535,18 +598,13 @@ export default function MockInterview() {
                 "Unable to start the interview. Please try again."
             );
 
-        }
-
-        finally {
+        } finally {
 
             setLoading(false);
 
         }
 
     };
-
-
-
 
     const resetInterview = () => {
 
@@ -581,61 +639,81 @@ export default function MockInterview() {
         setCompleteness(null);
 
         setCommunication(null);
+
+        setPendingInterview(null);
+
+        setSelectedDifficulty("");
+
+        setShowCountdown(false);
+
+        setCountdown(4);
+
     };
 
-    /* END */
+   const handleEnd = async () => {
 
-    const handleEnd = async () => {
+    SpeechRecognitionService.stop();
 
-        SpeechRecognitionService.stop();
+    SpeechSynthesisService.stop();
 
-        SpeechSynthesisService.stop();
+    if (!answeredAtLeastOneQuestion) {
 
-        if (!answeredAtLeastOneQuestion) {
+        resetInterview();
 
-            resetInterview();
+        return;
 
-            return;
+    }
 
-        }
+    if (!sessionId) {
 
-        if (!sessionId) {
+        resetInterview();
 
-            resetInterview();
+        return;
 
-            return;
+    }
 
-        }
+    try {
 
-        try {
+        setLoading(true);
 
-            setLoading(true);
+        await endInterview(sessionId);
 
-            await endInterview(sessionId);
+        localStorage.setItem(
+            "lastInterviewSessionId",
+            String(sessionId)
+        );
 
-            setStarted(false);
+        setStarted(false);
 
-            setShowFeedbackModal(true);
-
-        } catch (error) {
-
-            console.error(error);
-
-            toast.error(
-                "Unable to end the interview. Please try again.",
-                {
-                    autoClose: 100
+        navigate(
+            `/interview-result?sessionId=${sessionId}`,
+            {
+                replace: true,
+                state: {
+                    fromInterview: true,
+                    sessionId: sessionId
                 }
-            );
+            }
+        );
 
-        } finally {
+    } catch (error) {
 
-            setLoading(false);
+        console.error(error);
 
-        }
+        toast.error(
+            "Unable to end the interview. Please try again.",
+            {
+                autoClose: 1500
+            }
+        );
 
-    };
+    } finally {
 
+        setLoading(false);
+
+    }
+
+};
 
     const handleSubmit = async () => {
 
@@ -644,55 +722,88 @@ export default function MockInterview() {
         if (!answer.trim()) {
 
             return;
+
         }
 
         try {
 
             setLoading(true);
 
-            const response = await submitAnswer({
+            const response =
+                await submitAnswer({
 
-                sessionId: sessionId,
-                answer: answer
+                    sessionId:
+                        sessionId,
 
-            });
+                    answer:
+                        answer
 
-            setSubmittedAnswer(answer);
+                });
 
-            setAnsweredAtLeastOneQuestion(true);
+            setSubmittedAnswer(
+                answer
+            );
+
+            setAnsweredAtLeastOneQuestion(
+                true
+            );
 
             setTechnicalAccuracy(
-                response.data.technicalAccuracy ?? null
+                response.data
+                    .technicalAccuracy ??
+                null
             );
 
             setCompleteness(
-                response.data.completeness ?? null
+                response.data
+                    .completeness ??
+                null
             );
 
             setCommunication(
-                response.data.communication ?? null
+                response.data
+                    .communication ??
+                null
             );
 
-            if (response.data.interviewCompleted) {
+           if (response.data.interviewCompleted) {
 
-                SpeechSynthesisService.stop();
+    SpeechSynthesisService.stop();
 
-                SpeechRecognitionService.stop();
+    SpeechRecognitionService.stop();
 
-                setStarted(false);
+    setStarted(false);
 
-                setFirstInterviewCompleted(true);
+    setFirstInterviewCompleted(true);
 
-                setShowFeedbackModal(true);
+    localStorage.setItem(
+        "lastInterviewSessionId",
+        String(sessionId)
+    );
 
-                return;
+    navigate(
+        `/interview-result?sessionId=${sessionId}`,
+        {
+            replace: true,
+            state: {
+                fromInterview: true,
+                sessionId: sessionId
             }
+        }
+    );
+
+    return;
+}
 
             SpeechRecognitionService.stop();
 
-            setCurrentQuestion(response.data.nextQuestion);
+            setCurrentQuestion(
+                response.data.nextQuestion
+            );
 
-            setQuestionNumber(response.data.questionNumber);
+            setQuestionNumber(
+                response.data.questionNumber
+            );
 
             setAnswer("");
 
@@ -712,7 +823,6 @@ export default function MockInterview() {
 
     };
 
-
     return (
 
         <>
@@ -725,30 +835,34 @@ export default function MockInterview() {
                 }
             >
 
-
-
-
-                {/* HEADER */}
-
                 <div className="mock-header">
 
                     <div>
 
                         <h1>
-                            {currentUser?.targetRole || "AI Mock Interview"}
+                            {
+                                currentUser?.targetRole ||
+                                "AI Mock Interview"
+                            }
                         </h1>
 
                         <p>
-                            {(currentUser?.skills || []).join(" • ")}
+                            {
+                                Array.isArray(
+                                    currentUser?.skills
+                                )
+                                    ? currentUser.skills.join(
+                                        " • "
+                                    )
+                                    : technicalSkills.join(
+                                        " • "
+                                    )
+                            }
                         </p>
+
                     </div>
 
-
-
-                    {/* TIMER */}
-
                     {
-
                         started && (
 
                             <div className="timer-box">
@@ -758,45 +872,39 @@ export default function MockInterview() {
                             </div>
 
                         )
-
                     }
 
                 </div>
 
-                {/* MAIN */}
-
                 <div className="mock-grid">
-
-                    {/* LEFT */}
 
                     <div className="ai-panel">
 
-                        {/* QUESTION */}
-
                         <div className="question-badge">
 
-                            Question No - {questionNumber}
-                        </div>
+                            Question No - {
+                                questionNumber
+                            }
 
-                        {/* AI ORB */}
+                        </div>
 
                         <div className="ai-orb-wrapper">
 
                             <AIOrb
 
-                                speaking={isAiSpeaking}
+                                speaking={
+                                    isAiSpeaking
+                                }
 
-                                listening={isListening}
+                                listening={
+                                    isListening
+                                }
 
                             />
 
                         </div>
 
-
-                        {/* STATUS */}
-
                         {
-
                             started && (
 
                                 <div className="listening-box">
@@ -808,34 +916,35 @@ export default function MockInterview() {
                                 </div>
 
                             )
-
                         }
-
-                        {/* CONTROLS */}
 
                         <div className="controls-wrapper">
 
                             {
-
                                 !started
-
                                     ? (
 
                                         <button
                                             className="start-btn"
-                                            onClick={handleStart}
-                                            disabled={profileLoading || showCountdown}
+                                            onClick={
+                                                handleStart
+                                            }
+                                            disabled={
+                                                profileLoading ||
+                                                showCountdown
+                                            }
                                         >
-                                            <FiPlay />
-                                            Start Interview
-                                        </button>
-                                    )
 
+                                            <FiPlay />
+
+                                            Start Interview
+
+                                        </button>
+
+                                    )
                                     : (
 
                                         <div className="controls-row">
-
-                                            {/* MIC */}
 
                                             <button
                                                 className={
@@ -843,7 +952,9 @@ export default function MockInterview() {
                                                         ? "control-btn active-control"
                                                         : "control-btn"
                                                 }
-                                                onClick={toggleMic}
+                                                onClick={
+                                                    toggleMic
+                                                }
                                             >
 
                                                 {
@@ -854,16 +965,15 @@ export default function MockInterview() {
 
                                             </button>
 
-                                            {/* SPEAKER */}
-
                                             <button
                                                 className={
                                                     speakerMuted
                                                         ? "control-btn active-control"
                                                         : "control-btn"
                                                 }
-                                                onClick={toggleSpeaker}
-
+                                                onClick={
+                                                    toggleSpeaker
+                                                }
                                             >
 
                                                 {
@@ -874,11 +984,14 @@ export default function MockInterview() {
 
                                             </button>
 
-                                            {/* END */}
-
                                             <button
                                                 className="end-btn"
-                                                onClick={handleEnd}
+                                                onClick={
+                                                    handleEnd
+                                                }
+                                                disabled={
+                                                    loading
+                                                }
                                             >
 
                                                 <FiPhoneOff />
@@ -888,18 +1001,13 @@ export default function MockInterview() {
                                         </div>
 
                                     )
-
                             }
 
                         </div>
 
                     </div>
 
-                    {/* RIGHT */}
-
                     <div className="feedback-column">
-
-                        {/* FEEDBACK */}
 
                         <div className="feedback-card">
 
@@ -911,12 +1019,18 @@ export default function MockInterview() {
 
                                 <div className="feedback-top">
 
-                                    <span>Technical Accuracy</span>
+                                    <span>
+                                        Technical Accuracy
+                                    </span>
 
                                     <span>
-                                        {technicalAccuracy === null
-                                            ? "--"
-                                            : `${technicalAccuracy}%`}
+
+                                        {
+                                            technicalAccuracy === null
+                                                ? "--"
+                                                : `${technicalAccuracy}%`
+                                        }
+
                                     </span>
 
                                 </div>
@@ -941,12 +1055,18 @@ export default function MockInterview() {
 
                                 <div className="feedback-top">
 
-                                    <span>Completeness</span>
+                                    <span>
+                                        Completeness
+                                    </span>
 
                                     <span>
-                                        {completeness === null
-                                            ? "--"
-                                            : `${completeness}%`}
+
+                                        {
+                                            completeness === null
+                                                ? "--"
+                                                : `${completeness}%`
+                                        }
+
                                     </span>
 
                                 </div>
@@ -971,12 +1091,18 @@ export default function MockInterview() {
 
                                 <div className="feedback-top">
 
-                                    <span>Communication</span>
+                                    <span>
+                                        Communication
+                                    </span>
 
                                     <span>
-                                        {communication === null
-                                            ? "--"
-                                            : `${communication}%`}
+
+                                        {
+                                            communication === null
+                                                ? "--"
+                                                : `${communication}%`
+                                        }
+
                                     </span>
 
                                 </div>
@@ -999,8 +1125,6 @@ export default function MockInterview() {
 
                         </div>
 
-                        {/* TRANSCRIPT */}
-
                         <div className="transcript-card">
 
                             <h3>
@@ -1013,7 +1137,10 @@ export default function MockInterview() {
                                     AI:
                                 </span>
 
-                                {currentQuestion || "Click Start Interview to begin."}
+                                {
+                                    currentQuestion ||
+                                    "Click Start Interview to begin."
+                                }
 
                             </p>
 
@@ -1023,11 +1150,15 @@ export default function MockInterview() {
                                     You:
                                 </span>
 
-                                {submittedAnswer
-                                    ? submittedAnswer.length > 120
-                                        ? submittedAnswer.substring(0, 120) + "..."
-                                        : submittedAnswer
-                                    : "Your answer will appear here."
+                                {
+                                    submittedAnswer
+                                        ? submittedAnswer.length > 120
+                                            ? submittedAnswer.substring(
+                                                0,
+                                                120
+                                            ) + "..."
+                                            : submittedAnswer
+                                        : "Your answer will appear here."
                                 }
 
                             </p>
@@ -1036,15 +1167,28 @@ export default function MockInterview() {
                                 className="typing-box"
                                 placeholder="Type your answer..."
                                 value={answer}
-                                onChange={(e) => setAnswer(e.target.value)}
+                                onChange={
+                                    (e) =>
+                                        setAnswer(
+                                            e.target.value
+                                        )
+                                }
                             />
 
                             <button
                                 className="submit-answer-btn"
-                                onClick={handleSubmit}
-                                disabled={loading || !answer.trim()}
+                                onClick={
+                                    handleSubmit
+                                }
+                                disabled={
+                                    loading ||
+                                    !answer.trim() ||
+                                    !sessionId
+                                }
                             >
+
                                 Submit Answer
+
                             </button>
 
                         </div>
@@ -1053,8 +1197,6 @@ export default function MockInterview() {
 
                 </div>
 
-                {/* CURRENT QUESTION */}
-
                 <div className="current-question-card">
 
                     <h4>
@@ -1062,96 +1204,118 @@ export default function MockInterview() {
                     </h4>
 
                     <p>
-                        {currentQuestion || "Click Start Interview to begin."}
+                        {
+                            currentQuestion ||
+                            "Click Start Interview to begin."
+                        }
                     </p>
 
                 </div>
-
 
             </section>
 
             <DifficultyModal
 
-                open={showDifficultyModal}
+                open={
+                    showDifficultyModal
+                }
 
-                selectedDifficulty={selectedDifficulty}
+                selectedDifficulty={
+                    selectedDifficulty
+                }
 
-                setSelectedDifficulty={setSelectedDifficulty}
+                setSelectedDifficulty={
+                    setSelectedDifficulty
+                }
 
-                loading={loading}
+                loading={
+                    loading
+                }
 
                 onClose={() => {
 
-                    setShowDifficultyModal(false);
+                    setShowDifficultyModal(
+                        false
+                    );
 
                 }}
 
-                onStart={handleDifficultyStart}
+                onStart={
+                    handleDifficultyStart
+                }
 
             />
 
             {
-
                 showCountdown && (
 
                     <InterviewCountdown
 
-                        count={countdown}
+                        count={
+                            countdown
+                        }
 
                     />
 
                 )
-
             }
 
             <FirstInterviewFeedbackModal
 
-                isOpen={showFeedbackModal}
+                isOpen={
+                    showFeedbackModal
+                }
 
                 onClose={() => {
 
-                    setShowFeedbackModal(false);
+                    setShowFeedbackModal(
+                        false
+                    );
 
                     resetInterview();
 
                 }}
 
-                onSubmit={async (feedback) => {
+                onSubmit={
+                    async (feedback) => {
 
-                    try {
+                        try {
 
-                        await submitFeedback({
+                            await submitFeedback({
 
-                            sessionId,
+                                sessionId,
 
-                            rating: feedback.rating,
+                                rating:
+                                    feedback.rating,
 
-                            suggestion: feedback.suggestion
+                                suggestion:
+                                    feedback.suggestion
 
-                        });
+                            });
+
+                        } catch (error) {
+
+                            console.error(
+                                error
+                            );
+
+                        } finally {
+
+                            setShowFeedbackModal(
+                                false
+                            );
+
+                            resetInterview();
+
+                        }
 
                     }
-
-                    catch (error) {
-
-                        console.error(error);
-
-                    }
-
-                    finally {
-
-                        setShowFeedbackModal(false);
-
-                        resetInterview();
-
-                    }
-
-                }}
+                }
 
             />
 
         </>
 
-
     );
+
 }

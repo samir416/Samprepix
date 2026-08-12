@@ -135,7 +135,6 @@ body:not(.dark-theme) .feedback-header p {
     color: #64748B;
 }
 
-
 .feedback-divider {
     width: 100%;
 
@@ -147,6 +146,13 @@ body:not(.dark-theme) .feedback-header p {
 
     flex-shrink: 0;
 }
+
+body:not(.dark-theme) .feedback-divider {
+    background: rgba(15, 23, 42, .08);
+}
+
+
+
 
 .feedback-label {
     display: block;
@@ -305,8 +311,12 @@ body:not(.dark-theme) .feedback-input-section textarea {
 
 
 
-.feedback-input-section textarea:hover {
+body.dark-theme .feedback-input-section textarea:hover {
     border-color: rgba(255, 255, 255, .13);
+}
+
+body:not(.dark-theme) .feedback-input-section textarea:hover {
+    border-color: rgba(15, 23, 42, .16);
 }
 
 body.dark-theme .feedback-input-section textarea:focus {

@@ -5,7 +5,6 @@ const API = axios.create({
 });
 
 API.interceptors.request.use((config) => {
-
     const token = localStorage.getItem("token");
 
     if (token) {
@@ -28,4 +27,7 @@ export const getResult = (sessionId) =>
     API.get(`/result/${sessionId}`);
 
 export const endInterview = (sessionId) =>
-API.post(`/end/${sessionId}`);
+    API.post(`/end/${sessionId}`);
+
+export const getCompletedInterviewCount = () =>
+API.get("/count");

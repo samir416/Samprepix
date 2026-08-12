@@ -1,11 +1,13 @@
     import { useEffect, useRef, useState } from "react";
-    import {
-        getProfile,
-        updateProfile,
-        uploadProfilePicture,
-        removeProfilePicture,
-        getSkillSuggestions
-    } from "../services/profileService";
+   import {
+    getProfile,
+    updateProfile,
+    uploadProfilePicture,
+    removeProfilePicture,
+    getSkillSuggestions
+} from "../services/profileService";
+
+import { getCompletedInterviewCount } from "../services/interviewService";
 
     import {
         User,
@@ -23,6 +25,8 @@
     export default function Profile() {
 
         const [user, setUser] = useState(null);
+
+const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
         const [isEditing, setIsEditing] = useState(false);
 
@@ -492,6 +496,33 @@
             loadUser();
 
         }, []);
+
+        useEffect(() => {
+
+    const loadInterviewCount = async () => {
+
+        try {
+
+            const response =
+                await getCompletedInterviewCount();
+
+            setMockInterviewCount(
+                Number(response.data) || 0
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+            setMockInterviewCount(0);
+
+        }
+
+    };
+
+    loadInterviewCount();
+
+}, []);
 
         useEffect(() => {
 
@@ -1986,21 +2017,21 @@
 
                         </div>
 
-                        <div className="profile-page-stat-card">
+                      <div className="profile-page-stat-card">
 
-                            <h3>
+    <h3>
 
-                                0
+        {mockInterviewCount}
 
-                            </h3>
+    </h3>
 
-                            <span>
+    <span>
 
-                                Mock Interviews
+        Mock Interviews
 
-                            </span>
+    </span>
 
-                        </div>
+</div>
 
                         <div className="profile-page-stat-card">
 

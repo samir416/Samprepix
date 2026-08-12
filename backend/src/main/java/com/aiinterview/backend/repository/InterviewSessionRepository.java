@@ -16,4 +16,9 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
             User user
     );
 
+    long countByUserAndStatus(
+        User user,
+        String status
+);
+
 }

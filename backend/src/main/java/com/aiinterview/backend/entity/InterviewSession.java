@@ -26,7 +26,7 @@ public class InterviewSession {
     private String targetRole;
 
     @Column(nullable = false)
-private String interviewType;
+    private String interviewType;
 
     @Column(nullable = false)
     private String experienceLevel;
@@ -84,7 +84,7 @@ private String interviewType;
 
     private LocalDateTime completedAt;
 
-        @PrePersist
+    @PrePersist
     public void onCreate() {
 
         startedAt = LocalDateTime.now();
@@ -144,7 +144,5 @@ private String interviewType;
         if (status == null) {
             status = "IN_PROGRESS";
         }
-
     }
-
 }

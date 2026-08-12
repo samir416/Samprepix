@@ -137,8 +137,12 @@ public class InterviewServiceImpl implements InterviewService {
                                                 firstQuestion
 
                                 )
+
                                 .startedAt(
-                                                session.getStartedAt())
+
+                                                session.getStartedAt()
+
+                                )
 
                                 .build();
 
@@ -160,15 +164,27 @@ public class InterviewServiceImpl implements InterviewService {
                                 .orElseThrow(() -> new RuntimeException(
                                                 "Interview session not found."));
 
-                List<String> skills = readJson(session.getSelectedSkills());
+                if ("COMPLETED".equalsIgnoreCase(session.getStatus())) {
 
-                List<String> previousQuestions = readJson(session.getPreviousQuestions());
+                        throw new RuntimeException(
+                                        "Interview session is already completed.");
 
-                List<String> previousAnswers = readJson(session.getPreviousAnswers());
+                }
 
-                List<String> weakAreas = readJson(session.getWeakAreas());
+                List<String> skills = readJson(
+                                session.getSelectedSkills());
 
-                List<String> strongAreas = readJson(session.getStrongAreas());
+                List<String> previousQuestions = readJson(
+                                session.getPreviousQuestions());
+
+                List<String> previousAnswers = readJson(
+                                session.getPreviousAnswers());
+
+                List<String> weakAreas = readJson(
+                                session.getWeakAreas());
+
+                List<String> strongAreas = readJson(
+                                session.getStrongAreas());
 
                 String evaluationJson = geminiService.evaluateAnswer(
 
@@ -258,8 +274,13 @@ public class InterviewServiceImpl implements InterviewService {
 
                 ) {
 
-                        weakAreas.add(
-                                        evaluation.getNextFocusSkill());
+                        if (!weakAreas.contains(
+                                        evaluation.getNextFocusSkill())) {
+
+                                weakAreas.add(
+                                                evaluation.getNextFocusSkill());
+
+                        }
 
                 }
 
@@ -380,16 +401,22 @@ public class InterviewServiceImpl implements InterviewService {
                                 )
 
                                 .technicalAccuracy(
-        evaluation.getTechnicalAccuracy()
-)
 
-.completeness(
-        evaluation.getCompleteness()
-)
+                                                evaluation.getTechnicalAccuracy()
 
-.communication(
-        evaluation.getCommunication()
-)
+                                )
+
+                                .completeness(
+
+                                                evaluation.getCompleteness()
+
+                                )
+
+                                .communication(
+
+                                                evaluation.getCommunication()
+
+                                )
 
                                 .interviewCompleted(
 
@@ -398,8 +425,6 @@ public class InterviewServiceImpl implements InterviewService {
                                 )
 
                                 .build();
-
-                                
 
         }
 
@@ -526,13 +551,17 @@ public class InterviewServiceImpl implements InterviewService {
 
                                                         .strengths(
 
-                                                                        readJson(answer.getStrengths())
+                                                                        readJson(
+
+                                                                                        answer.getStrengths())
 
                                                         )
 
                                                         .missingConcepts(
 
-                                                                        readJson(answer.getMissingConcepts())
+                                                                        readJson(
+
+                                                                                        answer.getMissingConcepts())
 
                                                         )
 
@@ -543,89 +572,208 @@ public class InterviewServiceImpl implements InterviewService {
                 }
 
                 int overallScore = 0;
+
                 int technicalAccuracy = 0;
+
                 int completeness = 0;
+
                 int communication = 0;
 
                 if (!answers.isEmpty()) {
 
                         overallScore = (int) Math.round(
+
                                         answers.stream()
-                                                        .mapToInt(answer -> answer.getOverallScore() == null
+
+                                                        .mapToInt(answer ->
+
+                                                        answer.getOverallScore() == null
+
                                                                         ? 0
+
                                                                         : answer.getOverallScore())
+
                                                         .average()
-                                                        .orElse(0));
+
+                                                        .orElse(0)
+
+                        );
 
                         technicalAccuracy = (int) Math.round(
+
                                         answers.stream()
-                                                        .mapToInt(answer -> answer.getTechnicalAccuracy() == null
+
+                                                        .mapToInt(answer ->
+
+                                                        answer.getTechnicalAccuracy() == null
+
                                                                         ? 0
+
                                                                         : answer.getTechnicalAccuracy())
+
                                                         .average()
-                                                        .orElse(0));
+
+                                                        .orElse(0)
+
+                        );
 
                         completeness = (int) Math.round(
+
                                         answers.stream()
-                                                        .mapToInt(answer -> answer.getCompleteness() == null
+
+                                                        .mapToInt(answer ->
+
+                                                        answer.getCompleteness() == null
+
                                                                         ? 0
+
                                                                         : answer.getCompleteness())
+
                                                         .average()
-                                                        .orElse(0));
+
+                                                        .orElse(0)
+
+                        );
 
                         communication = (int) Math.round(
+
                                         answers.stream()
-                                                        .mapToInt(answer -> answer.getCommunication() == null
+
+                                                        .mapToInt(answer ->
+
+                                                        answer.getCommunication() == null
+
                                                                         ? 0
+
                                                                         : answer.getCommunication())
+
                                                         .average()
-                                                        .orElse(0));
+
+                                                        .orElse(0)
+
+                        );
+
                 }
+
+                session.setOverallScore(overallScore);
+
+                session.setTechnicalAccuracy(technicalAccuracy);
+
+                session.setCompleteness(completeness);
+
+                session.setCommunication(communication);
+
+                if (!answers.isEmpty()) {
+
+                        InterviewAnswer lastAnswer =
+
+                                        answers.get(answers.size() - 1);
+
+                        if (
+
+                        lastAnswer.getNextFocusSkill() != null &&
+
+                                        !lastAnswer.getNextFocusSkill().isBlank()
+
+                        ) {
+
+                                session.setNextFocusSkill(
+
+                                                lastAnswer.getNextFocusSkill()
+
+                                );
+
+                        }
+
+                        if (
+
+                        lastAnswer.getDifficulty() != null &&
+
+                                        !lastAnswer.getDifficulty().isBlank()
+
+                        ) {
+
+                                session.setDifficulty(
+
+                                                lastAnswer.getDifficulty()
+
+                                );
+
+                        }
+
+                }
+
+                interviewSessionRepository.save(session);
 
                 return InterviewResultResponse.builder()
 
                                 .sessionId(
+
                                                 session.getId())
 
                                 .status(
+
                                                 session.getStatus())
 
                                 .targetRole(
+
                                                 session.getTargetRole())
 
                                 .experienceLevel(
+
                                                 session.getExperienceLevel())
 
                                 .skills(
+
                                                 readJson(session.getSelectedSkills()))
 
                                 .questionsAnswered(
+
                                                 answers.size())
 
                                 .overallScore(
+
                                                 overallScore)
 
                                 .technicalAccuracy(
+
                                                 technicalAccuracy)
 
                                 .completeness(
+
                                                 completeness)
 
                                 .communication(
+
                                                 communication)
 
                                 .nextFocusSkill(
+
                                                 session.getNextFocusSkill())
 
                                 .difficulty(
                                                 session.getDifficulty())
-
+                                .startedAt(
+                                                session.getStartedAt())
+                                .completedAt(
+                                                session.getCompletedAt())
                                 .answers(
                                                 answerResponses)
-
                                 .build();
 
         }
+
+        @Override
+public long getCompletedInterviewCount(
+        User user
+) {
+
+    return interviewSessionRepository
+            .countByUserAndStatus(
+                    user,
+                    "COMPLETED"
+            );
+}
 
         @Override
         public InterviewProgressResponse getInterviewProgress(
@@ -837,18 +985,215 @@ public class InterviewServiceImpl implements InterviewService {
         ) {
 
                 InterviewSession session = interviewSessionRepository
-                                .findByIdAndUser(sessionId, user)
-                                .orElseThrow(() -> new RuntimeException("Interview session not found."));
 
-                session.setInterviewEndedByUser(true);
+                                .findByIdAndUser(
 
-                session.setStatus("COMPLETED");
+                                                sessionId,
 
-                session.setReportGenerated(true);
+                                                user
 
-                session.setCompletedAt(LocalDateTime.now());
+                                )
 
-                interviewSessionRepository.save(session);
+                                .orElseThrow(() ->
+
+                                new RuntimeException(
+
+                                                "Interview session not found."
+
+                                )
+
+                                );
+
+                List<InterviewAnswer> answers =
+
+                                interviewAnswerRepository
+
+                                                .findBySessionIdOrderByQuestionNumberAsc(
+
+                                                                sessionId
+
+                                                );
+
+                int overallScore = 0;
+
+                int technicalAccuracy = 0;
+
+                int completeness = 0;
+
+                int communication = 0;
+
+                if (!answers.isEmpty()) {
+
+                        overallScore = (int) Math.round(
+
+                                        answers.stream()
+
+                                                        .mapToInt(answer ->
+
+                                                        answer.getOverallScore() == null
+
+                                                                        ? 0
+
+                                                                        : answer.getOverallScore())
+
+                                                        .average()
+
+                                                        .orElse(0)
+
+                        );
+
+                        technicalAccuracy = (int) Math.round(
+
+                                        answers.stream()
+
+                                                        .mapToInt(answer ->
+
+                                                        answer.getTechnicalAccuracy() == null
+
+                                                                        ? 0
+
+                                                                        : answer.getTechnicalAccuracy())
+
+                                                        .average()
+
+                                                        .orElse(0)
+
+                        );
+
+                        completeness = (int) Math.round(
+
+                                        answers.stream()
+
+                                                        .mapToInt(answer ->
+
+                                                        answer.getCompleteness() == null
+
+                                                                        ? 0
+
+                                                                        : answer.getCompleteness())
+
+                                                        .average()
+
+                                                        .orElse(0)
+
+                        );
+
+                        communication = (int) Math.round(
+
+                                        answers.stream()
+
+                                                        .mapToInt(answer ->
+
+                                                        answer.getCommunication() == null
+
+                                                                        ? 0
+
+                                                                        : answer.getCommunication())
+
+                                                        .average()
+
+                                                        .orElse(0)
+
+                        );
+
+                        InterviewAnswer lastAnswer =
+
+                                        answers.get(answers.size() - 1);
+
+                        if (
+
+                        lastAnswer.getNextFocusSkill() != null &&
+
+                                        !lastAnswer.getNextFocusSkill().isBlank()
+
+                        ) {
+
+                                session.setNextFocusSkill(
+
+                                                lastAnswer.getNextFocusSkill()
+
+                                );
+
+                        }
+
+                        if (
+
+                        lastAnswer.getDifficulty() != null &&
+
+                                        !lastAnswer.getDifficulty().isBlank()
+
+                        ) {
+
+                                session.setDifficulty(
+
+                                                lastAnswer.getDifficulty()
+
+                                );
+
+                        }
+
+                }
+
+                session.setOverallScore(
+
+                                overallScore
+
+                );
+
+                session.setTechnicalAccuracy(
+
+                                technicalAccuracy
+
+                );
+
+                session.setCompleteness(
+
+                                completeness
+
+                );
+
+                session.setCommunication(
+
+                                communication
+
+                );
+
+                session.setQuestionsAnswered(
+
+                                answers.size()
+
+                );
+
+                session.setInterviewEndedByUser(
+
+                                true
+
+                );
+
+                session.setStatus(
+
+                                "COMPLETED"
+
+                );
+
+                session.setReportGenerated(
+
+                                true
+
+                );
+
+                session.setCompletedAt(
+
+                                LocalDateTime.now()
+
+                );
+
+                interviewSessionRepository.save(
+
+                                session
+
+                );
+
         }
 
         private InterviewEvaluationResponse readEvaluation(
@@ -858,6 +1203,22 @@ public class InterviewServiceImpl implements InterviewService {
         ) {
 
                 try {
+
+                        if (
+
+                        json == null ||
+
+                                        json.isBlank()
+
+                        ) {
+
+                                throw new RuntimeException(
+
+                                                "Empty Gemini evaluation response."
+
+                                );
+
+                        }
 
                         return OBJECT_MAPPER.readValue(
 

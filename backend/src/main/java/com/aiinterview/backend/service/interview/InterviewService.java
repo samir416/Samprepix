@@ -35,4 +35,8 @@ public interface InterviewService {
             User user
     );
 
+    long getCompletedInterviewCount(
+        User user
+);
+
 }
