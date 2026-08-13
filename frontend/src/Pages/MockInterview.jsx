@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import DifficultyModal from "./DifficultyModal";
@@ -24,10 +24,12 @@ import { submitFeedback } from "../services/feedbackService";
 import "../styles/mockInterview.css";
 import "../styles/AIOrb.css";
 import AIOrb from "./AIOrb";
+
 import {
     SpeechSynthesisService,
     SpeechRecognitionService
 } from "../services/speech";
+
 import FirstInterviewFeedbackModal from "../feedback/FirstInterviewFeedbackModal";
 
 export default function MockInterview() {
@@ -89,6 +91,10 @@ export default function MockInterview() {
 
     const [profileLoading, setProfileLoading] = useState(true);
 
+    const spokenQuestionRef = useRef(null);
+    const aiSpeakingRef = useRef(false);
+    const recognitionRestartTimerRef = useRef(null);
+
     const technicalSkills = Array.isArray(currentUser?.skills)
         ? currentUser.skills
         : typeof currentUser?.skills === "string"
@@ -104,27 +110,29 @@ export default function MockInterview() {
 
     useEffect(() => {
 
-        if (
-            location.state?.openFeedback &&
-            location.state?.sessionId
-        ) {
+        const openFeedback =
+            location.state?.openFeedback === true &&
+            location.state?.fromResult === true &&
+            location.state?.sessionId;
 
-            const feedbackSessionId =
-                location.state.sessionId;
-
-            setSessionId(feedbackSessionId);
-
-            setShowFeedbackModal(true);
-
-            navigate(
-                location.pathname,
-                {
-                    replace: true,
-                    state: null
-                }
-            );
-
+        if (!openFeedback) {
+            return;
         }
+
+        const feedbackSessionId =
+            location.state.sessionId;
+
+        setSessionId(feedbackSessionId);
+
+        setShowFeedbackModal(true);
+
+        navigate(
+            location.pathname,
+            {
+                replace: true,
+                state: null
+            }
+        );
 
     }, [
         location.state,
@@ -166,6 +174,14 @@ export default function MockInterview() {
 
         }
 
+        if (aiSpeakingRef.current) {
+
+            SpeechRecognitionService.stop();
+
+            return;
+
+        }
+
         try {
 
             if (SpeechRecognitionService.isListening) {
@@ -189,59 +205,119 @@ export default function MockInterview() {
     useEffect(() => {
 
         if (!started) {
-
             return;
-
         }
 
         if (!voiceEnabled) {
-
             return;
-
         }
 
         if (!currentQuestion?.trim()) {
-
             return;
-
         }
 
         if (speakerMuted) {
-
             return;
+        }
 
+        const questionKey =
+            `${questionNumber}:${currentQuestion.trim()}`;
+
+        if (
+            spokenQuestionRef.current === questionKey
+        ) {
+            return;
+        }
+
+        if (aiSpeakingRef.current) {
+            return;
         }
 
         if (SpeechSynthesisService.isSpeaking()) {
-
             return;
-
         }
+
+        if (
+            SpeechRecognitionService.recognition &&
+            SpeechRecognitionService.isListening
+        ) {
+            SpeechRecognitionService.stop();
+        }
+
+        spokenQuestionRef.current = questionKey;
 
         const timer = setTimeout(() => {
 
+            if (
+                speakerMuted ||
+                !voiceEnabled ||
+                !started
+            ) {
+                return;
+            }
+
+            if (
+                SpeechRecognitionService.recognition &&
+                SpeechRecognitionService.isListening
+            ) {
+                SpeechRecognitionService.stop();
+            }
+
             SpeechSynthesisService.speak(
-
                 currentQuestion,
-
                 () => {
 
                     if (
+                        !started ||
+                        speakerMuted ||
+                        !voiceEnabled ||
+                        micMuted ||
+                        aiSpeakingRef.current
+                    ) {
+                        return;
+                    }
 
+                    if (
                         SpeechRecognitionService.recognition &&
-
-                        !SpeechRecognitionService.isListening &&
-
-                        !micMuted
-
+                        !SpeechRecognitionService.isListening
                     ) {
 
-                        SpeechRecognitionService.start();
+                        if (
+                            recognitionRestartTimerRef.current
+                        ) {
+                            clearTimeout(
+                                recognitionRestartTimerRef.current
+                            );
+                        }
+
+                        recognitionRestartTimerRef.current =
+                            setTimeout(() => {
+
+                                if (
+                                    !started ||
+                                    speakerMuted ||
+                                    !voiceEnabled ||
+                                    micMuted ||
+                                    aiSpeakingRef.current
+                                ) {
+                                    return;
+                                }
+
+                                try {
+
+                                    SpeechRecognitionService.start();
+
+                                } catch (error) {
+
+                                    console.error(error);
+
+                                }
+
+                            }, 250);
 
                     }
 
                 }
-
             );
 
         }, 700);
@@ -253,16 +329,9 @@ export default function MockInterview() {
         };
 
     }, [
-
         started,
-
         currentQuestion,
-
-        voiceEnabled,
-
-        speakerMuted,
-        micMuted
-
+        questionNumber
     ]);
 
     useEffect(() => {
@@ -271,7 +340,11 @@ export default function MockInterview() {
 
             (text, isFinal) => {
 
-                if (!isFinal) {
+                if (
+                    !isFinal ||
+                    aiSpeakingRef.current ||
+                    SpeechSynthesisService.isSpeaking()
+                ) {
 
                     return;
 
@@ -288,13 +361,11 @@ export default function MockInterview() {
                     }
 
                     if (
-
                         previousAnswer
-
                             .toLowerCase()
-
-                            .includes(cleanText.toLowerCase())
-
+                            .includes(
+                                cleanText.toLowerCase()
+                            )
                     ) {
 
                         return previousAnswer;
@@ -329,6 +400,22 @@ export default function MockInterview() {
 
             (listening) => {
 
+                if (aiSpeakingRef.current) {
+
+                    if (listening) {
+
+                        SpeechRecognitionService.stop();
+
+                    }
+
+                    setIsListening(false);
+
+                    setMicMuted(true);
+
+                    return;
+
+                }
+
                 setIsListening(listening);
 
                 setMicMuted(!listening);
@@ -341,16 +428,51 @@ export default function MockInterview() {
 
             (speaking) => {
 
-                console.log(
-                    "AI Speaking:",
-                    speaking
-                );
+                aiSpeakingRef.current = speaking;
 
                 setIsAiSpeaking(speaking);
+
+                if (speaking) {
+
+                    if (
+                        recognitionRestartTimerRef.current
+                    ) {
+
+                        clearTimeout(
+                            recognitionRestartTimerRef.current
+                        );
+
+                        recognitionRestartTimerRef.current = null;
+
+                    }
+
+                    SpeechRecognitionService.stop();
+
+                    setIsListening(false);
+
+                    setMicMuted(true);
+
+                }
 
             }
 
         );
+
+        return () => {
+
+            if (
+                recognitionRestartTimerRef.current
+            ) {
+
+                clearTimeout(
+                    recognitionRestartTimerRef.current
+                );
+
+                recognitionRestartTimerRef.current = null;
+
+            }
+
+        };
 
     }, []);
 
@@ -457,12 +579,31 @@ export default function MockInterview() {
             clearTimeout(timer);
 
     }, [
-
         showCountdown,
-
         countdown
-
     ]);
+
+    useEffect(() => {
+
+        return () => {
+
+            if (
+                recognitionRestartTimerRef.current
+            ) {
+
+                clearTimeout(
+                    recognitionRestartTimerRef.current
+                );
+
+            }
+
+            SpeechRecognitionService.stop();
+
+            SpeechSynthesisService.stop();
+
+        };
+
+    }, []);
 
     const formatTime = () => {
 
@@ -485,6 +626,14 @@ export default function MockInterview() {
             return;
 
         }
+
+        SpeechRecognitionService.stop();
+
+        SpeechSynthesisService.stop();
+
+        spokenQuestionRef.current = null;
+
+        aiSpeakingRef.current = false;
 
         setSessionId(
             pendingInterview.sessionId
@@ -608,9 +757,25 @@ export default function MockInterview() {
 
     const resetInterview = () => {
 
+        if (
+            recognitionRestartTimerRef.current
+        ) {
+
+            clearTimeout(
+                recognitionRestartTimerRef.current
+            );
+
+            recognitionRestartTimerRef.current = null;
+
+        }
+
         SpeechSynthesisService.stop();
 
         SpeechRecognitionService.stop();
+
+        spokenQuestionRef.current = null;
+
+        aiSpeakingRef.current = false;
 
         setStarted(false);
 
@@ -648,76 +813,104 @@ export default function MockInterview() {
 
         setCountdown(4);
 
+        setFirstInterviewCompleted(false);
+
     };
 
-   const handleEnd = async () => {
+    const handleEnd = async () => {
 
-    SpeechRecognitionService.stop();
+        if (
+            recognitionRestartTimerRef.current
+        ) {
 
-    SpeechSynthesisService.stop();
+            clearTimeout(
+                recognitionRestartTimerRef.current
+            );
 
-    if (!answeredAtLeastOneQuestion) {
+            recognitionRestartTimerRef.current = null;
 
-        resetInterview();
+        }
 
-        return;
+        SpeechRecognitionService.stop();
 
-    }
+        SpeechSynthesisService.stop();
 
-    if (!sessionId) {
+        spokenQuestionRef.current = null;
 
-        resetInterview();
+        aiSpeakingRef.current = false;
 
-        return;
+        if (!answeredAtLeastOneQuestion) {
 
-    }
+            resetInterview();
 
-    try {
+            return;
 
-        setLoading(true);
+        }
 
-        await endInterview(sessionId);
+        if (!sessionId) {
 
-        localStorage.setItem(
-            "lastInterviewSessionId",
-            String(sessionId)
-        );
+            resetInterview();
 
-        setStarted(false);
+            return;
 
-        navigate(
-            `/interview-result?sessionId=${sessionId}`,
-            {
-                replace: true,
-                state: {
-                    fromInterview: true,
-                    sessionId: sessionId
+        }
+
+        try {
+
+            setLoading(true);
+
+            setShowFeedbackModal(false);
+
+            await endInterview(
+                sessionId
+            );
+
+            localStorage.setItem(
+                "lastInterviewSessionId",
+                String(sessionId)
+            );
+
+            setStarted(false);
+
+            navigate(
+                `/interview-result?sessionId=${sessionId}`,
+                {
+                    replace: true,
+                    state: {
+                        fromInterview: true,
+                        sessionId: sessionId
+                    }
                 }
-            }
-        );
+            );
 
-    } catch (error) {
+        } catch (error) {
 
-        console.error(error);
+            console.error(error);
 
-        toast.error(
-            "Unable to end the interview. Please try again.",
-            {
-                autoClose: 1500
-            }
-        );
+            toast.error(
+                "Unable to end the interview. Please try again.",
+                {
+                    autoClose: 1500
+                }
+            );
 
-    } finally {
+        } finally {
 
-        setLoading(false);
+            setLoading(false);
 
-    }
+        }
 
-};
+    };
 
     const handleSubmit = async () => {
 
         SpeechRecognitionService.stop();
+
+        SpeechSynthesisService.stop();
+
+        spokenQuestionRef.current = null;
+
+        aiSpeakingRef.current = false;
 
         if (!answer.trim()) {
 
@@ -766,34 +959,37 @@ export default function MockInterview() {
                 null
             );
 
-           if (response.data.interviewCompleted) {
+            if (
+                response.data.interviewCompleted
+            ) {
 
-    SpeechSynthesisService.stop();
+                SpeechSynthesisService.stop();
 
-    SpeechRecognitionService.stop();
+                SpeechRecognitionService.stop();
 
-    setStarted(false);
+                setStarted(false);
 
-    setFirstInterviewCompleted(true);
+                setFirstInterviewCompleted(true);
 
-    localStorage.setItem(
-        "lastInterviewSessionId",
-        String(sessionId)
-    );
+                localStorage.setItem(
+                    "lastInterviewSessionId",
+                    String(sessionId)
+                );
 
-    navigate(
-        `/interview-result?sessionId=${sessionId}`,
-        {
-            replace: true,
-            state: {
-                fromInterview: true,
-                sessionId: sessionId
+                navigate(
+                    `/interview-result?sessionId=${sessionId}`,
+                    {
+                        replace: true,
+                        state: {
+                            fromInterview: true,
+                            sessionId: sessionId
+                        }
+                    }
+                );
+
+                return;
+
             }
-        }
-    );
-
-    return;
-}
 
             SpeechRecognitionService.stop();
 
@@ -914,7 +1110,6 @@ export default function MockInterview() {
                                     Listening...
 
                                 </div>
-
                             )
                         }
 

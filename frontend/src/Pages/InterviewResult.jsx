@@ -1,69 +1,57 @@
 import React, { useEffect, useMemo, useState } from "react";
+import Logo from "../assets/Logo.png";
 import {
     FiArrowLeft,
-    FiAward,
     FiCheckCircle,
     FiChevronDown,
     FiChevronUp,
     FiClock,
     FiCode,
     FiDownload,
+    FiFileText,
     FiMessageCircle,
     FiTarget,
     FiTrendingUp,
     FiXCircle
 } from "react-icons/fi";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { jsPDF } from "jspdf";
 import { getResult } from "../services/interviewService";
 import "../styles/InterviewResult.css";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
-export default function InterviewResult() {
+const InterviewResult = () => {
 
     const navigate = useNavigate();
-
     const [searchParams] = useSearchParams();
 
     const [result, setResult] = useState(null);
-
     const [loading, setLoading] = useState(true);
-
     const [error, setError] = useState("");
-
-    const [isExporting, setIsExporting] = useState(false);
-
     const [expandedQuestion, setExpandedQuestion] = useState(null);
+    const [isExporting, setIsExporting] = useState(false);
 
     const sessionId =
         searchParams.get("sessionId") ||
         localStorage.getItem("lastInterviewSessionId");
 
-    const reportGeneratedAt = useMemo(() => {
-        return result?.completedAt
-            ? new Date(result.completedAt)
-            : new Date();
-    }, [result?.completedAt]);
+    const generatedAt = useMemo(
+        () => new Date(),
+        []
+    );
 
     useEffect(() => {
 
-        const fetchResult = async () => {
+        const loadResult = async () => {
 
             if (!sessionId) {
-
-                setError(
-                    "Interview report could not be found."
-                );
-
+                setError("Interview result could not be found.");
                 setLoading(false);
-
                 return;
             }
 
             try {
 
-                const response =
-                    await getResult(sessionId);
+                const response = await getResult(sessionId);
 
                 setResult(response.data);
 
@@ -71,7 +59,7 @@ export default function InterviewResult() {
 
                 setError(
                     err?.response?.data?.message ||
-                    "Unable to load interview report."
+                    "Unable to load interview result."
                 );
 
             } finally {
@@ -82,41 +70,91 @@ export default function InterviewResult() {
 
         };
 
-        fetchResult();
+        loadResult();
 
     }, [sessionId]);
 
-    const toggleQuestion = (index) => {
+    const answers = Array.isArray(result?.answers)
+        ? result.answers
+        : [];
 
-        setExpandedQuestion(
-            expandedQuestion === index
-                ? null
-                : index
-        );
+    const skills = Array.isArray(result?.skills)
+        ? result.skills
+        : [];
 
-    };
+    const overallScore = Number(
+        result?.overallScore || 0
+    );
+
+    const technicalAccuracy = Number(
+        result?.technicalAccuracy || 0
+    );
+
+    const completeness = Number(
+        result?.completeness || 0
+    );
+
+    const communication = Number(
+        result?.communication || 0
+    );
+
+    const targetRole =
+        result?.targetRole ||
+        result?.domain ||
+        "Not specified";
 
     const getScoreClass = (score) => {
 
         if (score >= 80) {
-
             return "result-score-excellent";
-
         }
 
         if (score >= 60) {
-
             return "result-score-good";
-
         }
 
         if (score >= 40) {
-
             return "result-score-average";
-
         }
 
         return "result-score-low";
+
+    };
+
+    const getPerformanceLabel = (score) => {
+
+        if (score >= 80) {
+            return "Excellent Performance";
+        }
+
+        if (score >= 60) {
+            return "Good Performance";
+        }
+
+        if (score >= 40) {
+            return "Average Performance";
+        }
+
+        return "Needs Improvement";
+
+    };
+
+    const normalizeList = (value) => {
+
+        if (Array.isArray(value)) {
+            return value.filter(Boolean);
+        }
+
+        if (typeof value === "string") {
+
+            return value
+                .split(/\r?\n|•|;/)
+                .map((item) => item.trim())
+                .filter(Boolean);
+
+        }
+
+        return [];
 
     };
 
@@ -146,61 +184,244 @@ export default function InterviewResult() {
 
     };
 
-    const normalizeList = (value) => {
+    const toggleQuestion = (index) => {
 
-        if (Array.isArray(value)) {
-
-            return value.filter(Boolean);
-
-        }
-
-        if (typeof value === "string") {
-
-            return value
-                .split(/\r?\n|•|;/)
-                .map(
-                    (item) => item.trim()
-                )
-                .filter(Boolean);
-
-        }
-
-        return [];
+        setExpandedQuestion(
+            expandedQuestion === index
+                ? null
+                : index
+        );
 
     };
 
-    const handleExport = async () => {
+    const addPdfText = (
+        pdf,
+        text,
+        x,
+        y,
+        width,
+        lineHeight = 5
+    ) => {
 
-        if (isExporting) {
-            return;
-        }
+        const safeText =
+            text === null ||
+            text === undefined ||
+            text === ""
+                ? "Not available."
+                : String(text);
 
-        const reportElement =
-            document.querySelector(".interview-result-page");
+        const lines =
+            pdf.splitTextToSize(
+                safeText,
+                width
+            );
 
-        if (!reportElement) {
+        pdf.text(
+            lines,
+            x,
+            y
+        );
+
+        return y + (
+            lines.length *
+            lineHeight
+        );
+
+    };
+
+  const drawPdfBrand = (
+    pdf,
+    pageWidth
+) => {
+
+    const headerX = 14;
+    const headerY = 12;
+    const headerWidth = pageWidth - 28;
+    const headerHeight = 27;
+
+    pdf.setFillColor(
+        248,
+        247,
+        255
+    );
+
+    pdf.roundedRect(
+        headerX,
+        headerY,
+        headerWidth,
+        headerHeight,
+        5,
+        5,
+        "F"
+    );
+
+    pdf.setDrawColor(
+        221,
+        222,
+        244
+    );
+
+    pdf.setLineWidth(
+        0.35
+    );
+
+    pdf.roundedRect(
+        headerX,
+        headerY,
+        headerWidth,
+        headerHeight,
+        5,
+        5,
+        "S"
+    );
+
+    const logoImage =
+        new Image();
+
+    logoImage.src = Logo;
+
+ pdf.addImage(
+    logoImage,
+    "PNG",
+    12,
+    13,
+    35,
+    25
+);
+    pdf.setTextColor(
+        24,
+        32,
+        54
+    );
+
+    pdf.setFont(
+        "helvetica",
+        "bold"
+    );
+
+    pdf.setFontSize(
+        14
+    );
+
+    pdf.text(
+        "Samprepix",
+        37,
+        24
+    );
+
+    pdf.setFont(
+        "helvetica",
+        "normal"
+    );
+
+    pdf.setFontSize(
+        7.5
+    );
+
+    pdf.setTextColor(
+        105,
+        115,
+        136
+    );
+
+    pdf.text(
+        "AI Interview & Placement Preparation Platform",
+        37,
+        29
+    );
+
+};  
+
+    const drawPdfFooter = (
+        pdf,
+        pageWidth,
+        pageHeight
+    ) => {
+
+        pdf.setDrawColor(
+            224,
+            228,
+            237
+        );
+
+        pdf.setLineWidth(
+            0.25
+        );
+
+        pdf.line(
+            18,
+            pageHeight - 13,
+            pageWidth - 18,
+            pageHeight - 13
+        );
+
+        pdf.setFont(
+            "helvetica",
+            "normal"
+        );
+
+        pdf.setFontSize(
+            7
+        );
+
+        pdf.setTextColor(
+            135,
+            144,
+            160
+        );
+
+        pdf.text(
+            "Samprepix",
+            18,
+            pageHeight - 7
+        );
+
+        pdf.text(
+            "Interview Questions & Answers",
+            pageWidth - 18,
+            pageHeight - 7,
+            {
+                align: "right"
+            }
+        );
+
+    };
+
+    const addNewPdfPage = (
+        pdf,
+        pageWidth,
+        pageHeight
+    ) => {
+
+        pdf.addPage();
+
+        drawPdfBrand(
+            pdf,
+            pageWidth
+        );
+
+        drawPdfFooter(
+            pdf,
+            pageWidth,
+            pageHeight
+        );
+
+        return 49;
+
+    };
+
+    const handleExportPdf = () => {
+
+        if (
+            isExporting ||
+            !result
+        ) {
             return;
         }
 
         try {
 
             setIsExporting(true);
-
-            const canvas = await html2canvas(
-                reportElement,
-                {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor:
-                        getComputedStyle(reportElement).backgroundColor,
-                    logging: false,
-                    windowWidth: reportElement.scrollWidth,
-                    windowHeight: reportElement.scrollHeight
-                }
-            );
-
-            const imageData =
-                canvas.toDataURL("image/png");
 
             const pdf = new jsPDF(
                 "p",
@@ -214,71 +435,475 @@ export default function InterviewResult() {
             const pageHeight =
                 pdf.internal.pageSize.getHeight();
 
-            const imageWidth = pageWidth;
+            const margin = 18;
 
-            const imageHeight =
-                (canvas.height * imageWidth) /
-                canvas.width;
+            const contentWidth =
+                pageWidth -
+                margin * 2;
 
-            let heightLeft = imageHeight;
+            const bottomLimit =
+                pageHeight - 21;
 
-            let position = 0;
-
-            pdf.addImage(
-                imageData,
-                "PNG",
-                0,
-                position,
-                imageWidth,
-                imageHeight,
-                undefined,
-                "FAST"
+            drawPdfBrand(
+                pdf,
+                pageWidth
             );
 
-            heightLeft -= pageHeight;
+            drawPdfFooter(
+                pdf,
+                pageWidth,
+                pageHeight
+            );
 
-            while (heightLeft > 0) {
+            let y = 49;
 
-                position =
-                    heightLeft - imageHeight;
+            pdf.setFont(
+                "helvetica",
+                "bold"
+            );
 
-                pdf.addPage();
+            pdf.setFontSize(
+                18
+            );
 
-                pdf.addImage(
-                    imageData,
-                    "PNG",
-                    0,
-                    position,
-                    imageWidth,
-                    imageHeight,
-                    undefined,
-                    "FAST"
-                );
+            pdf.setTextColor(
+                25,
+                35,
+                55
+            );
 
-                heightLeft -= pageHeight;
+            pdf.text(
+                "Interview Questions & Answers",
+                margin,
+                y
+            );
 
-            }
+            y += 9;
 
-            const role =
-                result?.targetRole
-                    ?.replace(/[^a-z0-9]+/gi, "_")
-                    .replace(/^_+|_+$/g, "")
-                || "Interview";
+            pdf.setFont(
+                "helvetica",
+                "normal"
+            );
 
-            const date =
-                reportGeneratedAt
+            pdf.setFontSize(
+                9
+            );
+
+            pdf.setTextColor(
+                92,
+                103,
+                122
+            );
+
+            const details = [
+                `Domain / Target Role: ${targetRole}`,
+                `Experience Level: ${
+                    result.experienceLevel ||
+                    "Not specified"
+                }`,
+                `Difficulty: ${
+                    result.difficulty ||
+                    "Not specified"
+                }`,
+                `Questions Answered: ${
+                    result.questionsAnswered ??
+                    answers.length
+                }`,
+                `Overall Score: ${overallScore}/100`
+            ];
+
+            details.forEach(
+                (detail) => {
+
+                    y = addPdfText(
+                        pdf,
+                        detail,
+                        margin,
+                        y,
+                        contentWidth,
+                        5
+                    );
+
+                    y += 1;
+
+                }
+            );
+
+            y += 6;
+
+            answers.forEach(
+                (answer, index) => {
+
+                    const questionNumber =
+                        answer.questionNumber ??
+                        index + 1;
+
+                    const question =
+                        answer.question ||
+                        "Question unavailable.";
+
+                    const userAnswer =
+                        answer.answer ||
+                        "No answer provided.";
+
+                    const rightAnswer =
+                        answer.idealAnswer ||
+                        answer.rightAnswer ||
+                        answer.correctAnswer ||
+                        answer.modelAnswer ||
+                        "Right answer is not available.";
+
+                    const score =
+                        Number(
+                            answer.overallScore || 0
+                        );
+
+                    const questionLines =
+                        pdf.splitTextToSize(
+                            question,
+                            contentWidth - 10
+                        );
+
+                    const answerLines =
+                        pdf.splitTextToSize(
+                            userAnswer,
+                            contentWidth - 10
+                        );
+
+                    const rightAnswerLines =
+                        pdf.splitTextToSize(
+                            rightAnswer,
+                            contentWidth - 10
+                        );
+
+                    const estimatedHeight =
+                        12 +
+                        questionLines.length * 5 +
+                        12 +
+                        answerLines.length * 5 +
+                        12 +
+                        rightAnswerLines.length * 5 +
+                        13;
+
+                    if (
+                        y + estimatedHeight >
+                        bottomLimit
+                    ) {
+
+                        y = addNewPdfPage(
+                            pdf,
+                            pageWidth,
+                            pageHeight
+                        );
+
+                    }
+
+                    pdf.setFillColor(
+                        244,
+                        246,
+                        251
+                    );
+
+                    pdf.roundedRect(
+                        margin,
+                        y - 5,
+                        contentWidth,
+                        8,
+                        2,
+                        2,
+                        "F"
+                    );
+
+                    pdf.setFont(
+                        "helvetica",
+                        "bold"
+                    );
+
+                    pdf.setFontSize(
+                        10
+                    );
+
+                    pdf.setTextColor(
+                        55,
+                        69,
+                        94
+                    );
+
+                    pdf.text(
+                        `Question ${questionNumber}`,
+                        margin + 4,
+                        y
+                    );
+
+                    y += 9;
+
+                    pdf.setFont(
+                        "helvetica",
+                        "bold"
+                    );
+
+                    pdf.setFontSize(
+                        8
+                    );
+
+                    pdf.setTextColor(
+                        78,
+                        91,
+                        112
+                    );
+
+                    pdf.text(
+                        "QUESTION",
+                        margin,
+                        y
+                    );
+
+                    y += 5;
+
+                    pdf.setFont(
+                        "helvetica",
+                        "normal"
+                    );
+
+                    pdf.setFontSize(
+                        9
+                    );
+
+                    pdf.setTextColor(
+                        42,
+                        52,
+                        70
+                    );
+
+                    y = addPdfText(
+                        pdf,
+                        question,
+                        margin,
+                        y,
+                        contentWidth - 4,
+                        5
+                    );
+
+                    y += 5;
+
+                    pdf.setFillColor(
+                        238,
+                        248,
+                        243
+                    );
+
+                    const answerBoxStart =
+                        y - 4;
+
+                    const answerBoxHeight =
+                        12 +
+                        answerLines.length * 5;
+
+                    pdf.roundedRect(
+                        margin,
+                        answerBoxStart,
+                        contentWidth,
+                        answerBoxHeight,
+                        2.5,
+                        2.5,
+                        "F"
+                    );
+
+                    pdf.setTextColor(
+                        39,
+                        132,
+                        89
+                    );
+
+                    pdf.setFont(
+                        "helvetica",
+                        "bold"
+                    );
+
+                    pdf.setFontSize(
+                        8
+                    );
+
+                    pdf.text(
+                        "YOUR ANSWER",
+                        margin + 4,
+                        y + 2
+                    );
+
+                    y += 7;
+
+                    pdf.setTextColor(
+                        57,
+                        73,
+                        88
+                    );
+
+                    pdf.setFont(
+                        "helvetica",
+                        "normal"
+                    );
+
+                    pdf.setFontSize(
+                        9
+                    );
+
+                    y = addPdfText(
+                        pdf,
+                        userAnswer,
+                        margin + 4,
+                        y,
+                        contentWidth - 8,
+                        5
+                    );
+
+                    y += 6;
+
+                    pdf.setFillColor(
+                        239,
+                        244,
+                        255
+                    );
+
+                    const rightBoxStart =
+                        y - 4;
+
+                    const rightBoxHeight =
+                        12 +
+                        rightAnswerLines.length * 5;
+
+                    pdf.roundedRect(
+                        margin,
+                        rightBoxStart,
+                        contentWidth,
+                        rightBoxHeight,
+                        2.5,
+                        2.5,
+                        "F"
+                    );
+
+                    pdf.setTextColor(
+                        70,
+                        94,
+                        190
+                    );
+
+                    pdf.setFont(
+                        "helvetica",
+                        "bold"
+                    );
+
+                    pdf.setFontSize(
+                        8
+                    );
+
+                    pdf.text(
+                        "RIGHT ANSWER",
+                        margin + 4,
+                        y + 2
+                    );
+
+                    y += 7;
+
+                    pdf.setTextColor(
+                        55,
+                        68,
+                        92
+                    );
+
+                    pdf.setFont(
+                        "helvetica",
+                        "normal"
+                    );
+
+                    pdf.setFontSize(
+                        9
+                    );
+
+                    y = addPdfText(
+                        pdf,
+                        rightAnswer,
+                        margin + 4,
+                        y,
+                        contentWidth - 8,
+                        5
+                    );
+
+                    y += 6;
+
+                    pdf.setFont(
+                        "helvetica",
+                        "bold"
+                    );
+
+                    pdf.setFontSize(
+                        9
+                    );
+
+                    pdf.setTextColor(
+                        43,
+                        137,
+                        91
+                    );
+
+                    pdf.text(
+                        `Question Score: ${score}/100`,
+                        margin,
+                        y
+                    );
+
+                    y += 8;
+
+                    pdf.setDrawColor(
+                        218,
+                        224,
+                        233
+                    );
+
+                    pdf.setLineWidth(
+                        0.25
+                    );
+
+                    pdf.line(
+                        margin,
+                        y,
+                        pageWidth - margin,
+                        y
+                    );
+
+                    y += 8;
+
+                }
+            );
+
+            const fileRole =
+                String(targetRole)
+                    .replace(
+                        /[^a-z0-9]+/gi,
+                        "_"
+                    )
+                    .replace(
+                        /^_+|_+$/g,
+                        ""
+                    ) ||
+                "Interview";
+
+            const fileDate =
+                generatedAt
                     .toISOString()
-                    .slice(0, 10);
+                    .slice(
+                        0,
+                        10
+                    );
 
             pdf.save(
-                `${role}_Interview_Report_${date}.pdf`
+                `Samprepix_${fileRole}_Interview_${fileDate}.pdf`
             );
 
-        } catch (error) {
+        } catch (err) {
 
             console.error(
-                "PDF export failed:",
-                error
+                "PDF generation failed:",
+                err
             );
 
         } finally {
@@ -289,15 +914,7 @@ export default function InterviewResult() {
 
     };
 
-    const handleCloseReport = () => {
-
-        if (!sessionId) {
-
-            navigate("/performance");
-
-            return;
-
-        }
+    const handleContinueFeedback = () => {
 
         navigate(
             "/mock-interview",
@@ -305,7 +922,8 @@ export default function InterviewResult() {
                 replace: true,
                 state: {
                     openFeedback: true,
-                    sessionId: sessionId
+                    fromResult: true,
+                    sessionId
                 }
             }
         );
@@ -323,11 +941,11 @@ export default function InterviewResult() {
                     <div className="result-loading-spinner"></div>
 
                     <h3>
-                        Preparing Your Report
+                        Preparing Your Result
                     </h3>
 
                     <p>
-                        Analyzing your interview performance...
+                        Evaluating your interview performance...
                     </p>
 
                 </div>
@@ -338,7 +956,10 @@ export default function InterviewResult() {
 
     }
 
-    if (error || !result) {
+    if (
+        error ||
+        !result
+    ) {
 
         return (
 
@@ -349,20 +970,22 @@ export default function InterviewResult() {
                     <FiXCircle size={46} />
 
                     <h3>
-                        Report Unavailable
+                        Result Unavailable
                     </h3>
 
                     <p>
                         {
                             error ||
-                            "Unable to load the interview report."
+                            "Unable to load the interview result."
                         }
                     </p>
 
                     <button
                         type="button"
                         onClick={() =>
-                            navigate("/performance")
+                            navigate(
+                                "/performance"
+                            )
                         }
                     >
                         Back to Performance
@@ -376,43 +999,23 @@ export default function InterviewResult() {
 
     }
 
-    const answers = Array.isArray(
-        result.answers
-    )
-        ? result.answers
-        : [];
-
-    const skills = Array.isArray(
-        result.skills
-    )
-        ? result.skills
-        : [];
-
-    const overallScore =
-        result.overallScore ?? 0;
-
-    const technicalAccuracy =
-        result.technicalAccuracy ?? 0;
-
-    const completeness =
-        result.completeness ?? 0;
-
-    const communication =
-        result.communication ?? 0;
-
     return (
 
         <div className="interview-result-page">
 
-            <div className="result-page-header">
+            <header className="result-page-header">
 
                 <button
                     type="button"
                     className="result-back-btn"
-                    onClick={handleCloseReport}
+                    onClick={() =>
+                        navigate(
+                            "/mock-interview"
+                        )
+                    }
                 >
                     <FiArrowLeft />
-                    Close Report
+                    Back to Interview
                 </button>
 
                 <div className="result-header-content">
@@ -420,35 +1023,31 @@ export default function InterviewResult() {
                     <div className="result-header-main">
 
                         <span className="result-eyebrow">
-                            AI INTERVIEW REPORT
+                            AI INTERVIEW COMPLETED
                         </span>
 
                         <h1>
-                            Interview Performance
+                            Interview Result
                         </h1>
 
                         <p>
-                            Your complete interview evaluation, answers and improvement insights.
+                            Your complete interview performance is summarized below.
+                            Review every answer, score and evaluation in one place.
                         </p>
 
                         <div className="result-generated-meta">
 
                             <span>
-
                                 <FiClock />
-
                                 {formatDate(
-                                    reportGeneratedAt
+                                    generatedAt
                                 )}
-
                             </span>
 
                             <span>
-
                                 {formatTime(
-                                    reportGeneratedAt
+                                    generatedAt
                                 )}
-
                             </span>
 
                         </div>
@@ -460,26 +1059,184 @@ export default function InterviewResult() {
                         <button
                             type="button"
                             className="result-export-btn"
-                            onClick={handleExport}
+                            onClick={handleExportPdf}
                             disabled={isExporting}
                         >
-
                             <FiDownload />
 
-                            {isExporting
-                                ? "Generating PDF..."
-                                : "Export Report"}
+                            {
+                                isExporting
+                                    ? "Creating PDF..."
+                                    : "Export PDF"
+                            }
 
                         </button>
 
                         <div className="result-status">
-
                             <FiCheckCircle />
+                            COMPLETED
+                        </div>
 
-                            {
-                                result.status ||
-                                "COMPLETED"
-                            }
+                    </div>
+
+                </div>
+
+            </header>
+
+            <section className="result-overview">
+
+                <div
+                    className="result-overall-card"
+                    style={{
+                        "--score":
+                            Math.max(
+                                0,
+                                Math.min(
+                                    100,
+                                    overallScore
+                                )
+                            )
+                    }}
+                >
+
+                    <div className="result-overall-ring">
+
+                        <div>
+
+                            <strong
+                                className={
+                                    getScoreClass(
+                                        overallScore
+                                    )
+                                }
+                            >
+                                {overallScore}
+                            </strong>
+
+                            <span>
+                                / 100
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div className="result-overall-content">
+
+                        <span>
+                            OVERALL PERFORMANCE
+                        </span>
+
+                        <h2>
+                            {getPerformanceLabel(
+                                overallScore
+                            )}
+                        </h2>
+
+                        <p>
+                            Your performance is calculated from technical accuracy,
+                            completeness and communication across the interview.
+                        </p>
+
+                        <div className="result-completed-badge">
+                            <FiCheckCircle />
+                            Interview Completed
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div className="result-quick-stats">
+
+                    <div className="result-quick-stat">
+
+                        <FiTarget />
+
+                        <div>
+
+                            <span>
+                                Technical Accuracy
+                            </span>
+
+                            <strong
+                                className={
+                                    getScoreClass(
+                                        technicalAccuracy
+                                    )
+                                }
+                            >
+                                {technicalAccuracy}%
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    <div className="result-quick-stat">
+
+                        <FiTrendingUp />
+
+                        <div>
+
+                            <span>
+                                Completeness
+                            </span>
+
+                            <strong
+                                className={
+                                    getScoreClass(
+                                        completeness
+                                    )
+                                }
+                            >
+                                {completeness}%
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    <div className="result-quick-stat">
+
+                        <FiMessageCircle />
+
+                        <div>
+
+                            <span>
+                                Communication
+                            </span>
+
+                            <strong
+                                className={
+                                    getScoreClass(
+                                        communication
+                                    )
+                                }
+                            >
+                                {communication}%
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    <div className="result-quick-stat">
+
+                        <FiFileText />
+
+                        <div>
+
+                            <span>
+                                Questions Answered
+                            </span>
+
+                            <strong>
+                                {
+                                    result.questionsAnswered ??
+                                    answers.length
+                                }
+                            </strong>
 
                         </div>
 
@@ -487,29 +1244,24 @@ export default function InterviewResult() {
 
                 </div>
 
-            </div>
+            </section>
 
-            <div className="result-profile-card">
+            <section className="result-profile-card">
 
                 <div className="result-profile-main">
 
                     <div className="result-role-icon">
-
                         <FiTarget />
-
                     </div>
 
                     <div>
 
                         <span>
-                            Target Role
+                            DOMAIN / TARGET ROLE
                         </span>
 
                         <h2>
-                            {
-                                result.targetRole ||
-                                "Not specified"
-                            }
+                            {targetRole}
                         </h2>
 
                     </div>
@@ -561,9 +1313,9 @@ export default function InterviewResult() {
 
                 </div>
 
-            </div>
+            </section>
 
-            <div className="result-skills-card">
+            <section className="result-skills-card">
 
                 <div className="result-section-heading">
 
@@ -580,9 +1332,7 @@ export default function InterviewResult() {
                     </div>
 
                     <span className="result-answer-count">
-
                         {skills.length} Skills
-
                     </span>
 
                 </div>
@@ -591,290 +1341,84 @@ export default function InterviewResult() {
 
                     {
                         skills.length > 0
-                            ? (
-                                skills.map(
-                                    (
-                                        skill,
-                                        index
-                                    ) => (
+                            ? skills.map(
+                                (
+                                    skill,
+                                    index
+                                ) => (
 
-                                        <span
-                                            className="result-skill-chip"
-                                            key={`${skill}-${index}`}
-                                        >
+                                    <span
+                                        className="result-skill-chip"
+                                        key={
+                                            `${skill}-${index}`
+                                        }
+                                    >
+                                        <FiCode />
+                                        {skill}
+                                    </span>
 
-                                            <FiCode />
-
-                                            {skill}
-
-                                        </span>
-
-                                    )
                                 )
                             )
                             : (
-
                                 <span className="result-empty-text">
-
                                     No skills recorded.
-
                                 </span>
-
                             )
                     }
 
                 </div>
 
-            </div>
+            </section>
 
-            <div className="result-score-grid">
-
-                <div className="result-score-card result-score-main">
-
-                    <div className="result-card-icon">
-
-                        <FiAward />
-
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Overall Score
-                        </span>
-
-                        <strong
-                            className={
-                                getScoreClass(
-                                    overallScore
-                                )
-                            }
-                        >
-                            {overallScore}
-                        </strong>
-
-                        <small>
-                            out of 100
-                        </small>
-
-                    </div>
-
-                </div>
-
-                <div className="result-score-card">
-
-                    <div className="result-card-icon">
-
-                        <FiTarget />
-
-                    </div>
-
-                    <span>
-                        Technical Accuracy
-                    </span>
-
-                    <strong
-                        className={
-                            getScoreClass(
-                                technicalAccuracy
-                            )
-                        }
-                    >
-                        {technicalAccuracy}%
-                    </strong>
-
-                </div>
-
-                <div className="result-score-card">
-
-                    <div className="result-card-icon">
-
-                        <FiTrendingUp />
-
-                    </div>
-
-                    <span>
-                        Completeness
-                    </span>
-
-                    <strong
-                        className={
-                            getScoreClass(
-                                completeness
-                            )
-                        }
-                    >
-                        {completeness}%
-                    </strong>
-
-                </div>
-
-                <div className="result-score-card">
-
-                    <div className="result-card-icon">
-
-                        <FiMessageCircle />
-
-                    </div>
-
-                    <span>
-                        Communication
-                    </span>
-
-                    <strong
-                        className={
-                            getScoreClass(
-                                communication
-                            )
-                        }
-                    >
-                        {communication}%
-                    </strong>
-
-                </div>
-
-            </div>
-
-            <div className="result-focus-card">
+            <section className="result-focus-card">
 
                 <div className="result-focus-icon">
-
                     <FiTrendingUp />
-
                 </div>
 
                 <div>
 
                     <span>
-                        Recommended Next Focus
+                        RECOMMENDED NEXT FOCUS
                     </span>
 
                     <h3>
                         {
                             result.nextFocusSkill ||
-                            "Keep strengthening your technical fundamentals."
+                            "Continue strengthening your technical fundamentals."
                         }
                     </h3>
 
                     <p>
-                        Focus on this area during your next preparation session.
+                        Use this recommendation as your next preparation target.
                     </p>
 
                 </div>
 
-            </div>
+            </section>
 
-            <div className="result-summary-card">
-
-                <div className="result-section-heading">
-
-                    <div>
-
-                        <span className="result-section-eyebrow">
-                            PERFORMANCE SUMMARY
-                        </span>
-
-                        <h2>
-                            Interview Overview
-                        </h2>
-
-                    </div>
-
-                </div>
-
-                <div className="result-summary-grid">
-
-                    <div className="result-summary-item">
-
-                        <span>
-                            Questions Answered
-                        </span>
-
-                        <strong>
-                            {
-                                result.questionsAnswered ??
-                                answers.length
-                            }
-                        </strong>
-
-                    </div>
-
-                    <div className="result-summary-item">
-
-                        <span>
-                            Overall Performance
-                        </span>
-
-                        <strong
-                            className={
-                                getScoreClass(
-                                    overallScore
-                                )
-                            }
-                        >
-                            {overallScore}/100
-                        </strong>
-
-                    </div>
-
-                    <div className="result-summary-item">
-
-                        <span>
-                            Interview Difficulty
-                        </span>
-
-                        <strong>
-                            {
-                                result.difficulty ||
-                                "Not specified"
-                            }
-                        </strong>
-
-                    </div>
-
-                    <div className="result-summary-item">
-
-                        <span>
-                            Report Status
-                        </span>
-
-                        <strong>
-                            {
-                                result.status ||
-                                "COMPLETED"
-                            }
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div className="result-answers-section">
+            <section className="result-answers-section">
 
                 <div className="result-section-heading">
 
                     <div>
 
                         <span className="result-section-eyebrow">
-                            QUESTION REVIEW
+                            DETAILED EVALUATION
                         </span>
 
                         <h2>
-                            Interview Answers
+                            Questions & Answers
                         </h2>
 
                         <p>
-                            Review every answer, AI evaluation and improvement area from this interview.
+                            Review every question, your response and the evaluation behind your score.
                         </p>
 
                     </div>
 
                     <span className="result-answer-count">
-
                         {answers.length} Questions
-
                     </span>
 
                 </div>
@@ -883,410 +1427,389 @@ export default function InterviewResult() {
 
                     {
                         answers.length > 0
-                            ? (
-                                answers.map(
-                                    (
-                                        answer,
-                                        index
-                                    ) => {
+                            ? answers.map(
+                                (
+                                    answer,
+                                    index
+                                ) => {
 
-                                        const isExpanded =
-                                            expandedQuestion === index;
+                                    const isExpanded =
+                                        expandedQuestion === index;
 
-                                        const strengths =
-                                            normalizeList(
-                                                answer.strengths
-                                            );
+                                    const strengths =
+                                        normalizeList(
+                                            answer.strengths
+                                        );
 
-                                        const missingConcepts =
-                                            normalizeList(
-                                                answer.missingConcepts
-                                            );
+                                    const missingConcepts =
+                                        normalizeList(
+                                            answer.missingConcepts
+                                        );
 
-                                        return (
+                                    return (
 
-                                            <div
-                                                className={`result-answer-card ${isExpanded
-                                                    ? "result-answer-expanded"
-                                                    : ""
-                                                    }`}
-                                                key={
-                                                    answer.questionNumber ||
-                                                    answer.id ||
-                                                    index
+                                        <article
+                                            className={
+                                                `result-answer-card ${
+                                                    isExpanded
+                                                        ? "result-answer-expanded"
+                                                        : ""
+                                                }`
+                                            }
+                                            key={
+                                                answer.id ||
+                                                answer.questionNumber ||
+                                                index
+                                            }
+                                        >
+
+                                            <button
+                                                type="button"
+                                                className="result-answer-header"
+                                                onClick={() =>
+                                                    toggleQuestion(
+                                                        index
+                                                    )
                                                 }
                                             >
 
-                                                <button
-                                                    type="button"
-                                                    className="result-answer-header"
-                                                    onClick={() =>
-                                                        toggleQuestion(
-                                                            index
-                                                        )
+                                                <div className="result-question-number">
+                                                    Q{
+                                                        answer.questionNumber ??
+                                                        index + 1
                                                     }
-                                                >
+                                                </div>
 
-                                                    <div className="result-question-number">
+                                                <div className="result-question-summary">
 
-                                                        Q{
-                                                            answer.questionNumber ??
-                                                            index + 1
+                                                    <span>
+                                                        {
+                                                            answer.difficulty ||
+                                                            "INTERVIEW QUESTION"
                                                         }
+                                                    </span>
 
-                                                    </div>
+                                                    <h3>
+                                                        {
+                                                            answer.question ||
+                                                            "Question unavailable."
+                                                        }
+                                                    </h3>
 
-                                                    <div className="result-question-summary">
+                                                </div>
 
-                                                        <span>
+                                                <div className="result-answer-score">
 
-                                                            {
-                                                                answer.difficulty ||
-                                                                "Interview Question"
-                                                            }
-
-                                                        </span>
-
-                                                        <h3>
-
-                                                            {
-                                                                answer.question ||
-                                                                "Question unavailable."
-                                                            }
-
-                                                        </h3>
-
-                                                    </div>
-
-                                                    <div className="result-answer-score">
-
-                                                        <strong
-                                                            className={
-                                                                getScoreClass(
-                                                                    answer.overallScore ??
+                                                    <strong
+                                                        className={
+                                                            getScoreClass(
+                                                                Number(
+                                                                    answer.overallScore ||
                                                                     0
                                                                 )
-                                                            }
-                                                        >
-                                                            {
-                                                                answer.overallScore ??
-                                                                0
-                                                            }
-                                                        </strong>
-
-                                                        {
-                                                            isExpanded
-                                                                ? (
-                                                                    <FiChevronUp />
-                                                                )
-                                                                : (
-                                                                    <FiChevronDown />
-                                                                )
+                                                            )
                                                         }
+                                                    >
+                                                        {
+                                                            answer.overallScore ??
+                                                            0
+                                                        }
+                                                    </strong>
 
-                                                    </div>
+                                                    {
+                                                        isExpanded
+                                                            ? <FiChevronUp />
+                                                            : <FiChevronDown />
+                                                    }
 
-                                                </button>
+                                                </div>
 
-                                                {
-                                                    isExpanded && (
+                                            </button>
 
-                                                        <div className="result-answer-details">
+                                            {
+                                                isExpanded && (
 
-                                                            <div className="result-detail-block">
+                                                    <div className="result-answer-details">
 
-                                                                <span>
-                                                                    Your Answer
-                                                                </span>
+                                                        <div className="result-detail-block">
 
-                                                                <p>
-                                                                    {
-                                                                        answer.answer ||
-                                                                        "No answer provided."
-                                                                    }
-                                                                </p>
+                                                            <span>
+                                                                Your Answer
+                                                            </span>
 
-                                                            </div>
+                                                            <p>
+                                                                {
+                                                                    answer.answer ||
+                                                                    "No answer provided."
+                                                                }
+                                                            </p>
 
-                                                            <div className="result-detail-block result-correct-answer">
+                                                        </div>
 
-                                                                <span>
-                                                                    Ideal Answer
-                                                                </span>
+                                                        <div className="result-detail-block result-correct-answer">
 
-                                                                <p>
-                                                                    {
-                                                                        answer.idealAnswer ||
-                                                                        "Not available."
-                                                                    }
-                                                                </p>
+                                                            <span>
+                                                                Right Answer
+                                                            </span>
 
-                                                            </div>
+                                                            <p>
+                                                                {
+                                                                    answer.idealAnswer ||
+                                                                    answer.rightAnswer ||
+                                                                    answer.correctAnswer ||
+                                                                    answer.modelAnswer ||
+                                                                    "Right answer is not available."
+                                                                }
+                                                            </p>
 
-                                                            <div className="result-detail-metrics">
+                                                        </div>
 
-                                                                <div>
+                                                        <div className="result-detail-metrics">
 
-                                                                    <span>
-                                                                        Technical Accuracy
-                                                                    </span>
-
-                                                                    <strong
-                                                                        className={
-                                                                            getScoreClass(
-                                                                                answer.technicalAccuracy ??
-                                                                                0
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            answer.technicalAccuracy ??
-                                                                            0
-                                                                        }%
-                                                                    </strong>
-
-                                                                </div>
-
-                                                                <div>
-
-                                                                    <span>
-                                                                        Completeness
-                                                                    </span>
-
-                                                                    <strong
-                                                                        className={
-                                                                            getScoreClass(
-                                                                                answer.completeness ??
-                                                                                0
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            answer.completeness ??
-                                                                            0
-                                                                        }%
-                                                                    </strong>
-
-                                                                </div>
-
-                                                                <div>
-
-                                                                    <span>
-                                                                        Communication
-                                                                    </span>
-
-                                                                    <strong
-                                                                        className={
-                                                                            getScoreClass(
-                                                                                answer.communication ??
-                                                                                0
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            answer.communication ??
-                                                                            0
-                                                                        }%
-                                                                    </strong>
-
-                                                                </div>
-
-                                                                <div>
-
-                                                                    <span>
-                                                                        Overall Score
-                                                                    </span>
-
-                                                                    <strong
-                                                                        className={
-                                                                            getScoreClass(
-                                                                                answer.overallScore ??
-                                                                                0
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            answer.overallScore ??
-                                                                            0
-                                                                        }%
-                                                                    </strong>
-
-                                                                </div>
-
-                                                            </div>
-
-                                                            <div className="result-detail-block">
+                                                            <div>
 
                                                                 <span>
-                                                                    Performance
+                                                                    Technical Accuracy
                                                                 </span>
 
-                                                                <strong>
-                                                                    {
-                                                                        answer.performance ||
-                                                                        "Not Evaluated"
+                                                                <strong
+                                                                    className={
+                                                                        getScoreClass(
+                                                                            Number(
+                                                                                answer.technicalAccuracy ||
+                                                                                0
+                                                                            )
+                                                                        )
                                                                     }
+                                                                >
+                                                                    {
+                                                                        answer.technicalAccuracy ??
+                                                                        0
+                                                                    }%
                                                                 </strong>
 
                                                             </div>
 
-                                                            <div className="result-detail-block">
+                                                            <div>
 
                                                                 <span>
-                                                                    AI Feedback
+                                                                    Completeness
                                                                 </span>
 
-                                                                <p>
-                                                                    {
-                                                                        answer.feedback ||
-                                                                        "No feedback available."
+                                                                <strong
+                                                                    className={
+                                                                        getScoreClass(
+                                                                            Number(
+                                                                                answer.completeness ||
+                                                                                0
+                                                                            )
+                                                                        )
                                                                     }
-                                                                </p>
+                                                                >
+                                                                    {
+                                                                        answer.completeness ??
+                                                                        0
+                                                                    }%
+                                                                </strong>
 
                                                             </div>
 
-                                                            <div className="result-detail-columns">
+                                                            <div>
 
-                                                                <div>
+                                                                <span>
+                                                                    Communication
+                                                                </span>
 
-                                                                    <span>
-                                                                        Strengths
-                                                                    </span>
-
-                                                                    {
-                                                                        strengths.length > 0
-                                                                            ? (
-                                                                                <ul>
-
-                                                                                    {
-                                                                                        strengths.map(
-                                                                                            (
-                                                                                                strength,
-                                                                                                strengthIndex
-                                                                                            ) => (
-
-                                                                                                <li
-                                                                                                    key={
-                                                                                                        strengthIndex
-                                                                                                    }
-                                                                                                >
-
-                                                                                                    <FiCheckCircle />
-
-                                                                                                    {
-                                                                                                        strength
-                                                                                                    }
-
-                                                                                                </li>
-
-                                                                                            )
-                                                                                        )
-                                                                                    }
-
-                                                                                </ul>
+                                                                <strong
+                                                                    className={
+                                                                        getScoreClass(
+                                                                            Number(
+                                                                                answer.communication ||
+                                                                                0
                                                                             )
-                                                                            : (
-
-                                                                                <p>
-                                                                                    No strengths recorded.
-                                                                                </p>
-
-                                                                            )
+                                                                        )
                                                                     }
-
-                                                                </div>
-
-                                                                <div>
-
-                                                                    <span>
-                                                                        Missing Concepts
-                                                                    </span>
-
+                                                                >
                                                                     {
-                                                                        missingConcepts.length > 0
-                                                                            ? (
-                                                                                <ul>
-
-                                                                                    {
-                                                                                        missingConcepts.map(
-                                                                                            (
-                                                                                                concept,
-                                                                                                conceptIndex
-                                                                                            ) => (
-
-                                                                                                <li
-                                                                                                    key={
-                                                                                                        conceptIndex
-                                                                                                    }
-                                                                                                >
-
-                                                                                                    <FiXCircle />
-
-                                                                                                    {
-                                                                                                        concept
-                                                                                                    }
-
-                                                                                                </li>
-
-                                                                                            )
-                                                                                        )
-                                                                                    }
-
-                                                                                </ul>
-                                                                            )
-                                                                            : (
-
-                                                                                <p>
-                                                                                    No missing concepts recorded.
-                                                                                </p>
-
-                                                                            )
-                                                                    }
-
-                                                                </div>
+                                                                        answer.communication ??
+                                                                        0
+                                                                    }%
+                                                                </strong>
 
                                                             </div>
 
-                                                            <div className="result-next-focus-inline">
+                                                            <div>
 
                                                                 <span>
-                                                                    Next Focus Skill
+                                                                    Overall
                                                                 </span>
 
-                                                                <strong>
-                                                                    {
-                                                                        answer.nextFocusSkill ||
-                                                                        result.nextFocusSkill ||
-                                                                        "Continue strengthening your fundamentals."
+                                                                <strong
+                                                                    className={
+                                                                        getScoreClass(
+                                                                            Number(
+                                                                                answer.overallScore ||
+                                                                                0
+                                                                            )
+                                                                        )
                                                                     }
+                                                                >
+                                                                    {
+                                                                        answer.overallScore ??
+                                                                        0
+                                                                    }%
                                                                 </strong>
 
                                                             </div>
 
                                                         </div>
 
-                                                    )
-                                                }
+                                                        <div className="result-detail-block">
 
-                                            </div>
+                                                            <span>
+                                                                AI Feedback
+                                                            </span>
 
-                                        );
+                                                            <p>
+                                                                {
+                                                                    answer.feedback ||
+                                                                    "No detailed feedback available."
+                                                                }
+                                                            </p>
 
-                                    }
-                                )
+                                                        </div>
+
+                                                        <div className="result-detail-columns">
+
+                                                            <div>
+
+                                                                <span>
+                                                                    Strengths
+                                                                </span>
+
+                                                                {
+                                                                    strengths.length > 0
+                                                                        ? (
+                                                                            <ul>
+
+                                                                                {
+                                                                                    strengths.map(
+                                                                                        (
+                                                                                            strength,
+                                                                                            strengthIndex
+                                                                                        ) => (
+
+                                                                                            <li
+                                                                                                key={
+                                                                                                    strengthIndex
+                                                                                                }
+                                                                                            >
+                                                                                                <FiCheckCircle />
+                                                                                                {
+                                                                                                    strength
+                                                                                                }
+                                                                                            </li>
+
+                                                                                        )
+                                                                                    )
+                                                                                }
+
+                                                                            </ul>
+                                                                        )
+                                                                        : (
+                                                                            <p>
+                                                                                No strengths recorded.
+                                                                            </p>
+                                                                        )
+                                                                }
+
+                                                            </div>
+
+                                                            <div>
+
+                                                                <span>
+                                                                    Missing Concepts
+                                                                </span>
+
+                                                                {
+                                                                    missingConcepts.length > 0
+                                                                        ? (
+                                                                            <ul>
+
+                                                                                {
+                                                                                    missingConcepts.map(
+                                                                                        (
+                                                                                            concept,
+                                                                                            conceptIndex
+                                                                                        ) => (
+
+                                                                                            <li
+                                                                                                key={
+                                                                                                    conceptIndex
+                                                                                                }
+                                                                                            >
+                                                                                                <FiXCircle />
+                                                                                                {
+                                                                                                    concept
+                                                                                                }
+                                                                                            </li>
+
+                                                                                        )
+                                                                                    )
+                                                                                }
+
+                                                                            </ul>
+                                                                        )
+                                                                        : (
+                                                                            <p>
+                                                                                No missing concepts recorded.
+                                                                            </p>
+                                                                        )
+                                                                }
+
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div className="result-next-focus-inline">
+
+                                                            <span>
+                                                                Next Focus Skill
+                                                            </span>
+
+                                                            <strong>
+                                                                {
+                                                                    answer.nextFocusSkill ||
+                                                                    result.nextFocusSkill ||
+                                                                    "Continue strengthening your fundamentals."
+                                                                }
+                                                            </strong>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                )
+                                            }
+
+                                        </article>
+
+                                    );
+
+                                }
                             )
                             : (
 
                                 <div className="result-empty-card">
 
-                                    <FiClock />
+                                    <FiFileText />
 
                                     <h3>
                                         No Answer Details Available
                                     </h3>
 
                                     <p>
-                                        The interview was completed, but detailed answer evaluation is not available.
+                                        Detailed answer evaluation is not available for this interview.
                                     </p>
 
                                 </div>
@@ -1296,9 +1819,9 @@ export default function InterviewResult() {
 
                 </div>
 
-            </div>
+            </section>
 
-            <div className="result-report-footer">
+            <section className="result-report-footer">
 
                 <div>
 
@@ -1307,17 +1830,13 @@ export default function InterviewResult() {
                     </span>
 
                     <strong>
-                        {
-                            formatDate(
-                                reportGeneratedAt
-                            )
-                        }{" "}
+                        {formatDate(
+                            generatedAt
+                        )}{" "}
                         at{" "}
-                        {
-                            formatTime(
-                                reportGeneratedAt
-                            )
-                        }
+                        {formatTime(
+                            generatedAt
+                        )}
                     </strong>
 
                 </div>
@@ -1325,23 +1844,61 @@ export default function InterviewResult() {
                 <button
                     type="button"
                     className="result-export-btn"
-                    onClick={handleExport}
+                    onClick={handleExportPdf}
                     disabled={isExporting}
                 >
-
                     <FiDownload />
 
-                    {isExporting
-                        ? "Generating PDF..."
-                        : "Export Report"}
-
+                    {
+                        isExporting
+                            ? "Creating PDF..."
+                            : "Export Questions PDF"
+                    }
 
                 </button>
 
-            </div>
+            </section>
+
+            <section className="result-finish-card">
+
+                <div>
+
+                    <FiCheckCircle />
+
+                    <div>
+
+                        <span>
+                            INTERVIEW REPORT COMPLETE
+                        </span>
+
+                        <h3>
+                            Ready to continue your placement preparation?
+                        </h3>
+
+                        <p>
+                            Your result is saved. Continue to feedback and move to your next preparation activity.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    onClick={
+                        handleContinueFeedback
+                    }
+                >
+                    Continue to Feedback
+                    <FiArrowLeft className="result-arrow-right" />
+                </button>
+
+            </section>
 
         </div>
 
     );
 
-}
+};
+
+export default InterviewResult;
