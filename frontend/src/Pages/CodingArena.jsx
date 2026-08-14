@@ -8,158 +8,122 @@ import {
     FiPlay,
     FiCpu,
     FiChevronDown,
-    FiSearch
+    FiX,
+    FiSearch,
+    FiArrowLeft,
+    FiArrowRight
 } from "react-icons/fi";
+
+import {
+    getCodingProblems,
+    getCodingProgress,
+    selectCodingProblem,
+    saveLastSelectedProblem,
+    saveCodingState,
+    completeCodingProblem,
+    updateCodingSubmission
+} from "../services/codingService";
 
 export default function CodingArena() {
 
-    /* =========================
-       BOILERPLATES
-    ========================= */
-
     const starterCodes = {
-
-        javascript:
-            `function solve() {
-
-    
+        javascript: `function solve() {
 
 }`,
 
-        typescript:
-            `function solve(): void {
-
-    
+        typescript: `function solve(): void {
 
 }`,
 
-        python:
-            `def solve():
+        python: `def solve():
 
     pass`,
 
-        java:
-            `class Solution {
+        java: `class Solution {
 
     public static void main(String[] args) {
-
-        
 
     }
 }`,
 
-        cpp:
-            `#include <iostream>
+        cpp: `#include <iostream>
 using namespace std;
 
 int main() {
 
-    
-
     return 0;
 }`,
 
-        c:
-            `#include <stdio.h>
+        c: `#include <stdio.h>
 
 int main() {
 
-    
-
     return 0;
 }`,
 
-        go:
-            `package main
+        go: `package main
 
 func main() {
 
-    
+}`,
+
+        rust: `fn main() {
 
 }`,
 
-        rust:
-            `fn main() {
-
-    
-
-}`,
-
-        php:
-            `<?php
+        php: `<?php
 
 echo "Hello World";
 
 ?>`,
 
-        kotlin:
-            `fun main() {
-
-    
+        kotlin: `fun main() {
 
 }`
     };
 
-    /* =========================
-       LANGUAGES
-    ========================= */
-
     const languages = [
-
         {
             label: "JavaScript",
             value: "javascript"
         },
-
         {
             label: "TypeScript",
             value: "typescript"
         },
-
         {
             label: "Python",
             value: "python"
         },
-
         {
             label: "Java",
             value: "java"
         },
-
         {
             label: "C++",
             value: "cpp"
         },
-
         {
             label: "C",
             value: "c"
         },
-
         {
             label: "Go",
             value: "go"
         },
-
         {
             label: "Rust",
             value: "rust"
         },
-
         {
             label: "PHP",
             value: "php"
         },
-
         {
             label: "Kotlin",
             value: "kotlin"
         }
     ];
-
-    /* =========================
-       STATES
-    ========================= */
 
     const [language, setLanguage] =
         useState("javascript");
@@ -173,6 +137,15 @@ echo "Hello World";
     const [selectedIndex, setSelectedIndex] =
         useState(0);
 
+    const [problems, setProblems] =
+        useState([]);
+
+    const [progress, setProgress] =
+        useState(null);
+
+    const [selectedProblemIndex, setSelectedProblemIndex] =
+        useState(null);
+
     const [codeMap, setCodeMap] =
         useState(starterCodes);
 
@@ -182,12 +155,60 @@ echo "Hello World";
     const [showSubmitResult, setShowSubmitResult] =
         useState(false);
 
+    const [showProblemMenu, setShowProblemMenu] =
+        useState(false);
+
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
+
     const dropdownRef = useRef(null);
 
     const optionRefs = useRef([]);
-    /* =========================
-       OUTSIDE CLICK
-    ========================= */
+
+    const problemMenuRef = useRef(null);
+
+    const saveTimerRef = useRef(null);
+
+    const selectedProblem =
+        selectedProblemIndex !== null
+            ? problems[selectedProblemIndex] || null
+            : null;
+
+    const hasSelectedProblem =
+        selectedProblem !== null;
+
+    const isFirstProblem =
+        selectedProblemIndex === 0;
+
+    const isLastProblem =
+        selectedProblemIndex !== null &&
+        selectedProblemIndex === problems.length - 1;
+
+    const filteredLanguages =
+        languages.filter((item) =>
+            item.label
+                .toLowerCase()
+                .includes(
+                    searchLanguage.toLowerCase()
+                )
+        );
+
+    useEffect(() => {
+
+        loadCodingArena();
+
+        return () => {
+
+            if (saveTimerRef.current) {
+                clearTimeout(saveTimerRef.current);
+            }
+
+        };
+
+    }, []);
 
     useEffect(() => {
 
@@ -197,9 +218,16 @@ echo "Hello World";
                 dropdownRef.current &&
                 !dropdownRef.current.contains(event.target)
             ) {
-
                 setShowLanguages(false);
             }
+
+            if (
+                problemMenuRef.current &&
+                !problemMenuRef.current.contains(event.target)
+            ) {
+                setShowProblemMenu(false);
+            }
+
         };
 
         document.addEventListener(
@@ -213,71 +241,695 @@ echo "Hello World";
                 "mousedown",
                 handleOutsideClick
             );
+
         };
 
     }, []);
 
-    /* =========================
-       CODE CHANGE
-    ========================= */
+    const loadCodingArena = async () => {
 
-    const handleCodeChange = (value) => {
+        try {
 
-        setCodeMap({
+            setLoading(true);
+            setError("");
 
-            ...codeMap,
+            const [
+                problemsResponse,
+                progressResponse
+            ] = await Promise.all([
+                getCodingProblems(),
+                getCodingProgress()
+            ]);
 
-            [language]: value
-        });
+            const backendProblems =
+                Array.isArray(
+                    problemsResponse.data
+                )
+                    ? problemsResponse.data
+                    : [];
+
+            const backendProgress =
+                progressResponse.data || null;
+
+            setProblems(backendProblems);
+            setProgress(backendProgress);
+
+            if (backendProblems.length === 0) {
+
+                setSelectedProblemIndex(null);
+                return;
+
+            }
+
+            const currentProblemId =
+                backendProgress?.currentProblem?.id;
+
+            const lastSelectedProblemId =
+                backendProgress?.lastSelectedProblem?.id;
+
+            let restoredProblemId =
+                currentProblemId ||
+                lastSelectedProblemId;
+
+            if (
+                backendProgress?.completed &&
+                !currentProblemId
+            ) {
+
+                restoredProblemId = null;
+
+            }
+
+            if (restoredProblemId) {
+
+                const restoredIndex =
+                    backendProblems.findIndex(
+                        (problem) =>
+                            problem.id ===
+                            restoredProblemId
+                    );
+
+                if (restoredIndex !== -1) {
+
+                    setSelectedProblemIndex(
+                        restoredIndex
+                    );
+
+                } else {
+
+                    setSelectedProblemIndex(null);
+
+                }
+
+            } else {
+
+                setSelectedProblemIndex(null);
+
+            }
+
+            if (
+                backendProgress?.lastLanguage &&
+                languages.some(
+                    (item) =>
+                        item.value ===
+                        backendProgress.lastLanguage
+                )
+            ) {
+
+                setLanguage(
+                    backendProgress.lastLanguage
+                );
+
+                const savedLanguage =
+                    languages.find(
+                        (item) =>
+                            item.value ===
+                            backendProgress.lastLanguage
+                    );
+
+                if (savedLanguage) {
+
+                    setSearchLanguage(
+                        savedLanguage.label
+                    );
+
+                }
+
+            }
+
+            if (
+                backendProgress?.lastCode &&
+                backendProgress?.lastLanguage
+            ) {
+
+                setCodeMap(
+                    (previous) => ({
+                        ...previous,
+                        [backendProgress.lastLanguage]:
+                            backendProgress.lastCode
+                    })
+                );
+
+            }
+
+        } catch (requestError) {
+
+            console.error(
+                "Failed to load Coding Arena",
+                requestError
+            );
+
+            setError(
+                "Unable to load Coding Arena."
+            );
+
+            setProblems([]);
+            setSelectedProblemIndex(null);
+
+        } finally {
+
+            setLoading(false);
+
+        }
+
     };
 
-    /* =========================
-       FILTER
-    ========================= */
+    const getStarterCode = (
+        problem,
+        currentLanguage
+    ) => {
 
-    const filteredLanguages =
-        languages.filter((item) =>
-            item.label
-                .toLowerCase()
-                .includes(
-                    searchLanguage.toLowerCase()
-                )
+        if (
+            problem?.starterCode &&
+            typeof problem.starterCode ===
+                "object"
+        ) {
+
+            return (
+                problem.starterCode[
+                    currentLanguage
+                ] ||
+                starterCodes[currentLanguage] ||
+                ""
+            );
+
+        }
+
+        if (
+            problem?.starterCode &&
+            typeof problem.starterCode ===
+                "string"
+        ) {
+
+            return problem.starterCode;
+
+        }
+
+        return (
+            starterCodes[currentLanguage] ||
+            ""
         );
+
+    };
+
+    const handleProblemSelect = async (
+        index
+    ) => {
+
+        const problem =
+            problems[index];
+
+        if (!problem) {
+            return;
+        }
+
+        setSelectedProblemIndex(index);
+        setShowProblemMenu(false);
+        setShowRunResult(false);
+        setShowSubmitResult(false);
+
+        const savedCode =
+            progress?.lastSelectedProblem?.id ===
+                problem.id &&
+            progress?.lastLanguage === language &&
+            progress?.lastCode
+                ? progress.lastCode
+                : getStarterCode(
+                    problem,
+                    language
+                );
+
+        setCodeMap(
+            (previous) => ({
+                ...previous,
+                [language]: savedCode
+            })
+        );
+
+        try {
+
+            const response =
+                await selectCodingProblem(
+                    problem.id
+                );
+
+            setProgress(response.data);
+
+        } catch (requestError) {
+
+            console.error(
+                "Failed to save selected problem",
+                requestError
+            );
+
+        }
+
+    };
+
+    const handlePreviousProblem = async () => {
+
+        if (
+            !hasSelectedProblem ||
+            isFirstProblem
+        ) {
+            return;
+        }
+
+        const nextIndex =
+            selectedProblemIndex - 1;
+
+        await handleProblemSelect(
+            nextIndex
+        );
+
+    };
+
+    const handleNextProblem = async () => {
+
+        if (
+            !hasSelectedProblem ||
+            isLastProblem
+        ) {
+            return;
+        }
+
+        const nextIndex =
+            selectedProblemIndex + 1;
+
+        await handleProblemSelect(
+            nextIndex
+        );
+
+    };
+
+    const handleCodeChange = (
+        value
+    ) => {
+
+        if (!hasSelectedProblem) {
+            return;
+        }
+
+        const nextCode =
+            value || "";
+
+        setCodeMap(
+            (previous) => ({
+                ...previous,
+                [language]: nextCode
+            })
+        );
+
+        if (saveTimerRef.current) {
+
+            clearTimeout(
+                saveTimerRef.current
+            );
+
+        }
+
+        saveTimerRef.current =
+            setTimeout(
+                async () => {
+
+                    try {
+
+                        const response =
+                            await saveCodingState(
+                                selectedProblem.id,
+                                language,
+                                nextCode
+                            );
+
+                        setProgress(
+                            response.data
+                        );
+
+                    } catch (requestError) {
+
+                        console.error(
+                            "Failed to save code state",
+                            requestError
+                        );
+
+                    }
+
+                },
+                800
+            );
+
+    };
+
+    const handleLanguageChange = (
+        selectedLanguage
+    ) => {
+
+        if (!selectedLanguage) {
+            return;
+        }
+
+        const existingCode =
+            codeMap[
+                selectedLanguage
+            ];
+
+        if (
+            !existingCode &&
+            selectedProblem
+        ) {
+
+            setCodeMap(
+                (previous) => ({
+                    ...previous,
+                    [selectedLanguage]:
+                        getStarterCode(
+                            selectedProblem,
+                            selectedLanguage
+                        )
+                })
+            );
+
+        }
+
+        setLanguage(
+            selectedLanguage
+        );
+
+        const selected =
+            languages.find(
+                (item) =>
+                    item.value ===
+                    selectedLanguage
+            );
+
+        if (selected) {
+
+            setSearchLanguage(
+                selected.label
+            );
+
+        }
+
+        setShowLanguages(false);
+
+    };
+
+    const handleRun = () => {
+
+        if (!hasSelectedProblem) {
+            return;
+        }
+
+        setShowRunResult(true);
+        setShowSubmitResult(false);
+
+    };
+
+    const handleSubmit = async () => {
+
+        if (!hasSelectedProblem) {
+            return;
+        }
+
+        try {
+
+            const response =
+                await completeCodingProblem(
+                    selectedProblem.id
+                );
+
+            setProgress(
+                response.data
+            );
+
+            await updateCodingSubmission(
+                true
+            );
+
+            setShowSubmitResult(true);
+            setShowRunResult(false);
+
+        } catch (requestError) {
+
+            console.error(
+                "Failed to submit coding problem",
+                requestError
+            );
+
+            try {
+
+                await updateCodingSubmission(
+                    false
+                );
+
+            } catch (submissionError) {
+
+                console.error(
+                    "Failed to update submission",
+                    submissionError
+                );
+
+            }
+
+        }
+
+    };
+
+    const handleOpenProblemMenu = () => {
+
+        setShowProblemMenu(
+            (previous) => !previous
+        );
+
+    };
 
     return (
 
         <section className="coding-page">
 
-            {/* TOPBAR */}
-
             <div className="coding-topbar">
 
-                <div className="problem-head">
+                <div
+                    className="problem-head"
+                    ref={problemMenuRef}
+                >
 
-                    <span>
-                        PROBLEM · EASY
+                    <span
+                        className="coding-problem-trigger"
+                        onClick={
+                            handleOpenProblemMenu
+                        }
+                    >
+
+                        PROBLEM
+                        {
+                            selectedProblem
+                                ? ` · ${selectedProblem.difficulty}`
+                                : ""
+                        }
+
                     </span>
 
-                    <h1>
-                        1. Two Sum
+                    <h1
+                        className="coding-problem-trigger"
+                        onClick={
+                            handleOpenProblemMenu
+                        }
+                    >
+
+                        {
+                            selectedProblem
+                                ? `${selectedProblem.id}. ${selectedProblem.title}`
+                                : "Your Next Challenge Awaits"
+                        }
+
                     </h1>
+
+                    {
+                        showProblemMenu && (
+
+                            <div className="coding-problem-menu">
+
+                                <div className="coding-problem-menu-header">
+
+                                    <div>
+
+                                        <span>
+                                            CODING ARENA
+                                        </span>
+
+                                        <h3>
+                                            Choose a Problem
+                                        </h3>
+
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowProblemMenu(
+                                                false
+                                            )
+                                        }
+                                    >
+
+                                        <FiX />
+
+                                    </button>
+
+                                </div>
+
+                                <div className="coding-problem-list">
+
+                                    {
+                                        problems.length > 0
+                                            ? problems.map(
+                                                (
+                                                    problem,
+                                                    index
+                                                ) => (
+
+                                                    <button
+                                                        type="button"
+                                                        key={
+                                                            problem.id
+                                                        }
+                                                        className={
+                                                            index ===
+                                                            selectedProblemIndex
+                                                                ? "coding-problem-option active"
+                                                                : "coding-problem-option"
+                                                        }
+                                                        onClick={() =>
+                                                            handleProblemSelect(
+                                                                index
+                                                            )
+                                                        }
+                                                    >
+
+                                                        <span className="coding-problem-option-number">
+
+                                                            {
+                                                                index + 1
+                                                            }
+
+                                                        </span>
+
+                                                        <span className="coding-problem-option-content">
+
+                                                            <strong>
+                                                                {
+                                                                    problem.title
+                                                                }
+                                                            </strong>
+
+                                                            <small>
+                                                                {
+                                                                    Array.isArray(
+                                                                        problem.tags
+                                                                    )
+                                                                        ? problem.tags.join(
+                                                                            " · "
+                                                                        )
+                                                                        : ""
+                                                                }
+                                                            </small>
+
+                                                        </span>
+
+                                                        <span
+                                                            className={
+                                                                `coding-problem-option-difficulty ${
+                                                                    String(
+                                                                        problem.difficulty ||
+                                                                        ""
+                                                                    ).toLowerCase()
+                                                                }`
+                                                            }
+                                                        >
+
+                                                            {
+                                                                problem.difficulty
+                                                            }
+
+                                                        </span>
+
+                                                    </button>
+
+                                                )
+                                            )
+                                            : (
+
+                                                <div className="coding-problem-empty">
+
+                                                    {
+                                                        loading
+                                                            ? "Loading problems..."
+                                                            : error ||
+                                                              "No problems available"
+                                                    }
+
+                                                </div>
+
+                                            )
+                                    }
+
+                                </div>
+
+                            </div>
+
+                        )
+                    }
 
                 </div>
 
-                {/* ACTIONS */}
-
                 <div className="coding-actions">
 
-                    {/* RUN */}
+                    <button
+                        className="coding-mobile-problem-btn"
+                        type="button"
+                        onClick={
+                            handlePreviousProblem
+                        }
+                        disabled={
+                            !hasSelectedProblem ||
+                            isFirstProblem
+                        }
+                    >
+
+                        <FiArrowLeft />
+
+                        Previous
+
+                    </button>
+
+                    <button
+                        className="coding-mobile-problem-btn"
+                        type="button"
+                        onClick={
+                            handleNextProblem
+                        }
+                        disabled={
+                            !hasSelectedProblem ||
+                            isLastProblem
+                        }
+                    >
+
+                        Next
+
+                        <FiArrowRight />
+
+                    </button>
 
                     <button
                         className="run-btn"
-                        onClick={() => {
-
-                            setShowRunResult(true);
-
-                            setShowSubmitResult(false);
-                        }}
+                        type="button"
+                        disabled={
+                            !hasSelectedProblem
+                        }
+                        onClick={
+                            handleRun
+                        }
                     >
 
                         <FiPlay />
@@ -286,16 +938,15 @@ echo "Hello World";
 
                     </button>
 
-                    {/* SUBMIT */}
-
                     <button
                         className="submit-btn"
-                        onClick={() => {
-
-                            setShowSubmitResult(true);
-
-                            setShowRunResult(false);
-                        }}
+                        type="button"
+                        disabled={
+                            !hasSelectedProblem
+                        }
+                        onClick={
+                            handleSubmit
+                        }
                     >
 
                         Submit
@@ -306,115 +957,198 @@ echo "Hello World";
 
             </div>
 
-            {/* GRID */}
-
             <div className="coding-grid">
-
-                {/* LEFT */}
 
                 <div className="problem-card">
 
-                    <div className="problem-tags">
+                    {
+                        loading ? (
 
-                        <span className="tag-green">
-                            Array
-                        </span>
+                            <div className="coding-empty-problem">
 
-                        <span className="tag-blue">
-                            Hash Map
-                        </span>
+                                Loading your coding arena...
 
-                        <div className="problem-time">
+                            </div>
 
-                            ⏱ 15:24
+                        ) : selectedProblem ? (
 
-                        </div>
+                            <>
 
-                    </div>
+                                <div className="problem-tags">
 
-                    {/* DESCRIPTION */}
+                                    <span className="tag-green">
 
-                    <div className="problem-description">
+                                        {
+                                            selectedProblem.difficulty
+                                        }
 
-                        <p>
+                                    </span>
 
-                            Given an array of integers
-                            <code> nums </code>
-                            and an integer
-                            <code> target </code>,
-                            return indices of the two numbers such that they add up to target.
+                                    {
+                                        Array.isArray(
+                                            selectedProblem.tags
+                                        ) &&
+                                        selectedProblem.tags
+                                            .map(
+                                                (
+                                                    tag,
+                                                    index
+                                                ) => (
 
-                        </p>
+                                                    <span
+                                                        key={
+                                                            `${tag}-${index}`
+                                                        }
+                                                        className="tag-blue"
+                                                    >
 
-                    </div>
+                                                        {
+                                                            tag
+                                                        }
 
-                    {/* EXAMPLE */}
+                                                    </span>
 
-                    <div className="example-box">
+                                                )
+                                            )
+                                    }
 
-                        <p>
+                                    <div className="problem-time">
 
-                            <strong>
-                                Input:
-                            </strong>
+                                        ⏱ 15:24
 
-                            nums = [2,7,11,15], target = 9
+                                    </div>
 
-                        </p>
+                                </div>
 
-                        <p>
+                                <div className="problem-description">
 
-                            <strong>
-                                Output:
-                            </strong>
+                                    <p>
 
-                            [0,1]
+                                        {
+                                            selectedProblem.description
+                                        }
 
-                        </p>
+                                    </p>
 
-                    </div>
+                                </div>
 
-                    {/* CONSTRAINTS */}
+                                {
+                                    (
+                                        selectedProblem.inputExample ||
+                                        selectedProblem.outputExample
+                                    ) && (
 
-                    <div className="constraints-box">
+                                        <div className="example-box">
 
-                        <h3>
-                            Constraints
-                        </h3>
+                                            {
+                                                selectedProblem.inputExample && (
 
-                        <ul>
+                                                    <p>
 
-                            <li>
-                                2 ≤ nums.length ≤ 10⁴
-                            </li>
+                                                        <strong>
+                                                            Input:
+                                                        </strong>
 
-                            <li>
-                                −10⁹ ≤ nums[i] ≤ 10⁹
-                            </li>
+                                                        {
+                                                            ` ${selectedProblem.inputExample}`
+                                                        }
 
-                            <li>
-                                Only one valid answer exists.
-                            </li>
+                                                    </p>
 
-                        </ul>
+                                                )
+                                            }
 
-                    </div>
+                                            {
+                                                selectedProblem.outputExample && (
+
+                                                    <p>
+
+                                                        <strong>
+                                                            Output:
+                                                        </strong>
+
+                                                        {
+                                                            ` ${selectedProblem.outputExample}`
+                                                        }
+
+                                                    </p>
+
+                                                )
+                                            }
+
+                                        </div>
+
+                                    )
+                                }
+
+                                {
+                                    Array.isArray(
+                                        selectedProblem.constraints
+                                    ) &&
+                                    selectedProblem.constraints.length >
+                                        0 && (
+
+                                        <div className="constraints-box">
+
+                                            <h3>
+                                                Constraints
+                                            </h3>
+
+                                            <ul>
+
+                                                {
+                                                    selectedProblem.constraints.map(
+                                                        (
+                                                            constraint,
+                                                            index
+                                                        ) => (
+
+                                                            <li
+                                                                key={
+                                                                    index
+                                                                }
+                                                            >
+
+                                                                {
+                                                                    constraint
+                                                                }
+
+                                                            </li>
+
+                                                        )
+                                                    )
+                                                }
+
+                                            </ul>
+
+                                        </div>
+
+                                    )
+                                }
+
+                            </>
+
+                        ) : (
+
+                            <div className="coding-empty-problem">
+
+                                {
+                                    error ||
+                                    "Your Next Challenge Awaits"
+                                }
+
+                            </div>
+
+                        )
+                    }
 
                 </div>
 
-                {/* RIGHT */}
-
                 <div className="editor-column">
-
-                    {/* EDITOR */}
 
                     <div className="editor-card">
 
-                        {/* HEADER */}
-
                         <div className="editor-header">
-
-                            {/* DOTS */}
 
                             <div className="editor-dots">
 
@@ -423,8 +1157,6 @@ echo "Hello World";
                                 <span></span>
 
                             </div>
-
-                            {/* LANGUAGE SWITCHER */}
 
                             <div
                                 className="language-search-wrapper"
@@ -435,92 +1167,147 @@ echo "Hello World";
 
                                 <input
                                     type="text"
-                                    value={searchLanguage}
+                                    value={
+                                        searchLanguage
+                                    }
                                     placeholder="Search language..."
                                     className="language-search"
                                     onFocus={() => {
 
-                                        setShowLanguages(true);
-
-                                        setSelectedIndex(0);
-                                    }}
-                                    onClick={() =>
-                                        setShowLanguages(true)
-                                    }
-                                    onChange={(e) => {
-
-                                        setSearchLanguage(
-                                            e.target.value
+                                        setShowLanguages(
+                                            true
                                         );
 
-                                        setShowLanguages(true);
+                                        setSelectedIndex(
+                                            0
+                                        );
 
-                                        setSelectedIndex(0);
                                     }}
-                                    onKeyDown={(e) => {
+                                    onClick={() =>
+                                        setShowLanguages(
+                                            true
+                                        )
+                                    }
+                                    onChange={(event) => {
 
-                                        if (e.key === "ArrowDown") {
+                                        setSearchLanguage(
+                                            event.target.value
+                                        );
 
-                                            e.preventDefault();
+                                        setShowLanguages(
+                                            true
+                                        );
 
-                                            setSelectedIndex((prev) => {
+                                        setSelectedIndex(
+                                            0
+                                        );
 
-                                                const nextIndex =
+                                    }}
+                                    onKeyDown={(event) => {
 
-                                                    prev < filteredLanguages.length - 1
-                                                        ? prev + 1
-                                                        : prev;
+                                        if (
+                                            event.key ===
+                                            "ArrowDown"
+                                        ) {
 
-                                                optionRefs.current[nextIndex]
-                                                    ?.scrollIntoView({
+                                            event.preventDefault();
 
-                                                        block: "nearest",
-                                                        behavior: "smooth"
-                                                    });
+                                            setSelectedIndex(
+                                                (
+                                                    previous
+                                                ) => {
 
-                                                return nextIndex;
-                                            });
+                                                    const nextIndex =
+                                                        previous <
+                                                        filteredLanguages.length -
+                                                            1
+                                                            ? previous +
+                                                              1
+                                                            : previous;
+
+                                                    optionRefs
+                                                        .current[
+                                                            nextIndex
+                                                        ]
+                                                        ?.scrollIntoView(
+                                                            {
+                                                                block:
+                                                                    "nearest",
+                                                                behavior:
+                                                                    "smooth"
+                                                            }
+                                                        );
+
+                                                    return nextIndex;
+
+                                                }
+                                            );
+
                                         }
 
-                                        if (e.key === "ArrowUp") {
+                                        if (
+                                            event.key ===
+                                            "ArrowUp"
+                                        ) {
 
-                                            e.preventDefault();
+                                            event.preventDefault();
 
-                                            setSelectedIndex((prev) => {
+                                            setSelectedIndex(
+                                                (
+                                                    previous
+                                                ) => {
 
-                                                const nextIndex =
+                                                    const nextIndex =
+                                                        previous >
+                                                        0
+                                                            ? previous -
+                                                              1
+                                                            : 0;
 
-                                                    prev > 0
-                                                        ? prev - 1
-                                                        : 0;
+                                                    optionRefs
+                                                        .current[
+                                                            nextIndex
+                                                        ]
+                                                        ?.scrollIntoView(
+                                                            {
+                                                                block:
+                                                                    "nearest",
+                                                                behavior:
+                                                                    "smooth"
+                                                            }
+                                                        );
 
-                                                optionRefs.current[nextIndex]
-                                                    ?.scrollIntoView({
+                                                    return nextIndex;
 
-                                                        block: "nearest",
-                                                        behavior: "smooth"
-                                                    });
+                                                }
+                                            );
 
-                                                return nextIndex;
-                                            });
                                         }
 
-                                        if (e.key === "Enter") {
+                                        if (
+                                            event.key ===
+                                            "Enter"
+                                        ) {
 
-                                            e.preventDefault();
+                                            event.preventDefault();
 
                                             const selected =
-                                                filteredLanguages[selectedIndex];
+                                                filteredLanguages[
+                                                    selectedIndex
+                                                ];
 
-                                            if (selected) {
+                                            if (
+                                                selected
+                                            ) {
 
-                                                setLanguage(selected.value);
+                                                handleLanguageChange(
+                                                    selected.value
+                                                );
 
-                                                setSearchLanguage(selected.label);
-
-                                                setShowLanguages(false);
                                             }
+
                                         }
+
                                     }}
                                 />
 
@@ -534,46 +1321,55 @@ echo "Hello World";
                                 />
 
                                 {
-
                                     showLanguages && (
 
                                         <div className="language-dropdown">
 
                                             {
-
-                                                filteredLanguages.length > 0
-
-                                                    ? (
-
-                                                        filteredLanguages.map((item, index) => (
+                                                filteredLanguages.length >
+                                                0
+                                                    ? filteredLanguages.map(
+                                                        (
+                                                            item,
+                                                            index
+                                                        ) => (
 
                                                             <div
-                                                                key={item.value}
-                                                                ref={(el) =>
-                                                                    optionRefs.current[index] = el
+                                                                key={
+                                                                    item.value
+                                                                }
+                                                                ref={(
+                                                                    element
+                                                                ) =>
+                                                                    optionRefs.current[
+                                                                        index
+                                                                    ] =
+                                                                        element
                                                                 }
                                                                 className={
-                                                                    index === selectedIndex
+                                                                    index ===
+                                                                    selectedIndex
                                                                         ? "language-item active-language"
                                                                         : "language-item"
                                                                 }
                                                                 onMouseEnter={() =>
-                                                                    setSelectedIndex(index)
+                                                                    setSelectedIndex(
+                                                                        index
+                                                                    )
                                                                 }
-                                                                onClick={() => {
-
-                                                                    setLanguage(item.value);
-
-                                                                    setSearchLanguage(item.label);
-
-                                                                    setShowLanguages(false);
-                                                                }}
+                                                                onClick={() =>
+                                                                    handleLanguageChange(
+                                                                        item.value
+                                                                    )
+                                                                }
                                                             >
 
                                                                 <div>
 
                                                                     <h4>
-                                                                        {item.label}
+                                                                        {
+                                                                            item.label
+                                                                        }
                                                                     </h4>
 
                                                                     <p>
@@ -583,15 +1379,15 @@ echo "Hello World";
                                                                 </div>
 
                                                                 <span>
-                                                                    {item.value}
+                                                                    {
+                                                                        item.value
+                                                                    }
                                                                 </span>
 
                                                             </div>
 
-                                                        ))
-
+                                                        )
                                                     )
-
                                                     : (
 
                                                         <div className="language-item">
@@ -605,16 +1401,16 @@ echo "Hello World";
                                                             </div>
 
                                                         </div>
+
                                                     )
                                             }
 
                                         </div>
+
                                     )
                                 }
 
                             </div>
-
-                            {/* AI */}
 
                             <div className="ai-hint">
 
@@ -626,31 +1422,47 @@ echo "Hello World";
 
                         </div>
 
-                        {/* MONACO */}
-
                         <div className="monaco-wrapper">
 
                             <Editor
                                 height="100%"
                                 theme="vs-dark"
-                                language={language}
-                                value={codeMap[language]}
-                                onChange={handleCodeChange}
+                                language={
+                                    language
+                                }
+                                value={
+                                    hasSelectedProblem
+                                        ? (
+                                            codeMap[
+                                                language
+                                            ] ||
+                                            getStarterCode(
+                                                selectedProblem,
+                                                language
+                                            )
+                                        )
+                                        : ""
+                                }
+                                onChange={
+                                    handleCodeChange
+                                }
                                 options={{
                                     fontSize: 13,
                                     minimap: {
                                         enabled: false
                                     },
-                                    scrollBeyondLastLine: false,
-                                    automaticLayout: true
+                                    scrollBeyondLastLine:
+                                        false,
+                                    automaticLayout:
+                                        true,
+                                    readOnly:
+                                        !hasSelectedProblem
                                 }}
                             />
 
                         </div>
 
                     </div>
-
-                    {/* TEST CASES */}
 
                     <div className="testcase-card">
 
@@ -661,53 +1473,70 @@ echo "Hello World";
                             </h3>
 
                             <span>
-                                💾 42 MB · 68 ms
+                                {
+                                    hasSelectedProblem
+                                        ? "Ready"
+                                        : "Select a problem"
+                                }
                             </span>
 
                         </div>
 
-                        <div className="case-item">
+                        {
+                            selectedProblem ? (
 
-                            <p>
-                                case 1: [2,7,11,15], 9 → [0,1]
-                            </p>
+                                <>
 
-                            <span>
-                                ✓
-                            </span>
+                                    <div className="case-item">
 
-                        </div>
+                                        <p>
 
-                        <div className="case-item">
+                                            Input: {
+                                                selectedProblem.inputExample ||
+                                                "Sample input"
+                                            }
 
-                            <p>
-                                case 2: [3,2,4], 6 → [1,2]
-                            </p>
+                                        </p>
 
-                            <span>
-                                ✓
-                            </span>
+                                        <span>
+                                            ✓
+                                        </span>
 
-                        </div>
+                                    </div>
 
-                        <div className="case-item">
+                                    <div className="case-item">
 
-                            <p>
-                                case 3: [3,3], 6 → [0,1]
-                            </p>
+                                        <p>
 
-                            <span>
-                                ✓
-                            </span>
+                                            Expected: {
+                                                selectedProblem.outputExample ||
+                                                "Sample output"
+                                            }
 
-                        </div>
+                                        </p>
+
+                                        <span>
+                                            ✓
+                                        </span>
+
+                                    </div>
+
+                                </>
+
+                            ) : (
+
+                                <div className="coding-empty-problem">
+
+                                    Select a problem to view test cases
+
+                                </div>
+
+                            )
+                        }
 
                     </div>
 
-                    {/* RUN RESULT */}
-
                     {
-
                         showRunResult && (
 
                             <div className="run-result-card">
@@ -735,21 +1564,17 @@ echo "Hello World";
                                 </p>
 
                             </div>
+
                         )
                     }
 
-                    {/* SUBMIT RESULT */}
-
                     {
-
                         showSubmitResult && (
 
                             <div className="accepted-card">
 
                                 <div className="accepted-icon">
-
                                     ✓
-
                                 </div>
 
                                 <h2>
@@ -757,10 +1582,11 @@ echo "Hello World";
                                 </h2>
 
                                 <p>
-                                    Beats 96% on runtime · 89% on memory
+                                    Submission saved successfully.
                                 </p>
 
                             </div>
+
                         )
                     }
 
@@ -769,5 +1595,7 @@ echo "Hello World";
             </div>
 
         </section>
+
     );
+
 }
