@@ -1,66 +1,56 @@
 package com.aiinterview.backend.controller;
 
+import com.aiinterview.backend.dto.coding.CodingProblemResponse;
+import com.aiinterview.backend.dto.coding.CodingPublicTestCaseResponse;
 import com.aiinterview.backend.entity.CodingProblem;
+import com.aiinterview.backend.entity.CodingTestCase;
 import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.repository.CodingTestCaseRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.service.coding.CodingProblemService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/coding/problems")
 public class CodingProblemController {
 
     private final CodingProblemService codingProblemService;
+
+    private final CodingTestCaseRepository codingTestCaseRepository;
+
     private final UserRepository userRepository;
 
     public CodingProblemController(
             CodingProblemService codingProblemService,
+            CodingTestCaseRepository codingTestCaseRepository,
             UserRepository userRepository
     ) {
-        this.codingProblemService = codingProblemService;
-        this.userRepository = userRepository;
+        this.codingProblemService =
+                codingProblemService;
+
+        this.codingTestCaseRepository =
+                codingTestCaseRepository;
+
+        this.userRepository =
+                userRepository;
     }
 
     @GetMapping
-    public ResponseEntity<List<CodingProblem>> getProblems(
+    public ResponseEntity<List<CodingProblemResponse>> getProblems(
             Authentication authentication
     ) {
 
-        User user = getAuthenticatedUser(authentication);
-
-        Integer experienceLevel =
-                getExperienceLevel(user);
-
-        return ResponseEntity.ok(
-                codingProblemService
-                        .getProblemsForExperience(
-                                experienceLevel
-                        )
-        );
-    }
-
-    @GetMapping("/{problemId}")
-    public ResponseEntity<CodingProblem> getProblem(
-            @PathVariable Long problemId
-    ) {
-
-        return ResponseEntity.ok(
-                codingProblemService
-                        .getProblemById(problemId)
-        );
-    }
-
-    @GetMapping("/difficulty/{difficulty}")
-    public ResponseEntity<List<CodingProblem>> getProblemsByDifficulty(
-            @PathVariable String difficulty,
-            Authentication authentication
-    ) {
-
-        User user = getAuthenticatedUser(authentication);
+        User user =
+                getAuthenticatedUser(
+                        authentication
+                );
 
         Integer experienceLevel =
                 getExperienceLevel(user);
@@ -71,19 +61,205 @@ public class CodingProblemController {
                                 experienceLevel
                         );
 
-        List<CodingProblem> filteredProblems =
+        return ResponseEntity.ok(
                 problems.stream()
-                        .filter(problem ->
-                                problem.getDifficulty()
-                                        .equalsIgnoreCase(
-                                                difficulty
-                                        )
+                        .map(
+                                this::toResponse
+                        )
+                        .toList()
+        );
+    }
+
+    @GetMapping("/{problemId}")
+    public ResponseEntity<CodingProblemResponse> getProblem(
+            @PathVariable Long problemId
+    ) {
+
+        CodingProblem problem =
+                codingProblemService
+                        .getProblemById(
+                                problemId
+                        );
+
+        return ResponseEntity.ok(
+                toResponse(problem)
+        );
+    }
+
+    @GetMapping("/difficulty/{difficulty}")
+    public ResponseEntity<List<CodingProblemResponse>> getProblemsByDifficulty(
+            @PathVariable String difficulty,
+            Authentication authentication
+    ) {
+
+        User user =
+                getAuthenticatedUser(
+                        authentication
+                );
+
+        Integer experienceLevel =
+                getExperienceLevel(user);
+
+        List<CodingProblem> problems =
+                codingProblemService
+                        .getProblemsForExperience(
+                                experienceLevel
+                        );
+
+        List<CodingProblemResponse> filteredProblems =
+                problems.stream()
+                        .filter(
+                                problem ->
+                                        problem.getDifficulty()
+                                                .equalsIgnoreCase(
+                                                        difficulty
+                                                )
+                        )
+                        .map(
+                                this::toResponse
                         )
                         .toList();
 
         return ResponseEntity.ok(
                 filteredProblems
         );
+    }
+
+    private CodingProblemResponse toResponse(
+            CodingProblem problem
+    ) {
+
+        List<CodingTestCase> testCases =
+                codingTestCaseRepository
+                        .findByProblemAndHiddenFalseAndActiveTrueOrderByTestCaseNumberAsc(
+                                problem
+                        );
+
+        List<CodingPublicTestCaseResponse> publicTestCases =
+                testCases.stream()
+                        .map(
+                                testCase ->
+                                        CodingPublicTestCaseResponse
+                                                .builder()
+                                                .testCaseNumber(
+                                                        testCase
+                                                                .getTestCaseNumber()
+                                                )
+                                                .input(
+                                                        testCase
+                                                                .getInput()
+                                                )
+                                                .expectedOutput(
+                                                        testCase
+                                                                .getExpectedOutput()
+                                                )
+                                                .build()
+                        )
+                        .toList();
+
+        return CodingProblemResponse.builder()
+                .id(
+                        problem.getId()
+                )
+                .title(
+                        problem.getTitle()
+                )
+                .description(
+                        problem.getDescription()
+                )
+                .difficulty(
+                        problem.getDifficulty()
+                )
+                .tags(
+                        problem.getTags()
+                )
+                .inputExample(
+                        problem.getInputExample()
+                )
+                .outputExample(
+                        problem.getOutputExample()
+                )
+                .constraints(
+                        problem.getConstraints()
+                )
+                .minimumExperienceLevel(
+                        problem
+                                .getMinimumExperienceLevel()
+                )
+                .active(
+                        problem.isActive()
+                )
+                .starterCodes(
+                        parseStarterCodes(
+                                problem.getStarterCode()
+                        )
+                )
+                .testCases(
+                        publicTestCases
+                )
+                .build();
+    }
+
+    private Map<String, String> parseStarterCodes(
+            String starterCode
+    ) {
+
+        Map<String, String> starterCodes =
+                new LinkedHashMap<>();
+
+        if (starterCode == null ||
+                starterCode.isBlank()) {
+
+            return starterCodes;
+        }
+
+        String[] sections =
+                starterCode.split(
+                        "\\n\\n"
+                );
+
+        for (String section : sections) {
+
+            if (section == null ||
+                    section.isBlank()) {
+
+                continue;
+            }
+
+            int separator =
+                    section.indexOf(
+                            ":\n"
+                    );
+
+            if (separator <= 0) {
+
+                continue;
+            }
+
+            String language =
+                    section.substring(
+                            0,
+                            separator
+                    )
+                    .trim()
+                    .toLowerCase();
+
+            String code =
+                    section.substring(
+                            separator + 2
+                    );
+
+            if (!language.isBlank() &&
+                    !code.isBlank()) {
+
+                starterCodes.put(
+                        language,
+                        code
+                );
+            }
+        }
+
+        return starterCodes;
     }
 
     private Integer getExperienceLevel(
@@ -108,13 +284,17 @@ public class CodingProblemController {
 
         return switch (experience) {
 
-            case "BEGINNER" -> 1;
+            case "BEGINNER" ->
+                    1;
 
-            case "INTERMEDIATE" -> 2;
+            case "INTERMEDIATE" ->
+                    2;
 
-            case "ADVANCED" -> 3;
+            case "ADVANCED" ->
+                    3;
 
-            default -> 1;
+            default ->
+                    1;
         };
     }
 
@@ -132,11 +312,14 @@ public class CodingProblemController {
         }
 
         return userRepository
-                .findByEmail(authentication.getName())
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "User account not found."
-                        )
+                .findByEmail(
+                        authentication.getName()
+                )
+                .orElseThrow(
+                        () ->
+                                new IllegalStateException(
+                                        "User account not found."
+                                )
                 );
     }
 }

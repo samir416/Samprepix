@@ -58,12 +58,31 @@ public class CodingProblem {
             name = "coding_problem_constraints",
             joinColumns = @JoinColumn(name = "problem_id")
     )
-    @Column(name = "constraint_text", columnDefinition = "TEXT")
+    @Column(
+            name = "constraint_text",
+            columnDefinition = "TEXT"
+    )
     @Builder.Default
-    private List<String> constraints = new ArrayList<>();
+    private List<String> constraints =
+            new ArrayList<>();
 
     @Column(columnDefinition = "LONGTEXT")
     private String starterCode;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String languageConfigurations;
+
+    @Column(length = 100)
+    private String functionName;
+
+    @Column(columnDefinition = "TEXT")
+    private String functionSignature;
+
+    @Column(length = 100)
+    private String returnType;
+
+    @Column(columnDefinition = "TEXT")
+    private String parameterTypes;
 
     @Column(nullable = false)
     private Integer minimumExperienceLevel;

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -30,4 +32,6 @@ public class CodeExecutionResponse {
     private String error;
 
     private String message;
+
+    private List<CodeExecutionTestCaseResponse> testCases;
 }

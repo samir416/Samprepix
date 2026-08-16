@@ -1,6 +1,6 @@
 import "../styles/codingarena.css";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 
 import Editor from "@monaco-editor/react";
 
@@ -18,118 +18,19 @@ import {
     getCodingProblems,
     getCodingProgress,
     selectCodingProblem,
-    saveLastSelectedProblem,
     saveCodingState,
     completeCodingProblem,
-    updateCodingSubmission
+    updateCodingSubmission,
+    executeCodingCode
 } from "../services/codingService";
 
 export default function CodingArena() {
 
-    const starterCodes = {
-        javascript: `function solve() {
-
-}`,
-
-        typescript: `function solve(): void {
-
-}`,
-
-        python: `def solve():
-
-    pass`,
-
-        java: `class Solution {
-
-    public static void main(String[] args) {
-
-    }
-}`,
-
-        cpp: `#include <iostream>
-using namespace std;
-
-int main() {
-
-    return 0;
-}`,
-
-        c: `#include <stdio.h>
-
-int main() {
-
-    return 0;
-}`,
-
-        go: `package main
-
-func main() {
-
-}`,
-
-        rust: `fn main() {
-
-}`,
-
-        php: `<?php
-
-echo "Hello World";
-
-?>`,
-
-        kotlin: `fun main() {
-
-}`
-    };
-
-    const languages = [
-        {
-            label: "JavaScript",
-            value: "javascript"
-        },
-        {
-            label: "TypeScript",
-            value: "typescript"
-        },
-        {
-            label: "Python",
-            value: "python"
-        },
-        {
-            label: "Java",
-            value: "java"
-        },
-        {
-            label: "C++",
-            value: "cpp"
-        },
-        {
-            label: "C",
-            value: "c"
-        },
-        {
-            label: "Go",
-            value: "go"
-        },
-        {
-            label: "Rust",
-            value: "rust"
-        },
-        {
-            label: "PHP",
-            value: "php"
-        },
-        {
-            label: "Kotlin",
-            value: "kotlin"
-        }
-    ];
-
     const [language, setLanguage] =
-        useState("javascript");
+        useState("");
 
     const [searchLanguage, setSearchLanguage] =
-        useState("JavaScript");
+        useState("");
 
     const [showLanguages, setShowLanguages] =
         useState(false);
@@ -147,12 +48,15 @@ echo "Hello World";
         useState(null);
 
     const [codeMap, setCodeMap] =
-        useState(starterCodes);
+        useState({});
 
-    const [showRunResult, setShowRunResult] =
+    const [executionResult, setExecutionResult] =
+        useState(null);
+
+    const [isExecuting, setIsExecuting] =
         useState(false);
 
-    const [showSubmitResult, setShowSubmitResult] =
+    const [isSubmitting, setIsSubmitting] =
         useState(false);
 
     const [showProblemMenu, setShowProblemMenu] =
@@ -164,13 +68,17 @@ echo "Hello World";
     const [error, setError] =
         useState("");
 
-    const dropdownRef = useRef(null);
+    const dropdownRef =
+        useRef(null);
 
-    const optionRefs = useRef([]);
+    const optionRefs =
+        useRef([]);
 
-    const problemMenuRef = useRef(null);
+    const problemMenuRef =
+        useRef(null);
 
-    const saveTimerRef = useRef(null);
+    const saveTimerRef =
+        useRef(null);
 
     const selectedProblem =
         selectedProblemIndex !== null
@@ -187,13 +95,142 @@ echo "Hello World";
         selectedProblemIndex !== null &&
         selectedProblemIndex === problems.length - 1;
 
+    const parseLanguageConfigurations = (
+        problem
+    ) => {
+
+        if (!problem) {
+
+            return {};
+        }
+
+        const raw =
+            problem.languageConfigurations;
+
+        if (!raw) {
+
+            return {};
+        }
+
+        if (
+            typeof raw === "object" &&
+            !Array.isArray(raw)
+        ) {
+
+            return raw;
+        }
+
+        if (typeof raw !== "string") {
+
+            return {};
+        }
+
+        try {
+
+            const parsed =
+                JSON.parse(raw);
+
+            if (
+                parsed &&
+                typeof parsed === "object" &&
+                !Array.isArray(parsed)
+            ) {
+
+                return parsed;
+            }
+
+        } catch (parseError) {
+
+            console.error(
+                "Invalid language configuration",
+                parseError
+            );
+
+        }
+
+        return {};
+    };
+
+    const getProblemLanguages = (
+        problem
+    ) => {
+
+        const configurations =
+            parseLanguageConfigurations(
+                problem
+            );
+
+        return Object.entries(
+            configurations
+        )
+            .filter(
+                ([value, configuration]) =>
+                    configuration &&
+                    typeof configuration === "object"
+            )
+            .map(
+                ([value, configuration]) => ({
+
+                    value,
+
+                    label:
+                        configuration.displayName ||
+                        configuration.name ||
+                        value,
+
+                    monacoLanguage:
+                        configuration.monacoLanguage ||
+                        value,
+
+                    runtimeLanguage:
+                        configuration.runtimeLanguage ||
+                        value,
+
+                    runtimeVersion:
+                        configuration.runtimeVersion ||
+                        "",
+
+                    fileName:
+                        configuration.fileName ||
+                        "",
+
+                    starterCode:
+                        configuration.starterCode ||
+                        "",
+
+                    executionTemplate:
+                        configuration.executionTemplate ||
+                        ""
+
+                })
+            );
+
+    };
+
+    const availableLanguages =
+        useMemo(
+            () =>
+                getProblemLanguages(
+                    selectedProblem
+                ),
+            [selectedProblem]
+        );
+
     const filteredLanguages =
-        languages.filter((item) =>
-            item.label
-                .toLowerCase()
-                .includes(
-                    searchLanguage.toLowerCase()
-                )
+        availableLanguages.filter(
+            (item) =>
+                item.label
+                    .toLowerCase()
+                    .includes(
+                        searchLanguage
+                            .toLowerCase()
+                    ) ||
+                item.value
+                    .toLowerCase()
+                    .includes(
+                        searchLanguage
+                            .toLowerCase()
+                    )
         );
 
     useEffect(() => {
@@ -203,7 +240,11 @@ echo "Hello World";
         return () => {
 
             if (saveTimerRef.current) {
-                clearTimeout(saveTimerRef.current);
+
+                clearTimeout(
+                    saveTimerRef.current
+                );
+
             }
 
         };
@@ -212,20 +253,98 @@ echo "Hello World";
 
     useEffect(() => {
 
-        const handleOutsideClick = (event) => {
+        if (!selectedProblem) {
+
+            return;
+        }
+
+        const languages =
+            getProblemLanguages(
+                selectedProblem
+            );
+
+        if (languages.length === 0) {
+
+            setLanguage("");
+            setSearchLanguage("");
+
+            return;
+        }
+
+        const currentExists =
+            languages.some(
+                (item) =>
+                    item.value === language
+            );
+
+        if (!currentExists) {
+
+            const progressLanguage =
+                progress?.lastLanguage;
+
+            const progressExists =
+                progressLanguage &&
+                languages.some(
+                    (item) =>
+                        item.value ===
+                        progressLanguage
+                );
+
+            const nextLanguage =
+                progressExists
+                    ? progressLanguage
+                    : languages[0].value;
+
+            const nextLanguageData =
+                languages.find(
+                    (item) =>
+                        item.value ===
+                        nextLanguage
+                );
+
+            setLanguage(
+                nextLanguage
+            );
+
+            setSearchLanguage(
+                nextLanguageData?.label ||
+                nextLanguage
+            );
+
+        }
+
+    }, [
+        selectedProblem,
+        progress,
+        language
+    ]);
+
+    useEffect(() => {
+
+        const handleOutsideClick = (
+            event
+        ) => {
 
             if (
                 dropdownRef.current &&
-                !dropdownRef.current.contains(event.target)
+                !dropdownRef.current.contains(
+                    event.target
+                )
             ) {
+
                 setShowLanguages(false);
+
             }
 
             if (
                 problemMenuRef.current &&
-                !problemMenuRef.current.contains(event.target)
+                !problemMenuRef.current.contains(
+                    event.target
+                )
             ) {
+
                 setShowProblemMenu(false);
+
             }
 
         };
@@ -245,6 +364,146 @@ echo "Hello World";
         };
 
     }, []);
+
+    const getStarterCode = (
+        problem,
+        currentLanguage
+    ) => {
+
+        if (!problem ||
+            !currentLanguage) {
+
+            return "";
+        }
+
+        const configurations =
+            parseLanguageConfigurations(
+                problem
+            );
+
+        const configuration =
+            configurations[
+                currentLanguage
+            ];
+
+        if (
+            configuration &&
+            typeof configuration === "object" &&
+            typeof configuration.starterCode ===
+                "string"
+        ) {
+
+            return configuration.starterCode;
+        }
+
+        const starterCodes =
+            problem.starterCodes;
+
+        if (
+            starterCodes &&
+            typeof starterCodes === "object" &&
+            !Array.isArray(starterCodes) &&
+            typeof starterCodes[
+                currentLanguage
+            ] === "string"
+        ) {
+
+            return starterCodes[
+                currentLanguage
+            ];
+        }
+
+        if (
+            typeof problem.starterCode ===
+            "string"
+        ) {
+
+            try {
+
+                const parsed =
+                    JSON.parse(
+                        problem.starterCode
+                    );
+
+                if (
+                    parsed &&
+                    typeof parsed === "object" &&
+                    typeof parsed[
+                        currentLanguage
+                    ] === "string"
+                ) {
+
+                    return parsed[
+                        currentLanguage
+                    ];
+                }
+
+            } catch {
+
+                return problem.starterCode;
+            }
+
+        }
+
+        return "";
+    };
+
+    const getCodeKey = (
+        problemId,
+        currentLanguage
+    ) => {
+
+        return `${problemId}_${currentLanguage}`;
+
+    };
+
+    const getCurrentCode = () => {
+
+        if (!selectedProblem ||
+            !language) {
+
+            return "";
+        }
+
+        const key =
+            getCodeKey(
+                selectedProblem.id,
+                language
+            );
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                codeMap,
+                key
+            )
+        ) {
+
+            return codeMap[key];
+
+        }
+
+        return getStarterCode(
+            selectedProblem,
+            language
+        );
+
+    };
+
+    const getMonacoLanguage = () => {
+
+        const selected =
+            availableLanguages.find(
+                (item) =>
+                    item.value === language
+            );
+
+        return (
+            selected?.monacoLanguage ||
+            language ||
+            "plaintext"
+        );
+
+    };
 
     const loadCodingArena = async () => {
 
@@ -271,12 +530,22 @@ echo "Hello World";
             const backendProgress =
                 progressResponse.data || null;
 
-            setProblems(backendProblems);
-            setProgress(backendProgress);
+            setProblems(
+                backendProblems
+            );
 
-            if (backendProblems.length === 0) {
+            setProgress(
+                backendProgress
+            );
 
-                setSelectedProblemIndex(null);
+            if (
+                backendProblems.length === 0
+            ) {
+
+                setSelectedProblemIndex(
+                    null
+                );
+
                 return;
 
             }
@@ -300,72 +569,88 @@ echo "Hello World";
 
             }
 
+            let restoredIndex = -1;
+
             if (restoredProblemId) {
 
-                const restoredIndex =
+                restoredIndex =
                     backendProblems.findIndex(
                         (problem) =>
                             problem.id ===
                             restoredProblemId
                     );
 
-                if (restoredIndex !== -1) {
+            }
 
-                    setSelectedProblemIndex(
-                        restoredIndex
-                    );
+            if (restoredIndex === -1) {
 
-                } else {
-
-                    setSelectedProblemIndex(null);
-
-                }
-
-            } else {
-
-                setSelectedProblemIndex(null);
+                restoredIndex = 0;
 
             }
 
-            if (
-                backendProgress?.lastLanguage &&
-                languages.some(
-                    (item) =>
-                        item.value ===
-                        backendProgress.lastLanguage
-                )
-            ) {
+            setSelectedProblemIndex(
+                restoredIndex
+            );
 
-                setLanguage(
-                    backendProgress.lastLanguage
+            const restoredProblem =
+                backendProblems[
+                    restoredIndex
+                ];
+
+            const restoredLanguages =
+                getProblemLanguages(
+                    restoredProblem
                 );
 
-                const savedLanguage =
-                    languages.find(
-                        (item) =>
-                            item.value ===
-                            backendProgress.lastLanguage
-                    );
+            const progressLanguage =
+                backendProgress?.lastLanguage;
 
-                if (savedLanguage) {
+            const restoredLanguageExists =
+                progressLanguage &&
+                restoredLanguages.some(
+                    (item) =>
+                        item.value ===
+                        progressLanguage
+                );
 
-                    setSearchLanguage(
-                        savedLanguage.label
-                    );
+            const initialLanguage =
+                restoredLanguageExists
+                    ? progressLanguage
+                    : restoredLanguages[0]?.value || "";
 
-                }
+            const initialLanguageData =
+                restoredLanguages.find(
+                    (item) =>
+                        item.value ===
+                        initialLanguage
+                );
 
-            }
+            setLanguage(
+                initialLanguage
+            );
+
+            setSearchLanguage(
+                initialLanguageData?.label ||
+                initialLanguage
+            );
 
             if (
                 backendProgress?.lastCode &&
-                backendProgress?.lastLanguage
+                backendProgress?.lastLanguage &&
+                backendProgress?.lastSelectedProblem?.id
             ) {
+
+                const key =
+                    getCodeKey(
+                        backendProgress
+                            .lastSelectedProblem.id,
+                        backendProgress.lastLanguage
+                    );
 
                 setCodeMap(
                     (previous) => ({
                         ...previous,
-                        [backendProgress.lastLanguage]:
+                        [key]:
                             backendProgress.lastCode
                     })
                 );
@@ -380,55 +665,22 @@ echo "Hello World";
             );
 
             setError(
+                requestError?.response?.data?.message ||
+                requestError?.response?.data?.error ||
                 "Unable to load Coding Arena."
             );
 
             setProblems([]);
-            setSelectedProblemIndex(null);
+
+            setSelectedProblemIndex(
+                null
+            );
 
         } finally {
 
             setLoading(false);
 
         }
-
-    };
-
-    const getStarterCode = (
-        problem,
-        currentLanguage
-    ) => {
-
-        if (
-            problem?.starterCode &&
-            typeof problem.starterCode ===
-                "object"
-        ) {
-
-            return (
-                problem.starterCode[
-                    currentLanguage
-                ] ||
-                starterCodes[currentLanguage] ||
-                ""
-            );
-
-        }
-
-        if (
-            problem?.starterCode &&
-            typeof problem.starterCode ===
-                "string"
-        ) {
-
-            return problem.starterCode;
-
-        }
-
-        return (
-            starterCodes[currentLanguage] ||
-            ""
-        );
 
     };
 
@@ -440,31 +692,83 @@ echo "Hello World";
             problems[index];
 
         if (!problem) {
+
             return;
+
         }
 
-        setSelectedProblemIndex(index);
-        setShowProblemMenu(false);
-        setShowRunResult(false);
-        setShowSubmitResult(false);
-
-        const savedCode =
-            progress?.lastSelectedProblem?.id ===
-                problem.id &&
-            progress?.lastLanguage === language &&
-            progress?.lastCode
-                ? progress.lastCode
-                : getStarterCode(
-                    problem,
-                    language
-                );
-
-        setCodeMap(
-            (previous) => ({
-                ...previous,
-                [language]: savedCode
-            })
+        setSelectedProblemIndex(
+            index
         );
+
+        setShowProblemMenu(
+            false
+        );
+
+        setExecutionResult(
+            null
+        );
+
+        const problemLanguages =
+            getProblemLanguages(
+                problem
+            );
+
+        const languageExists =
+            problemLanguages.some(
+                (item) =>
+                    item.value ===
+                    language
+            );
+
+        const nextLanguage =
+            languageExists
+                ? language
+                : problemLanguages[0]?.value ||
+                  "";
+
+        const nextLanguageData =
+            problemLanguages.find(
+                (item) =>
+                    item.value ===
+                    nextLanguage
+            );
+
+        setLanguage(
+            nextLanguage
+        );
+
+        setSearchLanguage(
+            nextLanguageData?.label ||
+            nextLanguage
+        );
+
+        const key =
+            getCodeKey(
+                problem.id,
+                nextLanguage
+            );
+
+        if (
+            nextLanguage &&
+            !Object.prototype.hasOwnProperty.call(
+                codeMap,
+                key
+            )
+        ) {
+
+            setCodeMap(
+                (previous) => ({
+                    ...previous,
+                    [key]:
+                        getStarterCode(
+                            problem,
+                            nextLanguage
+                        )
+                })
+            );
+
+        }
 
         try {
 
@@ -473,7 +777,9 @@ echo "Hello World";
                     problem.id
                 );
 
-            setProgress(response.data);
+            setProgress(
+                response.data
+            );
 
         } catch (requestError) {
 
@@ -492,14 +798,13 @@ echo "Hello World";
             !hasSelectedProblem ||
             isFirstProblem
         ) {
+
             return;
+
         }
 
-        const nextIndex =
-            selectedProblemIndex - 1;
-
         await handleProblemSelect(
-            nextIndex
+            selectedProblemIndex - 1
         );
 
     };
@@ -510,14 +815,13 @@ echo "Hello World";
             !hasSelectedProblem ||
             isLastProblem
         ) {
+
             return;
+
         }
 
-        const nextIndex =
-            selectedProblemIndex + 1;
-
         await handleProblemSelect(
-            nextIndex
+            selectedProblemIndex + 1
         );
 
     };
@@ -526,17 +830,27 @@ echo "Hello World";
         value
     ) => {
 
-        if (!hasSelectedProblem) {
+        if (!hasSelectedProblem ||
+            !language) {
+
             return;
+
         }
 
         const nextCode =
             value || "";
 
+        const key =
+            getCodeKey(
+                selectedProblem.id,
+                language
+            );
+
         setCodeMap(
             (previous) => ({
                 ...previous,
-                [language]: nextCode
+                [key]:
+                    nextCode
             })
         );
 
@@ -585,29 +899,38 @@ echo "Hello World";
     ) => {
 
         if (!selectedLanguage) {
+
             return;
+
         }
 
-        const existingCode =
-            codeMap[
-                selectedLanguage
-            ];
+        if (selectedProblem) {
 
-        if (
-            !existingCode &&
-            selectedProblem
-        ) {
+            const key =
+                getCodeKey(
+                    selectedProblem.id,
+                    selectedLanguage
+                );
 
-            setCodeMap(
-                (previous) => ({
-                    ...previous,
-                    [selectedLanguage]:
-                        getStarterCode(
-                            selectedProblem,
-                            selectedLanguage
-                        )
-                })
-            );
+            if (
+                !Object.prototype.hasOwnProperty.call(
+                    codeMap,
+                    key
+                )
+            ) {
+
+                setCodeMap(
+                    (previous) => ({
+                        ...previous,
+                        [key]:
+                            getStarterCode(
+                                selectedProblem,
+                                selectedLanguage
+                            )
+                    })
+                );
+
+            }
 
         }
 
@@ -616,58 +939,232 @@ echo "Hello World";
         );
 
         const selected =
-            languages.find(
+            availableLanguages.find(
                 (item) =>
                     item.value ===
                     selectedLanguage
             );
 
-        if (selected) {
+        setSearchLanguage(
+            selected?.label ||
+            selectedLanguage
+        );
 
-            setSearchLanguage(
-                selected.label
-            );
+        setShowLanguages(
+            false
+        );
 
-        }
-
-        setShowLanguages(false);
+        setExecutionResult(
+            null
+        );
 
     };
 
-    const handleRun = () => {
+    const buildExecutionError = (
+        requestError,
+        fallbackMessage
+    ) => {
 
-        if (!hasSelectedProblem) {
+        return {
+            status: "ERROR",
+            passed: false,
+            totalTests: 0,
+            passedTests: 0,
+            failedTests: 0,
+            runtime: 0,
+            memory: 0,
+            output: "",
+            expectedOutput: "",
+            error:
+                requestError?.response?.data?.message ||
+                requestError?.response?.data?.error ||
+                fallbackMessage,
+            message:
+                fallbackMessage,
+            testCases: []
+        };
+
+    };
+
+    const handleRun = async () => {
+
+        if (
+            !hasSelectedProblem ||
+            !language ||
+            isExecuting ||
+            isSubmitting
+        ) {
+
             return;
+
         }
 
-        setShowRunResult(true);
-        setShowSubmitResult(false);
+        const code =
+            getCurrentCode();
+
+        if (!code.trim()) {
+
+            setExecutionResult({
+                status: "ERROR",
+                passed: false,
+                totalTests: 0,
+                passedTests: 0,
+                failedTests: 0,
+                runtime: 0,
+                memory: 0,
+                output: "",
+                expectedOutput: "",
+                error:
+                    "Code cannot be empty.",
+                message:
+                    "Please write some code before running.",
+                testCases: []
+            });
+
+            return;
+
+        }
+
+        try {
+
+            setIsExecuting(true);
+
+            setExecutionResult(null);
+
+            const response =
+                await executeCodingCode(
+                    selectedProblem.id,
+                    language,
+                    code
+                );
+
+            setExecutionResult(
+                response.data
+            );
+
+        } catch (requestError) {
+
+            console.error(
+                "Code execution failed",
+                requestError
+            );
+
+            setExecutionResult(
+                buildExecutionError(
+                    requestError,
+                    "Code execution failed."
+                )
+            );
+
+        } finally {
+
+            setIsExecuting(false);
+
+        }
 
     };
 
     const handleSubmit = async () => {
 
-        if (!hasSelectedProblem) {
+        if (
+            !hasSelectedProblem ||
+            !language ||
+            isExecuting ||
+            isSubmitting
+        ) {
+
             return;
+
+        }
+
+        const code =
+            getCurrentCode();
+
+        if (!code.trim()) {
+
+            setExecutionResult({
+                status: "ERROR",
+                passed: false,
+                totalTests: 0,
+                passedTests: 0,
+                failedTests: 0,
+                runtime: 0,
+                memory: 0,
+                output: "",
+                expectedOutput: "",
+                error:
+                    "Code cannot be empty.",
+                message:
+                    "Please write some code before submitting.",
+                testCases: []
+            });
+
+            return;
+
         }
 
         try {
 
-            const response =
-                await completeCodingProblem(
-                    selectedProblem.id
+            setIsSubmitting(true);
+
+            setExecutionResult(null);
+
+            const executionResponse =
+                await executeCodingCode(
+                    selectedProblem.id,
+                    language,
+                    code
                 );
 
-            setProgress(
-                response.data
+            const result =
+                executionResponse.data;
+
+            setExecutionResult(
+                result
             );
 
-            await updateCodingSubmission(
-                true
-            );
+            const accepted =
+                result?.passed === true &&
+                result?.status === "ACCEPTED";
 
-            setShowSubmitResult(true);
-            setShowRunResult(false);
+            try {
+
+                await updateCodingSubmission(
+                    accepted
+                );
+
+            } catch (submissionError) {
+
+                console.error(
+                    "Failed to update submission",
+                    submissionError
+                );
+
+            }
+
+            if (accepted) {
+
+                try {
+
+                    const completedResponse =
+                        await completeCodingProblem(
+                            selectedProblem.id
+                        );
+
+                    setProgress(
+                        completedResponse.data
+                    );
+
+                } catch (completionError) {
+
+                    console.error(
+                        "Failed to complete coding problem",
+                        completionError
+                    );
+
+                }
+
+            }
 
         } catch (requestError) {
 
@@ -691,6 +1188,17 @@ echo "Hello World";
 
             }
 
+            setExecutionResult(
+                buildExecutionError(
+                    requestError,
+                    "Unable to submit code."
+                )
+            );
+
+        } finally {
+
+            setIsSubmitting(false);
+
         }
 
     };
@@ -699,6 +1207,288 @@ echo "Hello World";
 
         setShowProblemMenu(
             (previous) => !previous
+        );
+
+    };
+
+    const renderExecutionResult = () => {
+
+        if (!executionResult) {
+
+            return null;
+
+        }
+
+        const testCases =
+            Array.isArray(
+                executionResult.testCases
+            )
+                ? executionResult.testCases
+                : [];
+
+        const passed =
+            executionResult.passed === true;
+
+        const status =
+            executionResult.status ||
+            "RESULT";
+
+        const error =
+            executionResult.error;
+
+        const totalTests =
+            executionResult.totalTests || 0;
+
+        const passedTests =
+            executionResult.passedTests || 0;
+
+        const progressWidth =
+            totalTests > 0
+                ? `${Math.min(
+                    100,
+                    (
+                        passedTests /
+                        totalTests
+                    ) *
+                    100
+                )}%`
+                : "0%";
+
+        return (
+
+            <div
+                className={
+                    passed
+                        ? "run-result-card accepted-result"
+                        : "run-result-card failed-result"
+                }
+            >
+
+                <div className="run-top">
+
+                    <div>
+
+                        <strong>
+                            {status}
+                        </strong>
+
+                        <span>
+                            {
+                                executionResult.message ||
+                                ""
+                            }
+                        </span>
+
+                    </div>
+
+                    <div>
+
+                        {
+                            executionResult.runtime !==
+                            undefined
+                                ? `${executionResult.runtime} ms`
+                                : ""
+                        }
+
+                    </div>
+
+                </div>
+
+                {
+                    totalTests > 0 && (
+
+                        <div className="run-progress">
+
+                            <div
+                                className="run-fill"
+                                style={{
+                                    width:
+                                        progressWidth
+                                }}
+                            />
+
+                        </div>
+
+                    )
+                }
+
+                <div className="execution-summary">
+
+                    <span>
+                        Passed: {passedTests}
+                    </span>
+
+                    <span>
+                        Failed: {
+                            executionResult.failedTests ||
+                            0
+                        }
+                    </span>
+
+                    <span>
+                        Total: {totalTests}
+                    </span>
+
+                </div>
+
+                {
+                    error && (
+
+                        <div className="execution-error">
+
+                            {error}
+
+                        </div>
+
+                    )
+                }
+
+                {
+                    testCases.length > 0 && (
+
+                        <div className="execution-testcases">
+
+                            {
+                                testCases.map(
+                                    (
+                                        testCase
+                                    ) => (
+
+                                        <div
+                                            className={
+                                                testCase.passed
+                                                    ? "execution-testcase passed"
+                                                    : "execution-testcase failed"
+                                            }
+                                            key={
+                                                testCase.testCaseNumber
+                                            }
+                                        >
+
+                                            <div className="execution-testcase-header">
+
+                                                <strong>
+                                                    Test Case {
+                                                        testCase.testCaseNumber
+                                                    }
+                                                </strong>
+
+                                                <span>
+                                                    {
+                                                        testCase.passed
+                                                            ? "Passed"
+                                                            : "Failed"
+                                                    }
+                                                </span>
+
+                                            </div>
+
+                                            <div className="execution-testcase-content">
+
+                                                {
+                                                    testCase.input !==
+                                                    null &&
+                                                    testCase.input !==
+                                                    undefined && (
+
+                                                        <p>
+
+                                                            <strong>
+                                                                Input:
+                                                            </strong>
+
+                                                            {" "}
+
+                                                            {
+                                                                testCase.input
+                                                            }
+
+                                                        </p>
+
+                                                    )
+                                                }
+
+                                                {
+                                                    testCase.expectedOutput !==
+                                                    null &&
+                                                    testCase.expectedOutput !==
+                                                    undefined && (
+
+                                                        <p>
+
+                                                            <strong>
+                                                                Expected:
+                                                            </strong>
+
+                                                            {" "}
+
+                                                            {
+                                                                testCase.expectedOutput
+                                                            }
+
+                                                        </p>
+
+                                                    )
+                                                }
+
+                                                {
+                                                    testCase.actualOutput !==
+                                                    null &&
+                                                    testCase.actualOutput !==
+                                                    undefined && (
+
+                                                        <p>
+
+                                                            <strong>
+                                                                Output:
+                                                            </strong>
+
+                                                            {" "}
+
+                                                            {
+                                                                testCase.actualOutput
+                                                            }
+
+                                                        </p>
+
+                                                    )
+                                                }
+
+                                                {
+                                                    testCase.error && (
+
+                                                        <p>
+
+                                                            <strong>
+                                                                Error:
+                                                            </strong>
+
+                                                            {" "}
+
+                                                            {
+                                                                testCase.error
+                                                            }
+
+                                                        </p>
+
+                                                    )
+                                                }
+
+                                            </div>
+
+                                        </div>
+
+                                    )
+                                )
+                            }
+
+                        </div>
+
+                    )
+                }
+
+            </div>
+
         );
 
     };
@@ -722,6 +1512,7 @@ echo "Hello World";
                     >
 
                         PROBLEM
+
                         {
                             selectedProblem
                                 ? ` · ${selectedProblem.difficulty}`
@@ -925,7 +1716,10 @@ echo "Hello World";
                         className="run-btn"
                         type="button"
                         disabled={
-                            !hasSelectedProblem
+                            !hasSelectedProblem ||
+                            !language ||
+                            isExecuting ||
+                            isSubmitting
                         }
                         onClick={
                             handleRun
@@ -934,7 +1728,11 @@ echo "Hello World";
 
                         <FiPlay />
 
-                        Run
+                        {
+                            isExecuting
+                                ? "Running..."
+                                : "Run"
+                        }
 
                     </button>
 
@@ -942,14 +1740,21 @@ echo "Hello World";
                         className="submit-btn"
                         type="button"
                         disabled={
-                            !hasSelectedProblem
+                            !hasSelectedProblem ||
+                            !language ||
+                            isExecuting ||
+                            isSubmitting
                         }
                         onClick={
                             handleSubmit
                         }
                     >
 
-                        Submit
+                        {
+                            isSubmitting
+                                ? "Submitting..."
+                                : "Submit"
+                        }
 
                     </button>
 
@@ -988,28 +1793,27 @@ echo "Hello World";
                                         Array.isArray(
                                             selectedProblem.tags
                                         ) &&
-                                        selectedProblem.tags
-                                            .map(
-                                                (
-                                                    tag,
-                                                    index
-                                                ) => (
+                                        selectedProblem.tags.map(
+                                            (
+                                                tag,
+                                                index
+                                            ) => (
 
-                                                    <span
-                                                        key={
-                                                            `${tag}-${index}`
-                                                        }
-                                                        className="tag-blue"
-                                                    >
+                                                <span
+                                                    key={
+                                                        `${tag}-${index}`
+                                                    }
+                                                    className="tag-blue"
+                                                >
 
-                                                        {
-                                                            tag
-                                                        }
+                                                    {
+                                                        tag
+                                                    }
 
-                                                    </span>
+                                                </span>
 
-                                                )
                                             )
+                                        )
                                     }
 
                                     <div className="problem-time">
@@ -1213,16 +2017,13 @@ echo "Hello World";
                                             event.preventDefault();
 
                                             setSelectedIndex(
-                                                (
-                                                    previous
-                                                ) => {
+                                                (previous) => {
 
                                                     const nextIndex =
                                                         previous <
                                                         filteredLanguages.length -
-                                                            1
-                                                            ? previous +
-                                                              1
+                                                        1
+                                                            ? previous + 1
                                                             : previous;
 
                                                     optionRefs
@@ -1253,15 +2054,12 @@ echo "Hello World";
                                             event.preventDefault();
 
                                             setSelectedIndex(
-                                                (
-                                                    previous
-                                                ) => {
+                                                (previous) => {
 
                                                     const nextIndex =
                                                         previous >
                                                         0
-                                                            ? previous -
-                                                              1
+                                                            ? previous - 1
                                                             : 0;
 
                                                     optionRefs
@@ -1296,15 +2094,24 @@ echo "Hello World";
                                                     selectedIndex
                                                 ];
 
-                                            if (
-                                                selected
-                                            ) {
+                                            if (selected) {
 
                                                 handleLanguageChange(
                                                     selected.value
                                                 );
 
                                             }
+
+                                        }
+
+                                        if (
+                                            event.key ===
+                                            "Escape"
+                                        ) {
+
+                                            setShowLanguages(
+                                                false
+                                            );
 
                                         }
 
@@ -1315,7 +2122,8 @@ echo "Hello World";
                                     className="dropdown-arrow"
                                     onClick={() =>
                                         setShowLanguages(
-                                            !showLanguages
+                                            (previous) =>
+                                                !previous
                                         )
                                     }
                                 />
@@ -1373,7 +2181,7 @@ echo "Hello World";
                                                                     </h4>
 
                                                                     <p>
-                                                                        Boilerplate snippet
+                                                                        Problem-specific snippet
                                                                     </p>
 
                                                                 </div>
@@ -1428,19 +2236,12 @@ echo "Hello World";
                                 height="100%"
                                 theme="vs-dark"
                                 language={
-                                    language
+                                    getMonacoLanguage()
                                 }
                                 value={
-                                    hasSelectedProblem
-                                        ? (
-                                            codeMap[
-                                                language
-                                            ] ||
-                                            getStarterCode(
-                                                selectedProblem,
-                                                language
-                                            )
-                                        )
+                                    hasSelectedProblem &&
+                                    language
+                                        ? getCurrentCode()
                                         : ""
                                 }
                                 onChange={
@@ -1456,7 +2257,8 @@ echo "Hello World";
                                     automaticLayout:
                                         true,
                                     readOnly:
-                                        !hasSelectedProblem
+                                        !hasSelectedProblem ||
+                                        !language
                                 }}
                             />
 
@@ -1473,17 +2275,109 @@ echo "Hello World";
                             </h3>
 
                             <span>
+
                                 {
-                                    hasSelectedProblem
-                                        ? "Ready"
-                                        : "Select a problem"
+                                    executionResult
+                                        ? `${executionResult.passedTests || 0}/${executionResult.totalTests || 0} passed`
+                                        : hasSelectedProblem
+                                            ? `${Array.isArray(
+                                                selectedProblem.testCases
+                                            )
+                                                ? selectedProblem.testCases.length
+                                                : 0} public cases`
+                                            : "Select a problem"
                                 }
+
                             </span>
 
                         </div>
 
                         {
-                            selectedProblem ? (
+                            executionResult &&
+                            Array.isArray(
+                                executionResult.testCases
+                            ) &&
+                            executionResult.testCases.length > 0 ? (
+
+                                executionResult.testCases.map(
+                                    (
+                                        testCase
+                                    ) => (
+
+                                        <div
+                                            className="case-item"
+                                            key={
+                                                testCase.testCaseNumber
+                                            }
+                                        >
+
+                                            <p>
+
+                                                <strong>
+                                                    Test Case {
+                                                        testCase.testCaseNumber
+                                                    }
+                                                </strong>
+
+                                                {" · "}
+
+                                                {
+                                                    testCase.passed
+                                                        ? "Passed"
+                                                        : "Failed"
+                                                }
+
+                                            </p>
+
+                                            <span>
+                                                {
+                                                    testCase.passed
+                                                        ? "✓"
+                                                        : "✕"
+                                                }
+                                            </span>
+
+                                        </div>
+
+                                    )
+                                )
+
+                            ) : selectedProblem &&
+                              Array.isArray(
+                                  selectedProblem.testCases
+                              ) &&
+                              selectedProblem.testCases.length > 0 ? (
+
+                                selectedProblem.testCases.map(
+                                    (
+                                        testCase
+                                    ) => (
+
+                                        <div
+                                            className="case-item"
+                                            key={
+                                                testCase.testCaseNumber
+                                            }
+                                        >
+
+                                            <p>
+
+                                                Test Case {
+                                                    testCase.testCaseNumber
+                                                }
+
+                                            </p>
+
+                                            <span>
+                                                ○
+                                            </span>
+
+                                        </div>
+
+                                    )
+                                )
+
+                            ) : selectedProblem ? (
 
                                 <>
 
@@ -1498,10 +2392,6 @@ echo "Hello World";
 
                                         </p>
 
-                                        <span>
-                                            ✓
-                                        </span>
-
                                     </div>
 
                                     <div className="case-item">
@@ -1514,10 +2404,6 @@ echo "Hello World";
                                             }
 
                                         </p>
-
-                                        <span>
-                                            ✓
-                                        </span>
 
                                     </div>
 
@@ -1537,57 +2423,7 @@ echo "Hello World";
                     </div>
 
                     {
-                        showRunResult && (
-
-                            <div className="run-result-card">
-
-                                <div className="run-top">
-
-                                    <span>
-                                        Runtime
-                                    </span>
-
-                                    <span>
-                                        68 ms
-                                    </span>
-
-                                </div>
-
-                                <div className="run-progress">
-
-                                    <div className="run-fill"></div>
-
-                                </div>
-
-                                <p>
-                                    All test cases passed successfully.
-                                </p>
-
-                            </div>
-
-                        )
-                    }
-
-                    {
-                        showSubmitResult && (
-
-                            <div className="accepted-card">
-
-                                <div className="accepted-icon">
-                                    ✓
-                                </div>
-
-                                <h2>
-                                    Accepted
-                                </h2>
-
-                                <p>
-                                    Submission saved successfully.
-                                </p>
-
-                            </div>
-
-                        )
+                        renderExecutionResult()
                     }
 
                 </div>
