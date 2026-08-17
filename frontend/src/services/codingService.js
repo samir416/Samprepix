@@ -38,7 +38,9 @@ export const getCodingProblemsByDifficulty = (
     difficulty
 ) =>
     API.get(
-        `/problems/difficulty/${difficulty}`
+        `/problems/difficulty/${encodeURIComponent(
+            difficulty
+        )}`
     );
 
 export const getCodingProgress = () =>
@@ -92,8 +94,7 @@ export const updateCodingSubmission = (
         null,
         {
             params: {
-                successful:
-                    Boolean(successful)
+                successful
             }
         }
     );
