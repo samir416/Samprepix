@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -25,37 +28,13 @@ public class FunctionExecutionWrapperService {
             String input
     ) {
 
-        if (problem == null) {
-
-            throw new IllegalArgumentException(
-                    "Coding problem is required."
-            );
-        }
-
-        if (language == null ||
-                language.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Programming language is required."
-            );
-        }
-
-        if (userCode == null ||
-                userCode.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Code cannot be empty."
-            );
-        }
-
-        Map<String, LanguageConfiguration> configurations =
-                getLanguageConfigurations(
-                        problem
-                );
+        validateProblem(problem);
+        validateLanguage(language);
+        validateCode(userCode);
 
         LanguageConfiguration configuration =
-                findConfiguration(
-                        configurations,
+                getConfiguration(
+                        problem,
                         language
                 );
 
@@ -95,25 +74,20 @@ public class FunctionExecutionWrapperService {
             return "";
         }
 
-        Map<String, LanguageConfiguration> configurations =
-                getLanguageConfigurations(
-                        problem
-                );
-
         LanguageConfiguration configuration =
-                findConfiguration(
-                        configurations,
+                getConfiguration(
+                        problem,
                         language
                 );
 
-        if (configuration == null) {
+        if (configuration == null ||
+                configuration.getStarterCode() == null) {
 
             return "";
         }
 
-        return configuration.getStarterCode() == null
-                ? ""
-                : configuration.getStarterCode();
+        return configuration
+                .getStarterCode();
     }
 
     public String getRuntimeLanguage(
@@ -122,21 +96,24 @@ public class FunctionExecutionWrapperService {
     ) {
 
         LanguageConfiguration configuration =
-                getConfiguration(
+                requireConfiguration(
                         problem,
                         language
                 );
 
-        if (configuration == null ||
-                configuration.getRuntimeLanguage() == null ||
-                configuration.getRuntimeLanguage().isBlank()) {
+        String runtimeLanguage =
+                configuration
+                        .getRuntimeLanguage();
 
-            return language;
+        if (runtimeLanguage == null ||
+                runtimeLanguage.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Runtime language is not configured for the selected language."
+            );
         }
 
-        return configuration
-                .getRuntimeLanguage()
-                .trim();
+        return runtimeLanguage.trim();
     }
 
     public String getRuntimeVersion(
@@ -145,17 +122,24 @@ public class FunctionExecutionWrapperService {
     ) {
 
         LanguageConfiguration configuration =
-                getConfiguration(
+                requireConfiguration(
                         problem,
                         language
                 );
 
-        if (configuration == null) {
+        String runtimeVersion =
+                configuration
+                        .getRuntimeVersion();
 
-            return null;
+        if (runtimeVersion == null ||
+                runtimeVersion.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Runtime version is not configured for the selected language."
+            );
         }
 
-        return configuration.getRuntimeVersion();
+        return runtimeVersion.trim();
     }
 
     public String getFileName(
@@ -164,43 +148,35 @@ public class FunctionExecutionWrapperService {
     ) {
 
         LanguageConfiguration configuration =
-                getConfiguration(
+                requireConfiguration(
                         problem,
                         language
                 );
 
-        if (configuration == null ||
-                configuration.getFileName() == null ||
-                configuration.getFileName().isBlank()) {
+        String fileName =
+                configuration
+                        .getFileName();
 
-            return "Main.txt";
+        if (fileName == null ||
+                fileName.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Source filename is not configured for the selected language."
+            );
         }
 
-        return configuration
-                .getFileName()
-                .trim();
+        return fileName.trim();
     }
 
-    private LanguageConfiguration getConfiguration(
-            CodingProblem problem,
-            String language
-    ) {
-
-        Map<String, LanguageConfiguration> configurations =
-                getLanguageConfigurations(
-                        problem
-                );
-
-        return findConfiguration(
-                configurations,
-                language
-        );
-    }
-
-    private Map<String, LanguageConfiguration>
+    public Map<String, LanguageConfiguration>
     getLanguageConfigurations(
             CodingProblem problem
     ) {
+
+        if (problem == null) {
+
+            return Collections.emptyMap();
+        }
 
         String configurationJson =
                 problem.getLanguageConfigurations();
@@ -213,12 +189,68 @@ public class FunctionExecutionWrapperService {
 
         try {
 
-            return objectMapper.readValue(
-                    configurationJson,
-                    new TypeReference<
-                            Map<String, LanguageConfiguration>
-                            >() {}
-            );
+            JsonNode root =
+                    objectMapper.readTree(
+                            configurationJson
+                    );
+
+            if (root == null ||
+                    !root.isObject()) {
+
+                throw new IllegalStateException(
+                        "Language configuration must be a JSON object."
+                );
+            }
+
+            Map<String, LanguageConfiguration>
+                    configurations =
+                    new LinkedHashMap<>();
+
+            Iterator<Map.Entry<String, JsonNode>>
+                    fields =
+                    root.fields();
+
+            while (fields.hasNext()) {
+
+                Map.Entry<String, JsonNode> entry =
+                        fields.next();
+
+                String key =
+                        normalizeLanguage(
+                                entry.getKey()
+                        );
+
+                if (key.isBlank()) {
+                    continue;
+                }
+
+                LanguageConfiguration configuration =
+                        objectMapper.treeToValue(
+                                entry.getValue(),
+                                LanguageConfiguration.class
+                        );
+
+                if (configuration == null) {
+                    continue;
+                }
+
+                if (
+                        configuration.getDisplayName() == null ||
+                        configuration.getDisplayName().isBlank()
+                ) {
+
+                    configuration.setDisplayName(
+                            entry.getKey()
+                    );
+                }
+
+                configurations.put(
+                        key,
+                        configuration
+                );
+            }
+
+            return configurations;
 
         } catch (Exception exception) {
 
@@ -229,21 +261,72 @@ public class FunctionExecutionWrapperService {
         }
     }
 
-    private LanguageConfiguration findConfiguration(
-            Map<String, LanguageConfiguration> configurations,
+    public boolean supportsLanguage(
+            CodingProblem problem,
             String language
     ) {
+
+        return getConfiguration(
+                problem,
+                language
+        ) != null;
+    }
+
+    private LanguageConfiguration requireConfiguration(
+            CodingProblem problem,
+            String language
+    ) {
+
+        validateProblem(problem);
+        validateLanguage(language);
+
+        LanguageConfiguration configuration =
+                getConfiguration(
+                        problem,
+                        language
+                );
+
+        if (configuration == null) {
+
+            throw new IllegalArgumentException(
+                    "Selected language is not configured for this problem."
+            );
+        }
+
+        return configuration;
+    }
+
+    private LanguageConfiguration getConfiguration(
+            CodingProblem problem,
+            String language
+    ) {
+
+        if (problem == null ||
+                language == null ||
+                language.isBlank()) {
+
+            return null;
+        }
+
+        Map<String, LanguageConfiguration>
+                configurations =
+                getLanguageConfigurations(
+                        problem
+                );
 
         if (configurations.isEmpty()) {
 
             return null;
         }
 
+        String normalizedLanguage =
+                normalizeLanguage(
+                        language
+                );
+
         LanguageConfiguration direct =
                 configurations.get(
-                        language
-                                .trim()
-                                .toLowerCase()
+                        normalizedLanguage
                 );
 
         if (direct != null) {
@@ -252,32 +335,40 @@ public class FunctionExecutionWrapperService {
         }
 
         for (
-                Map.Entry<String, LanguageConfiguration> entry :
-                configurations.entrySet()
+                Map.Entry<String, LanguageConfiguration>
+                        entry :
+                        configurations.entrySet()
         ) {
 
-            if (
-                    entry.getKey()
-                            .equalsIgnoreCase(
-                                    language.trim()
-                            )
-            ) {
-
-                return entry.getValue();
-            }
-
-            LanguageConfiguration value =
+            LanguageConfiguration configuration =
                     entry.getValue();
 
+            if (configuration == null) {
+                continue;
+            }
+
             if (
-                    value.getDisplayName() != null &&
-                    value.getDisplayName()
-                            .equalsIgnoreCase(
-                                    language.trim()
-                            )
+                    configuration.getDisplayName() != null &&
+                    normalizeLanguage(
+                            configuration.getDisplayName()
+                    ).equals(
+                            normalizedLanguage
+                    )
             ) {
 
-                return value;
+                return configuration;
+            }
+
+            if (
+                    configuration.getRuntimeLanguage() != null &&
+                    normalizeLanguage(
+                            configuration.getRuntimeLanguage()
+                    ).equals(
+                            normalizedLanguage
+                    )
+            ) {
+
+                return configuration;
             }
         }
 
@@ -340,6 +431,25 @@ public class FunctionExecutionWrapperService {
         return result;
     }
 
+    private String normalizeLanguage(
+            String language
+    ) {
+
+        if (language == null) {
+            return "";
+        }
+
+        return language
+                .trim()
+                .toLowerCase(
+                        Locale.ROOT
+                )
+                .replace(
+                        "_",
+                        "-"
+                );
+    }
+
     private String safe(
             String value
     ) {
@@ -347,6 +457,44 @@ public class FunctionExecutionWrapperService {
         return value == null
                 ? ""
                 : value;
+    }
+
+    private void validateProblem(
+            CodingProblem problem
+    ) {
+
+        if (problem == null) {
+
+            throw new IllegalArgumentException(
+                    "Coding problem is required."
+            );
+        }
+    }
+
+    private void validateLanguage(
+            String language
+    ) {
+
+        if (language == null ||
+                language.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Programming language is required."
+            );
+        }
+    }
+
+    private void validateCode(
+            String userCode
+    ) {
+
+        if (userCode == null ||
+                userCode.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Code cannot be empty."
+            );
+        }
     }
 
     public static class LanguageConfiguration {
@@ -370,7 +518,8 @@ public class FunctionExecutionWrapperService {
         public void setDisplayName(
                 String displayName
         ) {
-            this.displayName = displayName;
+            this.displayName =
+                    displayName;
         }
 
         public String getRuntimeLanguage() {

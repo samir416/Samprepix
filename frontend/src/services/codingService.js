@@ -113,4 +113,18 @@ export const executeCodingCode = (
         }
     );
 
+export const submitCodingCode = (
+    problemId,
+    language,
+    code
+) =>
+    API.post(
+        "/submit",
+        {
+            problemId,
+            language,
+            code
+        }
+    );
+
 export default API;

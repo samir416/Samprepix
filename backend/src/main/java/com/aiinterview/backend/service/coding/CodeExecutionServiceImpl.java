@@ -577,12 +577,13 @@ public class CodeExecutionServiceImpl
                                 )
                         )
                         .actualOutput(null)
-                        .error(
-                                firstNonBlank(
-                                        stderr,
-                                        "Program execution failed."
-                                )
-                        )
+                       .error(
+        firstNonBlank(
+                stderr,
+                "",
+                "Program execution failed."
+        )
+)
                         .runtime(
                                 runtime
                         )

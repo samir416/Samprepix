@@ -19,9 +19,8 @@ import {
     getCodingProgress,
     selectCodingProblem,
     saveCodingState,
-    completeCodingProblem,
-    updateCodingSubmission,
-    executeCodingCode
+    executeCodingCode,
+    submitCodingCode
 } from "../services/codingService";
 
 export default function CodingArena() {
@@ -1109,57 +1108,36 @@ export default function CodingArena() {
 
             setExecutionResult(null);
 
-            const executionResponse =
-                await executeCodingCode(
+            const response =
+                await submitCodingCode(
                     selectedProblem.id,
                     language,
                     code
                 );
 
             const result =
-                executionResponse.data;
+                response.data;
 
             setExecutionResult(
                 result
             );
 
-            const accepted =
-                result?.passed === true &&
-                result?.status === "ACCEPTED";
-
-            try {
-
-                await updateCodingSubmission(
-                    accepted
-                );
-
-            } catch (submissionError) {
-
-                console.error(
-                    "Failed to update submission",
-                    submissionError
-                );
-
-            }
-
-            if (accepted) {
+            if (result?.passed === true) {
 
                 try {
 
-                    const completedResponse =
-                        await completeCodingProblem(
-                            selectedProblem.id
-                        );
+                    const progressResponse =
+                        await getCodingProgress();
 
                     setProgress(
-                        completedResponse.data
+                        progressResponse.data
                     );
 
-                } catch (completionError) {
+                } catch (progressError) {
 
                     console.error(
-                        "Failed to complete coding problem",
-                        completionError
+                        "Failed to refresh coding progress",
+                        progressError
                     );
 
                 }
@@ -1172,21 +1150,6 @@ export default function CodingArena() {
                 "Failed to submit coding problem",
                 requestError
             );
-
-            try {
-
-                await updateCodingSubmission(
-                    false
-                );
-
-            } catch (submissionError) {
-
-                console.error(
-                    "Failed to update submission",
-                    submissionError
-                );
-
-            }
 
             setExecutionResult(
                 buildExecutionError(

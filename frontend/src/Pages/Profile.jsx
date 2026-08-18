@@ -1,10 +1,11 @@
-    import { useEffect, useRef, useState } from "react";
+  import { useEffect, useRef, useState } from "react";
    import {
     getProfile,
     updateProfile,
     uploadProfilePicture,
     removeProfilePicture,
-    getSkillSuggestions
+    getSkillSuggestions,
+    getGitHubRepository
 } from "../services/profileService";
 
 import { getCompletedInterviewCount } from "../services/interviewService";
@@ -494,6 +495,42 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
             };
 
             loadUser();
+
+        }, []);
+
+        useEffect(() => {
+
+            const loadGitHubRepository = async () => {
+
+                try {
+
+                    const repository =
+                        await getGitHubRepository();
+
+                    setGithubRepository({
+                        connected:
+                            repository?.connected === true,
+                        repositoryUrl:
+                            repository?.repositoryUrl || ""
+                    });
+
+                } catch (error) {
+
+                    console.error(
+                        "Failed to load GitHub repository",
+                        error
+                    );
+
+                    setGithubRepository({
+                        connected: false,
+                        repositoryUrl: ""
+                    });
+
+                }
+
+            };
+
+            loadGitHubRepository();
 
         }, []);
 
@@ -2902,44 +2939,31 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
                                         <label>
 
-                                            GitHub
+                                            GitHub Repository
 
                                         </label>
 
                                         {
 
-                                            isEditing ?
+                                            githubRepository.connected &&
+                                            githubRepository.repositoryUrl
 
-                                                <>
+                                                ?
 
-                                                    <input
-                                                        type="url"
-                                                        name="githubUrl"
-                                                        value={formData.githubUrl}
-                                                        onChange={handleChange}
-                                                        className="profile-page-input"
-                                                        placeholder="https://github.com/username"
-                                                    />
-
-                                                    {
-
-                                                        errors.githubUrl &&
-
-                                                        <small className="profile-page-error">
-
-                                                            {errors.githubUrl}
-
-                                                        </small>
-
-                                                    }
-
-                                                </>
+                                                <a
+                                                    href={githubRepository.repositoryUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="profile-page-social-link"
+                                                >
+                                                    {githubRepository.repositoryUrl}
+                                                </a>
 
                                                 :
 
                                                 <span>
 
-                                                    {formData.githubUrl || "-"}
+                                                    GitHub repository not connected
 
                                                 </span>
 
