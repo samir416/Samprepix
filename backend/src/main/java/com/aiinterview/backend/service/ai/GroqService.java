@@ -19,7 +19,6 @@ import java.util.List;
 public class GroqService implements AIService {
 
     private final WebClient webClient;
-
     private final ObjectMapper objectMapper;
 
     @Value("${groq.api.url}")
@@ -51,7 +50,10 @@ public class GroqService implements AIService {
 
         GroqResponse response = webClient.post()
                 .uri(apiUrl)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Bearer " + apiKey
+                )
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
@@ -62,25 +64,34 @@ public class GroqService implements AIService {
                 || response.getChoices() == null
                 || response.getChoices().isEmpty()) {
 
-            throw new RuntimeException("Groq returned an empty response.");
+            throw new RuntimeException(
+                    "Groq returned an empty response."
+            );
         }
 
-        Choice choice = response.getChoices().get(0);
+        Choice choice =
+                response.getChoices().get(0);
 
         if (choice == null
                 || choice.getMessage() == null
                 || choice.getMessage().getContent() == null
                 || choice.getMessage().getContent().isBlank()) {
 
-            throw new RuntimeException("Groq returned an empty response.");
+            throw new RuntimeException(
+                    "Groq returned an empty response."
+            );
         }
 
-        String aiContent = choice.getMessage().getContent();
+        String aiContent =
+                choice.getMessage().getContent();
 
         try {
 
             AIResponse aiResponse =
-                    objectMapper.readValue(aiContent, AIResponse.class);
+                    objectMapper.readValue(
+                            aiContent,
+                            AIResponse.class
+                    );
 
             if (aiResponse.getAtsScore() == null) {
                 aiResponse.setAtsScore(0);
@@ -95,5 +106,77 @@ public class GroqService implements AIService {
                     exception
             );
         }
+    }
+
+    @Override
+    public String generateCodingHint(
+            String problemTitle,
+            String problemDescription,
+            String language,
+            String code
+    ) {
+
+        Message message = new Message(
+                "user",
+                PromptBuilder.buildCodingHintPrompt(
+                        problemTitle,
+                        problemDescription,
+                        language,
+                        code
+                )
+        );
+
+        GroqRequest request =
+                new GroqRequest(
+                        model,
+                        List.of(message)
+                );
+
+        GroqResponse response =
+                webClient.post()
+                        .uri(apiUrl)
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + apiKey
+                        )
+                        .contentType(
+                                MediaType.APPLICATION_JSON
+                        )
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(
+                                GroqResponse.class
+                        )
+                        .block(
+                                Duration.ofSeconds(30)
+                        );
+
+        if (response == null
+                || response.getChoices() == null
+                || response.getChoices().isEmpty()) {
+
+            throw new RuntimeException(
+                    "Groq returned an empty coding hint."
+            );
+        }
+
+        Choice choice =
+                response.getChoices().get(0);
+
+        if (choice == null
+                || choice.getMessage() == null
+                || choice.getMessage().getContent() == null
+                || choice.getMessage()
+                        .getContent()
+                        .isBlank()) {
+
+            throw new RuntimeException(
+                    "Groq returned an empty coding hint."
+            );
+        }
+
+        return choice.getMessage()
+                .getContent()
+                .trim();
     }
 }

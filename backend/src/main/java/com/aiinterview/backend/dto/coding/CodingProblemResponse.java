@@ -36,5 +36,7 @@ public class CodingProblemResponse {
 
     private Map<String, String> starterCodes;
 
+    private Map<String, Object> languageConfigurations;
+
     private List<CodingPublicTestCaseResponse> testCases;
 }

@@ -8,11 +8,12 @@ import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.repository.CodingTestCaseRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.service.coding.CodingProblemService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,24 +23,19 @@ import java.util.Map;
 public class CodingProblemController {
 
     private final CodingProblemService codingProblemService;
-
     private final CodingTestCaseRepository codingTestCaseRepository;
-
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     public CodingProblemController(
             CodingProblemService codingProblemService,
             CodingTestCaseRepository codingTestCaseRepository,
             UserRepository userRepository
     ) {
-        this.codingProblemService =
-                codingProblemService;
-
-        this.codingTestCaseRepository =
-                codingTestCaseRepository;
-
-        this.userRepository =
-                userRepository;
+        this.codingProblemService = codingProblemService;
+        this.codingTestCaseRepository = codingTestCaseRepository;
+        this.userRepository = userRepository;
+        this.objectMapper = new ObjectMapper();
     }
 
     @GetMapping
@@ -47,25 +43,18 @@ public class CodingProblemController {
             Authentication authentication
     ) {
 
-        User user =
-                getAuthenticatedUser(
-                        authentication
-                );
+        User user = getAuthenticatedUser(authentication);
 
-        Integer experienceLevel =
-                getExperienceLevel(user);
+        Integer experienceLevel = getExperienceLevel(user);
 
         List<CodingProblem> problems =
-                codingProblemService
-                        .getProblemsForExperience(
-                                experienceLevel
-                        );
+                codingProblemService.getProblemsForExperience(
+                        experienceLevel
+                );
 
         return ResponseEntity.ok(
                 problems.stream()
-                        .map(
-                                this::toResponse
-                        )
+                        .map(this::toResponse)
                         .toList()
         );
     }
@@ -76,10 +65,7 @@ public class CodingProblemController {
     ) {
 
         CodingProblem problem =
-                codingProblemService
-                        .getProblemById(
-                                problemId
-                        );
+                codingProblemService.getProblemById(problemId);
 
         return ResponseEntity.ok(
                 toResponse(problem)
@@ -92,37 +78,26 @@ public class CodingProblemController {
             Authentication authentication
     ) {
 
-        User user =
-                getAuthenticatedUser(
-                        authentication
-                );
+        User user = getAuthenticatedUser(authentication);
 
-        Integer experienceLevel =
-                getExperienceLevel(user);
+        Integer experienceLevel = getExperienceLevel(user);
 
         List<CodingProblem> problems =
-                codingProblemService
-                        .getProblemsForExperience(
-                                experienceLevel
-                        );
+                codingProblemService.getProblemsForExperience(
+                        experienceLevel
+                );
 
         List<CodingProblemResponse> filteredProblems =
                 problems.stream()
-                        .filter(
-                                problem ->
-                                        problem.getDifficulty()
-                                                .equalsIgnoreCase(
-                                                        difficulty
-                                                )
+                        .filter(problem ->
+                                problem.getDifficulty() != null &&
+                                problem.getDifficulty()
+                                        .equalsIgnoreCase(difficulty)
                         )
-                        .map(
-                                this::toResponse
-                        )
+                        .map(this::toResponse)
                         .toList();
 
-        return ResponseEntity.ok(
-                filteredProblems
-        );
+        return ResponseEntity.ok(filteredProblems);
     }
 
     private CodingProblemResponse toResponse(
@@ -137,75 +112,97 @@ public class CodingProblemController {
 
         List<CodingPublicTestCaseResponse> publicTestCases =
                 testCases.stream()
-                        .map(
-                                testCase ->
-                                        CodingPublicTestCaseResponse
-                                                .builder()
-                                                .testCaseNumber(
-                                                        testCase
-                                                                .getTestCaseNumber()
-                                                )
-                                                .input(
-                                                        testCase
-                                                                .getInput()
-                                                )
-                                                .expectedOutput(
-                                                        testCase
-                                                                .getExpectedOutput()
-                                                )
-                                                .build()
+                        .map(testCase ->
+                                CodingPublicTestCaseResponse
+                                        .builder()
+                                        .testCaseNumber(
+                                                testCase.getTestCaseNumber()
+                                        )
+                                        .input(
+                                                testCase.getInput()
+                                        )
+                                        .expectedOutput(
+                                                testCase.getExpectedOutput()
+                                        )
+                                        .build()
                         )
                         .toList();
 
+        Map<String, Object> languageConfigurations =
+                parseLanguageConfigurations(
+                        problem.getLanguageConfigurations()
+                );
+
+        Map<String, String> starterCodes =
+                parseStarterCodes(
+                        problem.getStarterCode(),
+                        languageConfigurations
+                );
+
         return CodingProblemResponse.builder()
-                .id(
-                        problem.getId()
-                )
-                .title(
-                        problem.getTitle()
-                )
-                .description(
-                        problem.getDescription()
-                )
-                .difficulty(
-                        problem.getDifficulty()
-                )
-                .tags(
-                        problem.getTags()
-                )
-                .inputExample(
-                        problem.getInputExample()
-                )
-                .outputExample(
-                        problem.getOutputExample()
-                )
-                .constraints(
-                        problem.getConstraints()
-                )
+                .id(problem.getId())
+                .title(problem.getTitle())
+                .description(problem.getDescription())
+                .difficulty(problem.getDifficulty())
+                .tags(problem.getTags())
+                .inputExample(problem.getInputExample())
+                .outputExample(problem.getOutputExample())
+                .constraints(problem.getConstraints())
                 .minimumExperienceLevel(
-                        problem
-                                .getMinimumExperienceLevel()
+                        problem.getMinimumExperienceLevel()
                 )
-                .active(
-                        problem.isActive()
-                )
-                .starterCodes(
-                        parseStarterCodes(
-                                problem.getStarterCode()
-                        )
-                )
-                .testCases(
-                        publicTestCases
-                )
+                .active(problem.isActive())
+                .starterCodes(starterCodes)
+                .languageConfigurations(languageConfigurations)
+                .testCases(publicTestCases)
                 .build();
     }
 
     private Map<String, String> parseStarterCodes(
-            String starterCode
+            String starterCode,
+            Map<String, Object> languageConfigurations
     ) {
 
         Map<String, String> starterCodes =
                 new LinkedHashMap<>();
+
+        if (languageConfigurations != null &&
+                !languageConfigurations.isEmpty()) {
+
+            for (Map.Entry<String, Object> entry :
+                    languageConfigurations.entrySet()) {
+
+                String language = entry.getKey();
+
+                if (language == null ||
+                        language.isBlank()) {
+                    continue;
+                }
+
+                if (!(entry.getValue() instanceof Map<?, ?> config)) {
+                    continue;
+                }
+
+                Object starter = config.get("starterCode");
+
+                if (starter == null) {
+                    starter = config.get("starter_code");
+                }
+
+                if (starter != null &&
+                        !starter.toString().isBlank()) {
+
+                    starterCodes.put(
+                            language.trim().toLowerCase(),
+                            starter.toString()
+                    );
+                }
+            }
+        }
+
+        if (!starterCodes.isEmpty()) {
+            return starterCodes;
+        }
 
         if (starterCode == null ||
                 starterCode.isBlank()) {
@@ -215,24 +212,25 @@ public class CodingProblemController {
 
         String[] sections =
                 starterCode.split(
-                        "\\n\\n"
+                        "\\r?\\n\\r?\\n"
                 );
 
         for (String section : sections) {
 
             if (section == null ||
                     section.isBlank()) {
-
                 continue;
             }
 
             int separator =
-                    section.indexOf(
-                            ":\n"
-                    );
+                    section.indexOf(":\n");
+
+            if (separator < 0) {
+                separator =
+                        section.indexOf(":\r\n");
+            }
 
             if (separator <= 0) {
-
                 continue;
             }
 
@@ -260,6 +258,37 @@ public class CodingProblemController {
         }
 
         return starterCodes;
+    }
+
+    private Map<String, Object> parseLanguageConfigurations(
+            String configurations
+    ) {
+
+        if (configurations == null ||
+                configurations.isBlank()) {
+
+            return new LinkedHashMap<>();
+        }
+
+        try {
+
+            Map<String, Object> parsed =
+                    objectMapper.readValue(
+                            configurations,
+                            new TypeReference<Map<String, Object>>() {
+                            }
+                    );
+
+            if (parsed == null) {
+                return new LinkedHashMap<>();
+            }
+
+            return new LinkedHashMap<>(parsed);
+
+        } catch (Exception exception) {
+
+            return new LinkedHashMap<>();
+        }
     }
 
     private Integer getExperienceLevel(

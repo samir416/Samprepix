@@ -11,14 +11,11 @@ API.interceptors.request.use(
             localStorage.getItem("token");
 
         if (token) {
-
             config.headers.Authorization =
                 `Bearer ${token}`;
-
         }
 
         return config;
-
     },
     (error) =>
         Promise.reject(error)
@@ -126,5 +123,34 @@ export const submitCodingCode = (
             code
         }
     );
+
+export const getCodingHint = (
+    problemTitle,
+    problemDescription,
+    language,
+    code
+) => {
+
+    const token =
+        localStorage.getItem("token");
+
+    return axios.post(
+        "http://localhost:8080/api/ai/coding-hint",
+        {
+            problemTitle,
+            problemDescription,
+            language,
+            code
+        },
+        {
+            headers: {
+                Authorization:
+                    `Bearer ${token}`,
+                "Content-Type":
+                    "application/json"
+            }
+        }
+    );
+};
 
 export default API;

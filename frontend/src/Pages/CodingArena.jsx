@@ -20,7 +20,8 @@ import {
     selectCodingProblem,
     saveCodingState,
     executeCodingCode,
-    submitCodingCode
+    submitCodingCode,
+    getCodingHint
 } from "../services/codingService";
 
 export default function CodingArena() {
@@ -56,6 +57,18 @@ export default function CodingArena() {
         useState(false);
 
     const [isSubmitting, setIsSubmitting] =
+        useState(false);
+
+    const [isGeneratingHint, setIsGeneratingHint] =
+        useState(false);
+
+    const [aiHint, setAiHint] =
+        useState("");
+
+    const [aiHintError, setAiHintError] =
+        useState("");
+
+    const [showAiHint, setShowAiHint] =
         useState(false);
 
     const [showProblemMenu, setShowProblemMenu] =
@@ -94,33 +107,163 @@ export default function CodingArena() {
         selectedProblemIndex !== null &&
         selectedProblemIndex === problems.length - 1;
 
+    const normalizeLanguageValue = (
+        value
+    ) => {
+
+        if (!value) {
+            return "";
+        }
+
+        return String(value)
+            .trim()
+            .toLowerCase();
+
+    };
+
+    const getLanguageDefaults = (
+        value
+    ) => {
+
+        const normalized =
+            normalizeLanguageValue(value);
+
+        const defaults = {
+            java: {
+                label: "Java",
+                monacoLanguage: "java",
+                runtimeLanguage: "java"
+            },
+            python: {
+                label: "Python",
+                monacoLanguage: "python",
+                runtimeLanguage: "python"
+            },
+            javascript: {
+                label: "JavaScript",
+                monacoLanguage: "javascript",
+                runtimeLanguage: "javascript"
+            },
+            typescript: {
+                label: "TypeScript",
+                monacoLanguage: "typescript",
+                runtimeLanguage: "typescript"
+            },
+            c: {
+                label: "C",
+                monacoLanguage: "c",
+                runtimeLanguage: "c"
+            },
+            cpp: {
+                label: "C++",
+                monacoLanguage: "cpp",
+                runtimeLanguage: "c++"
+            },
+            "c++": {
+                label: "C++",
+                monacoLanguage: "cpp",
+                runtimeLanguage: "c++"
+            },
+            csharp: {
+                label: "C#",
+                monacoLanguage: "csharp",
+                runtimeLanguage: "csharp"
+            },
+            "c#": {
+                label: "C#",
+                monacoLanguage: "csharp",
+                runtimeLanguage: "csharp"
+            },
+            go: {
+                label: "Go",
+                monacoLanguage: "go",
+                runtimeLanguage: "go"
+            },
+            rust: {
+                label: "Rust",
+                monacoLanguage: "rust",
+                runtimeLanguage: "rust"
+            },
+            kotlin: {
+                label: "Kotlin",
+                monacoLanguage: "kotlin",
+                runtimeLanguage: "kotlin"
+            },
+            swift: {
+                label: "Swift",
+                monacoLanguage: "swift",
+                runtimeLanguage: "swift"
+            },
+            php: {
+                label: "PHP",
+                monacoLanguage: "php",
+                runtimeLanguage: "php"
+            },
+            ruby: {
+                label: "Ruby",
+                monacoLanguage: "ruby",
+                runtimeLanguage: "ruby"
+            },
+            dart: {
+                label: "Dart",
+                monacoLanguage: "dart",
+                runtimeLanguage: "dart"
+            },
+            scala: {
+                label: "Scala",
+                monacoLanguage: "scala",
+                runtimeLanguage: "scala"
+            },
+            bash: {
+                label: "Bash",
+                monacoLanguage: "shell",
+                runtimeLanguage: "bash"
+            },
+            shell: {
+                label: "Shell",
+                monacoLanguage: "shell",
+                runtimeLanguage: "bash"
+            },
+            sql: {
+                label: "SQL",
+                monacoLanguage: "sql",
+                runtimeLanguage: "sqlite3"
+            }
+        };
+
+        return defaults[normalized] || {
+            label:
+                String(value)
+                    .charAt(0)
+                    .toUpperCase() +
+                String(value).slice(1),
+            monacoLanguage:
+                normalized || "plaintext",
+            runtimeLanguage:
+                normalized
+        };
+    };
+
     const parseLanguageConfigurations = (
         problem
     ) => {
 
         if (!problem) {
-
             return {};
         }
 
         const raw =
             problem.languageConfigurations;
 
-        if (!raw) {
-
-            return {};
-        }
-
         if (
+            raw &&
             typeof raw === "object" &&
             !Array.isArray(raw)
         ) {
-
             return raw;
         }
 
         if (typeof raw !== "string") {
-
             return {};
         }
 
@@ -134,7 +277,6 @@ export default function CodingArena() {
                 typeof parsed === "object" &&
                 !Array.isArray(parsed)
             ) {
-
                 return parsed;
             }
 
@@ -154,56 +296,162 @@ export default function CodingArena() {
         problem
     ) => {
 
+        if (!problem) {
+            return [];
+        }
+
         const configurations =
             parseLanguageConfigurations(
                 problem
             );
 
-        return Object.entries(
-            configurations
-        )
-            .filter(
-                ([value, configuration]) =>
-                    configuration &&
-                    typeof configuration === "object"
+        const configurationLanguages =
+            Object.entries(
+                configurations
             )
-            .map(
-                ([value, configuration]) => ({
+                .filter(
+                    ([, configuration]) =>
+                        configuration &&
+                        typeof configuration === "object" &&
+                        !Array.isArray(configuration)
+                )
+                .map(
+                    ([value, configuration]) => {
 
-                    value,
+                        const defaults =
+                            getLanguageDefaults(
+                                value
+                            );
 
-                    label:
-                        configuration.displayName ||
-                        configuration.name ||
+                        return {
+                            value,
+                            label:
+                                configuration.displayName ||
+                                configuration.name ||
+                                defaults.label,
+                            monacoLanguage:
+                                configuration.monacoLanguage ||
+                                defaults.monacoLanguage,
+                            runtimeLanguage:
+                                configuration.runtimeLanguage ||
+                                defaults.runtimeLanguage,
+                            runtimeVersion:
+                                configuration.runtimeVersion ||
+                                "",
+                            fileName:
+                                configuration.fileName ||
+                                "",
+                            starterCode:
+                                configuration.starterCode ||
+                                "",
+                            executionTemplate:
+                                configuration.executionTemplate ||
+                                ""
+                        };
+                    }
+                );
+
+        if (
+            configurationLanguages.length > 0
+        ) {
+            return configurationLanguages;
+        }
+
+        const starterCodes =
+            problem.starterCodes;
+
+        if (
+            starterCodes &&
+            typeof starterCodes === "object" &&
+            !Array.isArray(starterCodes)
+        ) {
+
+            return Object.keys(
+                starterCodes
+            ).map(
+                (value) => {
+
+                    const defaults =
+                        getLanguageDefaults(
+                            value
+                        );
+
+                    return {
                         value,
-
-                    monacoLanguage:
-                        configuration.monacoLanguage ||
-                        value,
-
-                    runtimeLanguage:
-                        configuration.runtimeLanguage ||
-                        value,
-
-                    runtimeVersion:
-                        configuration.runtimeVersion ||
-                        "",
-
-                    fileName:
-                        configuration.fileName ||
-                        "",
-
-                    starterCode:
-                        configuration.starterCode ||
-                        "",
-
-                    executionTemplate:
-                        configuration.executionTemplate ||
-                        ""
-
-                })
+                        label: defaults.label,
+                        monacoLanguage:
+                            defaults.monacoLanguage,
+                        runtimeLanguage:
+                            defaults.runtimeLanguage,
+                        runtimeVersion: "",
+                        fileName: "",
+                        starterCode:
+                            typeof starterCodes[value] === "string"
+                                ? starterCodes[value]
+                                : "",
+                        executionTemplate: ""
+                    };
+                }
             );
+        }
 
+        if (
+            typeof problem.starterCode ===
+            "string" &&
+            problem.starterCode.trim()
+        ) {
+
+            try {
+
+                const parsed =
+                    JSON.parse(
+                        problem.starterCode
+                    );
+
+                if (
+                    parsed &&
+                    typeof parsed === "object" &&
+                    !Array.isArray(parsed)
+                ) {
+
+                    return Object.keys(
+                        parsed
+                    ).map(
+                        (value) => {
+
+                            const defaults =
+                                getLanguageDefaults(
+                                    value
+                                );
+
+                            return {
+                                value,
+                                label:
+                                    defaults.label,
+                                monacoLanguage:
+                                    defaults.monacoLanguage,
+                                runtimeLanguage:
+                                    defaults.runtimeLanguage,
+                                runtimeVersion: "",
+                                fileName: "",
+                                starterCode:
+                                    typeof parsed[value] ===
+                                    "string"
+                                        ? parsed[value]
+                                        : "",
+                                executionTemplate: ""
+                            };
+                        }
+                    );
+                }
+
+            } catch {
+
+                return [];
+            }
+        }
+
+        return [];
     };
 
     const availableLanguages =
@@ -253,7 +501,6 @@ export default function CodingArena() {
     useEffect(() => {
 
         if (!selectedProblem) {
-
             return;
         }
 
@@ -309,7 +556,6 @@ export default function CodingArena() {
                 nextLanguageData?.label ||
                 nextLanguage
             );
-
         }
 
     }, [
@@ -332,7 +578,6 @@ export default function CodingArena() {
             ) {
 
                 setShowLanguages(false);
-
             }
 
             if (
@@ -343,9 +588,7 @@ export default function CodingArena() {
             ) {
 
                 setShowProblemMenu(false);
-
             }
-
         };
 
         document.addEventListener(
@@ -369,9 +612,10 @@ export default function CodingArena() {
         currentLanguage
     ) => {
 
-        if (!problem ||
-            !currentLanguage) {
-
+        if (
+            !problem ||
+            !currentLanguage
+        ) {
             return "";
         }
 
@@ -389,7 +633,7 @@ export default function CodingArena() {
             configuration &&
             typeof configuration === "object" &&
             typeof configuration.starterCode ===
-                "string"
+            "string"
         ) {
 
             return configuration.starterCode;
@@ -401,15 +645,40 @@ export default function CodingArena() {
         if (
             starterCodes &&
             typeof starterCodes === "object" &&
-            !Array.isArray(starterCodes) &&
-            typeof starterCodes[
-                currentLanguage
-            ] === "string"
+            !Array.isArray(starterCodes)
         ) {
 
-            return starterCodes[
-                currentLanguage
-            ];
+            const exact =
+                starterCodes[
+                    currentLanguage
+                ];
+
+            if (typeof exact === "string") {
+                return exact;
+            }
+
+            const matchingKey =
+                Object.keys(
+                    starterCodes
+                ).find(
+                    (key) =>
+                        normalizeLanguageValue(key) ===
+                        normalizeLanguageValue(
+                            currentLanguage
+                        )
+                );
+
+            if (
+                matchingKey &&
+                typeof starterCodes[
+                    matchingKey
+                ] === "string"
+            ) {
+
+                return starterCodes[
+                    matchingKey
+                ];
+            }
         }
 
         if (
@@ -437,14 +706,58 @@ export default function CodingArena() {
                     ];
                 }
 
+                if (
+                    parsed &&
+                    typeof parsed === "object"
+                ) {
+
+                    const matchingKey =
+                        Object.keys(
+                            parsed
+                        ).find(
+                            (key) =>
+                                normalizeLanguageValue(
+                                    key
+                                ) ===
+                                normalizeLanguageValue(
+                                    currentLanguage
+                                )
+                        );
+
+                    if (
+                        matchingKey &&
+                        typeof parsed[
+                            matchingKey
+                        ] === "string"
+                    ) {
+
+                        return parsed[
+                            matchingKey
+                        ];
+                    }
+                }
+
             } catch {
 
                 return problem.starterCode;
             }
-
         }
 
-        return "";
+        const selectedLanguage =
+            getProblemLanguages(
+                problem
+            ).find(
+                (item) =>
+                    normalizeLanguageValue(
+                        item.value
+                    ) ===
+                    normalizeLanguageValue(
+                        currentLanguage
+                    )
+            );
+
+        return selectedLanguage?.starterCode ||
+            "";
     };
 
     const getCodeKey = (
@@ -453,14 +766,14 @@ export default function CodingArena() {
     ) => {
 
         return `${problemId}_${currentLanguage}`;
-
     };
 
     const getCurrentCode = () => {
 
-        if (!selectedProblem ||
-            !language) {
-
+        if (
+            !selectedProblem ||
+            !language
+        ) {
             return "";
         }
 
@@ -478,14 +791,12 @@ export default function CodingArena() {
         ) {
 
             return codeMap[key];
-
         }
 
         return getStarterCode(
             selectedProblem,
             language
         );
-
     };
 
     const getMonacoLanguage = () => {
@@ -498,10 +809,11 @@ export default function CodingArena() {
 
         return (
             selected?.monacoLanguage ||
-            language ||
+            getLanguageDefaults(
+                language
+            ).monacoLanguage ||
             "plaintext"
         );
-
     };
 
     const loadCodingArena = async () => {
@@ -527,7 +839,8 @@ export default function CodingArena() {
                     : [];
 
             const backendProgress =
-                progressResponse.data || null;
+                progressResponse.data ||
+                null;
 
             setProblems(
                 backendProblems
@@ -546,14 +859,14 @@ export default function CodingArena() {
                 );
 
                 return;
-
             }
 
             const currentProblemId =
                 backendProgress?.currentProblem?.id;
 
             const lastSelectedProblemId =
-                backendProgress?.lastSelectedProblem?.id;
+                backendProgress
+                    ?.lastSelectedProblem?.id;
 
             let restoredProblemId =
                 currentProblemId ||
@@ -565,7 +878,6 @@ export default function CodingArena() {
             ) {
 
                 restoredProblemId = null;
-
             }
 
             let restoredIndex = -1;
@@ -578,13 +890,10 @@ export default function CodingArena() {
                             problem.id ===
                             restoredProblemId
                     );
-
             }
 
             if (restoredIndex === -1) {
-
                 restoredIndex = 0;
-
             }
 
             setSelectedProblemIndex(
@@ -608,14 +917,19 @@ export default function CodingArena() {
                 progressLanguage &&
                 restoredLanguages.some(
                     (item) =>
-                        item.value ===
-                        progressLanguage
+                        normalizeLanguageValue(
+                            item.value
+                        ) ===
+                        normalizeLanguageValue(
+                            progressLanguage
+                        )
                 );
 
             const initialLanguage =
                 restoredLanguageExists
                     ? progressLanguage
-                    : restoredLanguages[0]?.value || "";
+                    : restoredLanguages[0]?.value ||
+                      "";
 
             const initialLanguageData =
                 restoredLanguages.find(
@@ -636,7 +950,8 @@ export default function CodingArena() {
             if (
                 backendProgress?.lastCode &&
                 backendProgress?.lastLanguage &&
-                backendProgress?.lastSelectedProblem?.id
+                backendProgress
+                    ?.lastSelectedProblem?.id
             ) {
 
                 const key =
@@ -653,7 +968,6 @@ export default function CodingArena() {
                             backendProgress.lastCode
                     })
                 );
-
             }
 
         } catch (requestError) {
@@ -678,9 +992,7 @@ export default function CodingArena() {
         } finally {
 
             setLoading(false);
-
         }
-
     };
 
     const handleProblemSelect = async (
@@ -691,9 +1003,7 @@ export default function CodingArena() {
             problems[index];
 
         if (!problem) {
-
             return;
-
         }
 
         setSelectedProblemIndex(
@@ -708,20 +1018,28 @@ export default function CodingArena() {
             null
         );
 
+        setAiHint("");
+        setAiHintError("");
+        setShowAiHint(false);
+
         const problemLanguages =
             getProblemLanguages(
                 problem
             );
 
-        const languageExists =
+        const currentLanguageExists =
             problemLanguages.some(
                 (item) =>
-                    item.value ===
-                    language
+                    normalizeLanguageValue(
+                        item.value
+                    ) ===
+                    normalizeLanguageValue(
+                        language
+                    )
             );
 
         const nextLanguage =
-            languageExists
+            currentLanguageExists
                 ? language
                 : problemLanguages[0]?.value ||
                   "";
@@ -766,7 +1084,6 @@ export default function CodingArena() {
                         )
                 })
             );
-
         }
 
         try {
@@ -786,9 +1103,7 @@ export default function CodingArena() {
                 "Failed to save selected problem",
                 requestError
             );
-
         }
-
     };
 
     const handlePreviousProblem = async () => {
@@ -797,15 +1112,12 @@ export default function CodingArena() {
             !hasSelectedProblem ||
             isFirstProblem
         ) {
-
             return;
-
         }
 
         await handleProblemSelect(
             selectedProblemIndex - 1
         );
-
     };
 
     const handleNextProblem = async () => {
@@ -814,26 +1126,23 @@ export default function CodingArena() {
             !hasSelectedProblem ||
             isLastProblem
         ) {
-
             return;
-
         }
 
         await handleProblemSelect(
             selectedProblemIndex + 1
         );
-
     };
 
     const handleCodeChange = (
         value
     ) => {
 
-        if (!hasSelectedProblem ||
-            !language) {
-
+        if (
+            !hasSelectedProblem ||
+            !language
+        ) {
             return;
-
         }
 
         const nextCode =
@@ -858,7 +1167,6 @@ export default function CodingArena() {
             clearTimeout(
                 saveTimerRef.current
             );
-
         }
 
         saveTimerRef.current =
@@ -884,13 +1192,11 @@ export default function CodingArena() {
                             "Failed to save code state",
                             requestError
                         );
-
                     }
 
                 },
                 800
             );
-
     };
 
     const handleLanguageChange = (
@@ -898,9 +1204,7 @@ export default function CodingArena() {
     ) => {
 
         if (!selectedLanguage) {
-
             return;
-
         }
 
         if (selectedProblem) {
@@ -928,9 +1232,7 @@ export default function CodingArena() {
                             )
                     })
                 );
-
             }
-
         }
 
         setLanguage(
@@ -957,6 +1259,88 @@ export default function CodingArena() {
             null
         );
 
+        setAiHint("");
+        setAiHintError("");
+    };
+
+    const handleAiHint = async () => {
+
+        if (
+            !selectedProblem ||
+            !language ||
+            isGeneratingHint
+        ) {
+            return;
+        }
+
+        const code =
+            getCurrentCode();
+
+        setIsGeneratingHint(
+            true
+        );
+
+        setAiHintError(
+            ""
+        );
+
+        setShowAiHint(
+            true
+        );
+
+        try {
+
+            const response =
+                await getCodingHint(
+                    selectedProblem.title,
+                    selectedProblem.description,
+                    language,
+                    code
+                );
+
+            const hint =
+                typeof response.data ===
+                "string"
+                    ? response.data
+                    : response.data?.hint ||
+                      response.data?.message ||
+                      "";
+
+            if (!hint.trim()) {
+
+                throw new Error(
+                    "AI returned an empty hint."
+                );
+            }
+
+            setAiHint(
+                hint.trim()
+            );
+
+        } catch (requestError) {
+
+            console.error(
+                "AI hint generation failed",
+                requestError
+            );
+
+            setAiHint(
+                ""
+            );
+
+            setAiHintError(
+                requestError?.response?.data?.message ||
+                requestError?.response?.data?.error ||
+                requestError?.message ||
+                "Unable to generate AI hint."
+            );
+
+        } finally {
+
+            setIsGeneratingHint(
+                false
+            );
+        }
     };
 
     const buildExecutionError = (
@@ -982,7 +1366,6 @@ export default function CodingArena() {
                 fallbackMessage,
             testCases: []
         };
-
     };
 
     const handleRun = async () => {
@@ -993,9 +1376,7 @@ export default function CodingArena() {
             isExecuting ||
             isSubmitting
         ) {
-
             return;
-
         }
 
         const code =
@@ -1021,14 +1402,17 @@ export default function CodingArena() {
             });
 
             return;
-
         }
 
         try {
 
-            setIsExecuting(true);
+            setIsExecuting(
+                true
+            );
 
-            setExecutionResult(null);
+            setExecutionResult(
+                null
+            );
 
             const response =
                 await executeCodingCode(
@@ -1057,10 +1441,10 @@ export default function CodingArena() {
 
         } finally {
 
-            setIsExecuting(false);
-
+            setIsExecuting(
+                false
+            );
         }
-
     };
 
     const handleSubmit = async () => {
@@ -1071,9 +1455,7 @@ export default function CodingArena() {
             isExecuting ||
             isSubmitting
         ) {
-
             return;
-
         }
 
         const code =
@@ -1099,14 +1481,17 @@ export default function CodingArena() {
             });
 
             return;
-
         }
 
         try {
 
-            setIsSubmitting(true);
+            setIsSubmitting(
+                true
+            );
 
-            setExecutionResult(null);
+            setExecutionResult(
+                null
+            );
 
             const response =
                 await submitCodingCode(
@@ -1122,7 +1507,9 @@ export default function CodingArena() {
                 result
             );
 
-            if (result?.passed === true) {
+            if (
+                result?.passed === true
+            ) {
 
                 try {
 
@@ -1139,9 +1526,7 @@ export default function CodingArena() {
                         "Failed to refresh coding progress",
                         progressError
                     );
-
                 }
-
             }
 
         } catch (requestError) {
@@ -1160,10 +1545,10 @@ export default function CodingArena() {
 
         } finally {
 
-            setIsSubmitting(false);
-
+            setIsSubmitting(
+                false
+            );
         }
-
     };
 
     const handleOpenProblemMenu = () => {
@@ -1171,15 +1556,12 @@ export default function CodingArena() {
         setShowProblemMenu(
             (previous) => !previous
         );
-
     };
 
     const renderExecutionResult = () => {
 
         if (!executionResult) {
-
             return null;
-
         }
 
         const testCases =
@@ -1271,7 +1653,6 @@ export default function CodingArena() {
                             />
 
                         </div>
-
                     )
                 }
 
@@ -1302,7 +1683,6 @@ export default function CodingArena() {
                             {error}
 
                         </div>
-
                     )
                 }
 
@@ -1367,7 +1747,6 @@ export default function CodingArena() {
                                                             }
 
                                                         </p>
-
                                                     )
                                                 }
 
@@ -1390,7 +1769,6 @@ export default function CodingArena() {
                                                             }
 
                                                         </p>
-
                                                     )
                                                 }
 
@@ -1413,7 +1791,6 @@ export default function CodingArena() {
                                                             }
 
                                                         </p>
-
                                                     )
                                                 }
 
@@ -1433,27 +1810,22 @@ export default function CodingArena() {
                                                             }
 
                                                         </p>
-
                                                     )
                                                 }
 
                                             </div>
 
                                         </div>
-
                                     )
                                 )
                             }
 
                         </div>
-
                     )
                 }
 
             </div>
-
         );
-
     };
 
     return (
@@ -1609,7 +1981,6 @@ export default function CodingArena() {
                                                         </span>
 
                                                     </button>
-
                                                 )
                                             )
                                             : (
@@ -1624,14 +1995,12 @@ export default function CodingArena() {
                                                     }
 
                                                 </div>
-
                                             )
                                     }
 
                                 </div>
 
                             </div>
-
                         )
                     }
 
@@ -1774,7 +2143,6 @@ export default function CodingArena() {
                                                     }
 
                                                 </span>
-
                                             )
                                         )
                                     }
@@ -1821,7 +2189,6 @@ export default function CodingArena() {
                                                         }
 
                                                     </p>
-
                                                 )
                                             }
 
@@ -1839,12 +2206,10 @@ export default function CodingArena() {
                                                         }
 
                                                     </p>
-
                                                 )
                                             }
 
                                         </div>
-
                                     )
                                 }
 
@@ -1853,7 +2218,7 @@ export default function CodingArena() {
                                         selectedProblem.constraints
                                     ) &&
                                     selectedProblem.constraints.length >
-                                        0 && (
+                                    0 && (
 
                                         <div className="constraints-box">
 
@@ -1881,7 +2246,6 @@ export default function CodingArena() {
                                                                 }
 
                                                             </li>
-
                                                         )
                                                     )
                                                 }
@@ -1889,7 +2253,6 @@ export default function CodingArena() {
                                             </ul>
 
                                         </div>
-
                                     )
                                 }
 
@@ -1905,7 +2268,6 @@ export default function CodingArena() {
                                 }
 
                             </div>
-
                         )
                     }
 
@@ -1937,9 +2299,24 @@ export default function CodingArena() {
                                     value={
                                         searchLanguage
                                     }
-                                    placeholder="Search language..."
+                                    placeholder={
+                                        availableLanguages.length > 0
+                                            ? "Search language..."
+                                            : "No language available"
+                                    }
                                     className="language-search"
+                                    disabled={
+                                        !hasSelectedProblem ||
+                                        availableLanguages.length === 0
+                                    }
                                     onFocus={() => {
+
+                                        if (
+                                            availableLanguages.length ===
+                                            0
+                                        ) {
+                                            return;
+                                        }
 
                                         setShowLanguages(
                                             true
@@ -1948,13 +2325,20 @@ export default function CodingArena() {
                                         setSelectedIndex(
                                             0
                                         );
-
                                     }}
-                                    onClick={() =>
+                                    onClick={() => {
+
+                                        if (
+                                            availableLanguages.length ===
+                                            0
+                                        ) {
+                                            return;
+                                        }
+
                                         setShowLanguages(
                                             true
-                                        )
-                                    }
+                                        );
+                                    }}
                                     onChange={(event) => {
 
                                         setSearchLanguage(
@@ -1968,7 +2352,6 @@ export default function CodingArena() {
                                         setSelectedIndex(
                                             0
                                         );
-
                                     }}
                                     onKeyDown={(event) => {
 
@@ -2003,10 +2386,8 @@ export default function CodingArena() {
                                                         );
 
                                                     return nextIndex;
-
                                                 }
                                             );
-
                                         }
 
                                         if (
@@ -2039,10 +2420,8 @@ export default function CodingArena() {
                                                         );
 
                                                     return nextIndex;
-
                                                 }
                                             );
-
                                         }
 
                                         if (
@@ -2062,9 +2441,7 @@ export default function CodingArena() {
                                                 handleLanguageChange(
                                                     selected.value
                                                 );
-
                                             }
-
                                         }
 
                                         if (
@@ -2075,20 +2452,26 @@ export default function CodingArena() {
                                             setShowLanguages(
                                                 false
                                             );
-
                                         }
-
                                     }}
                                 />
 
                                 <FiChevronDown
                                     className="dropdown-arrow"
-                                    onClick={() =>
+                                    onClick={() => {
+
+                                        if (
+                                            availableLanguages.length ===
+                                            0
+                                        ) {
+                                            return;
+                                        }
+
                                         setShowLanguages(
                                             (previous) =>
                                                 !previous
-                                        )
-                                    }
+                                        );
+                                    }}
                                 />
 
                                 {
@@ -2156,7 +2539,6 @@ export default function CodingArena() {
                                                                 </span>
 
                                                             </div>
-
                                                         )
                                                     )
                                                     : (
@@ -2172,24 +2554,37 @@ export default function CodingArena() {
                                                             </div>
 
                                                         </div>
-
                                                     )
                                             }
 
                                         </div>
-
                                     )
                                 }
 
                             </div>
 
-                            <div className="ai-hint">
+                            <button
+                                type="button"
+                                className="ai-hint"
+                                disabled={
+                                    !hasSelectedProblem ||
+                                    !language ||
+                                    isGeneratingHint
+                                }
+                                onClick={
+                                    handleAiHint
+                                }
+                            >
 
                                 <FiCpu />
 
-                                AI Hint
+                                {
+                                    isGeneratingHint
+                                        ? "Thinking..."
+                                        : "AI Hint"
+                                }
 
-                            </div>
+                            </button>
 
                         </div>
 
@@ -2228,6 +2623,86 @@ export default function CodingArena() {
                         </div>
 
                     </div>
+
+                    {
+                        showAiHint && (
+
+                            <div className="ai-hint-panel">
+
+                                <div className="ai-hint-panel-header">
+
+                                    <div>
+
+                                        <FiCpu />
+
+                                        <strong>
+                                            AI Hint
+                                        </strong>
+
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowAiHint(
+                                                false
+                                            )
+                                        }
+                                    >
+
+                                        <FiX />
+
+                                    </button>
+
+                                </div>
+
+                                <div className="ai-hint-panel-content">
+
+                                    {
+                                        isGeneratingHint ? (
+
+                                            <div className="ai-hint-loading">
+
+                                                <span></span>
+
+                                                <span></span>
+
+                                                <span></span>
+
+                                                <p>
+                                                    Analyzing your approach...
+                                                </p>
+
+                                            </div>
+
+                                        ) : aiHintError ? (
+
+                                            <div className="ai-hint-error">
+
+                                                {aiHintError}
+
+                                            </div>
+
+                                        ) : aiHint ? (
+
+                                            <p>
+                                                {aiHint}
+                                            </p>
+
+                                        ) : (
+
+                                            <p>
+                                                Click AI Hint to get guidance for this problem.
+                                            </p>
+
+                                        )
+                                    }
+
+                                </div>
+
+                            </div>
+                        )
+                    }
 
                     <div className="testcase-card">
 
@@ -2301,7 +2776,6 @@ export default function CodingArena() {
                                             </span>
 
                                         </div>
-
                                     )
                                 )
 
@@ -2336,7 +2810,6 @@ export default function CodingArena() {
                                             </span>
 
                                         </div>
-
                                     )
                                 )
 
@@ -2379,7 +2852,6 @@ export default function CodingArena() {
                                     Select a problem to view test cases
 
                                 </div>
-
                             )
                         }
 
@@ -2394,7 +2866,5 @@ export default function CodingArena() {
             </div>
 
         </section>
-
     );
-
 }

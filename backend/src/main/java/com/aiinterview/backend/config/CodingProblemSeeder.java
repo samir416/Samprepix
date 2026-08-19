@@ -7,6 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +15,7 @@ import java.util.Map;
 @Configuration
 public class CodingProblemSeeder {
 
-    private final ObjectMapper objectMapper =
-            new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Bean
     CommandLineRunner seedCodingProblems(
@@ -49,43 +49,198 @@ public class CodingProblemSeeder {
 
             boolean changed = false;
 
-            for (CodingProblem problem :
-                    problems) {
+            for (CodingProblem problem : problems) {
 
-                if (problem.getLanguageConfigurations() ==
-                        null ||
-                        problem.getLanguageConfigurations()
-                                .isBlank() ||
-                        "{}".equals(
-                                problem.getLanguageConfigurations()
-                        )) {
+                String title =
+                        problem.getTitle() == null
+                                ? ""
+                                : problem.getTitle()
+                                        .trim()
+                                        .toLowerCase();
 
-                    applyProblemConfiguration(
-                            problem
-                    );
+                applyFunctionMetadata(problem);
 
+                if (problem.getLanguageConfigurations() == null ||
+                        problem.getLanguageConfigurations().isBlank()) {
+
+                    applyProblemConfiguration(problem);
                     changed = true;
+                    continue;
                 }
 
-                if (problem.getFunctionName() ==
-                        null ||
-                        problem.getFunctionName().isBlank()) {
+                if (isManagedProblem(title)) {
 
-                    applyFunctionMetadata(
-                            problem
-                    );
+                    Map<String, Object> configurations =
+                            readConfigurations(
+                                    problem.getLanguageConfigurations()
+                            );
 
-                    changed = true;
+                    Map<String, Object> updated =
+                            enrichConfigurations(
+                                    problem,
+                                    configurations
+                            );
+
+                    String json =
+                            writeJson(updated);
+
+                    if (!json.equals(
+                            problem.getLanguageConfigurations()
+                    )) {
+
+                        problem.setLanguageConfigurations(json);
+                        changed = true;
+                    }
                 }
             }
 
             if (changed) {
-
-                repository.saveAll(
-                        problems
-                );
+                repository.saveAll(problems);
             }
         };
+    }
+
+    private boolean isManagedProblem(
+            String title
+    ) {
+
+        return title.contains("two sum") ||
+                title.contains("valid parentheses") ||
+                title.contains("best time") ||
+                title.contains("binary search") ||
+                title.contains("longest substring") ||
+                title.contains("product of array") ||
+                title.contains("merge intervals") ||
+                title.contains("number of islands") ||
+                title.contains("course schedule") ||
+                title.contains("trapping rain");
+    }
+
+    private Map<String, Object> enrichConfigurations(
+            CodingProblem problem,
+            Map<String, Object> existing
+    ) {
+
+        Map<String, Object> configurations =
+                new LinkedHashMap<>();
+
+        if (existing != null) {
+            configurations.putAll(existing);
+        }
+
+        addLanguageIfMissing(
+                configurations,
+                problem,
+                "java",
+                "Java",
+                "java",
+                "15.0.2",
+                "Main.java",
+                javaStarterCode(problem),
+                "java"
+        );
+
+        addLanguageIfMissing(
+                configurations,
+                problem,
+                "python",
+                "Python",
+                "python",
+                "3.12.0",
+                "main.py",
+                pythonStarterCode(problem),
+                "python"
+        );
+
+        addLanguageIfMissing(
+                configurations,
+                problem,
+                "kotlin",
+                "Kotlin",
+                "kotlin",
+                "1.8.20",
+                "Main.kt",
+                kotlinStarterCode(problem),
+                "kotlin"
+        );
+
+        addLanguageIfMissing(
+                configurations,
+                problem,
+                "go",
+                "Go",
+                "go",
+                "1.16.2",
+                "main.go",
+                goStarterCode(problem),
+                "go"
+        );
+
+        addLanguageIfMissing(
+                configurations,
+                problem,
+                "rust",
+                "Rust",
+                "rust",
+                "1.68.2",
+                "main.rs",
+                rustStarterCode(problem),
+                "rust"
+        );
+
+        return configurations;
+    }
+
+    private void addLanguageIfMissing(
+            Map<String, Object> configurations,
+            CodingProblem problem,
+            String key,
+            String displayName,
+            String runtimeLanguage,
+            String runtimeVersion,
+            String fileName,
+            String starterCode,
+            String monacoLanguage
+    ) {
+
+        if (configurations.containsKey(key)) {
+            return;
+        }
+
+        configurations.put(
+                key,
+                language(
+                        displayName,
+                        runtimeLanguage,
+                        runtimeVersion,
+                        fileName,
+                        starterCode,
+                        "{{USER_CODE}}",
+                        monacoLanguage
+                )
+        );
+    }
+
+    private Map<String, Object> readConfigurations(
+            String json
+    ) {
+
+        try {
+
+            Map<String, Object> configurations =
+                    objectMapper.readValue(
+                            json,
+                            LinkedHashMap.class
+                    );
+
+            return configurations == null
+                    ? new LinkedHashMap<>()
+                    : configurations;
+
+        } catch (Exception exception) {
+
+            return new LinkedHashMap<>();
+        }
     }
 
     private CodingProblem twoSum() {
@@ -94,10 +249,7 @@ public class CodingProblemSeeder {
                 "Two Sum",
                 "Given an array of integers and a target value, return the indices of the two numbers that add up to the target.",
                 "EASY",
-                List.of(
-                        "Array",
-                        "Hash Table"
-                ),
+                List.of("Array", "Hash Table"),
                 "nums = [2,7,11,15], target = 9",
                 "[0,1]",
                 List.of(
@@ -119,10 +271,7 @@ public class CodingProblemSeeder {
                 "Valid Parentheses",
                 "Given a string containing brackets, determine whether the input string is valid. Every opening bracket must be closed by the same type of bracket in the correct order.",
                 "EASY",
-                List.of(
-                        "String",
-                        "Stack"
-                ),
+                List.of("String", "Stack"),
                 "s = \"()[]{}\"",
                 "true",
                 List.of(
@@ -143,10 +292,7 @@ public class CodingProblemSeeder {
                 "Best Time to Buy and Sell Stock",
                 "Given an array where prices[i] is the price of a stock on day i, find the maximum profit that can be achieved by buying on one day and selling on a later day.",
                 "EASY",
-                List.of(
-                        "Array",
-                        "Greedy"
-                ),
+                List.of("Array", "Greedy"),
                 "prices = [7,1,5,3,6,4]",
                 "5",
                 List.of(
@@ -167,10 +313,7 @@ public class CodingProblemSeeder {
                 "Binary Search",
                 "Given a sorted array of integers and a target value, return the index of the target if it exists. Otherwise return -1.",
                 "MEDIUM",
-                List.of(
-                        "Array",
-                        "Binary Search"
-                ),
+                List.of("Array", "Binary Search"),
                 "nums = [-1,0,3,5,9,12], target = 9",
                 "4",
                 List.of(
@@ -193,11 +336,7 @@ public class CodingProblemSeeder {
                 "Longest Substring Without Repeating Characters",
                 "Given a string, find the length of the longest substring without repeating characters.",
                 "MEDIUM",
-                List.of(
-                        "String",
-                        "Sliding Window",
-                        "Hash Table"
-                ),
+                List.of("String", "Sliding Window", "Hash Table"),
                 "s = \"abcabcbb\"",
                 "3",
                 List.of(
@@ -218,10 +357,7 @@ public class CodingProblemSeeder {
                 "Product of Array Except Self",
                 "Given an integer array, return an array where each element is the product of all elements except the element at the same index.",
                 "MEDIUM",
-                List.of(
-                        "Array",
-                        "Prefix Sum"
-                ),
+                List.of("Array", "Prefix Sum"),
                 "nums = [1,2,3,4]",
                 "[24,12,8,6]",
                 List.of(
@@ -243,11 +379,7 @@ public class CodingProblemSeeder {
                 "Merge Intervals",
                 "Given an array of intervals, merge all overlapping intervals and return an array of the non-overlapping intervals that cover all the input intervals.",
                 "MEDIUM",
-                List.of(
-                        "Array",
-                        "Sorting",
-                        "Intervals"
-                ),
+                List.of("Array", "Sorting", "Intervals"),
                 "intervals = [[1,3],[2,6],[8,10],[15,18]]",
                 "[[1,6],[8,10],[15,18]]",
                 List.of(
@@ -269,12 +401,7 @@ public class CodingProblemSeeder {
                 "Number of Islands",
                 "Given a grid of land and water cells, count the number of islands. An island is formed by connecting adjacent land cells horizontally or vertically.",
                 "HARD",
-                List.of(
-                        "Graph",
-                        "DFS",
-                        "BFS",
-                        "Matrix"
-                ),
+                List.of("Graph", "DFS", "BFS", "Matrix"),
                 "grid = [[\"1\",\"1\",\"0\"],[\"1\",\"0\",\"0\"],[\"0\",\"0\",\"1\"]]",
                 "2",
                 List.of(
@@ -295,12 +422,7 @@ public class CodingProblemSeeder {
                 "Course Schedule",
                 "There are a number of courses to take. Some courses have prerequisites. Determine whether it is possible to finish all courses.",
                 "HARD",
-                List.of(
-                        "Graph",
-                        "BFS",
-                        "DFS",
-                        "Topological Sort"
-                ),
+                List.of("Graph", "BFS", "DFS", "Topological Sort"),
                 "numCourses = 2, prerequisites = [[1,0]]",
                 "true",
                 List.of(
@@ -322,11 +444,7 @@ public class CodingProblemSeeder {
                 "Trapping Rain Water",
                 "Given an array representing elevation heights, calculate how much rain water can be trapped after raining.",
                 "HARD",
-                List.of(
-                        "Array",
-                        "Two Pointers",
-                        "Stack"
-                ),
+                List.of("Array", "Two Pointers", "Stack"),
                 "height = [0,1,0,2,1,0,1,3,2,1,2,1]",
                 "6",
                 List.of(
@@ -366,23 +484,15 @@ public class CodingProblemSeeder {
                         .outputExample(outputExample)
                         .constraints(constraints)
                         .functionName(functionName)
-                        .functionSignature(
-                                functionSignature
-                        )
+                        .functionSignature(functionSignature)
                         .returnType(returnType)
-                        .parameterTypes(
-                                parameterTypes
-                        )
+                        .parameterTypes(parameterTypes)
                         .starterCode("")
-                        .minimumExperienceLevel(
-                                experience
-                        )
+                        .minimumExperienceLevel(experience)
                         .active(true)
                         .build();
 
-        applyProblemConfiguration(
-                problem
-        );
+        applyProblemConfiguration(problem);
 
         return problem;
     }
@@ -392,234 +502,114 @@ public class CodingProblemSeeder {
     ) {
 
         String title =
-                problem.getTitle()
-                        .trim()
-                        .toLowerCase();
+                problem.getTitle() == null
+                        ? ""
+                        : problem.getTitle()
+                                .trim()
+                                .toLowerCase();
 
         if (title.contains("two sum")) {
 
-            problem.setFunctionName(
-                    "twoSum"
-            );
-
-            problem.setFunctionSignature(
-                    "twoSum(nums, target)"
-            );
-
-            problem.setReturnType(
-                    "array"
-            );
-
-            problem.setParameterTypes(
-                    "array,integer"
-            );
+            problem.setFunctionName("twoSum");
+            problem.setFunctionSignature("twoSum(nums, target)");
+            problem.setReturnType("array");
+            problem.setParameterTypes("array,integer");
 
             return;
         }
 
-        if (title.contains(
-                "valid parentheses"
-        )) {
+        if (title.contains("valid parentheses")) {
 
-            problem.setFunctionName(
-                    "isValid"
-            );
-
-            problem.setFunctionSignature(
-                    "isValid(s)"
-            );
-
-            problem.setReturnType(
-                    "boolean"
-            );
-
-            problem.setParameterTypes(
-                    "string"
-            );
+            problem.setFunctionName("isValid");
+            problem.setFunctionSignature("isValid(s)");
+            problem.setReturnType("boolean");
+            problem.setParameterTypes("string");
 
             return;
         }
 
-        if (title.contains(
-                "best time"
-        )) {
+        if (title.contains("best time")) {
 
-            problem.setFunctionName(
-                    "maxProfit"
-            );
-
-            problem.setFunctionSignature(
-                    "maxProfit(prices)"
-            );
-
-            problem.setReturnType(
-                    "integer"
-            );
-
-            problem.setParameterTypes(
-                    "integer[]"
-            );
+            problem.setFunctionName("maxProfit");
+            problem.setFunctionSignature("maxProfit(prices)");
+            problem.setReturnType("integer");
+            problem.setParameterTypes("integer[]");
 
             return;
         }
 
-        if (title.contains(
-                "binary search"
-        )) {
+        if (title.contains("binary search")) {
 
-            problem.setFunctionName(
-                    "search"
-            );
-
-            problem.setFunctionSignature(
-                    "search(nums, target)"
-            );
-
-            problem.setReturnType(
-                    "integer"
-            );
-
-            problem.setParameterTypes(
-                    "integer[],integer"
-            );
+            problem.setFunctionName("search");
+            problem.setFunctionSignature("search(nums, target)");
+            problem.setReturnType("integer");
+            problem.setParameterTypes("integer[],integer");
 
             return;
         }
 
-        if (title.contains(
-                "longest substring"
-        )) {
+        if (title.contains("longest substring")) {
 
-            problem.setFunctionName(
-                    "lengthOfLongestSubstring"
-            );
-
+            problem.setFunctionName("lengthOfLongestSubstring");
             problem.setFunctionSignature(
                     "lengthOfLongestSubstring(s)"
             );
-
-            problem.setReturnType(
-                    "integer"
-            );
-
-            problem.setParameterTypes(
-                    "string"
-            );
+            problem.setReturnType("integer");
+            problem.setParameterTypes("string");
 
             return;
         }
 
-        if (title.contains(
-                "product of array"
-        )) {
+        if (title.contains("product of array")) {
 
-            problem.setFunctionName(
-                    "productExceptSelf"
-            );
-
+            problem.setFunctionName("productExceptSelf");
             problem.setFunctionSignature(
                     "productExceptSelf(nums)"
             );
-
-            problem.setReturnType(
-                    "integer[]"
-            );
-
-            problem.setParameterTypes(
-                    "integer[]"
-            );
+            problem.setReturnType("integer[]");
+            problem.setParameterTypes("integer[]");
 
             return;
         }
 
-        if (title.contains(
-                "merge intervals"
-        )) {
+        if (title.contains("merge intervals")) {
 
-            problem.setFunctionName(
-                    "merge"
-            );
-
-            problem.setFunctionSignature(
-                    "merge(intervals)"
-            );
-
-            problem.setReturnType(
-                    "integer[][]"
-            );
-
-            problem.setParameterTypes(
-                    "integer[][]"
-            );
+            problem.setFunctionName("merge");
+            problem.setFunctionSignature("merge(intervals)");
+            problem.setReturnType("integer[][]");
+            problem.setParameterTypes("integer[][]");
 
             return;
         }
 
-        if (title.contains(
-                "number of islands"
-        )) {
+        if (title.contains("number of islands")) {
 
-            problem.setFunctionName(
-                    "numIslands"
-            );
-
-            problem.setFunctionSignature(
-                    "numIslands(grid)"
-            );
-
-            problem.setReturnType(
-                    "integer"
-            );
-
-            problem.setParameterTypes(
-                    "character[][]"
-            );
+            problem.setFunctionName("numIslands");
+            problem.setFunctionSignature("numIslands(grid)");
+            problem.setReturnType("integer");
+            problem.setParameterTypes("character[][]");
 
             return;
         }
 
-        if (title.contains(
-                "course schedule"
-        )) {
+        if (title.contains("course schedule")) {
 
-            problem.setFunctionName(
-                    "canFinish"
-            );
-
+            problem.setFunctionName("canFinish");
             problem.setFunctionSignature(
                     "canFinish(numCourses, prerequisites)"
             );
-
-            problem.setReturnType(
-                    "boolean"
-            );
-
-            problem.setParameterTypes(
-                    "integer,integer[][]"
-            );
+            problem.setReturnType("boolean");
+            problem.setParameterTypes("integer,integer[][]");
 
             return;
         }
 
-        if (title.contains(
-                "trapping rain"
-        )) {
+        if (title.contains("trapping rain")) {
 
-            problem.setFunctionName(
-                    "trap"
-            );
-
-            problem.setFunctionSignature(
-                    "trap(height)"
-            );
-
-            problem.setReturnType(
-                    "integer"
-            );
-
-            problem.setParameterTypes(
-                    "integer[]"
-            );
+            problem.setFunctionName("trap");
+            problem.setFunctionSignature("trap(height)");
+            problem.setReturnType("integer");
+            problem.setParameterTypes("integer[]");
         }
     }
 
@@ -630,15 +620,458 @@ public class CodingProblemSeeder {
         Map<String, Object> configurations =
                 new LinkedHashMap<>();
 
-        problem.setLanguageConfigurations(
-                writeJson(
-                        configurations
+        configurations.put(
+                "java",
+                language(
+                        "Java",
+                        "java",
+                        "15.0.2",
+                        "Main.java",
+                        javaStarterCode(problem),
+                        "{{USER_CODE}}",
+                        "java"
                 )
         );
 
-        problem.setStarterCode(
-                ""
+        configurations.put(
+                "python",
+                language(
+                        "Python",
+                        "python",
+                        "3.12.0",
+                        "main.py",
+                        pythonStarterCode(problem),
+                        "{{USER_CODE}}",
+                        "python"
+                )
         );
+
+        configurations.put(
+                "kotlin",
+                language(
+                        "Kotlin",
+                        "kotlin",
+                        "1.8.20",
+                        "Main.kt",
+                        kotlinStarterCode(problem),
+                        "{{USER_CODE}}",
+                        "kotlin"
+                )
+        );
+
+        configurations.put(
+                "go",
+                language(
+                        "Go",
+                        "go",
+                        "1.16.2",
+                        "main.go",
+                        goStarterCode(problem),
+                        "{{USER_CODE}}",
+                        "go"
+                )
+        );
+
+        configurations.put(
+                "rust",
+                language(
+                        "Rust",
+                        "rust",
+                        "1.68.2",
+                        "main.rs",
+                        rustStarterCode(problem),
+                        "{{USER_CODE}}",
+                        "rust"
+                )
+        );
+
+        problem.setLanguageConfigurations(
+                writeJson(configurations)
+        );
+
+        problem.setStarterCode("");
+    }
+
+    private Map<String, Object> language(
+            String displayName,
+            String runtimeLanguage,
+            String runtimeVersion,
+            String fileName,
+            String starterCode,
+            String executionTemplate,
+            String monacoLanguage
+    ) {
+
+        Map<String, Object> configuration =
+                new LinkedHashMap<>();
+
+        configuration.put("displayName", displayName);
+        configuration.put("runtimeLanguage", runtimeLanguage);
+        configuration.put("runtimeVersion", runtimeVersion);
+        configuration.put("fileName", fileName);
+        configuration.put("monacoLanguage", monacoLanguage);
+        configuration.put("starterCode", starterCode);
+        configuration.put("executionTemplate", executionTemplate);
+
+        return configuration;
+    }
+
+    private String javaStarterCode(
+            CodingProblem problem
+    ) {
+
+        return switch (problem.getFunctionName()) {
+
+            case "twoSum" -> """
+public static int[] twoSum(int[] nums, int target) {
+    return new int[]{};
+}
+""";
+
+            case "isValid" -> """
+public static boolean isValid(String s) {
+    return false;
+}
+""";
+
+            case "maxProfit" -> """
+public static int maxProfit(int[] prices) {
+    return 0;
+}
+""";
+
+            case "search" -> """
+public static int search(int[] nums, int target) {
+    return -1;
+}
+""";
+
+            case "lengthOfLongestSubstring" -> """
+public static int lengthOfLongestSubstring(String s) {
+    return 0;
+}
+""";
+
+            case "productExceptSelf" -> """
+public static int[] productExceptSelf(int[] nums) {
+    return new int[]{};
+}
+""";
+
+            case "merge" -> """
+public static int[][] merge(int[][] intervals) {
+    return new int[][]{};
+}
+""";
+
+            case "numIslands" -> """
+public static int numIslands(char[][] grid) {
+    return 0;
+}
+""";
+
+            case "canFinish" -> """
+public static boolean canFinish(int numCourses, int[][] prerequisites) {
+    return false;
+}
+""";
+
+            case "trap" -> """
+public static int trap(int[] height) {
+    return 0;
+}
+""";
+
+            default -> """
+public static void solve() {
+}
+""";
+        };
+    }
+
+    private String pythonStarterCode(
+            CodingProblem problem
+    ) {
+
+        return switch (problem.getFunctionName()) {
+
+            case "twoSum" -> """
+def twoSum(nums, target):
+    return []
+""";
+
+            case "isValid" -> """
+def isValid(s):
+    return False
+""";
+
+            case "maxProfit" -> """
+def maxProfit(prices):
+    return 0
+""";
+
+            case "search" -> """
+def search(nums, target):
+    return -1
+""";
+
+            case "lengthOfLongestSubstring" -> """
+def lengthOfLongestSubstring(s):
+    return 0
+""";
+
+            case "productExceptSelf" -> """
+def productExceptSelf(nums):
+    return []
+""";
+
+            case "merge" -> """
+def merge(intervals):
+    return []
+""";
+
+            case "numIslands" -> """
+def numIslands(grid):
+    return 0
+""";
+
+            case "canFinish" -> """
+def canFinish(numCourses, prerequisites):
+    return False
+""";
+
+            case "trap" -> """
+def trap(height):
+    return 0
+""";
+
+            default -> """
+def solve():
+    pass
+""";
+        };
+    }
+
+    private String kotlinStarterCode(
+            CodingProblem problem
+    ) {
+
+        return switch (problem.getFunctionName()) {
+
+            case "twoSum" -> """
+fun twoSum(nums: IntArray, target: Int): IntArray {
+    return intArrayOf()
+}
+""";
+
+            case "isValid" -> """
+fun isValid(s: String): Boolean {
+    return false
+}
+""";
+
+            case "maxProfit" -> """
+fun maxProfit(prices: IntArray): Int {
+    return 0
+}
+""";
+
+            case "search" -> """
+fun search(nums: IntArray, target: Int): Int {
+    return -1
+}
+""";
+
+            case "lengthOfLongestSubstring" -> """
+fun lengthOfLongestSubstring(s: String): Int {
+    return 0
+}
+""";
+
+            case "productExceptSelf" -> """
+fun productExceptSelf(nums: IntArray): IntArray {
+    return intArrayOf()
+}
+""";
+
+            case "merge" -> """
+fun merge(intervals: Array<IntArray>): Array<IntArray> {
+    return emptyArray()
+}
+""";
+
+            case "numIslands" -> """
+fun numIslands(grid: Array<CharArray>): Int {
+    return 0
+}
+""";
+
+            case "canFinish" -> """
+fun canFinish(numCourses: Int, prerequisites: Array<IntArray>): Boolean {
+    return false
+}
+""";
+
+            case "trap" -> """
+fun trap(height: IntArray): Int {
+    return 0
+}
+""";
+
+            default -> """
+fun solve() {
+}
+""";
+        };
+    }
+
+    private String goStarterCode(
+            CodingProblem problem
+    ) {
+
+        return switch (problem.getFunctionName()) {
+
+            case "twoSum" -> """
+func twoSum(nums []int, target int) []int {
+    return []int{}
+}
+""";
+
+            case "isValid" -> """
+func isValid(s string) bool {
+    return false
+}
+""";
+
+            case "maxProfit" -> """
+func maxProfit(prices []int) int {
+    return 0
+}
+""";
+
+            case "search" -> """
+func search(nums []int, target int) int {
+    return -1
+}
+""";
+
+            case "lengthOfLongestSubstring" -> """
+func lengthOfLongestSubstring(s string) int {
+    return 0
+}
+""";
+
+            case "productExceptSelf" -> """
+func productExceptSelf(nums []int) []int {
+    return []int{}
+}
+""";
+
+            case "merge" -> """
+func merge(intervals [][]int) [][]int {
+    return [][]int{}
+}
+""";
+
+            case "numIslands" -> """
+func numIslands(grid [][]byte) int {
+    return 0
+}
+""";
+
+            case "canFinish" -> """
+func canFinish(numCourses int, prerequisites [][]int) bool {
+    return false
+}
+""";
+
+            case "trap" -> """
+func trap(height []int) int {
+    return 0
+}
+""";
+
+            default -> """
+func solve() {
+}
+""";
+        };
+    }
+
+    private String rustStarterCode(
+            CodingProblem problem
+    ) {
+
+        return switch (problem.getFunctionName()) {
+
+            case "twoSum" -> """
+fn two_sum(nums: Vec<i32>, target: i32) -> Vec<i32> {
+    vec![]
+}
+""";
+
+            case "isValid" -> """
+fn is_valid(s: String) -> bool {
+    false
+}
+""";
+
+            case "maxProfit" -> """
+fn max_profit(prices: Vec<i32>) -> i32 {
+    0
+}
+""";
+
+            case "search" -> """
+fn search(nums: Vec<i32>, target: i32) -> i32 {
+    -1
+}
+""";
+
+            case "lengthOfLongestSubstring" -> """
+fn length_of_longest_substring(s: String) -> i32 {
+    0
+}
+""";
+
+            case "productExceptSelf" -> """
+fn product_except_self(nums: Vec<i32>) -> Vec<i32> {
+    vec![]
+}
+""";
+
+            case "merge" -> """
+fn merge(intervals: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
+    vec![]
+}
+""";
+
+            case "numIslands" -> """
+fn num_islands(grid: Vec<Vec<char>>) -> i32 {
+    0
+}
+""";
+
+            case "canFinish" -> """
+fn can_finish(
+    num_courses: i32,
+    prerequisites: Vec<Vec<i32>>
+) -> bool {
+    false
+}
+""";
+
+            case "trap" -> """
+fn trap(height: Vec<i32>) -> i32 {
+    0
+}
+""";
+
+            default -> """
+fn solve() {
+}
+""";
+        };
     }
 
     private String writeJson(
@@ -647,9 +1080,7 @@ public class CodingProblemSeeder {
 
         try {
 
-            return objectMapper.writeValueAsString(
-                    value
-            );
+            return objectMapper.writeValueAsString(value);
 
         } catch (Exception exception) {
 

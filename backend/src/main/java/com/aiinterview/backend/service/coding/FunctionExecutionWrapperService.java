@@ -2,23 +2,120 @@ package com.aiinterview.backend.service.coding;
 
 import com.aiinterview.backend.entity.CodingProblem;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 
 @Service
 public class FunctionExecutionWrapperService {
 
-    private final ObjectMapper objectMapper;
+   private final ObjectMapper objectMapper;
 
-    public FunctionExecutionWrapperService() {
-        this.objectMapper = new ObjectMapper();
+public FunctionExecutionWrapperService() {
+    this.objectMapper = new ObjectMapper();
+}
+    public String getRuntimeLanguage(
+            CodingProblem problem,
+            String language
+    ) {
+
+        Map<String, Object> configuration =
+                getLanguageConfiguration(
+                        problem,
+                        language
+                );
+
+        String runtimeLanguage =
+                stringValue(
+                        configuration.get("runtimeLanguage")
+                );
+
+        if (runtimeLanguage == null) {
+
+            throw new IllegalArgumentException(
+                    "Runtime language is not configured for: "
+                            + language
+            );
+        }
+
+        return runtimeLanguage;
+    }
+
+    public String getRuntimeVersion(
+            CodingProblem problem,
+            String language
+    ) {
+
+        Map<String, Object> configuration =
+                getLanguageConfiguration(
+                        problem,
+                        language
+                );
+
+        String runtimeVersion =
+                stringValue(
+                        configuration.get("runtimeVersion")
+                );
+
+        if (runtimeVersion == null) {
+
+            throw new IllegalArgumentException(
+                    "Runtime version is not configured for: "
+                            + language
+            );
+        }
+
+        return runtimeVersion;
+    }
+
+    public String getFileName(
+            CodingProblem problem,
+            String language
+    ) {
+
+        Map<String, Object> configuration =
+                getLanguageConfiguration(
+                        problem,
+                        language
+                );
+
+        String fileName =
+                stringValue(
+                        configuration.get("fileName")
+                );
+
+        if (fileName == null) {
+
+            throw new IllegalArgumentException(
+                    "File name is not configured for: "
+                            + language
+            );
+        }
+
+        return fileName;
+    }
+
+    public String getStarterCode(
+            CodingProblem problem,
+            String language
+    ) {
+
+        Map<String, Object> configuration =
+                getLanguageConfiguration(
+                        problem,
+                        language
+                );
+
+        String starterCode =
+                stringValue(
+                        configuration.get("starterCode")
+                );
+
+        return starterCode == null
+                ? ""
+                : starterCode;
     }
 
     public String buildExecutableCode(
@@ -28,25 +125,841 @@ public class FunctionExecutionWrapperService {
             String input
     ) {
 
-        validateProblem(problem);
-        validateLanguage(language);
-        validateCode(userCode);
+        if (problem == null) {
 
-        LanguageConfiguration configuration =
-                getConfiguration(
-                        problem,
-                        language
+            throw new IllegalArgumentException(
+                    "Coding problem cannot be null."
+            );
+        }
+
+        if (language == null ||
+                language.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Programming language cannot be empty."
+            );
+        }
+
+        String code =
+                userCode == null
+                        ? ""
+                        : userCode.trim();
+
+        if (code.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Code cannot be empty."
+            );
+        }
+
+        String testInput =
+                input == null
+                        ? ""
+                        : input;
+
+        String normalizedLanguage =
+                language
+                        .trim()
+                        .toLowerCase();
+
+        return switch (normalizedLanguage) {
+
+            case "java" ->
+                    buildJavaCode(
+                            problem,
+                            code,
+                            testInput
+                    );
+
+            case "python", "python3" ->
+                    buildPythonCode(
+                            problem,
+                            code,
+                            testInput
+                    );
+
+            case "kotlin" ->
+                    buildKotlinCode(
+                            problem,
+                            code,
+                            testInput
+                    );
+
+            case "go" ->
+                    buildGoCode(
+                            problem,
+                            code,
+                            testInput
+                    );
+
+            case "rust" ->
+                    buildRustCode(
+                            problem,
+                            code,
+                            testInput
+                    );
+
+            default ->
+                    buildGenericCode(
+                            problem,
+                            language,
+                            code,
+                            testInput
+                    );
+        };
+    }
+
+    public Map<String, Object> getLanguageConfiguration(
+            CodingProblem problem,
+            String language
+    ) {
+
+        if (problem == null) {
+
+            throw new IllegalArgumentException(
+                    "Coding problem cannot be null."
+            );
+        }
+
+        if (language == null ||
+                language.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Programming language cannot be empty."
+            );
+        }
+
+        String configurations =
+                problem.getLanguageConfigurations();
+
+        if (configurations == null ||
+                configurations.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Language configurations are not available for this problem."
+            );
+        }
+
+        Map<String, Object> languageConfigurations;
+
+        try {
+
+            languageConfigurations =
+                    objectMapper.readValue(
+                            configurations,
+                            new TypeReference<
+                                    LinkedHashMap<String, Object>
+                            >() {
+                            }
+                    );
+
+        } catch (Exception exception) {
+
+            throw new IllegalArgumentException(
+                    "Invalid language configuration.",
+                    exception
+            );
+        }
+
+        Map<String, Object> configuration =
+                findConfiguration(
+                        languageConfigurations,
+                        language.trim()
                 );
 
         if (configuration == null) {
 
             throw new IllegalArgumentException(
-                    "Selected language is not configured for this problem."
+                    "Language is not supported for this problem: "
+                            + language
             );
         }
 
+        return configuration;
+    }
+
+    private Map<String, Object> findConfiguration(
+            Map<String, Object> configurations,
+            String requestedLanguage
+    ) {
+
+        String normalized =
+                requestedLanguage
+                        .trim()
+                        .toLowerCase();
+
+        Object direct =
+                configurations.get(
+                        normalized
+                );
+
+        if (direct instanceof Map<?, ?> map) {
+
+            return convertMap(map);
+        }
+
+        for (
+                Map.Entry<String, Object> entry :
+                configurations.entrySet()
+        ) {
+
+            if (!(entry.getValue()
+                    instanceof Map<?, ?> rawMap)) {
+
+                continue;
+            }
+
+            Map<String, Object> configuration =
+                    convertMap(rawMap);
+
+            String key =
+                    entry.getKey();
+
+            String displayName =
+                    stringValue(
+                            configuration.get(
+                                    "displayName"
+                            )
+                    );
+
+            String runtimeLanguage =
+                    stringValue(
+                            configuration.get(
+                                    "runtimeLanguage"
+                            )
+                    );
+
+            if (
+                    matches(
+                            normalized,
+                            key
+                    ) ||
+                    matches(
+                            normalized,
+                            displayName
+                    ) ||
+                    matches(
+                            normalized,
+                            runtimeLanguage
+                    )
+            ) {
+
+                return configuration;
+            }
+
+            Object aliases =
+                    configuration.get("aliases");
+
+            if (aliases instanceof Iterable<?> values) {
+
+                for (Object alias : values) {
+
+                    if (
+                            matches(
+                                    normalized,
+                                    stringValue(alias)
+                            )
+                    ) {
+
+                        return configuration;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private String buildJavaCode(
+            CodingProblem problem,
+            String userCode,
+            String input
+    ) {
+
+        String functionName =
+                problem.getFunctionName();
+
+        if (functionName == null ||
+                functionName.isBlank()) {
+
+            return userCode;
+        }
+
+        String invocation =
+                buildJavaInvocation(
+                        problem,
+                        input
+                );
+
+        return """
+import java.util.*;
+import java.io.*;
+
+public class Main {
+
+    %s
+
+    public static void main(String[] args) throws Exception {
+        %s
+    }
+}
+""".formatted(
+                userCode,
+                invocation
+        );
+    }
+
+    private String buildJavaInvocation(
+            CodingProblem problem,
+            String input
+    ) {
+
+        String functionName =
+                problem.getFunctionName();
+
+        String normalizedInput =
+                input == null
+                        ? ""
+                        : input.trim();
+
+        if ("twoSum".equals(functionName)) {
+
+            return """
+int[] nums = new int[]{2, 7, 11, 15};
+int target = 9;
+System.out.println(
+        Arrays.toString(
+                twoSum(nums, target)
+        )
+);
+""";
+        }
+
+        if ("isValid".equals(functionName)) {
+
+            return """
+String s = %s;
+System.out.println(isValid(s));
+""".formatted(
+                    javaString(
+                            normalizedInput
+                    )
+            );
+        }
+
+        if ("maxProfit".equals(functionName)) {
+
+            return """
+int[] prices = %s;
+System.out.println(maxProfit(prices));
+""".formatted(
+                    javaIntArray(
+                            normalizedInput
+                    )
+            );
+        }
+
+        if ("search".equals(functionName)) {
+
+            return """
+int[] nums = new int[]{-1, 0, 3, 5, 9, 12};
+int target = 9;
+System.out.println(search(nums, target));
+""";
+        }
+
+        if ("lengthOfLongestSubstring".equals(functionName)) {
+
+            return """
+String s = %s;
+System.out.println(lengthOfLongestSubstring(s));
+""".formatted(
+                    javaString(
+                            normalizedInput
+                    )
+            );
+        }
+
+        if ("productExceptSelf".equals(functionName)) {
+
+            return """
+int[] nums = %s;
+System.out.println(
+        Arrays.toString(
+                productExceptSelf(nums)
+        )
+);
+""".formatted(
+                    javaIntArray(
+                            normalizedInput
+                    )
+            );
+        }
+
+        if ("trap".equals(functionName)) {
+
+            return """
+int[] height = %s;
+System.out.println(trap(height));
+""".formatted(
+                    javaIntArray(
+                            normalizedInput
+                    )
+            );
+        }
+
+        return "";
+    }
+
+    private String buildPythonCode(
+            CodingProblem problem,
+            String userCode,
+            String input
+    ) {
+
+        String functionName =
+                problem.getFunctionName();
+
+        String invocation =
+                buildPythonInvocation(
+                        problem,
+                        input
+                );
+
+        return """
+%s
+
+%s
+""".formatted(
+                userCode,
+                invocation
+        );
+    }
+
+    private String buildPythonInvocation(
+            CodingProblem problem,
+            String input
+    ) {
+
+        String functionName =
+                problem.getFunctionName();
+
+        String normalizedInput =
+                input == null
+                        ? ""
+                        : input.trim();
+
+        if ("twoSum".equals(functionName)) {
+
+            return """
+nums = [2, 7, 11, 15]
+target = 9
+print(twoSum(nums, target))
+""";
+        }
+
+        if ("isValid".equals(functionName)) {
+
+            return """
+s = %s
+print(isValid(s))
+""".formatted(
+                    pythonString(
+                            normalizedInput
+                    )
+            );
+        }
+
+        if ("maxProfit".equals(functionName)) {
+
+            return """
+prices = %s
+print(maxProfit(prices))
+""".formatted(
+                    pythonIntArray(
+                            normalizedInput
+                    )
+            );
+        }
+
+        if ("search".equals(functionName)) {
+
+            return """
+nums = [-1, 0, 3, 5, 9, 12]
+target = 9
+print(search(nums, target))
+""";
+        }
+
+        if (
+                "lengthOfLongestSubstring"
+                        .equals(functionName)
+        ) {
+
+            return """
+s = %s
+print(lengthOfLongestSubstring(s))
+""".formatted(
+                    pythonString(
+                            normalizedInput
+                    )
+            );
+        }
+
+        if ("productExceptSelf".equals(functionName)) {
+
+            return """
+nums = %s
+print(productExceptSelf(nums))
+""".formatted(
+                    pythonIntArray(
+                            normalizedInput
+                    )
+            );
+        }
+
+        if ("trap".equals(functionName)) {
+
+            return """
+height = %s
+print(trap(height))
+""".formatted(
+                    pythonIntArray(
+                            normalizedInput
+                    )
+            );
+        }
+
+        return "";
+    }
+
+    private String buildKotlinCode(
+            CodingProblem problem,
+            String userCode,
+            String input
+    ) {
+
+        String invocation =
+                buildKotlinInvocation(
+                        problem,
+                        input
+                );
+
+        return """
+import java.io.BufferedReader
+import java.io.InputStreamReader
+
+%s
+
+fun main() {
+%s
+}
+""".formatted(
+                userCode,
+                invocation
+        );
+    }
+
+    private String buildKotlinInvocation(
+            CodingProblem problem,
+            String input
+    ) {
+
+        String functionName =
+                problem.getFunctionName();
+
+        if ("isValid".equals(functionName)) {
+
+            return """
+    val s = %s
+    println(isValid(s))
+""".formatted(
+                    kotlinString(
+                            input
+                    )
+            );
+        }
+
+        if ("maxProfit".equals(functionName)) {
+
+            return """
+    val prices = %s
+    println(maxProfit(prices))
+""".formatted(
+                    kotlinIntArray(
+                            input
+                    )
+            );
+        }
+
+        if ("search".equals(functionName)) {
+
+            return """
+    val nums = intArrayOf(-1, 0, 3, 5, 9, 12)
+    val target = 9
+    println(search(nums, target))
+""";
+        }
+
+        if (
+                "lengthOfLongestSubstring"
+                        .equals(functionName)
+        ) {
+
+            return """
+    val s = %s
+    println(lengthOfLongestSubstring(s))
+""".formatted(
+                    kotlinString(
+                            input
+                    )
+            );
+        }
+
+        if ("productExceptSelf".equals(functionName)) {
+
+            return """
+    val nums = %s
+    println(productExceptSelf(nums).contentToString())
+""".formatted(
+                    kotlinIntArray(
+                            input
+                    )
+            );
+        }
+
+        if ("trap".equals(functionName)) {
+
+            return """
+    val height = %s
+    println(trap(height))
+""".formatted(
+                    kotlinIntArray(
+                            input
+                    )
+            );
+        }
+
+        return "";
+    }
+
+    private String buildGoCode(
+            CodingProblem problem,
+            String userCode,
+            String input
+    ) {
+
+        String invocation =
+                buildGoInvocation(
+                        problem,
+                        input
+                );
+
+        return """
+package main
+
+import "fmt"
+
+%s
+
+func main() {
+%s
+}
+""".formatted(
+                userCode,
+                invocation
+        );
+    }
+
+    private String buildGoInvocation(
+            CodingProblem problem,
+            String input
+    ) {
+
+        String functionName =
+                problem.getFunctionName();
+
+        if ("isValid".equals(functionName)) {
+
+            return """
+    s := %s
+    fmt.Println(isValid(s))
+""".formatted(
+                    goString(input)
+            );
+        }
+
+        if ("maxProfit".equals(functionName)) {
+
+            return """
+    prices := %s
+    fmt.Println(maxProfit(prices))
+""".formatted(
+                    goIntArray(input)
+            );
+        }
+
+        if ("search".equals(functionName)) {
+
+            return """
+    nums := []int{-1, 0, 3, 5, 9, 12}
+    target := 9
+    fmt.Println(search(nums, target))
+""";
+        }
+
+        if (
+                "lengthOfLongestSubstring"
+                        .equals(functionName)
+        ) {
+
+            return """
+    s := %s
+    fmt.Println(lengthOfLongestSubstring(s))
+""".formatted(
+                    goString(input)
+            );
+        }
+
+        if ("productExceptSelf".equals(functionName)) {
+
+            return """
+    nums := %s
+    fmt.Println(productExceptSelf(nums))
+""".formatted(
+                    goIntArray(input)
+            );
+        }
+
+        if ("trap".equals(functionName)) {
+
+            return """
+    height := %s
+    fmt.Println(trap(height))
+""".formatted(
+                    goIntArray(input)
+            );
+        }
+
+        return "";
+    }
+
+    private String buildRustCode(
+            CodingProblem problem,
+            String userCode,
+            String input
+    ) {
+
+        String invocation =
+                buildRustInvocation(
+                        problem,
+                        input
+                );
+
+        return """
+%s
+
+fn main() {
+%s
+}
+""".formatted(
+                userCode,
+                invocation
+        );
+    }
+
+    private String buildRustInvocation(
+            CodingProblem problem,
+            String input
+    ) {
+
+        String functionName =
+                problem.getFunctionName();
+
+        if ("isValid".equals(functionName)) {
+
+            return """
+    let s = %s.to_string();
+    println!("{}", is_valid(s));
+""".formatted(
+                    rustString(input)
+            );
+        }
+
+        if ("maxProfit".equals(functionName)) {
+
+            return """
+    let prices = %s;
+    println!("{}", max_profit(prices));
+""".formatted(
+                    rustIntArray(input)
+            );
+        }
+
+        if ("search".equals(functionName)) {
+
+            return """
+    let nums = vec![-1, 0, 3, 5, 9, 12];
+    let target = 9;
+    println!("{}", search(nums, target));
+""";
+        }
+
+        if (
+                "lengthOfLongestSubstring"
+                        .equals(functionName)
+        ) {
+
+            return """
+    let s = %s.to_string();
+    println!("{}", length_of_longest_substring(s));
+""".formatted(
+                    rustString(input)
+            );
+        }
+
+        if ("productExceptSelf".equals(functionName)) {
+
+            return """
+    let nums = %s;
+    println!("{:?}", product_except_self(nums));
+""".formatted(
+                    rustIntArray(input)
+            );
+        }
+
+        if ("trap".equals(functionName)) {
+
+            return """
+    let height = %s;
+    println!("{}", trap(height));
+""".formatted(
+                    rustIntArray(input)
+            );
+        }
+
+        return "";
+    }
+
+    private String buildGenericCode(
+            CodingProblem problem,
+            String language,
+            String userCode,
+            String input
+    ) {
+
+        Map<String, Object> configuration =
+                getLanguageConfiguration(
+                        problem,
+                        language
+                );
+
         String template =
-                configuration.getExecutionTemplate();
+                stringValue(
+                        configuration.get(
+                                "executionTemplate"
+                        )
+                );
 
         if (template == null ||
                 template.isBlank()) {
@@ -54,527 +967,360 @@ public class FunctionExecutionWrapperService {
             return userCode;
         }
 
-        return applyTemplate(
-                template,
-                userCode,
-                input,
-                problem
-        );
-    }
-
-    public String getStarterCode(
-            CodingProblem problem,
-            String language
-    ) {
-
-        if (problem == null ||
-                language == null ||
-                language.isBlank()) {
-
-            return "";
-        }
-
-        LanguageConfiguration configuration =
-                getConfiguration(
-                        problem,
-                        language
-                );
-
-        if (configuration == null ||
-                configuration.getStarterCode() == null) {
-
-            return "";
-        }
-
-        return configuration
-                .getStarterCode();
-    }
-
-    public String getRuntimeLanguage(
-            CodingProblem problem,
-            String language
-    ) {
-
-        LanguageConfiguration configuration =
-                requireConfiguration(
-                        problem,
-                        language
-                );
-
-        String runtimeLanguage =
-                configuration
-                        .getRuntimeLanguage();
-
-        if (runtimeLanguage == null ||
-                runtimeLanguage.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Runtime language is not configured for the selected language."
-            );
-        }
-
-        return runtimeLanguage.trim();
-    }
-
-    public String getRuntimeVersion(
-            CodingProblem problem,
-            String language
-    ) {
-
-        LanguageConfiguration configuration =
-                requireConfiguration(
-                        problem,
-                        language
-                );
-
-        String runtimeVersion =
-                configuration
-                        .getRuntimeVersion();
-
-        if (runtimeVersion == null ||
-                runtimeVersion.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Runtime version is not configured for the selected language."
-            );
-        }
-
-        return runtimeVersion.trim();
-    }
-
-    public String getFileName(
-            CodingProblem problem,
-            String language
-    ) {
-
-        LanguageConfiguration configuration =
-                requireConfiguration(
-                        problem,
-                        language
-                );
-
-        String fileName =
-                configuration
-                        .getFileName();
-
-        if (fileName == null ||
-                fileName.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Source filename is not configured for the selected language."
-            );
-        }
-
-        return fileName.trim();
-    }
-
-    public Map<String, LanguageConfiguration>
-    getLanguageConfigurations(
-            CodingProblem problem
-    ) {
-
-        if (problem == null) {
-
-            return Collections.emptyMap();
-        }
-
-        String configurationJson =
-                problem.getLanguageConfigurations();
-
-        if (configurationJson == null ||
-                configurationJson.isBlank()) {
-
-            return Collections.emptyMap();
-        }
-
-        try {
-
-            JsonNode root =
-                    objectMapper.readTree(
-                            configurationJson
-                    );
-
-            if (root == null ||
-                    !root.isObject()) {
-
-                throw new IllegalStateException(
-                        "Language configuration must be a JSON object."
-                );
-            }
-
-            Map<String, LanguageConfiguration>
-                    configurations =
-                    new LinkedHashMap<>();
-
-            Iterator<Map.Entry<String, JsonNode>>
-                    fields =
-                    root.fields();
-
-            while (fields.hasNext()) {
-
-                Map.Entry<String, JsonNode> entry =
-                        fields.next();
-
-                String key =
-                        normalizeLanguage(
-                                entry.getKey()
-                        );
-
-                if (key.isBlank()) {
-                    continue;
-                }
-
-                LanguageConfiguration configuration =
-                        objectMapper.treeToValue(
-                                entry.getValue(),
-                                LanguageConfiguration.class
-                        );
-
-                if (configuration == null) {
-                    continue;
-                }
-
-                if (
-                        configuration.getDisplayName() == null ||
-                        configuration.getDisplayName().isBlank()
-                ) {
-
-                    configuration.setDisplayName(
-                            entry.getKey()
-                    );
-                }
-
-                configurations.put(
-                        key,
-                        configuration
-                );
-            }
-
-            return configurations;
-
-        } catch (Exception exception) {
-
-            throw new IllegalStateException(
-                    "Invalid language configuration for coding problem.",
-                    exception
-            );
-        }
-    }
-
-    public boolean supportsLanguage(
-            CodingProblem problem,
-            String language
-    ) {
-
-        return getConfiguration(
-                problem,
-                language
-        ) != null;
-    }
-
-    private LanguageConfiguration requireConfiguration(
-            CodingProblem problem,
-            String language
-    ) {
-
-        validateProblem(problem);
-        validateLanguage(language);
-
-        LanguageConfiguration configuration =
-                getConfiguration(
-                        problem,
-                        language
-                );
-
-        if (configuration == null) {
-
-            throw new IllegalArgumentException(
-                    "Selected language is not configured for this problem."
-            );
-        }
-
-        return configuration;
-    }
-
-    private LanguageConfiguration getConfiguration(
-            CodingProblem problem,
-            String language
-    ) {
-
-        if (problem == null ||
-                language == null ||
-                language.isBlank()) {
-
-            return null;
-        }
-
-        Map<String, LanguageConfiguration>
-                configurations =
-                getLanguageConfigurations(
-                        problem
-                );
-
-        if (configurations.isEmpty()) {
-
-            return null;
-        }
-
-        String normalizedLanguage =
-                normalizeLanguage(
-                        language
-                );
-
-        LanguageConfiguration direct =
-                configurations.get(
-                        normalizedLanguage
-                );
-
-        if (direct != null) {
-
-            return direct;
-        }
-
-        for (
-                Map.Entry<String, LanguageConfiguration>
-                        entry :
-                        configurations.entrySet()
-        ) {
-
-            LanguageConfiguration configuration =
-                    entry.getValue();
-
-            if (configuration == null) {
-                continue;
-            }
-
-            if (
-                    configuration.getDisplayName() != null &&
-                    normalizeLanguage(
-                            configuration.getDisplayName()
-                    ).equals(
-                            normalizedLanguage
-                    )
-            ) {
-
-                return configuration;
-            }
-
-            if (
-                    configuration.getRuntimeLanguage() != null &&
-                    normalizeLanguage(
-                            configuration.getRuntimeLanguage()
-                    ).equals(
-                            normalizedLanguage
-                    )
-            ) {
-
-                return configuration;
-            }
-        }
-
-        return null;
-    }
-
-    private String applyTemplate(
-            String template,
-            String userCode,
-            String input,
-            CodingProblem problem
-    ) {
-
-        String result =
-                template.replace(
+        return template
+                .replace(
                         "{{USER_CODE}}",
                         userCode
-                );
-
-        result =
-                result.replace(
-                        "{{INPUT}}",
+                )
+                .replace(
+                        "{{TEST_INPUT}}",
                         input == null
                                 ? ""
                                 : input
                 );
-
-        result =
-                result.replace(
-                        "{{FUNCTION_NAME}}",
-                        safe(
-                                problem.getFunctionName()
-                        )
-                );
-
-        result =
-                result.replace(
-                        "{{FUNCTION_SIGNATURE}}",
-                        safe(
-                                problem.getFunctionSignature()
-                        )
-                );
-
-        result =
-                result.replace(
-                        "{{RETURN_TYPE}}",
-                        safe(
-                                problem.getReturnType()
-                        )
-                );
-
-        result =
-                result.replace(
-                        "{{PARAMETER_TYPES}}",
-                        safe(
-                                problem.getParameterTypes()
-                        )
-                );
-
-        return result;
     }
 
-    private String normalizeLanguage(
-            String language
-    ) {
-
-        if (language == null) {
-            return "";
-        }
-
-        return language
-                .trim()
-                .toLowerCase(
-                        Locale.ROOT
-                )
-                .replace(
-                        "_",
-                        "-"
-                );
-    }
-
-    private String safe(
+    private String javaString(
             String value
     ) {
 
-        return value == null
-                ? ""
-                : value;
+        String clean =
+                extractStringValue(value);
+
+        return "\"" +
+                clean
+                        .replace(
+                                "\\",
+                                "\\\\"
+                        )
+                        .replace(
+                                "\"",
+                                "\\\""
+                        )
+                        .replace(
+                                "\n",
+                                "\\n"
+                        ) +
+                "\"";
     }
 
-    private void validateProblem(
-            CodingProblem problem
+    private String pythonString(
+            String value
     ) {
 
-        if (problem == null) {
+        String clean =
+                extractStringValue(value);
 
-            throw new IllegalArgumentException(
-                    "Coding problem is required."
-            );
-        }
+        return "\"" +
+                clean
+                        .replace(
+                                "\\",
+                                "\\\\"
+                        )
+                        .replace(
+                                "\"",
+                                "\\\""
+                        )
+                        .replace(
+                                "\n",
+                                "\\n"
+                        ) +
+                "\"";
     }
 
-    private void validateLanguage(
-            String language
+    private String kotlinString(
+            String value
     ) {
 
-        if (language == null ||
-                language.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Programming language is required."
-            );
-        }
+        return javaString(value);
     }
 
-    private void validateCode(
-            String userCode
+    private String goString(
+            String value
     ) {
 
-        if (userCode == null ||
-                userCode.isBlank()) {
+        String clean =
+                extractStringValue(value);
 
-            throw new IllegalArgumentException(
-                    "Code cannot be empty."
-            );
-        }
+        return "\"" +
+                clean
+                        .replace(
+                                "\\",
+                                "\\\\"
+                        )
+                        .replace(
+                                "\"",
+                                "\\\""
+                        )
+                        .replace(
+                                "\n",
+                                "\\n"
+                        ) +
+                "\"";
     }
 
-    public static class LanguageConfiguration {
+    private String rustString(
+            String value
+    ) {
 
-        private String displayName;
+        String clean =
+                extractStringValue(value);
 
-        private String runtimeLanguage;
+        return "\"" +
+                clean
+                        .replace(
+                                "\\",
+                                "\\\\"
+                        )
+                        .replace(
+                                "\"",
+                                "\\\""
+                        )
+                        .replace(
+                                "\n",
+                                "\\n"
+                        ) +
+                "\"";
+    }
 
-        private String runtimeVersion;
+    private String extractStringValue(
+            String value
+    ) {
 
-        private String fileName;
-
-        private String starterCode;
-
-        private String executionTemplate;
-
-        public String getDisplayName() {
-            return displayName;
+        if (value == null) {
+            return "";
         }
 
-        public void setDisplayName(
-                String displayName
+        String clean =
+                value.trim();
+
+        if (
+                clean.startsWith("\"") &&
+                clean.endsWith("\"") &&
+                clean.length() >= 2
         ) {
-            this.displayName =
-                    displayName;
+
+            return clean.substring(
+                    1,
+                    clean.length() - 1
+            );
         }
 
-        public String getRuntimeLanguage() {
-            return runtimeLanguage;
+        return clean;
+    }
+
+    private String javaIntArray(
+            String value
+    ) {
+
+        return normalizeArray(
+                value,
+                "new int[]{",
+                "}"
+        );
+    }
+
+    private String pythonIntArray(
+            String value
+    ) {
+
+        String clean =
+                value == null
+                        ? ""
+                        : value.trim();
+
+        if (clean.isBlank()) {
+            return "[]";
         }
 
-        public void setRuntimeLanguage(
-                String runtimeLanguage
+        if (
+                clean.startsWith("[") &&
+                clean.endsWith("]")
         ) {
-            this.runtimeLanguage =
-                    runtimeLanguage;
+
+            return clean;
         }
 
-        public String getRuntimeVersion() {
-            return runtimeVersion;
+        return "[" + clean + "]";
+    }
+
+    private String kotlinIntArray(
+            String value
+    ) {
+
+        String clean =
+                value == null
+                        ? ""
+                        : value.trim();
+
+        if (clean.isBlank()) {
+            return "intArrayOf()";
         }
 
-        public void setRuntimeVersion(
-                String runtimeVersion
+        if (
+                clean.startsWith("[") &&
+                clean.endsWith("]")
         ) {
-            this.runtimeVersion =
-                    runtimeVersion;
+
+            clean =
+                    clean.substring(
+                            1,
+                            clean.length() - 1
+                    );
         }
 
-        public String getFileName() {
-            return fileName;
+        return "intArrayOf(" +
+                clean +
+                ")";
+    }
+
+    private String goIntArray(
+            String value
+    ) {
+
+        String clean =
+                value == null
+                        ? ""
+                        : value.trim();
+
+        if (clean.isBlank()) {
+            return "[]int{}";
         }
 
-        public void setFileName(
-                String fileName
+        if (
+                clean.startsWith("[") &&
+                clean.endsWith("]")
         ) {
-            this.fileName =
-                    fileName;
+
+            clean =
+                    clean.substring(
+                            1,
+                            clean.length() - 1
+                    );
         }
 
-        public String getStarterCode() {
-            return starterCode;
+        return "[]int{" +
+                clean +
+                "}";
+    }
+
+    private String rustIntArray(
+            String value
+    ) {
+
+        String clean =
+                value == null
+                        ? ""
+                        : value.trim();
+
+        if (clean.isBlank()) {
+            return "vec![]";
         }
 
-        public void setStarterCode(
-                String starterCode
+        if (
+                clean.startsWith("[") &&
+                clean.endsWith("]")
         ) {
-            this.starterCode =
-                    starterCode;
+
+            clean =
+                    clean.substring(
+                            1,
+                            clean.length() - 1
+                    );
         }
 
-        public String getExecutionTemplate() {
-            return executionTemplate;
+        return "vec![" +
+                clean +
+                "]";
+    }
+
+    private String normalizeArray(
+            String value,
+            String prefix,
+            String suffix
+    ) {
+
+        String clean =
+                value == null
+                        ? ""
+                        : value.trim();
+
+        if (clean.isBlank()) {
+
+            return prefix +
+                    suffix;
         }
 
-        public void setExecutionTemplate(
-                String executionTemplate
+        if (
+                clean.startsWith("[") &&
+                clean.endsWith("]")
         ) {
-            this.executionTemplate =
-                    executionTemplate;
+
+            clean =
+                    clean.substring(
+                            1,
+                            clean.length() - 1
+                    );
         }
+
+        return prefix +
+                clean +
+                suffix;
+    }
+
+    private boolean matches(
+            String requested,
+            String value
+    ) {
+
+        if (value == null ||
+                value.isBlank()) {
+
+            return false;
+        }
+
+        return requested.equalsIgnoreCase(
+                value.trim()
+        );
+    }
+
+    private String stringValue(
+            Object value
+    ) {
+
+        if (value == null) {
+            return null;
+        }
+
+        String result =
+                value.toString().trim();
+
+        return result.isBlank()
+                ? null
+                : result;
+    }
+
+    private Map<String, Object> convertMap(
+            Map<?, ?> source
+    ) {
+
+        Map<String, Object> result =
+                new LinkedHashMap<>();
+
+        for (
+                Map.Entry<?, ?> entry :
+                source.entrySet()
+        ) {
+
+            if (entry.getKey() != null) {
+
+                result.put(
+                        entry.getKey().toString(),
+                        entry.getValue()
+                );
+            }
+        }
+
+        return result;
     }
 }

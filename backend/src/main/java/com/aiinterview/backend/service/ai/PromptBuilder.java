@@ -49,9 +49,6 @@ Resume:
 """ + resumeText;
     }
 
-    /**
-     * Generates the next interview question.
-     */
     public static String buildInterviewQuestionPrompt(
             String interviewType,
             int questionNumber,
@@ -77,9 +74,6 @@ Question Number:
 """ + questionNumber + " of " + totalQuestions;
     }
 
-    /**
-     * Evaluates the candidate's answer.
-     */
     public static String buildAnswerEvaluationPrompt(
             String question,
             String answer
@@ -108,16 +102,12 @@ Answer:
 """ + answer;
     }
 
+    public static String buildSkillSuggestionPrompt(
+            String role,
+            String query
+    ) {
 
-  public static String buildSkillSuggestionPrompt(
-
-        String role,
-
-        String query
-
-) {
-
-    return """
+        return """
 You are a senior software architect, technical interviewer and hiring manager.
 
 Your task is to suggest technical skills only.
@@ -179,8 +169,45 @@ Role:
 User Search:
 
 """ + query;
+    }
 
-}
+    public static String buildCodingHintPrompt(
+            String problemTitle,
+            String problemDescription,
+            String language,
+            String code
+    ) {
 
+        return """
+You are an expert coding interview mentor.
 
+Give the candidate a useful hint for solving the coding problem.
+
+Rules:
+
+1. Return plain text only.
+2. Do not use Markdown.
+3. Do not provide the complete solution.
+4. Do not provide complete code.
+5. Do not directly reveal the final answer.
+6. Explain the next useful idea or approach.
+7. Point out a likely mistake if the submitted code has one.
+8. Keep the hint concise and practical.
+9. The hint must be relevant to the selected programming language.
+
+Problem:
+""" + problemTitle + """
+
+Description:
+""" + problemDescription + """
+
+Language:
+""" + language + """
+
+Current Code:
+""" + code + """
+
+Give one helpful hint now.
+""";
+    }
 }
