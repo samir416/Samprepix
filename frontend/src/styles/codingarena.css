@@ -78,43 +78,27 @@
 ========================= */
 
 .coding-problem-menu{
-
     position:fixed;
-
     top:50%;
-
     left:50%;
-
     transform:translate(-50%,-50%);
-
     width:min(500px, calc(100vw - 32px));
-
     max-height:min(620px, calc(100vh - 48px));
-
     padding:8px;
-
     border-radius:26px;
-
-    background:
-    rgba(255,255,255,0.88);
-
+    background:rgba(255,255,255,0.88);
     backdrop-filter:blur(28px);
-
     -webkit-backdrop-filter:blur(28px);
-
-    border:
-    1px solid rgba(255,255,255,0.7);
-
+    border:1px solid rgba(255,255,255,0.7);
     box-shadow:
     0 30px 80px rgba(15,23,42,0.18),
     0 8px 30px rgba(109,99,255,0.08);
-
     z-index:10000;
-
-    animation:
-    problemMenuIn 0.2s ease;
+    animation:problemMenuIn 0.2s ease;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
 }
-
 .coding-problem-menu::before{
 
     content:"";
@@ -224,26 +208,21 @@
 ========================= */
 
 .coding-problem-list{
-
     position:relative;
-
     z-index:1;
-
-    max-height:490px;
-
+    flex:1;
+    min-height:0;
+    max-height:none;
     overflow-y:auto;
-
     overflow-x:hidden;
-
     padding:8px 4px 6px;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
 }
 
 .coding-problem-list::-webkit-scrollbar{
-
     width:0;
-
     height:0;
-
     display:none;
 }
 

@@ -1,5 +1,5 @@
-  import { useEffect, useRef, useState } from "react";
-   import {
+import { useEffect, useRef, useState } from "react";
+import {
     getProfile,
     updateProfile,
     uploadProfilePicture,
@@ -10,792 +10,571 @@
 
 import { getCompletedInterviewCount } from "../services/interviewService";
 
-    import {
-        User,
-        Briefcase,
-        GraduationCap,
-        Link2,
-        Camera,
-        Trash2
-    } from "lucide-react";
-    import { getCurrentUser } from "../services/authService";
-    import "../styles/profile.css";
-    import ConfirmationModal from "../components/ConfirmationModal";
-    import ImageCropModal from "../components/common/ImageCropModal";
+import {
+    User,
+    Briefcase,
+    GraduationCap,
+    Link2,
+    Camera,
+    Trash2
+} from "lucide-react";
+import { getCurrentUser } from "../services/authService";
+import "../styles/profile.css";
+import ConfirmationModal from "../components/ConfirmationModal";
+import ImageCropModal from "../components/common/ImageCropModal";
 
-    export default function Profile() {
+export default function Profile() {
 
-        const [user, setUser] = useState(null);
+    const [user, setUser] = useState(null);
 
-const [mockInterviewCount, setMockInterviewCount] = useState(0);
+    const [githubRepository, setGithubRepository] = useState({
+        connected: false,
+        repositoryUrl: ""
+    });
 
-        const [isEditing, setIsEditing] = useState(false);
+    const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
-        const [selectedImage, setSelectedImage] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
 
-        const [cropImage, setCropImage] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null);
 
-        const [originalImageFile, setOriginalImageFile] = useState(null);
+    const [cropImage, setCropImage] = useState(null);
 
-
-        const [isCropOpen, setIsCropOpen] = useState(false);
-
-
-        const [selectedFile, setSelectedFile] = useState(null);
-
-        const [isSaving, setIsSaving] = useState(false);
-
-        const [hasChanges, setHasChanges] = useState(false);
-
-        const [originalProfile, setOriginalProfile] = useState(null);
-
-        const [errors, setErrors] = useState({});
-
-        const [imageError, setImageError] = useState(false);
-
-        const [isUploadingImage, setIsUploadingImage] = useState(false);
-
-        const [message, setMessage] = useState({
-            type: "",
-            text: ""
-        });
-
-        const [showDiscardModal, setShowDiscardModal] = useState(false);
-
-        const [selectedSkills, setSelectedSkills] = useState([]);
-
-        const [skillInput, setSkillInput] = useState("");
-
-        const [skillSuggestions, setSkillSuggestions] = useState([]);
-
-        const [showSkillSuggestions, setShowSkillSuggestions] = useState(false);
-
-        const [activeSkillIndex, setActiveSkillIndex] = useState(-1);
-
-        const [skillValidation, setSkillValidation] = useState("");
-
-        const [isSkillLoading, setIsSkillLoading] = useState(false);
-
-        const [skillSearchTimer, setSkillSearchTimer] = useState(null);
-
-        const [skillAbortController, setSkillAbortController] = useState(null);
-
-        const activeSuggestionRef = useRef(null);
-
-        const skillCache = useRef(new Map());
-
-        const [formData, setFormData] = useState({
-
-            name: "",
-
-            username: "",
-
-            email: "",
-
-            journeyType: "",
-
-            targetRole: "",
-
-            experienceLevel: "",
-
-            collegeName: "",
-
-            degree: "",
-
-            graduationYear: "",
-
-            currentCompany: "",
-
-            phone: "",
-
-            gender: "",
-
-            githubUrl: "",
-
-            linkedinUrl: "",
-
-            portfolioUrl: "",
-
-            personalWebsite: "",
-
-            dateOfBirth: "",
-
-            yearsOfExperience: "",
-
-            careerGoal: "",
-
-            university: "",
-
-            designation: "",
-
-            employmentType: "",
-
-            skills: []
+    const [originalImageFile, setOriginalImageFile] = useState(null);
 
 
-        });
+    const [isCropOpen, setIsCropOpen] = useState(false);
 
 
-        const genderOptions = [
+    const [selectedFile, setSelectedFile] = useState(null);
 
-            {
-                value: "MALE",
-                label: "Male"
-            },
+    const [isSaving, setIsSaving] = useState(false);
 
-            {
-                value: "FEMALE",
-                label: "Female"
-            },
+    const [hasChanges, setHasChanges] = useState(false);
 
-            {
-                value: "OTHER",
-                label: "Other"
+    const [originalProfile, setOriginalProfile] = useState(null);
+
+    const [errors, setErrors] = useState({});
+
+    const [imageError, setImageError] = useState(false);
+
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+    const [message, setMessage] = useState({
+        type: "",
+        text: ""
+    });
+
+    const [showDiscardModal, setShowDiscardModal] = useState(false);
+
+    const [selectedSkills, setSelectedSkills] = useState([]);
+
+    const [skillInput, setSkillInput] = useState("");
+
+    const [skillSuggestions, setSkillSuggestions] = useState([]);
+
+    const [showSkillSuggestions, setShowSkillSuggestions] = useState(false);
+
+    const [activeSkillIndex, setActiveSkillIndex] = useState(-1);
+
+    const [skillValidation, setSkillValidation] = useState("");
+
+    const [isSkillLoading, setIsSkillLoading] = useState(false);
+
+    const [skillSearchTimer, setSkillSearchTimer] = useState(null);
+
+    const [skillAbortController, setSkillAbortController] = useState(null);
+
+    const activeSuggestionRef = useRef(null);
+
+    const skillCache = useRef(new Map());
+
+    const [formData, setFormData] = useState({
+
+        name: "",
+
+        username: "",
+
+        email: "",
+
+        journeyType: "",
+
+        targetRole: "",
+
+        experienceLevel: "",
+
+        collegeName: "",
+
+        degree: "",
+
+        graduationYear: "",
+
+        currentCompany: "",
+
+        phone: "",
+
+        gender: "",
+
+        githubUrl: "",
+
+        linkedinUrl: "",
+
+        portfolioUrl: "",
+
+        personalWebsite: "",
+
+        dateOfBirth: "",
+
+        yearsOfExperience: "",
+
+        careerGoal: "",
+
+        university: "",
+
+        designation: "",
+
+        employmentType: "",
+
+        skills: []
+
+
+    });
+
+
+    const genderOptions = [
+
+        {
+            value: "MALE",
+            label: "Male"
+        },
+
+        {
+            value: "FEMALE",
+            label: "Female"
+        },
+
+        {
+            value: "OTHER",
+            label: "Other"
+        }
+
+    ];
+
+    const journeyOptions = [
+
+        {
+            value: "STUDENT",
+            label: "Student"
+        },
+
+        {
+            value: "WORKING_PROFESSIONAL",
+            label: "Working Professional"
+        },
+
+        {
+            value: "OTHER",
+            label: "Other"
+        }
+
+    ];
+
+    const experienceOptions = [
+
+        {
+            value: "FRESHER",
+            label: "Fresher"
+        },
+
+        {
+            value: "BEGINNER",
+            label: "Beginner"
+        },
+
+        {
+            value: "INTERMEDIATE",
+            label: "Intermediate"
+        },
+
+        {
+            value: "ADVANCED",
+            label: "Advanced"
+        }
+
+    ];
+
+
+    const careerGoalOptions = [
+
+        {
+            value: "JOB",
+            label: "Get a Job"
+        },
+
+        {
+            value: "COMPANY_SWITCH",
+            label: "Switch Company"
+        },
+
+        {
+            value: "DOMAIN_SWITCH",
+            label: "Switch Domain"
+        },
+
+        {
+            value: "PROMOTION",
+            label: "Promotion"
+        },
+
+        {
+            value: "INTERVIEW_PRACTICE",
+            label: "Interview Practice"
+        }
+
+    ];
+
+    const graduationYearOptions = [
+
+        {
+            value: "2025",
+            label: "2025"
+        },
+
+        {
+            value: "2026",
+            label: "2026"
+        },
+
+        {
+            value: "2027",
+            label: "2027"
+        },
+
+        {
+            value: "2028",
+            label: "2028"
+        },
+
+        {
+            value: "2029",
+            label: "2029"
+        },
+
+        {
+            value: "2030",
+            label: "2030"
+        }
+
+    ];
+
+    const experienceYearOptions = [
+
+        {
+            value: "0.0",
+            label: "Fresher"
+        },
+
+        {
+            value: "1.0",
+            label: "1 Year"
+        },
+
+        {
+            value: "2.0",
+            label: "2 Years"
+        },
+
+        {
+            value: "3.0",
+            label: "3 Years"
+        },
+
+        {
+            value: "4.0",
+            label: "4 Years"
+        },
+
+        {
+            value: "5.0",
+            label: "5+ Years"
+        }
+
+    ];
+
+    const employmentTypeOptions = [
+
+        {
+            value: "FULL_TIME",
+            label: "Full Time"
+        },
+
+        {
+            value: "PART_TIME",
+            label: "Part Time"
+        },
+
+        {
+            value: "INTERNSHIP",
+            label: "Internship"
+        },
+
+        {
+            value: "FREELANCE",
+            label: "Freelance"
+        },
+
+        {
+            value: "CONTRACT",
+            label: "Contract"
+        }
+
+    ];
+
+
+    useEffect(() => {
+
+        const loadUser = async () => {
+
+            try {
+
+                const basicUser = await getCurrentUser();
+
+                const profile = await getProfile();
+
+                const currentUser = {
+
+                    ...basicUser,
+
+                    ...profile
+
+                };
+
+                localStorage.setItem(
+                    "user",
+                    JSON.stringify(currentUser)
+                );
+
+                setUser(currentUser);
+
+                setOriginalProfile({
+
+                    ...currentUser,
+
+                    skills: currentUser.skills || []
+
+                });
+
+                setImageError(false);
+
+                setFormData({
+
+
+
+                    name: currentUser.name || "",
+
+                    username: currentUser.username || "",
+
+                    email: currentUser.email || "",
+
+                    journeyType: currentUser.journeyType || "",
+
+                    targetRole: currentUser.targetRole || "",
+
+                    experienceLevel: currentUser.experienceLevel || "",
+
+                    collegeName: currentUser.college || "",
+
+                    degree: currentUser.course || "",
+
+                    graduationYear: currentUser.graduationYear || "",
+
+                    university: currentUser.university || "",
+
+                    currentCompany: currentUser.currentCompany || "",
+
+                    designation: currentUser.designation || "",
+
+                    employmentType: currentUser.employmentType || "",
+
+                    skills: currentUser.skills || [],
+
+                    phone: currentUser.phone || "",
+
+                    gender: currentUser.gender || "",
+
+                    githubUrl: currentUser.githubUrl || "",
+
+                    linkedinUrl: currentUser.linkedinUrl || "",
+
+                    portfolioUrl: currentUser.portfolioUrl || "",
+
+                    personalWebsite: currentUser.personalWebsite || "",
+
+                    dateOfBirth: currentUser.dateOfBirth || "",
+
+                    yearsOfExperience: currentUser.yearsOfExperience || "",
+
+                    careerGoal: currentUser.careerGoal || "",
+
+                });
+                setSelectedSkills(currentUser.skills || []);
+
             }
 
-        ];
+            catch (error) {
 
-        const journeyOptions = [
+                console.error(error);
 
-            {
-                value: "STUDENT",
-                label: "Student"
-            },
-
-            {
-                value: "WORKING_PROFESSIONAL",
-                label: "Working Professional"
-            },
-
-            {
-                value: "OTHER",
-                label: "Other"
-            }
-
-        ];
-
-        const experienceOptions = [
-
-            {
-                value: "FRESHER",
-                label: "Fresher"
-            },
-
-            {
-                value: "BEGINNER",
-                label: "Beginner"
-            },
-
-            {
-                value: "INTERMEDIATE",
-                label: "Intermediate"
-            },
-
-            {
-                value: "ADVANCED",
-                label: "Advanced"
-            }
-
-        ];
+                const storedUser = localStorage.getItem("user");
 
 
-        const careerGoalOptions = [
+                if (storedUser) {
 
-            {
-                value: "JOB",
-                label: "Get a Job"
-            },
+                    const parsedUser = JSON.parse(storedUser);
 
-            {
-                value: "COMPANY_SWITCH",
-                label: "Switch Company"
-            },
-
-            {
-                value: "DOMAIN_SWITCH",
-                label: "Switch Domain"
-            },
-
-            {
-                value: "PROMOTION",
-                label: "Promotion"
-            },
-
-            {
-                value: "INTERVIEW_PRACTICE",
-                label: "Interview Practice"
-            }
-
-        ];
-
-        const graduationYearOptions = [
-
-            {
-                value: "2025",
-                label: "2025"
-            },
-
-            {
-                value: "2026",
-                label: "2026"
-            },
-
-            {
-                value: "2027",
-                label: "2027"
-            },
-
-            {
-                value: "2028",
-                label: "2028"
-            },
-
-            {
-                value: "2029",
-                label: "2029"
-            },
-
-            {
-                value: "2030",
-                label: "2030"
-            }
-
-        ];
-
-        const experienceYearOptions = [
-
-            {
-                value: "0.0",
-                label: "Fresher"
-            },
-
-            {
-                value: "1.0",
-                label: "1 Year"
-            },
-
-            {
-                value: "2.0",
-                label: "2 Years"
-            },
-
-            {
-                value: "3.0",
-                label: "3 Years"
-            },
-
-            {
-                value: "4.0",
-                label: "4 Years"
-            },
-
-            {
-                value: "5.0",
-                label: "5+ Years"
-            }
-
-        ];
-
-        const employmentTypeOptions = [
-
-            {
-                value: "FULL_TIME",
-                label: "Full Time"
-            },
-
-            {
-                value: "PART_TIME",
-                label: "Part Time"
-            },
-
-            {
-                value: "INTERNSHIP",
-                label: "Internship"
-            },
-
-            {
-                value: "FREELANCE",
-                label: "Freelance"
-            },
-
-            {
-                value: "CONTRACT",
-                label: "Contract"
-            }
-
-        ];
-
-
-        useEffect(() => {
-
-            const loadUser = async () => {
-
-                try {
-
-                    const basicUser = await getCurrentUser();
-
-                    const profile = await getProfile();
-
-                    const currentUser = {
-
-                        ...basicUser,
-
-                        ...profile
-
-                    };
-
-                    localStorage.setItem(
-                        "user",
-                        JSON.stringify(currentUser)
-                    );
-
-                    setUser(currentUser);
+                    setUser(parsedUser);
 
                     setOriginalProfile({
 
-                        ...currentUser,
+                        ...parsedUser,
 
-                        skills: currentUser.skills || []
+                        skills: parsedUser.skills || []
 
                     });
-
-                    setImageError(false);
 
                     setFormData({
 
+                        name: parsedUser.name || "",
 
+                        username: parsedUser.username || "",
 
-                        name: currentUser.name || "",
+                        email: parsedUser.email || "",
 
-                        username: currentUser.username || "",
+                        journeyType: parsedUser.journeyType || "",
 
-                        email: currentUser.email || "",
+                        targetRole: parsedUser.targetRole || "",
 
-                        journeyType: currentUser.journeyType || "",
+                        experienceLevel: parsedUser.experienceLevel || "",
 
-                        targetRole: currentUser.targetRole || "",
+                        collegeName: parsedUser.college || "",
 
-                        experienceLevel: currentUser.experienceLevel || "",
+                        degree: parsedUser.course || "",
 
-                        collegeName: currentUser.college || "",
+                        graduationYear: parsedUser.graduationYear || "",
 
-                        degree: currentUser.course || "",
+                        currentCompany: parsedUser.currentCompany || "",
 
-                        graduationYear: currentUser.graduationYear || "",
+                        university: parsedUser.university || "",
 
-                        university: currentUser.university || "",
+                        designation: parsedUser.designation || "",
 
-                        currentCompany: currentUser.currentCompany || "",
+                        employmentType: parsedUser.employmentType || "",
 
-                        designation: currentUser.designation || "",
+                        skills: parsedUser.skills || [],
 
-                        employmentType: currentUser.employmentType || "",
+                        phone: parsedUser.phone || "",
+                        gender: parsedUser.gender || "",
 
-                        skills: currentUser.skills || [],
+                        githubUrl: parsedUser.githubUrl || "",
 
-                        phone: currentUser.phone || "",
+                        linkedinUrl: parsedUser.linkedinUrl || "",
 
-                        gender: currentUser.gender || "",
+                        portfolioUrl: parsedUser.portfolioUrl || "",
 
-                        githubUrl: currentUser.githubUrl || "",
+                        personalWebsite: parsedUser.personalWebsite || "",
 
-                        linkedinUrl: currentUser.linkedinUrl || "",
+                        dateOfBirth: parsedUser.dateOfBirth || "",
 
-                        portfolioUrl: currentUser.portfolioUrl || "",
+                        yearsOfExperience: parsedUser.yearsOfExperience || "",
 
-                        personalWebsite: currentUser.personalWebsite || "",
-
-                        dateOfBirth: currentUser.dateOfBirth || "",
-
-                        yearsOfExperience: currentUser.yearsOfExperience || "",
-
-                        careerGoal: currentUser.careerGoal || "",
+                        careerGoal: parsedUser.careerGoal || "",
 
                     });
-                    setSelectedSkills(currentUser.skills || []);
+
+                    setSelectedSkills(parsedUser.skills || []);
 
                 }
 
-                catch (error) {
+            }
 
-                    console.error(error);
+        };
 
-                    const storedUser = localStorage.getItem("user");
+        loadUser();
 
+    }, []);
 
-                    if (storedUser) {
+    useEffect(() => {
 
-                        const parsedUser = JSON.parse(storedUser);
+        const loadGitHubRepository = async () => {
 
-                        setUser(parsedUser);
+            try {
 
-                        setOriginalProfile({
+                const repository =
+                    await getGitHubRepository();
 
-                            ...parsedUser,
+                setGithubRepository({
+                    connected:
+                        repository?.connected === true,
+                    repositoryUrl:
+                        repository?.repositoryUrl || ""
+                });
 
-                            skills: parsedUser.skills || []
+            } catch (error) {
 
-                        });
-
-                        setFormData({
-
-                            name: parsedUser.name || "",
-
-                            username: parsedUser.username || "",
-
-                            email: parsedUser.email || "",
-
-                            journeyType: parsedUser.journeyType || "",
-
-                            targetRole: parsedUser.targetRole || "",
-
-                            experienceLevel: parsedUser.experienceLevel || "",
-
-                            collegeName: parsedUser.college || "",
-
-                            degree: parsedUser.course || "",
-
-                            graduationYear: parsedUser.graduationYear || "",
-
-                            currentCompany: parsedUser.currentCompany || "",
-
-                            university: parsedUser.university || "",
-
-                            designation: parsedUser.designation || "",
-
-                            employmentType: parsedUser.employmentType || "",
-
-                            skills: parsedUser.skills || [],
-
-                            phone: parsedUser.phone || "",
-                            gender: parsedUser.gender || "",
-
-                            githubUrl: parsedUser.githubUrl || "",
-
-                            linkedinUrl: parsedUser.linkedinUrl || "",
-
-                            portfolioUrl: parsedUser.portfolioUrl || "",
-
-                            personalWebsite: parsedUser.personalWebsite || "",
-
-                            dateOfBirth: parsedUser.dateOfBirth || "",
-
-                            yearsOfExperience: parsedUser.yearsOfExperience || "",
-
-                            careerGoal: parsedUser.careerGoal || "",
-
-                        });
-
-                        setSelectedSkills(parsedUser.skills || []);
-
-                    }
-
-                }
-
-            };
-
-            loadUser();
-
-        }, []);
-
-        useEffect(() => {
-
-            const loadGitHubRepository = async () => {
-
-                try {
-
-                    const repository =
-                        await getGitHubRepository();
-
-                    setGithubRepository({
-                        connected:
-                            repository?.connected === true,
-                        repositoryUrl:
-                            repository?.repositoryUrl || ""
-                    });
-
-                } catch (error) {
-
-                    console.error(
-                        "Failed to load GitHub repository",
-                        error
-                    );
-
-                    setGithubRepository({
-                        connected: false,
-                        repositoryUrl: ""
-                    });
-
-                }
-
-            };
-
-            loadGitHubRepository();
-
-        }, []);
-
-        useEffect(() => {
-
-    const loadInterviewCount = async () => {
-
-        try {
-
-            const response =
-                await getCompletedInterviewCount();
-
-            setMockInterviewCount(
-                Number(response.data) || 0
-            );
-
-        } catch (error) {
-
-            console.error(error);
-
-            setMockInterviewCount(0);
-
-        }
-
-    };
-
-    loadInterviewCount();
-
-}, []);
-
-        useEffect(() => {
-
-            return () => {
-
-                if (skillAbortController) {
-
-                    skillAbortController.abort();
-
-                }
-
-                if (skillSearchTimer) {
-
-                    clearTimeout(skillSearchTimer);
-
-                }
-
-            };
-
-        }, [skillAbortController, skillSearchTimer]);
-
-
-
-        useEffect(() => {
-
-            const handleBeforeUnload = (event) => {
-
-                if (!hasChanges) {
-
-                    return;
-
-                }
-
-                event.preventDefault();
-
-                event.returnValue = "";
-
-            };
-
-            window.addEventListener(
-                "beforeunload",
-                handleBeforeUnload
-            );
-
-            return () => {
-
-                window.removeEventListener(
-                    "beforeunload",
-                    handleBeforeUnload
+                console.error(
+                    "Failed to load GitHub repository",
+                    error
                 );
 
-            };
-
-        }, [hasChanges]);
-
-
-        const checkForChanges = (updatedForm, updatedSkills = selectedSkills) => {
-
-            if (!originalProfile) {
-
-                return false;
+                setGithubRepository({
+                    connected: false,
+                    repositoryUrl: ""
+                });
 
             }
-
-            const normalize = (value) =>
-
-                value === null || value === undefined
-                    ? ""
-                    : String(value).trim();
-
-
-
-            const changed =
-
-                normalize(updatedForm.name) !== normalize(originalProfile.name) ||
-
-                normalize(updatedForm.targetRole) !== normalize(originalProfile.targetRole) ||
-
-                normalize(updatedForm.experienceLevel) !== normalize(originalProfile.experienceLevel) ||
-
-                normalize(updatedForm.phone) !== normalize(originalProfile.phone) ||
-
-                normalize(updatedForm.gender) !== normalize(originalProfile.gender) ||
-
-                normalize(updatedForm.githubUrl) !== normalize(originalProfile.githubUrl) ||
-
-                normalize(updatedForm.linkedinUrl) !== normalize(originalProfile.linkedinUrl) ||
-
-                normalize(updatedForm.portfolioUrl) !== normalize(originalProfile.portfolioUrl) ||
-
-                normalize(updatedForm.personalWebsite) !== normalize(originalProfile.personalWebsite) ||
-
-                normalize(updatedForm.dateOfBirth) !== normalize(originalProfile.dateOfBirth) ||
-
-                normalize(updatedForm.careerGoal) !== normalize(originalProfile.careerGoal) ||
-
-                normalize(updatedForm.journeyType) !== normalize(originalProfile.journeyType) ||
-
-                normalize(updatedForm.collegeName) !== normalize(originalProfile.college) ||
-
-                normalize(updatedForm.degree) !== normalize(originalProfile.course) ||
-
-                normalize(updatedForm.graduationYear) !== normalize(originalProfile.graduationYear) ||
-
-                normalize(updatedForm.currentCompany) !== normalize(originalProfile.currentCompany) ||
-
-                normalize(updatedForm.university) !== normalize(originalProfile.university) ||
-
-                normalize(updatedForm.designation) !== normalize(originalProfile.designation) ||
-
-                normalize(updatedForm.employmentType) !== normalize(originalProfile.employmentType) ||
-
-                normalize(updatedForm.yearsOfExperience) !== normalize(originalProfile.yearsOfExperience) ||
-
-                JSON.stringify(updatedSkills) !==
-
-                JSON.stringify(originalProfile.skills || []);
-
-            setHasChanges(changed);
 
         };
 
+        loadGitHubRepository();
 
+    }, []);
 
-        const avatarLetter =
-            user?.name?.charAt(0)?.toUpperCase()
-            ||
-            user?.username?.charAt(0)?.toUpperCase()
-            ||
-            "U";
+    useEffect(() => {
 
-        const profileFields = [
+        const loadInterviewCount = async () => {
 
-            formData.name,
+            try {
 
-            formData.username,
+                const response =
+                    await getCompletedInterviewCount();
 
-            formData.email,
+                setMockInterviewCount(
+                    Number(response.data) || 0
+                );
 
-            formData.journeyType,
+            } catch (error) {
 
-            formData.targetRole,
+                console.error(error);
 
-            formData.experienceLevel,
-
-            formData.phone,
-
-            formData.gender,
-
-            formData.careerGoal,
-
-            formData.githubUrl,
-
-            formData.linkedinUrl,
-
-            formData.portfolioUrl,
-
-            formData.personalWebsite,
-
-            formData.dateOfBirth,
-
-            user?.profilePicture,
-
-            formData.collegeName,
-
-            formData.degree,
-
-            formData.graduationYear,
-
-            formData.currentCompany,
-
-            formData.university,
-
-            formData.designation,
-
-            formData.employmentType,
-
-            formData.yearsOfExperience,
-
-            selectedSkills
-
-        ];
-
-        const completedFields = profileFields.filter(value => {
-
-            if (value === null || value === undefined) {
-
-                return false;
+                setMockInterviewCount(0);
 
             }
-
-            return String(value).trim() !== "";
-
-        }).length;
-
-        const profileCompletion = Math.round(
-
-            (completedFields / profileFields.length) * 100
-
-        );
-
-
-        const showSkillMessage = (text) => {
-
-            setSkillValidation(text);
-
-            window.clearTimeout(window.skillValidationTimer);
-
-            window.skillValidationTimer = setTimeout(() => {
-
-                setSkillValidation("");
-
-            }, 3000);
 
         };
 
+        loadInterviewCount();
 
-        const handleSkillInputChange = (e) => {
+    }, []);
 
-            if (!formData.targetRole.trim()) {
+    useEffect(() => {
 
-                showSkillMessage("Please select your target role first.");
+        return () => {
 
-                return;
+            if (skillAbortController) {
+
+                skillAbortController.abort();
 
             }
-
-
-            const value = e.target.value;
-
-            const cacheKey =
-                `${formData.targetRole}_${value.trim().toLowerCase()}`;
-
-            setSkillInput(value);
-
-            setActiveSkillIndex(-1);
 
             if (skillSearchTimer) {
 
@@ -803,358 +582,578 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
             }
 
-            if (value.trim().length < 2) {
+        };
 
-                setSkillSuggestions([]);
+    }, [skillAbortController, skillSearchTimer]);
 
-                setShowSkillSuggestions(false);
 
-                setIsSkillLoading(false);
+
+    useEffect(() => {
+
+        const handleBeforeUnload = (event) => {
+
+            if (!hasChanges) {
 
                 return;
 
             }
 
+            event.preventDefault();
 
-            if (skillCache.current.has(cacheKey)) {
-
-                setSkillSuggestions(
-                    skillCache.current.get(cacheKey)
-                );
-
-                setShowSkillSuggestions(true);
-
-                setIsSkillLoading(false);
-
-                return;
-            }
-
-
-            setIsSkillLoading(true);
-
-            const timer = setTimeout(async () => {
-
-                try {
-
-                    if (skillAbortController) {
-
-                        skillAbortController.abort();
-
-                    }
-
-                    const controller = new AbortController();
-
-                    setSkillAbortController(controller);
-
-                    const suggestions = await getSkillSuggestions(
-
-                        formData.targetRole,
-
-                        value,
-
-                        controller.signal
-
-                    );
-
-                    skillCache.current.set(
-                        cacheKey,
-                        suggestions
-                    );
-
-
-                    setSkillSuggestions(suggestions);
-
-                    setShowSkillSuggestions(true);
-
-                }
-
-                catch (error) {
-
-                    if (error.name !== "CanceledError") {
-
-                        console.error(error);
-
-                        setSkillSuggestions([]);
-
-                        setShowSkillSuggestions(false);
-
-                    }
-
-                }
-
-                finally {
-
-                    setIsSkillLoading(false);
-
-                }
-
-            }, 300);
-
-            setSkillSearchTimer(timer);
+            event.returnValue = "";
 
         };
 
-        const handleSkillRemove = (skill) => {
+        window.addEventListener(
+            "beforeunload",
+            handleBeforeUnload
+        );
 
-            const updatedSkills = selectedSkills.filter(
+        return () => {
 
-                (item) => item !== skill
-
+            window.removeEventListener(
+                "beforeunload",
+                handleBeforeUnload
             );
 
-            setSelectedSkills(updatedSkills);
-
-            const updatedForm = {
-
-                ...formData,
-
-                skills: updatedSkills
-
-            };
-
-            setFormData(updatedForm);
-
-            checkForChanges(updatedForm, updatedSkills);
-            setSkillValidation("");
-
         };
 
-        const handleSkillSelect = (skill) => {
+    }, [hasChanges]);
 
-            if (selectedSkills.length >= 10) {
 
-                showSkillMessage(
-                    "You can add up to 10 skills."
-                );
+    const checkForChanges = (updatedForm, updatedSkills = selectedSkills) => {
 
-                return;
+        if (!originalProfile) {
 
-            }
+            return false;
 
-            if (selectedSkills.includes(skill)) {
+        }
 
-                return;
+        const normalize = (value) =>
 
-            }
+            value === null || value === undefined
+                ? ""
+                : String(value).trim();
 
-            const updatedSkills = [
 
-                ...selectedSkills,
 
-                skill
+        const changed =
 
-            ];
+            normalize(updatedForm.name) !== normalize(originalProfile.name) ||
 
-            const updatedForm = {
+            normalize(updatedForm.targetRole) !== normalize(originalProfile.targetRole) ||
 
-                ...formData,
+            normalize(updatedForm.experienceLevel) !== normalize(originalProfile.experienceLevel) ||
 
-                skills: updatedSkills
+            normalize(updatedForm.phone) !== normalize(originalProfile.phone) ||
 
-            };
+            normalize(updatedForm.gender) !== normalize(originalProfile.gender) ||
 
-            setSelectedSkills(updatedSkills);
+            normalize(updatedForm.githubUrl) !== normalize(originalProfile.githubUrl) ||
 
-            setFormData(updatedForm);
+            normalize(updatedForm.linkedinUrl) !== normalize(originalProfile.linkedinUrl) ||
 
-            checkForChanges(updatedForm, updatedSkills);
+            normalize(updatedForm.portfolioUrl) !== normalize(originalProfile.portfolioUrl) ||
 
-            setSkillInput("");
+            normalize(updatedForm.personalWebsite) !== normalize(originalProfile.personalWebsite) ||
 
-            setShowSkillSuggestions(false);
+            normalize(updatedForm.dateOfBirth) !== normalize(originalProfile.dateOfBirth) ||
+
+            normalize(updatedForm.careerGoal) !== normalize(originalProfile.careerGoal) ||
+
+            normalize(updatedForm.journeyType) !== normalize(originalProfile.journeyType) ||
+
+            normalize(updatedForm.collegeName) !== normalize(originalProfile.college) ||
+
+            normalize(updatedForm.degree) !== normalize(originalProfile.course) ||
+
+            normalize(updatedForm.graduationYear) !== normalize(originalProfile.graduationYear) ||
+
+            normalize(updatedForm.currentCompany) !== normalize(originalProfile.currentCompany) ||
+
+            normalize(updatedForm.university) !== normalize(originalProfile.university) ||
+
+            normalize(updatedForm.designation) !== normalize(originalProfile.designation) ||
+
+            normalize(updatedForm.employmentType) !== normalize(originalProfile.employmentType) ||
+
+            normalize(updatedForm.yearsOfExperience) !== normalize(originalProfile.yearsOfExperience) ||
+
+            JSON.stringify(updatedSkills) !==
+
+            JSON.stringify(originalProfile.skills || []);
+
+        setHasChanges(changed);
+
+    };
+
+
+
+    const avatarLetter =
+        user?.name?.charAt(0)?.toUpperCase()
+        ||
+        user?.username?.charAt(0)?.toUpperCase()
+        ||
+        "U";
+
+    const profileFields = [
+
+        formData.name,
+
+        formData.username,
+
+        formData.email,
+
+        formData.journeyType,
+
+        formData.targetRole,
+
+        formData.experienceLevel,
+
+        formData.phone,
+
+        formData.gender,
+
+        formData.careerGoal,
+
+        formData.githubUrl,
+
+        formData.linkedinUrl,
+
+        formData.portfolioUrl,
+
+        formData.personalWebsite,
+
+        formData.dateOfBirth,
+
+        user?.profilePicture,
+
+        formData.collegeName,
+
+        formData.degree,
+
+        formData.graduationYear,
+
+        formData.currentCompany,
+
+        formData.university,
+
+        formData.designation,
+
+        formData.employmentType,
+
+        formData.yearsOfExperience,
+
+        selectedSkills
+
+    ];
+
+    const completedFields = profileFields.filter(value => {
+
+        if (value === null || value === undefined) {
+
+            return false;
+
+        }
+
+        return String(value).trim() !== "";
+
+    }).length;
+
+    const profileCompletion = Math.round(
+
+        (completedFields / profileFields.length) * 100
+
+    );
+
+
+    const showSkillMessage = (text) => {
+
+        setSkillValidation(text);
+
+        window.clearTimeout(window.skillValidationTimer);
+
+        window.skillValidationTimer = setTimeout(() => {
+
+            setSkillValidation("");
+
+        }, 3000);
+
+    };
+
+
+    const handleSkillInputChange = (e) => {
+
+        if (!formData.targetRole.trim()) {
+
+            showSkillMessage("Please select your target role first.");
+
+            return;
+
+        }
+
+
+        const value = e.target.value;
+
+        const cacheKey =
+            `${formData.targetRole}_${value.trim().toLowerCase()}`;
+
+        setSkillInput(value);
+
+        setActiveSkillIndex(-1);
+
+        if (skillSearchTimer) {
+
+            clearTimeout(skillSearchTimer);
+
+        }
+
+        if (value.trim().length < 2) {
 
             setSkillSuggestions([]);
 
-            setActiveSkillIndex(-1);
+            setShowSkillSuggestions(false);
+
+            setIsSkillLoading(false);
+
+            return;
+
+        }
+
+
+        if (skillCache.current.has(cacheKey)) {
+
+            setSkillSuggestions(
+                skillCache.current.get(cacheKey)
+            );
+
+            setShowSkillSuggestions(true);
+
+            setIsSkillLoading(false);
+
+            return;
+        }
+
+
+        setIsSkillLoading(true);
+
+        const timer = setTimeout(async () => {
+
+            try {
+
+                if (skillAbortController) {
+
+                    skillAbortController.abort();
+
+                }
+
+                const controller = new AbortController();
+
+                setSkillAbortController(controller);
+
+                const suggestions = await getSkillSuggestions(
+
+                    formData.targetRole,
+
+                    value,
+
+                    controller.signal
+
+                );
+
+                skillCache.current.set(
+                    cacheKey,
+                    suggestions
+                );
+
+
+                setSkillSuggestions(suggestions);
+
+                setShowSkillSuggestions(true);
+
+            }
+
+            catch (error) {
+
+                if (error.name !== "CanceledError") {
+
+                    console.error(error);
+
+                    setSkillSuggestions([]);
+
+                    setShowSkillSuggestions(false);
+
+                }
+
+            }
+
+            finally {
+
+                setIsSkillLoading(false);
+
+            }
+
+        }, 300);
+
+        setSkillSearchTimer(timer);
+
+    };
+
+    const handleSkillRemove = (skill) => {
+
+        const updatedSkills = selectedSkills.filter(
+
+            (item) => item !== skill
+
+        );
+
+        setSelectedSkills(updatedSkills);
+
+        const updatedForm = {
+
+            ...formData,
+
+            skills: updatedSkills
 
         };
 
-        const handleSkillKeyDown = (e) => {
+        setFormData(updatedForm);
 
-            if (!showSkillSuggestions) {
+        checkForChanges(updatedForm, updatedSkills);
+        setSkillValidation("");
 
-                return;
+    };
 
-            }
+    const handleSkillSelect = (skill) => {
 
-            if (e.key === "ArrowDown") {
+        if (selectedSkills.length >= 10) {
 
-                e.preventDefault();
+            showSkillMessage(
+                "You can add up to 10 skills."
+            );
 
-                setActiveSkillIndex((prev) =>
+            return;
 
-                    prev < skillSuggestions.length - 1
+        }
 
-                        ? prev + 1
+        if (selectedSkills.includes(skill)) {
 
-                        : 0
+            return;
 
-                );
+        }
 
-            }
+        const updatedSkills = [
 
-            else if (e.key === "ArrowUp") {
+            ...selectedSkills,
 
-                e.preventDefault();
+            skill
 
-                setActiveSkillIndex((prev) =>
+        ];
 
-                    prev > 0
+        const updatedForm = {
 
-                        ? prev - 1
+            ...formData,
 
-                        : skillSuggestions.length - 1
+            skills: updatedSkills
 
-                );
+        };
 
-            }
+        setSelectedSkills(updatedSkills);
 
-            else if (e.key === "Enter") {
+        setFormData(updatedForm);
 
-                e.preventDefault();
+        checkForChanges(updatedForm, updatedSkills);
 
-                if (
+        setSkillInput("");
 
-                    activeSkillIndex >= 0
+        setShowSkillSuggestions(false);
 
-                    &&
+        setSkillSuggestions([]);
+
+        setActiveSkillIndex(-1);
+
+    };
+
+    const handleSkillKeyDown = (e) => {
+
+        if (!showSkillSuggestions) {
+
+            return;
+
+        }
+
+        if (e.key === "ArrowDown") {
+
+            e.preventDefault();
+
+            setActiveSkillIndex((prev) =>
+
+                prev < skillSuggestions.length - 1
+
+                    ? prev + 1
+
+                    : 0
+
+            );
+
+        }
+
+        else if (e.key === "ArrowUp") {
+
+            e.preventDefault();
+
+            setActiveSkillIndex((prev) =>
+
+                prev > 0
+
+                    ? prev - 1
+
+                    : skillSuggestions.length - 1
+
+            );
+
+        }
+
+        else if (e.key === "Enter") {
+
+            e.preventDefault();
+
+            if (
+
+                activeSkillIndex >= 0
+
+                &&
+
+                skillSuggestions[activeSkillIndex]
+
+            ) {
+
+                handleSkillSelect(
 
                     skillSuggestions[activeSkillIndex]
 
-                ) {
-
-                    handleSkillSelect(
-
-                        skillSuggestions[activeSkillIndex]
-
-                    );
-
-                }
+                );
 
             }
 
-            else if (e.key === "Escape") {
+        }
 
-                setShowSkillSuggestions(false);
+        else if (e.key === "Escape") {
 
-            }
+            setShowSkillSuggestions(false);
 
-        };
+        }
+
+    };
 
 
-        useEffect(() => {
+    useEffect(() => {
 
-            if (!showSkillSuggestions) {
+        if (!showSkillSuggestions) {
 
-                return;
+            return;
 
-            }
+        }
 
-            requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
 
-                activeSuggestionRef.current?.scrollIntoView({
+            activeSuggestionRef.current?.scrollIntoView({
 
-                    behavior: "smooth",
+                behavior: "smooth",
 
-                    block: "center",
+                block: "center",
 
-                    inline: "nearest"
-
-                });
+                inline: "nearest"
 
             });
 
-        }, [
+        });
 
-            activeSkillIndex,
+    }, [
 
-            showSkillSuggestions
+        activeSkillIndex,
 
-        ]);
+        showSkillSuggestions
 
-
-        const handleChange = (e) => {
-
-            const { name, value } = e.target;
-
-            const updatedForm = {
-
-                ...formData,
-
-                [name]: value
-
-            };
-
-            setFormData(updatedForm);
-
-            checkForChanges(updatedForm);
-
-            const newErrors = {
-
-                ...errors
-
-            };
-
-            if (name === "targetRole") {
-
-                if (!value.trim()) {
-
-                    newErrors.targetRole = "Target Role is required.";
-
-                } else {
-
-                    delete newErrors.targetRole;
+    ]);
 
 
+    const handleChange = (e) => {
+
+        const { name, value } = e.target;
+
+        const updatedForm = {
+
+            ...formData,
+
+            [name]: value
+
+        };
+
+        setFormData(updatedForm);
+
+        checkForChanges(updatedForm);
+
+        const newErrors = {
+
+            ...errors
+
+        };
+
+        if (name === "targetRole") {
+
+            if (!value.trim()) {
+
+                newErrors.targetRole = "Target Role is required.";
+
+            } else {
+
+                delete newErrors.targetRole;
 
 
-                }
 
-            }
-
-            if (name === "journeyType") {
-
-                if (!value) {
-
-                    newErrors.journeyType = "Journey is required.";
-
-                } else {
-
-                    delete newErrors.journeyType;
-
-                }
 
             }
 
-            if (name === "experienceLevel") {
+        }
 
-                if (!value) {
+        if (name === "journeyType") {
 
-                    newErrors.experienceLevel = "Experience Level is required.";
+            if (!value) {
 
-                } else {
+                newErrors.journeyType = "Journey is required.";
 
-                    delete newErrors.experienceLevel;
+            } else {
 
-                }
+                delete newErrors.journeyType;
 
             }
 
-            if (name === "phone") {
+        }
 
-                if (value) {
+        if (name === "experienceLevel") {
 
-                    const phoneRegex = /^[6-9]\d{9}$/;
+            if (!value) {
 
-                    if (!phoneRegex.test(value)) {
+                newErrors.experienceLevel = "Experience Level is required.";
 
-                        newErrors.phone = "Enter a valid phone number.";
+            } else {
 
-                    } else {
+                delete newErrors.experienceLevel;
 
-                        delete newErrors.phone;
+            }
 
-                    }
+        }
+
+        if (name === "phone") {
+
+            if (value) {
+
+                const phoneRegex = /^[6-9]\d{9}$/;
+
+                if (!phoneRegex.test(value)) {
+
+                    newErrors.phone = "Enter a valid phone number.";
 
                 } else {
 
@@ -1162,517 +1161,23 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
                 }
 
-            }
+            } else {
 
-            if (name === "githubUrl") {
-
-                if (value) {
-
-                    try {
-
-                        new URL(value);
-
-                        delete newErrors.githubUrl;
-
-                    } catch {
-
-                        newErrors.githubUrl = "Invalid GitHub URL.";
-
-                    }
-
-                } else {
-
-                    delete newErrors.githubUrl;
-
-                }
+                delete newErrors.phone;
 
             }
 
-            if (name === "linkedinUrl") {
+        }
 
-                if (value) {
+        if (name === "githubUrl") {
 
-                    try {
-
-                        new URL(value);
-
-                        delete newErrors.linkedinUrl;
-
-                    } catch {
-
-                        newErrors.linkedinUrl = "Invalid LinkedIn URL.";
-
-                    }
-
-                } else {
-
-                    delete newErrors.linkedinUrl;
-
-                }
-
-            }
-
-            if (name === "portfolioUrl") {
-
-                if (value) {
-
-                    try {
-
-                        new URL(value);
-
-                        delete newErrors.portfolioUrl;
-
-                    } catch {
-
-                        newErrors.portfolioUrl = "Invalid Portfolio URL.";
-
-                    }
-
-                } else {
-
-                    delete newErrors.portfolioUrl;
-
-                }
-
-            }
-
-            if (name === "personalWebsite") {
-
-                if (value) {
-
-                    try {
-
-                        new URL(value);
-
-                        delete newErrors.personalWebsite;
-
-                    } catch {
-
-                        newErrors.personalWebsite = "Invalid Website URL.";
-
-                    }
-
-                } else {
-
-                    delete newErrors.personalWebsite;
-
-                }
-
-            }
-
-            if (name === "dateOfBirth") {
-
-                if (value) {
-
-                    const selectedDate = new Date(value);
-
-                    const today = new Date();
-
-                    today.setHours(0, 0, 0, 0);
-
-                    if (selectedDate > today) {
-
-                        newErrors.dateOfBirth = "Future date is not allowed.";
-
-                    } else {
-
-                        delete newErrors.dateOfBirth;
-
-                    }
-
-                } else {
-
-                    delete newErrors.dateOfBirth;
-
-                }
-
-            }
-
-            setErrors(newErrors);
-
-        };
-
-
-
-
-
-        const handleImageChange = (e) => {
-
-            setErrors({});
-
-            setMessage({
-                type: "",
-                text: ""
-            });
-
-            const file = e.target.files[0];
-
-            if (!file) return;
-
-            if (!file.type.startsWith("image/")) {
-
-                alert("Please select a valid image.");
-
-                return;
-            }
-
-            if (file.size > 5 * 1024 * 1024) {
-
-                alert("Image size must be less than 5 MB.");
-
-                return;
-            }
-
-            if (selectedImage) {
-
-                URL.revokeObjectURL(selectedImage);
-
-            }
-
-            setOriginalImageFile(file);
-
-            const preview = URL.createObjectURL(file);
-
-            setCropImage(preview);
-
-            setIsCropOpen(true);
-
-        };
-
-        const handleRemovePhoto = async () => {
-
-            try {
-
-                await removeProfilePicture();
-
-                if (selectedImage) {
-
-                    URL.revokeObjectURL(selectedImage);
-
-                }
-
-                setSelectedImage(null);
-
-                setSelectedFile(null);
-
-                setImageError(false);
-
-                setHasChanges(true);
-
-                setUser(prev => ({
-                    ...prev,
-                    profilePicture: null
-                }));
-
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify({
-                        ...user,
-                        profilePicture: null
-                    })
-                );
-
-
-                setMessage({
-                    type: "success",
-                    text: "Profile picture removed successfully."
-                });
-
-                setTimeout(() => {
-
-                    setMessage({
-                        type: "",
-                        text: ""
-                    });
-
-                }, 3000);
-
-            } catch (error) {
-
-                console.error(error);
-
-                setMessage({
-                    type: "error",
-                    text: "Failed to remove profile picture."
-                });
-
-                setTimeout(() => {
-
-                    setMessage({
-                        type: "",
-                        text: ""
-                    });
-
-                }, 3000);
-
-            }
-
-        };
-
-        const handleSave = async () => {
-
-            setMessage({
-                type: "",
-                text: ""
-            });
-
-            if (!validateForm()) {
-
-                return;
-
-            }
-
-            try {
-                setIsSaving(true);
-
-
-                if (selectedFile) {
-
-                    setIsUploadingImage(true);
-
-                    try {
-
-                        const imageUrl = await uploadProfilePicture(selectedFile);
-
-
-                    } finally {
-
-                        setIsUploadingImage(false);
-
-                    }
-
-                }
-
-                await updateProfile({
-
-                    name: formData.name,
-
-                    journeyType: formData.journeyType,
-
-                    targetRole: formData.targetRole,
-
-                    experienceLevel: formData.experienceLevel,
-
-                    yearsOfExperience:
-                        formData.yearsOfExperience === ""
-                            ? null
-                            : Number(formData.yearsOfExperience),
-
-                    careerGoal: formData.careerGoal,
-
-                    college: formData.collegeName,
-
-                    course: formData.degree,
-
-                    graduationYear: formData.graduationYear,
-
-                    currentCompany: formData.currentCompany,
-
-                    phone: formData.phone,
-
-                    gender: formData.gender,
-
-                    githubUrl: formData.githubUrl,
-
-                    linkedinUrl: formData.linkedinUrl,
-
-                    portfolioUrl: formData.portfolioUrl,
-
-                    personalWebsite: formData.personalWebsite,
-
-                    university: formData.university,
-
-                    designation: formData.designation,
-
-                    employmentType: formData.employmentType,
-
-                    skills: selectedSkills,
-
-                    dateOfBirth: formData.dateOfBirth
-
-                });
-
-                const basicUser = await getCurrentUser();
-
-                const latestProfile = await getProfile();
-
-                const updatedUser = {
-
-                    ...basicUser,
-
-                    ...latestProfile
-
-                };
-
-                setUser(updatedUser);
-
-                setOriginalProfile({
-
-                    ...updatedUser,
-
-                    skills: updatedUser.skills || []
-
-                });
-
-                setSelectedSkills(
-
-                    updatedUser.skills || []
-
-                );
-
-                setFormData({
-
-                    name: updatedUser.name || "",
-
-                    username: updatedUser.username || "",
-
-                    email: updatedUser.email || "",
-
-                    journeyType: updatedUser.journeyType || "",
-
-                    targetRole: updatedUser.targetRole || "",
-
-                    experienceLevel: updatedUser.experienceLevel || "",
-
-                    collegeName: updatedUser.college || "",
-
-                    degree: updatedUser.course || "",
-
-                    graduationYear: updatedUser.graduationYear || "",
-
-                    currentCompany: updatedUser.currentCompany || "",
-
-                    university: updatedUser.university || "",
-
-                    designation: updatedUser.designation || "",
-
-                    employmentType: updatedUser.employmentType || "",
-
-                    skills: updatedUser.skills || [],
-
-                    phone: updatedUser.phone || "",
-
-                    gender: updatedUser.gender || "",
-
-                    githubUrl: updatedUser.githubUrl || "",
-
-                    linkedinUrl: updatedUser.linkedinUrl || "",
-
-                    portfolioUrl: updatedUser.portfolioUrl || "",
-
-                    personalWebsite: updatedUser.personalWebsite || "",
-
-                    dateOfBirth: updatedUser.dateOfBirth || "",
-
-                    yearsOfExperience: updatedUser.yearsOfExperience || "",
-
-                    careerGoal: updatedUser.careerGoal || ""
-
-                });
-                localStorage.setItem(
-                    "user",
-                    JSON.stringify(updatedUser)
-                );
-
-                if (selectedImage) {
-
-                    URL.revokeObjectURL(selectedImage);
-
-                }
-
-                setSelectedImage(null);
-
-                setSelectedFile(null);
-
-                setHasChanges(false);
-
-                setImageError(false);
-
-                setErrors({});
-
-                setIsEditing(false);
-
-                setMessage({
-                    type: "success",
-                    text: "Profile updated successfully."
-                });
-
-                setTimeout(() => {
-
-                    setMessage({
-                        type: "",
-                        text: ""
-                    });
-
-                }, 3000);
-
-            } catch (error) {
-
-                console.error(error);
-
-                setMessage({
-                    type: "error",
-                    text: "Failed to save profile."
-                });
-
-                setTimeout(() => {
-
-                    setMessage({
-                        type: "",
-                        text: ""
-                    });
-
-                }, 3000);
-
-            } finally {
-
-                setIsSaving(false);
-
-            }
-
-        };
-
-
-
-        const validateForm = () => {
-
-            const newErrors = {};
-
-            if (!formData.targetRole.trim()) {
-
-                newErrors.targetRole = "Target Role is required.";
-
-            }
-
-            if (!formData.journeyType) {
-
-                newErrors.journeyType = "Journey is required.";
-
-            }
-
-            if (!formData.experienceLevel) {
-
-                newErrors.experienceLevel = "Experience Level is required.";
-
-            }
-
-            if (formData.phone) {
-
-                const phoneRegex = /^[6-9]\d{9}$/;
-
-                if (!phoneRegex.test(formData.phone)) {
-
-                    newErrors.phone = "Enter a valid phone number.";
-
-                }
-
-            }
-
-            if (formData.githubUrl) {
+            if (value) {
 
                 try {
 
-                    new URL(formData.githubUrl);
+                    new URL(value);
+
+                    delete newErrors.githubUrl;
 
                 } catch {
 
@@ -1680,13 +1185,23 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
                 }
 
+            } else {
+
+                delete newErrors.githubUrl;
+
             }
 
-            if (formData.linkedinUrl) {
+        }
+
+        if (name === "linkedinUrl") {
+
+            if (value) {
 
                 try {
 
-                    new URL(formData.linkedinUrl);
+                    new URL(value);
+
+                    delete newErrors.linkedinUrl;
 
                 } catch {
 
@@ -1694,13 +1209,47 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
                 }
 
+            } else {
+
+                delete newErrors.linkedinUrl;
+
             }
 
-            if (formData.personalWebsite) {
+        }
+
+        if (name === "portfolioUrl") {
+
+            if (value) {
 
                 try {
 
-                    new URL(formData.personalWebsite);
+                    new URL(value);
+
+                    delete newErrors.portfolioUrl;
+
+                } catch {
+
+                    newErrors.portfolioUrl = "Invalid Portfolio URL.";
+
+                }
+
+            } else {
+
+                delete newErrors.portfolioUrl;
+
+            }
+
+        }
+
+        if (name === "personalWebsite") {
+
+            if (value) {
+
+                try {
+
+                    new URL(value);
+
+                    delete newErrors.personalWebsite;
 
                 } catch {
 
@@ -1708,11 +1257,19 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
                 }
 
+            } else {
+
+                delete newErrors.personalWebsite;
+
             }
 
-            if (formData.dateOfBirth) {
+        }
 
-                const selectedDate = new Date(formData.dateOfBirth);
+        if (name === "dateOfBirth") {
+
+            if (value) {
+
+                const selectedDate = new Date(value);
 
                 const today = new Date();
 
@@ -1722,792 +1279,1284 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
                     newErrors.dateOfBirth = "Future date is not allowed.";
 
+                } else {
+
+                    delete newErrors.dateOfBirth;
+
                 }
+
+            } else {
+
+                delete newErrors.dateOfBirth;
 
             }
 
+        }
 
-            if (formData.portfolioUrl) {
+        setErrors(newErrors);
+
+    };
+
+
+
+
+
+    const handleImageChange = (e) => {
+
+        setErrors({});
+
+        setMessage({
+            type: "",
+            text: ""
+        });
+
+        const file = e.target.files[0];
+
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+
+            alert("Please select a valid image.");
+
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+
+            alert("Image size must be less than 5 MB.");
+
+            return;
+        }
+
+        if (selectedImage) {
+
+            URL.revokeObjectURL(selectedImage);
+
+        }
+
+        setOriginalImageFile(file);
+
+        const preview = URL.createObjectURL(file);
+
+        setCropImage(preview);
+
+        setIsCropOpen(true);
+
+    };
+
+    const handleRemovePhoto = async () => {
+
+        try {
+
+            await removeProfilePicture();
+
+            if (selectedImage) {
+
+                URL.revokeObjectURL(selectedImage);
+
+            }
+
+            setSelectedImage(null);
+
+            setSelectedFile(null);
+
+            setImageError(false);
+
+            setHasChanges(true);
+
+            setUser(prev => ({
+                ...prev,
+                profilePicture: null
+            }));
+
+            localStorage.setItem(
+                "user",
+                JSON.stringify({
+                    ...user,
+                    profilePicture: null
+                })
+            );
+
+
+            setMessage({
+                type: "success",
+                text: "Profile picture removed successfully."
+            });
+
+            setTimeout(() => {
+
+                setMessage({
+                    type: "",
+                    text: ""
+                });
+
+            }, 3000);
+
+        } catch (error) {
+
+            console.error(error);
+
+            setMessage({
+                type: "error",
+                text: "Failed to remove profile picture."
+            });
+
+            setTimeout(() => {
+
+                setMessage({
+                    type: "",
+                    text: ""
+                });
+
+            }, 3000);
+
+        }
+
+    };
+
+    const handleSave = async () => {
+
+        setMessage({
+            type: "",
+            text: ""
+        });
+
+        if (!validateForm()) {
+
+            return;
+
+        }
+
+        try {
+            setIsSaving(true);
+
+
+            if (selectedFile) {
+
+                setIsUploadingImage(true);
 
                 try {
-                    new URL(formData.portfolioUrl);
-                } catch {
-                    newErrors.portfolioUrl = "Invalid Portfolio URL.";
+
+                    const imageUrl = await uploadProfilePicture(selectedFile);
+
+
+                } finally {
+
+                    setIsUploadingImage(false);
+
                 }
 
             }
-            setErrors(newErrors);
 
-            return Object.keys(newErrors).length === 0;
+            await updateProfile({
 
-        };
+                name: formData.name,
+
+                journeyType: formData.journeyType,
+
+                targetRole: formData.targetRole,
+
+                experienceLevel: formData.experienceLevel,
+
+                yearsOfExperience:
+                    formData.yearsOfExperience === ""
+                        ? null
+                        : Number(formData.yearsOfExperience),
+
+                careerGoal: formData.careerGoal,
+
+                college: formData.collegeName,
+
+                course: formData.degree,
+
+                graduationYear: formData.graduationYear,
+
+                currentCompany: formData.currentCompany,
+
+                phone: formData.phone,
+
+                gender: formData.gender,
+
+                githubUrl: formData.githubUrl,
+
+                linkedinUrl: formData.linkedinUrl,
+
+                portfolioUrl: formData.portfolioUrl,
+
+                personalWebsite: formData.personalWebsite,
+
+                university: formData.university,
+
+                designation: formData.designation,
+
+                employmentType: formData.employmentType,
+
+                skills: selectedSkills,
+
+                dateOfBirth: formData.dateOfBirth
+
+            });
+
+            const basicUser = await getCurrentUser();
+
+            const latestProfile = await getProfile();
+
+            const updatedUser = {
+
+                ...basicUser,
+
+                ...latestProfile
+
+            };
+
+            setUser(updatedUser);
+
+            setOriginalProfile({
+
+                ...updatedUser,
+
+                skills: updatedUser.skills || []
+
+            });
+
+            setSelectedSkills(
+
+                updatedUser.skills || []
+
+            );
+
+            setFormData({
+
+                name: updatedUser.name || "",
+
+                username: updatedUser.username || "",
+
+                email: updatedUser.email || "",
+
+                journeyType: updatedUser.journeyType || "",
+
+                targetRole: updatedUser.targetRole || "",
+
+                experienceLevel: updatedUser.experienceLevel || "",
+
+                collegeName: updatedUser.college || "",
+
+                degree: updatedUser.course || "",
+
+                graduationYear: updatedUser.graduationYear || "",
+
+                currentCompany: updatedUser.currentCompany || "",
+
+                university: updatedUser.university || "",
+
+                designation: updatedUser.designation || "",
+
+                employmentType: updatedUser.employmentType || "",
+
+                skills: updatedUser.skills || [],
+
+                phone: updatedUser.phone || "",
+
+                gender: updatedUser.gender || "",
+
+                githubUrl: updatedUser.githubUrl || "",
+
+                linkedinUrl: updatedUser.linkedinUrl || "",
+
+                portfolioUrl: updatedUser.portfolioUrl || "",
+
+                personalWebsite: updatedUser.personalWebsite || "",
+
+                dateOfBirth: updatedUser.dateOfBirth || "",
+
+                yearsOfExperience: updatedUser.yearsOfExperience || "",
+
+                careerGoal: updatedUser.careerGoal || ""
+
+            });
+            localStorage.setItem(
+                "user",
+                JSON.stringify(updatedUser)
+            );
+
+            if (selectedImage) {
+
+                URL.revokeObjectURL(selectedImage);
+
+            }
+
+            setSelectedImage(null);
+
+            setSelectedFile(null);
+
+            setHasChanges(false);
+
+            setImageError(false);
+
+            setErrors({});
+
+            setIsEditing(false);
+
+            setMessage({
+                type: "success",
+                text: "Profile updated successfully."
+            });
+
+            setTimeout(() => {
+
+                setMessage({
+                    type: "",
+                    text: ""
+                });
+
+            }, 3000);
+
+        } catch (error) {
+
+            console.error(error);
+
+            setMessage({
+                type: "error",
+                text: "Failed to save profile."
+            });
+
+            setTimeout(() => {
+
+                setMessage({
+                    type: "",
+                    text: ""
+                });
+
+            }, 3000);
+
+        } finally {
+
+            setIsSaving(false);
+
+        }
+
+    };
 
 
-        return (
 
-            <div className="profile-page">
+    const validateForm = () => {
 
-                <div className="profile-header">
+        const newErrors = {};
 
-                    <div>
+        if (!formData.targetRole.trim()) {
 
-                        <h1>
+            newErrors.targetRole = "Target Role is required.";
 
-                            My Profile
+        }
 
-                        </h1>
+        if (!formData.journeyType) {
 
-                        <p>
+            newErrors.journeyType = "Journey is required.";
 
-                            Manage your account, career preferences and personal information.
+        }
 
-                        </p>
+        if (!formData.experienceLevel) {
 
-                    </div>
+            newErrors.experienceLevel = "Experience Level is required.";
 
-                    <div className="profile-actions">
+        }
+
+        if (formData.phone) {
+
+            const phoneRegex = /^[6-9]\d{9}$/;
+
+            if (!phoneRegex.test(formData.phone)) {
+
+                newErrors.phone = "Enter a valid phone number.";
+
+            }
+
+        }
+
+        if (formData.githubUrl) {
+
+            try {
+
+                new URL(formData.githubUrl);
+
+            } catch {
+
+                newErrors.githubUrl = "Invalid GitHub URL.";
+
+            }
+
+        }
+
+        if (formData.linkedinUrl) {
+
+            try {
+
+                new URL(formData.linkedinUrl);
+
+            } catch {
+
+                newErrors.linkedinUrl = "Invalid LinkedIn URL.";
+
+            }
+
+        }
+
+        if (formData.personalWebsite) {
+
+            try {
+
+                new URL(formData.personalWebsite);
+
+            } catch {
+
+                newErrors.personalWebsite = "Invalid Website URL.";
+
+            }
+
+        }
+
+        if (formData.dateOfBirth) {
+
+            const selectedDate = new Date(formData.dateOfBirth);
+
+            const today = new Date();
+
+            today.setHours(0, 0, 0, 0);
+
+            if (selectedDate > today) {
+
+                newErrors.dateOfBirth = "Future date is not allowed.";
+
+            }
+
+        }
+
+
+        if (formData.portfolioUrl) {
+
+            try {
+                new URL(formData.portfolioUrl);
+            } catch {
+                newErrors.portfolioUrl = "Invalid Portfolio URL.";
+            }
+
+        }
+        setErrors(newErrors);
+
+        return Object.keys(newErrors).length === 0;
+
+    };
+
+
+    return (
+
+        <div className="profile-page">
+
+            <div className="profile-header">
+
+                <div>
+
+                    <h1>
+
+                        My Profile
+
+                    </h1>
+
+                    <p>
+
+                        Manage your account, career preferences and personal information.
+
+                    </p>
+
+                </div>
+
+                <div className="profile-actions">
+
+                    {
+
+                        isEditing &&
+                        <button
+                            className={`profile-save-btn ${!hasChanges ? "disabled" : ""}`}
+                            onClick={handleSave}
+                            disabled={
+                                isSaving ||
+                                !hasChanges ||
+                                Object.keys(errors).length > 0
+                            }
+                        >
+                            {isSaving ? "Saving..." : "Save Changes"}
+
+                        </button>
+
+                    }
+
+                    <button
+                        className="profile-edit-btn"
+                        onClick={async () => {
+
+                            if (isEditing) {
+
+                                if (hasChanges) {
+
+                                    setShowDiscardModal(true);
+
+                                    return;
+
+                                }
+                                if (selectedImage) {
+
+                                    URL.revokeObjectURL(selectedImage);
+
+                                }
+
+                                setSelectedImage(null);
+
+                                setSelectedFile(null);
+
+                                setHasChanges(false);
+
+                                setImageError(false);
+
+                                setErrors({});
+
+                                setMessage({
+                                    type: "",
+                                    text: ""
+                                });
+
+                                try {
+
+                                    const basicUser = await getCurrentUser();
+
+                                    const profile = await getProfile();
+
+                                    const currentUser = {
+
+                                        ...basicUser,
+
+                                        ...profile
+
+                                    };
+
+                                    setUser(currentUser);
+
+                                    setFormData({
+
+                                        name: currentUser.name || "",
+
+                                        username: currentUser.username || "",
+
+                                        email: currentUser.email || "",
+
+                                        journeyType: currentUser.journeyType || "",
+
+                                        targetRole: currentUser.targetRole || "",
+
+
+
+                                        experienceLevel: currentUser.experienceLevel || "",
+
+                                        collegeName: currentUser.college || "",
+
+                                        degree: currentUser.course || "",
+
+                                        graduationYear: currentUser.graduationYear || "",
+
+                                        currentCompany: currentUser.currentCompany || "",
+
+                                        university: currentUser.university || "",
+
+                                        designation: currentUser.designation || "",
+
+                                        employmentType: currentUser.employmentType || "",
+
+                                        skills: currentUser.skills || [],
+
+                                        phone: currentUser.phone || "",
+
+                                        gender: currentUser.gender || "",
+
+                                        githubUrl: currentUser.githubUrl || "",
+
+                                        linkedinUrl: currentUser.linkedinUrl || "",
+
+                                        portfolioUrl: currentUser.portfolioUrl || "",
+
+                                        personalWebsite: currentUser.personalWebsite || "",
+
+                                        dateOfBirth: currentUser.dateOfBirth || "",
+
+                                        yearsOfExperience: currentUser.yearsOfExperience || "",
+
+                                        careerGoal: currentUser.careerGoal || ""
+
+                                    });
+
+                                    setSelectedSkills(currentUser.skills || []);
+
+                                } catch (error) {
+
+                                    console.error(error);
+
+                                }
+
+                            }
+
+                            setIsEditing(!isEditing);
+
+                        }}
+                    >
+
+                        {isEditing ? "Cancel" : "Edit Profile"}
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            {
+
+                message.text &&
+
+                <div
+                    className={
+                        message.type === "success"
+                            ? "profile-page-success-message"
+                            : "profile-page-error-message"
+                    }
+                >
+
+                    {message.text}
+
+                </div>
+
+            }
+
+            <div className="profile-page-card">
+
+                <div className="profile-page-cover"></div>
+
+                <div className="profile-page-hero">
+
+                    <div className="profile-page-avatar-wrapper">
+
+                        {
+
+                            isUploadingImage ?
+
+                                <div className="profile-page-avatar-large profile-page-uploading">
+
+                                    Uploading...
+
+                                </div>
+
+                                :
+
+                                selectedImage ?
+
+                                    <img
+                                        src={selectedImage}
+                                        alt="Profile"
+                                        className="profile-page-avatar-large"
+                                    />
+
+                                    :
+
+                                    user?.profilePicture && !imageError ?
+
+                                        <img
+                                            src={
+                                                (user.profilePicture.startsWith("http")
+                                                    ? user.profilePicture
+                                                    : `http://localhost:8080${user.profilePicture}`) +
+                                                `?t=${Date.now()}`
+                                            }
+                                            alt="Profile"
+                                            className="profile-page-avatar-large"
+                                            onError={() => setImageError(true)}
+                                        />
+
+                                        :
+
+                                        <div className="profile-page-avatar-large">
+
+                                            {avatarLetter}
+
+                                        </div>
+
+                        }
 
                         {
 
                             isEditing &&
-                            <button
-                                className={`profile-save-btn ${!hasChanges ? "disabled" : ""}`}
-                                onClick={handleSave}
-                                disabled={
-                                    isSaving ||
-                                    !hasChanges ||
-                                    Object.keys(errors).length > 0
-                                }
-                            >
-                                {isSaving ? "Saving..." : "Save Changes"}
 
-                            </button>
+                            <div className="profile-page-image-actions">
+
+                                <label className="profile-page-camera-btn">
+
+                                    <Camera size={18} />
+
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        hidden
+                                        onChange={handleImageChange}
+                                    />
+
+                                </label>
+
+                                {
+
+                                    (selectedImage || user?.profilePicture) &&
+
+                                    <button
+                                        type="button"
+                                        className="profile-page-remove-btn"
+                                        onClick={handleRemovePhoto}
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+
+
+                                }
+
+                            </div>
 
                         }
 
-                        <button
-                            className="profile-edit-btn"
-                            onClick={async () => {
-
-                                if (isEditing) {
-
-                                    if (hasChanges) {
-
-                                        setShowDiscardModal(true);
-
-                                        return;
-
-                                    }
-                                    if (selectedImage) {
-
-                                        URL.revokeObjectURL(selectedImage);
-
-                                    }
-
-                                    setSelectedImage(null);
-
-                                    setSelectedFile(null);
-
-                                    setHasChanges(false);
-
-                                    setImageError(false);
-
-                                    setErrors({});
-
-                                    setMessage({
-                                        type: "",
-                                        text: ""
-                                    });
-
-                                    try {
-
-                                        const basicUser = await getCurrentUser();
-
-                                        const profile = await getProfile();
-
-                                        const currentUser = {
-
-                                            ...basicUser,
-
-                                            ...profile
-
-                                        };
-
-                                        setUser(currentUser);
-
-                                        setFormData({
-
-                                            name: currentUser.name || "",
-
-                                            username: currentUser.username || "",
-
-                                            email: currentUser.email || "",
-
-                                            journeyType: currentUser.journeyType || "",
-
-                                            targetRole: currentUser.targetRole || "",
+                    </div>
 
 
+                    <div className="profile-page-hero-content">
 
-                                            experienceLevel: currentUser.experienceLevel || "",
+                        <h2>
 
-                                            collegeName: currentUser.college || "",
+                            {formData.name || "Your Name"}
 
-                                            degree: currentUser.course || "",
+                        </h2>
 
-                                            graduationYear: currentUser.graduationYear || "",
-
-                                            currentCompany: currentUser.currentCompany || "",
-
-                                            university: currentUser.university || "",
-
-                                            designation: currentUser.designation || "",
-
-                                            employmentType: currentUser.employmentType || "",
-
-                                            skills: currentUser.skills || [],
-
-                                            phone: currentUser.phone || "",
-
-                                            gender: currentUser.gender || "",
-
-                                            githubUrl: currentUser.githubUrl || "",
-
-                                            linkedinUrl: currentUser.linkedinUrl || "",
-
-                                            portfolioUrl: currentUser.portfolioUrl || "",
-
-                                            personalWebsite: currentUser.personalWebsite || "",
-
-                                            dateOfBirth: currentUser.dateOfBirth || "",
-
-                                            yearsOfExperience: currentUser.yearsOfExperience || "",
-
-                                            careerGoal: currentUser.careerGoal || ""
-
-                                        });
-
-                                        setSelectedSkills(currentUser.skills || []);
-
-                                    } catch (error) {
-
-                                        console.error(error);
-
-                                    }
-
-                                }
-
-                                setIsEditing(!isEditing);
-
-                            }}
-                        >
-
-                            {isEditing ? "Cancel" : "Edit Profile"}
-
-                        </button>
 
                     </div>
 
                 </div>
 
-                {
+                <div className="profile-page-stats">
 
-                    message.text &&
+                    <div className="profile-page-stat-card">
 
-                    <div
-                        className={
-                            message.type === "success"
-                                ? "profile-page-success-message"
-                                : "profile-page-error-message"
-                        }
-                    >
+                        <h3>
 
-                        {message.text}
+                            {profileCompletion}%
+
+                        </h3>
+
+                        <span>
+
+                            Profile Completion
+
+                        </span>
 
                     </div>
 
-                }
+                    <div className="profile-page-stat-card">
 
-                <div className="profile-page-card">
+                        <h3>
 
-                    <div className="profile-page-cover"></div>
+                            {mockInterviewCount}
 
-                    <div className="profile-page-hero">
+                        </h3>
 
-                        <div className="profile-page-avatar-wrapper">
+                        <span>
 
-                            {
+                            Mock Interviews
 
-                                isUploadingImage ?
+                        </span>
 
-                                    <div className="profile-page-avatar-large profile-page-uploading">
+                    </div>
 
-                                        Uploading...
+                    <div className="profile-page-stat-card">
 
-                                    </div>
+                        <h3>
 
-                                    :
+                            0
 
-                                    selectedImage ?
+                        </h3>
 
-                                        <img
-                                            src={selectedImage}
-                                            alt="Profile"
-                                            className="profile-page-avatar-large"
-                                        />
+                        <span>
 
-                                        :
+                            Coding Tests
 
-                                        user?.profilePicture && !imageError ?
+                        </span>
 
-                                            <img
-                                                src={
-                                                    (user.profilePicture.startsWith("http")
-                                                        ? user.profilePicture
-                                                        : `http://localhost:8080${user.profilePicture}`) +
-                                                    `?t=${Date.now()}`
-                                                }
-                                                alt="Profile"
-                                                className="profile-page-avatar-large"
-                                                onError={() => setImageError(true)}
+                    </div>
+
+                    <div className="profile-page-stat-card">
+
+                        <h3>
+
+                            0
+
+                        </h3>
+
+                        <span>
+
+                            Achievements
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div className="profile-page-card-header">
+
+                    <h2>
+
+                        Profile Details
+
+                    </h2>
+
+                </div>
+
+                <form
+                    className="profile-page-card-body"
+                    onSubmit={(e) => {
+
+                        e.preventDefault();
+
+                        if (
+                            !isSaving &&
+                            hasChanges &&
+                            Object.keys(errors).length === 0
+                        ) {
+                            handleSave();
+
+                        }
+
+                    }}
+                >
+
+                    <>
+
+                        <div className="profile-page-section">
+
+                            <h3 className="profile-page-section-title">
+
+                                <User size={20} />
+
+                                Personal details
+
+                            </h3>
+
+                            <div className="profile-page-info-grid">
+
+                                <div className="profile-page-info-item">
+
+                                    <label>
+
+                                        Full Name
+
+                                    </label>
+
+                                    {
+                                        isEditing ?
+
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleChange}
+                                                className="profile-page-input"
+                                                placeholder="Enter Full Name"
                                             />
 
                                             :
 
-                                            <div className="profile-page-avatar-large">
+                                            <span>
 
-                                                {avatarLetter}
+                                                {formData.name || "-"}
 
-                                            </div>
+                                            </span>
 
-                            }
+                                    }
 
-                            {
+                                </div>
 
-                                isEditing &&
+                                <div className="profile-page-info-item">
 
-                                <div className="profile-page-image-actions">
+                                    <label>
 
-                                    <label className="profile-page-camera-btn">
-
-                                        <Camera size={18} />
-
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            hidden
-                                            onChange={handleImageChange}
-                                        />
+                                        Username
 
                                     </label>
 
                                     {
 
-                                        (selectedImage || user?.profilePicture) &&
+                                        isEditing ?
 
-                                        <button
-                                            type="button"
-                                            className="profile-page-remove-btn"
-                                            onClick={handleRemovePhoto}
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                            <div className="profile-page-username-box">
 
-
-                                    }
-
-                                </div>
-
-                            }
-
-                        </div>
-
-
-                        <div className="profile-page-hero-content">
-
-                            <h2>
-
-                                {formData.name || "Your Name"}
-
-                            </h2>
-
-
-                        </div>
-
-                    </div>
-
-                    <div className="profile-page-stats">
-
-                        <div className="profile-page-stat-card">
-
-                            <h3>
-
-                                {profileCompletion}%
-
-                            </h3>
-
-                            <span>
-
-                                Profile Completion
-
-                            </span>
-
-                        </div>
-
-                      <div className="profile-page-stat-card">
-
-    <h3>
-
-        {mockInterviewCount}
-
-    </h3>
-
-    <span>
-
-        Mock Interviews
-
-    </span>
-
-</div>
-
-                        <div className="profile-page-stat-card">
-
-                            <h3>
-
-                                0
-
-                            </h3>
-
-                            <span>
-
-                                Coding Tests
-
-                            </span>
-
-                        </div>
-
-                        <div className="profile-page-stat-card">
-
-                            <h3>
-
-                                0
-
-                            </h3>
-
-                            <span>
-
-                                Achievements
-
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <div className="profile-page-card-header">
-
-                        <h2>
-
-                            Profile Details
-
-                        </h2>
-
-                    </div>
-
-                    <form
-                        className="profile-page-card-body"
-                        onSubmit={(e) => {
-
-                            e.preventDefault();
-
-                            if (
-                                !isSaving &&
-                                hasChanges &&
-                                Object.keys(errors).length === 0
-                            ) {
-                                handleSave();
-
-                            }
-
-                        }}
-                    >
-
-                        <>
-
-                            <div className="profile-page-section">
-
-                                <h3 className="profile-page-section-title">
-
-                                    <User size={20} />
-
-                                    Personal details
-
-                                </h3>
-
-                                <div className="profile-page-info-grid">
-
-                                    <div className="profile-page-info-item">
-
-                                        <label>
-
-                                            Full Name
-
-                                        </label>
-
-                                        {
-                                            isEditing ?
-
-                                                <input
-                                                    type="text"
-                                                    name="name"
-                                                    value={formData.name}
-                                                    onChange={handleChange}
-                                                    className="profile-page-input"
-                                                    placeholder="Enter Full Name"
-                                                />
-
-                                                :
-
-                                                <span>
-
-                                                    {formData.name || "-"}
-
-                                                </span>
-
-                                        }
-
-                                    </div>
-
-                                    <div className="profile-page-info-item">
-
-                                        <label>
-
-                                            Username
-
-                                        </label>
-
-                                        {
-
-                                            isEditing ?
-
-                                                <div className="profile-page-username-box">
-
-                                                    <span className="profile-page-username-value">
-
-                                                        {formData.username || "-"}
-
-                                                    </span>
-
-                                                    <div className="profile-page-username-lock">
-
-                                                        🔒
-
-                                                    </div>
-
-                                                </div>
-
-                                                :
-
-                                                <span>
+                                                <span className="profile-page-username-value">
 
                                                     {formData.username || "-"}
 
                                                 </span>
 
-                                        }
+                                                <div className="profile-page-username-lock">
 
-                                    </div>
-                                    <div className="profile-page-info-item">
+                                                    🔒
 
-                                        <label>
+                                                </div>
 
-                                            Email
+                                            </div>
 
-                                        </label>
+                                            :
 
-                                        {
-                                            isEditing ?
+                                            <span>
 
-                                                <input
-                                                    type="email"
-                                                    value={formData.email}
-                                                    className="profile-page-input"
-                                                    readOnly
-                                                />
+                                                {formData.username || "-"}
 
-                                                :
+                                            </span>
 
-                                                <span>
+                                    }
 
-                                                    {formData.email || "-"}
+                                </div>
+                                <div className="profile-page-info-item">
 
-                                                </span>
+                                    <label>
 
-                                        }
+                                        Email
 
-                                    </div>
+                                    </label>
 
-                                    <div className="profile-page-info-item">
+                                    {
+                                        isEditing ?
 
-                                        <label>
+                                            <input
+                                                type="email"
+                                                value={formData.email}
+                                                className="profile-page-input"
+                                                readOnly
+                                            />
 
-                                            Phone
+                                            :
 
-                                        </label>
+                                            <span>
 
-                                        {
+                                                {formData.email || "-"}
 
-                                            isEditing ?
+                                            </span>
 
-                                                <>
-
-                                                    <input
-                                                        type="text"
-                                                        name="phone"
-                                                        value={formData.phone}
-                                                        onChange={handleChange}
-                                                        className="profile-page-input"
-                                                    />
-
-                                                    {
-
-                                                        errors.phone &&
-
-                                                        <small className="profile-page-error">
-
-                                                            {errors.phone}
-
-                                                        </small>
-
-                                                    }
-
-                                                </>
-
-                                                :
-
-                                                <span>
-
-                                                    {formData.phone || "-"}
-
-                                                </span>
-
-                                        }
-
-                                    </div>
-
-                                    <div className="profile-page-info-item">
-
-                                        <label>
-
-                                            Gender
-
-                                        </label>
-
-                                        {
-
-                                            isEditing ?
-
-                                                <select
-                                                    name="gender"
-                                                    value={formData.gender}
-                                                    onChange={handleChange}
-                                                    className="profile-page-select"
-                                                >
-                                                    <option value="">Select Gender</option>
-
-                                                    {genderOptions.map(option => (
-                                                        <option
-                                                            key={option.value}
-                                                            value={option.value}
-                                                        >
-                                                            {option.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                :
-
-                                                <span>
-
-                                                    {formData.gender || "-"}
-
-                                                </span>
-
-                                        }
-
-                                    </div>
-
-                                    <div className="profile-page-info-item">
-
-                                        <label>
-
-                                            Date of Birth
-
-                                        </label>
-
-                                        {
-
-                                            isEditing ?
-
-                                                <>
-                                                    <input
-        type="date"
-        name="dateOfBirth"
-        value={formData.dateOfBirth}
-        onChange={handleChange}
-        max={new Date().toISOString().split("T")[0]}
-        className="profile-page-input profile-page-date-input"
-    />
-
-                                                    {
-                                                        errors.dateOfBirth &&
-
-                                                        <small className="profile-page-error">
-
-                                                            {errors.dateOfBirth}
-
-                                                        </small>
-                                                    }
-                                                </>
-
-                                                :
-
-                                                <span>
-
-                                                    {formData.dateOfBirth || "-"}
-
-                                                </span>
-
-                                        }
-
-                                    </div>
-
+                                    }
 
                                 </div>
 
-                            </div>
+                                <div className="profile-page-info-item">
 
-                            <div className="profile-page-section">
+                                    <label>
 
-                                <h3 className="profile-page-section-title">
+                                        Phone
 
-                                    <Briefcase size={20} />
+                                    </label>
 
-                                    Career Information
+                                    {
 
-                                </h3>
+                                        isEditing ?
 
-                                <div className="profile-page-info-grid">
-
-                                    <div className="profile-page-info-item">
-
-                                        <label>
-
-                                            Journey
-
-                                        </label>
-
-                                        {
-
-                                            isEditing ?
-
-                                                <>
-
-                                                    <select
-                                                        name="journeyType"
-                                                        value={formData.journeyType}
-                                                        onChange={handleChange}
-                                                        className="profile-page-select"
-                                                    >
-                                                        <option value="">Select Journey</option>
-
-                                                        {journeyOptions.map(option => (
-                                                            <option
-                                                                key={option.value}
-                                                                value={option.value}
-                                                            >
-                                                                {option.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    {
-
-                                                        errors.journeyType &&
-
-                                                        <small className="profile-page-error">
-
-                                                            {errors.journeyType}
-
-                                                        </small>
-
-                                                    }
-
-                                                </>
-
-                                                :
-
-                                                <span>
-
-                                                    {formData.journeyType || "-"}
-
-                                                </span>
-
-                                        }
-
-                                    </div>
-
-
-                                    <div className="profile-page-info-item">
-
-                                        <label>
-
-                                            Target Role
-
-                                        </label>
-
-                                        {
-
-                                            isEditing ?
+                                            <>
 
                                                 <input
                                                     type="text"
-                                                    name="targetRole"
-                                                    value={formData.targetRole}
+                                                    name="phone"
+                                                    value={formData.phone}
                                                     onChange={handleChange}
                                                     className="profile-page-input"
-                                                    placeholder="Enter Your Target Role"
                                                 />
 
-                                                :
+                                                {
 
-                                                <span>
+                                                    errors.phone &&
 
-                                                    {formData.targetRole || "-"}
+                                                    <small className="profile-page-error">
 
-                                                </span>
+                                                        {errors.phone}
 
-                                        }
+                                                    </small>
 
-                                    </div>
+                                                }
 
-                                    <div className="profile-page-info-item">
-                                        <label>
+                                            </>
 
-                                            Career Goal
+                                            :
 
-                                        </label>
-                                        {
+                                            <span>
 
-                                            isEditing ?
+                                                {formData.phone || "-"}
+
+                                            </span>
+
+                                    }
+
+                                </div>
+
+                                <div className="profile-page-info-item">
+
+                                    <label>
+
+                                        Gender
+
+                                    </label>
+
+                                    {
+
+                                        isEditing ?
+
+                                            <select
+                                                name="gender"
+                                                value={formData.gender}
+                                                onChange={handleChange}
+                                                className="profile-page-select"
+                                            >
+                                                <option value="">Select Gender</option>
+
+                                                {genderOptions.map(option => (
+                                                    <option
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            :
+
+                                            <span>
+
+                                                {formData.gender || "-"}
+
+                                            </span>
+
+                                    }
+
+                                </div>
+
+                                <div className="profile-page-info-item">
+
+                                    <label>
+
+                                        Date of Birth
+
+                                    </label>
+
+                                    {
+
+                                        isEditing ?
+
+                                            <>
+                                                <input
+                                                    type="date"
+                                                    name="dateOfBirth"
+                                                    value={formData.dateOfBirth}
+                                                    onChange={handleChange}
+                                                    max={new Date().toISOString().split("T")[0]}
+                                                    className="profile-page-input profile-page-date-input"
+                                                />
+
+                                                {
+                                                    errors.dateOfBirth &&
+
+                                                    <small className="profile-page-error">
+
+                                                        {errors.dateOfBirth}
+
+                                                    </small>
+                                                }
+                                            </>
+
+                                            :
+
+                                            <span>
+
+                                                {formData.dateOfBirth || "-"}
+
+                                            </span>
+
+                                    }
+
+                                </div>
+
+
+                            </div>
+
+                        </div>
+
+                        <div className="profile-page-section">
+
+                            <h3 className="profile-page-section-title">
+
+                                <Briefcase size={20} />
+
+                                Career Information
+
+                            </h3>
+
+                            <div className="profile-page-info-grid">
+
+                                <div className="profile-page-info-item">
+
+                                    <label>
+
+                                        Journey
+
+                                    </label>
+
+                                    {
+
+                                        isEditing ?
+
+                                            <>
 
                                                 <select
-                                                    name="careerGoal"
-                                                    value={formData.careerGoal}
+                                                    name="journeyType"
+                                                    value={formData.journeyType}
                                                     onChange={handleChange}
                                                     className="profile-page-select"
                                                 >
-                                                    <option value="">Select Career Goal</option>
+                                                    <option value="">Select Journey</option>
 
-                                                    {careerGoalOptions.map(option => (
+                                                    {journeyOptions.map(option => (
+                                                        <option
+                                                            key={option.value}
+                                                            value={option.value}
+                                                        >
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {
+
+                                                    errors.journeyType &&
+
+                                                    <small className="profile-page-error">
+
+                                                        {errors.journeyType}
+
+                                                    </small>
+
+                                                }
+
+                                            </>
+
+                                            :
+
+                                            <span>
+
+                                                {formData.journeyType || "-"}
+
+                                            </span>
+
+                                    }
+
+                                </div>
+
+
+                                <div className="profile-page-info-item">
+
+                                    <label>
+
+                                        Target Role
+
+                                    </label>
+
+                                    {
+
+                                        isEditing ?
+
+                                            <input
+                                                type="text"
+                                                name="targetRole"
+                                                value={formData.targetRole}
+                                                onChange={handleChange}
+                                                className="profile-page-input"
+                                                placeholder="Enter Your Target Role"
+                                            />
+
+                                            :
+
+                                            <span>
+
+                                                {formData.targetRole || "-"}
+
+                                            </span>
+
+                                    }
+
+                                </div>
+
+                                <div className="profile-page-info-item">
+                                    <label>
+
+                                        Career Goal
+
+                                    </label>
+                                    {
+
+                                        isEditing ?
+
+                                            <select
+                                                name="careerGoal"
+                                                value={formData.careerGoal}
+                                                onChange={handleChange}
+                                                className="profile-page-select"
+                                            >
+                                                <option value="">Select Career Goal</option>
+
+                                                {careerGoalOptions.map(option => (
+                                                    <option
+                                                        key={option.value}
+                                                        value={option.value}
+                                                    >
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+
+                                            :
+
+                                            <span>
+
+                                                {formData.careerGoal || "-"}
+
+                                            </span>
+
+                                    }
+
+                                </div>
+
+                                <div className="profile-page-info-item">
+
+                                    <label>
+
+                                        Experience Level
+
+                                    </label>
+
+                                    {
+
+                                        isEditing ?
+
+                                            <>
+
+                                                <select
+                                                    name="experienceLevel"
+                                                    value={formData.experienceLevel}
+                                                    onChange={handleChange}
+                                                    className="profile-page-select"
+                                                >
+                                                    <option value="">Select Experience Level</option>
+
+                                                    {experienceOptions.map(option => (
                                                         <option
                                                             key={option.value}
                                                             value={option.value}
@@ -2517,41 +2566,142 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
                                                     ))}
                                                 </select>
 
-                                                :
+                                                {
 
-                                                <span>
+                                                    errors.experienceLevel &&
 
-                                                    {formData.careerGoal || "-"}
+                                                    <small className="profile-page-error">
 
-                                                </span>
+                                                        {errors.experienceLevel}
 
-                                        }
+                                                    </small>
 
-                                    </div>
+                                                }
 
-                                    <div className="profile-page-info-item">
+                                            </>
 
-                                        <label>
+                                            :
 
-                                            Experience Level
+                                            <span>
 
-                                        </label>
+                                                {formData.experienceLevel || "-"}
 
-                                        {
+                                            </span>
 
-                                            isEditing ?
+                                    }
 
-                                                <>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div className="profile-page-section">
+
+                            <h3 className="profile-page-section-title">
+
+                                <GraduationCap size={20} />
+
+
+                                Education / Experience
+
+                            </h3>
+
+                            <div className="profile-page-info-grid">
+
+                                {
+
+                                    formData.journeyType === "STUDENT" &&
+
+                                    <>
+
+                                        <div className="profile-page-info-item">
+
+                                            <label>
+
+                                                College Name
+
+                                            </label>
+
+                                            {
+
+                                                isEditing ?
+
+                                                    <input
+                                                        type="text"
+                                                        name="collegeName"
+                                                        value={formData.collegeName}
+                                                        onChange={handleChange}
+                                                        className="profile-page-input"
+                                                        placeholder="Enter College Name"
+                                                    />
+
+                                                    :
+
+                                                    <span>
+
+                                                        {formData.collegeName || "-"}
+
+                                                    </span>
+
+                                            }
+
+                                        </div>
+
+                                        <div className="profile-page-info-item">
+
+                                            <label>
+
+                                                Degree
+
+                                            </label>
+
+                                            {
+
+                                                isEditing ?
+
+                                                    <input
+                                                        type="text"
+                                                        name="degree"
+                                                        value={formData.degree}
+                                                        onChange={handleChange}
+                                                        className="profile-page-input"
+                                                        placeholder="Enter Degree"
+                                                    />
+
+                                                    :
+
+                                                    <span>
+
+                                                        {formData.degree || "-"}
+
+                                                    </span>
+
+                                            }
+
+                                        </div>
+
+                                        <div className="profile-page-info-item">
+
+                                            <label>
+
+                                                Graduation Year
+
+                                            </label>
+
+                                            {
+
+                                                isEditing ?
 
                                                     <select
-                                                        name="experienceLevel"
-                                                        value={formData.experienceLevel}
+                                                        name="graduationYear"
+                                                        value={formData.graduationYear}
                                                         onChange={handleChange}
                                                         className="profile-page-select"
                                                     >
-                                                        <option value="">Select Experience Level</option>
+                                                        <option value="">Select Graduation Year</option>
 
-                                                        {experienceOptions.map(option => (
+                                                        {graduationYearOptions.map(option => (
                                                             <option
                                                                 key={option.value}
                                                                 value={option.value}
@@ -2561,586 +2711,488 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
                                                         ))}
                                                     </select>
 
-                                                    {
+                                                    :
 
-                                                        errors.experienceLevel &&
+                                                    <span>
 
-                                                        <small className="profile-page-error">
+                                                        {formData.graduationYear || "-"}
 
-                                                            {errors.experienceLevel}
+                                                    </span>
 
-                                                        </small>
+                                            }
 
-                                                    }
+                                        </div>
 
-                                                </>
+                                        <div className="profile-page-info-item">
 
-                                                :
+                                            <label>
 
-                                                <span>
+                                                University
 
-                                                    {formData.experienceLevel || "-"}
+                                            </label>
 
-                                                </span>
+                                            {
 
-                                        }
+                                                isEditing ?
 
-                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        name="university"
+                                                        value={formData.university}
+                                                        onChange={handleChange}
+                                                        className="profile-page-input"
+                                                        placeholder="Enter University Name"
+                                                    />
 
-                                </div>
+                                                    :
+
+                                                    <span>
+
+                                                        {formData.university || "-"}
+
+                                                    </span>
+
+                                            }
+
+                                        </div>
+
+                                    </>
+
+                                }
+
+                                {
+
+                                    formData.journeyType === "WORKING_PROFESSIONAL" &&
+
+                                    <>
+
+                                        <div className="profile-page-info-item">
+
+                                            <label>
+
+                                                Company Name
+
+                                            </label>
+
+                                            {
+
+                                                isEditing ?
+
+                                                    <input
+                                                        type="text"
+                                                        name="currentCompany"
+                                                        value={formData.currentCompany}
+                                                        onChange={handleChange}
+                                                        className="profile-page-input"
+                                                        placeholder="Enter Company Name"
+                                                    />
+
+                                                    :
+
+                                                    <span>
+
+                                                        {formData.currentCompany || "-"}
+
+                                                    </span>
+
+                                            }
+
+                                        </div>
+
+                                        <div className="profile-page-info-item">
+
+                                            <label>
+
+                                                Years of Experience
+
+                                            </label>
+
+                                            {
+
+                                                isEditing ?
+
+                                                    <select
+                                                        name="yearsOfExperience"
+                                                        value={formData.yearsOfExperience}
+                                                        onChange={handleChange}
+                                                        className="profile-page-select"
+                                                    >
+                                                        <option value="">Select Experience</option>
+
+                                                        {experienceYearOptions.map(option => (
+                                                            <option
+                                                                key={option.value}
+                                                                value={option.value}
+                                                            >
+                                                                {option.label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+
+                                                    :
+
+                                                    <span>
+
+                                                        {
+                                                            formData.yearsOfExperience
+                                                                ? `${formData.yearsOfExperience} Year${Number(formData.yearsOfExperience) === 1 ? "" : "s"}`
+                                                                : "-"
+                                                        }
+
+                                                    </span>
+
+                                            }
+
+                                        </div>
+
+                                        <div className="profile-page-info-item">
+
+                                            <label>
+
+                                                Designation
+
+                                            </label>
+
+                                            {
+
+                                                isEditing ?
+
+                                                    <input
+                                                        type="text"
+                                                        name="designation"
+                                                        value={formData.designation}
+                                                        onChange={handleChange}
+                                                        className="profile-page-input"
+                                                        placeholder="Enter Designation"
+                                                    />
+
+                                                    :
+
+                                                    <span>
+
+                                                        {formData.designation || "-"}
+
+                                                    </span>
+
+                                            }
+
+                                        </div>
+
+                                        <div className="profile-page-info-item">
+
+                                            <label>
+
+                                                Employment Type
+
+                                            </label>
+
+                                            {
+
+                                                isEditing ?
+
+                                                    <select
+                                                        name="employmentType"
+                                                        value={formData.employmentType}
+                                                        onChange={handleChange}
+                                                        className="profile-page-select"
+                                                    >
+                                                        <option value="">Select Employment Type</option>
+
+                                                        {employmentTypeOptions.map(option => (
+                                                            <option
+                                                                key={option.value}
+                                                                value={option.value}
+                                                            >
+                                                                {option.label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+
+                                                    :
+
+                                                    <span>
+
+                                                        {formData.employmentType || "-"}
+
+                                                    </span>
+
+                                            }
+
+                                        </div>
+                                    </>
+
+                                }
 
                             </div>
 
-                            <div className="profile-page-section">
+                        </div>
 
-                                <h3 className="profile-page-section-title">
+                        <div className="profile-page-section">
 
-                                    <GraduationCap size={20} />
+                            <h3 className="profile-page-section-title">
+
+                                <Link2 size={20} />
 
 
-                                    Education / Experience
+                                Social Links
 
-                                </h3>
+                            </h3>
 
-                                <div className="profile-page-info-grid">
+                            <div className="profile-page-info-grid">
+
+                                <div className="profile-page-info-item">
+
+                                    <label>
+
+                                        GitHub Repository
+
+                                    </label>
 
                                     {
 
-                                        formData.journeyType === "STUDENT" &&
-
-                                        <>
-
-                                            <div className="profile-page-info-item">
-
-                                                <label>
-
-                                                    College Name
-
-                                                </label>
-
-                                                {
-
-                                                    isEditing ?
-
-                                                        <input
-                                                            type="text"
-                                                            name="collegeName"
-                                                            value={formData.collegeName}
-                                                            onChange={handleChange}
-                                                            className="profile-page-input"
-                                                            placeholder="Enter College Name"
-                                                        />
-
-                                                        :
-
-                                                        <span>
-
-                                                            {formData.collegeName || "-"}
-
-                                                        </span>
-
-                                                }
-
-                                            </div>
-
-                                            <div className="profile-page-info-item">
-
-                                                <label>
-
-                                                    Degree
-
-                                                </label>
-
-                                                {
-
-                                                    isEditing ?
-
-                                                        <input
-                                                            type="text"
-                                                            name="degree"
-                                                            value={formData.degree}
-                                                            onChange={handleChange}
-                                                            className="profile-page-input"
-                                                            placeholder="Enter Degree"
-                                                        />
-
-                                                        :
-
-                                                        <span>
-
-                                                            {formData.degree || "-"}
-
-                                                        </span>
-
-                                                }
-
-                                            </div>
-
-                                            <div className="profile-page-info-item">
-
-                                                <label>
-
-                                                    Graduation Year
-
-                                                </label>
-
-                                                {
-
-                                                    isEditing ?
-
-                                                        <select
-                                                            name="graduationYear"
-                                                            value={formData.graduationYear}
-                                                            onChange={handleChange}
-                                                            className="profile-page-select"
-                                                        >
-                                                            <option value="">Select Graduation Year</option>
-
-                                                            {graduationYearOptions.map(option => (
-                                                                <option
-                                                                    key={option.value}
-                                                                    value={option.value}
-                                                                >
-                                                                    {option.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-
-                                                        :
-
-                                                        <span>
-
-                                                            {formData.graduationYear || "-"}
-
-                                                        </span>
-
-                                                }
-
-                                            </div>
-
-                                            <div className="profile-page-info-item">
-
-                                                <label>
-
-                                                    University
-
-                                                </label>
-
-                                                {
-
-                                                    isEditing ?
-
-                                                        <input
-                                                            type="text"
-                                                            name="university"
-                                                            value={formData.university}
-                                                            onChange={handleChange}
-                                                            className="profile-page-input"
-                                                            placeholder="Enter University Name"
-                                                        />
-
-                                                        :
-
-                                                        <span>
-
-                                                            {formData.university || "-"}
-
-                                                        </span>
-
-                                                }
-
-                                            </div>
-
-                                        </>
-
-                                    }
-
-                                    {
-
-                                        formData.journeyType === "WORKING_PROFESSIONAL" &&
-
-                                        <>
-
-                                            <div className="profile-page-info-item">
-
-                                                <label>
-
-                                                    Company Name
-
-                                                </label>
-
-                                                {
-
-                                                    isEditing ?
-
-                                                        <input
-                                                            type="text"
-                                                            name="currentCompany"
-                                                            value={formData.currentCompany}
-                                                            onChange={handleChange}
-                                                            className="profile-page-input"
-                                                            placeholder="Enter Company Name"
-                                                        />
-
-                                                        :
-
-                                                        <span>
-
-                                                            {formData.currentCompany || "-"}
-
-                                                        </span>
-
-                                                }
-
-                                            </div>
-
-                                            <div className="profile-page-info-item">
-
-                                                <label>
-
-                                                    Years of Experience
-
-                                                </label>
-
-                                                {
-
-                                                    isEditing ?
-
-                                                        <select
-                                                            name="yearsOfExperience"
-                                                            value={formData.yearsOfExperience}
-                                                            onChange={handleChange}
-                                                            className="profile-page-select"
-                                                        >
-                                                            <option value="">Select Experience</option>
-
-                                                            {experienceYearOptions.map(option => (
-                                                                <option
-                                                                    key={option.value}
-                                                                    value={option.value}
-                                                                >
-                                                                    {option.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-
-                                                        :
-
-                                                        <span>
-
-                                                            {
-                                                                formData.yearsOfExperience
-                                                                    ? `${formData.yearsOfExperience} Year${Number(formData.yearsOfExperience) === 1 ? "" : "s"}`
-                                                                    : "-"
-                                                            }
-
-                                                        </span>
-
-                                                }
-
-                                            </div>
-
-                                            <div className="profile-page-info-item">
-
-                                                <label>
-
-                                                    Designation
-
-                                                </label>
-
-                                                {
-
-                                                    isEditing ?
-
-                                                        <input
-                                                            type="text"
-                                                            name="designation"
-                                                            value={formData.designation}
-                                                            onChange={handleChange}
-                                                            className="profile-page-input"
-                                                            placeholder="Enter Designation"
-                                                        />
-
-                                                        :
-
-                                                        <span>
-
-                                                            {formData.designation || "-"}
-
-                                                        </span>
-
-                                                }
-
-                                            </div>
-
-                                            <div className="profile-page-info-item">
-
-                                                <label>
-
-                                                    Employment Type
-
-                                                </label>
-
-                                                {
-
-                                                    isEditing ?
-
-                                                        <select
-                                                            name="employmentType"
-                                                            value={formData.employmentType}
-                                                            onChange={handleChange}
-                                                            className="profile-page-select"
-                                                        >
-                                                            <option value="">Select Employment Type</option>
-
-                                                            {employmentTypeOptions.map(option => (
-                                                                <option
-                                                                    key={option.value}
-                                                                    value={option.value}
-                                                                >
-                                                                    {option.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-
-                                                        :
-
-                                                        <span>
-
-                                                            {formData.employmentType || "-"}
-
-                                                        </span>
-
-                                                }
-
-                                            </div>
-                                        </>
-
-                                    }
-
-                                </div>
-
-                            </div>
-
-                            <div className="profile-page-section">
-
-                                <h3 className="profile-page-section-title">
-
-                                    <Link2 size={20} />
-
-
-                                    Social Links
-
-                                </h3>
-
-                                <div className="profile-page-info-grid">
-
-                                    <div className="profile-page-info-item">
-
-                                        <label>
-
-                                            GitHub Repository
-
-                                        </label>
-
-                                        {
-
-                                            githubRepository.connected &&
+                                        githubRepository.connected &&
                                             githubRepository.repositoryUrl
 
-                                                ?
+                                            ?
 
-                                                <a
-                                                    href={githubRepository.repositoryUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="profile-page-social-link"
-                                                >
-                                                    {githubRepository.repositoryUrl}
-                                                </a>
+                                            <a
+                                                href={githubRepository.repositoryUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="profile-page-social-link"
+                                            >
+                                                {githubRepository.repositoryUrl}
+                                            </a>
 
-                                                :
+                                            :
 
-                                                <span>
+                                            <span>
 
-                                                    GitHub repository not connected
+                                                GitHub repository not connected
 
-                                                </span>
+                                            </span>
 
-                                        }
+                                    }
 
-                                    </div>
+                                </div>
 
-                                    <div className="profile-page-info-item">
+                                <div className="profile-page-info-item">
 
-                                        <label>
+                                    <label>
 
-                                            LinkedIn
+                                        LinkedIn
 
-                                        </label>
+                                    </label>
 
-                                        {
+                                    {
 
-                                            isEditing ?
+                                        isEditing ?
 
-                                                <>
+                                            <>
 
-                                                    <input
-                                                        type="url"
-                                                        name="linkedinUrl"
-                                                        value={formData.linkedinUrl}
-                                                        onChange={handleChange}
-                                                        className="profile-page-input"
-                                                        placeholder="https://linkedin.com/in/username"
-                                                    />
+                                                <input
+                                                    type="url"
+                                                    name="linkedinUrl"
+                                                    value={formData.linkedinUrl}
+                                                    onChange={handleChange}
+                                                    className="profile-page-input"
+                                                    placeholder="https://linkedin.com/in/username"
+                                                />
 
-                                                    {
+                                                {
 
-                                                        errors.linkedinUrl &&
+                                                    errors.linkedinUrl &&
 
-                                                        <small className="profile-page-error">
+                                                    <small className="profile-page-error">
 
-                                                            {errors.linkedinUrl}
+                                                        {errors.linkedinUrl}
 
-                                                        </small>
+                                                    </small>
 
-                                                    }
+                                                }
 
-                                                </>
+                                            </>
 
-                                                :
+                                            :
 
-                                                <span>
+                                            <span>
 
-                                                    {formData.linkedinUrl || "-"}
+                                                {formData.linkedinUrl || "-"}
 
-                                                </span>
+                                            </span>
 
-                                        }
+                                    }
 
-                                    </div>
+                                </div>
 
-                                    <div className="profile-page-info-item">
+                                <div className="profile-page-info-item">
 
-                                        <label>
+                                    <label>
 
-                                            Portfolio (Optional)
+                                        Portfolio (Optional)
 
-                                        </label>
+                                    </label>
 
-                                        {
+                                    {
 
-                                            isEditing ?
+                                        isEditing ?
 
-                                                <>
+                                            <>
 
-                                                    <input
-                                                        type="url"
-                                                        name="portfolioUrl"
-                                                        value={formData.portfolioUrl}
-                                                        onChange={handleChange}
-                                                        className="profile-page-input"
-                                                        placeholder="https://yourportfolio.com"
-                                                    />
+                                                <input
+                                                    type="url"
+                                                    name="portfolioUrl"
+                                                    value={formData.portfolioUrl}
+                                                    onChange={handleChange}
+                                                    className="profile-page-input"
+                                                    placeholder="https://yourportfolio.com"
+                                                />
 
-                                                    {
+                                                {
 
-                                                        errors.portfolioUrl &&
+                                                    errors.portfolioUrl &&
 
-                                                        <small className="profile-page-error">
+                                                    <small className="profile-page-error">
 
-                                                            {errors.portfolioUrl}
+                                                        {errors.portfolioUrl}
 
-                                                        </small>
+                                                    </small>
 
-                                                    }
+                                                }
 
-                                                </>
+                                            </>
 
-                                                :
+                                            :
 
-                                                <span>
+                                            <span>
 
-                                                    {formData.portfolioUrl || "-"}
+                                                {formData.portfolioUrl || "-"}
 
-                                                </span>
+                                            </span>
 
-                                        }
+                                    }
 
-                                    </div>
+                                </div>
 
-                                    <div className="profile-page-info-item">
+                                <div className="profile-page-info-item">
 
-                                        <label>
+                                    <label>
 
-                                            Personal Website (Optional)
+                                        Personal Website (Optional)
 
-                                        </label>
+                                    </label>
 
-                                        {
+                                    {
 
-                                            isEditing ?
+                                        isEditing ?
 
-                                                <>
+                                            <>
 
-                                                    <input
-                                                        type="url"
-                                                        name="personalWebsite"
-                                                        value={formData.personalWebsite}
-                                                        onChange={handleChange}
-                                                        className="profile-page-input"
-                                                        placeholder="https://yourwebsite.com"
-                                                    />
+                                                <input
+                                                    type="url"
+                                                    name="personalWebsite"
+                                                    value={formData.personalWebsite}
+                                                    onChange={handleChange}
+                                                    className="profile-page-input"
+                                                    placeholder="https://yourwebsite.com"
+                                                />
 
-                                                    {
+                                                {
 
-                                                        errors.personalWebsite &&
+                                                    errors.personalWebsite &&
 
-                                                        <small className="profile-page-error">
+                                                    <small className="profile-page-error">
 
-                                                            {errors.personalWebsite}
+                                                        {errors.personalWebsite}
 
-                                                        </small>
+                                                    </small>
 
-                                                    }
+                                                }
 
-                                                </>
+                                            </>
 
-                                                :
+                                            :
 
-                                                <span>
+                                            <span>
 
-                                                    {formData.personalWebsite || "-"}
+                                                {formData.personalWebsite || "-"}
 
-                                                </span>
+                                            </span>
 
-                                        }
-
-                                    </div>
+                                    }
 
                                 </div>
 
                             </div>
-                            <div className="profile-page-section">
 
-                                <h3 className="profile-page-section-title">
+                        </div>
+                        <div className="profile-page-section">
 
-                                    Technical Skills
+                            <h3 className="profile-page-section-title">
 
-                                </h3>
+                                Technical Skills
 
-                                <div className="profile-page-info-grid">
+                            </h3>
 
-                                    <div className="profile-page-info-item profile-page-skills-item">
+                            <div className="profile-page-info-grid">
 
-                                        {
+                                <div className="profile-page-info-item profile-page-skills-item">
 
-                                            isEditing ? (
-                                                <div className="profile-page-skills-wrapper">
+                                    {
 
-                                                    <div
-                                                        className="profile-page-skills-input-wrapper"
-                                                        onClick={() => {
+                                        isEditing ? (
+                                            <div className="profile-page-skills-wrapper">
+
+                                                <div
+                                                    className="profile-page-skills-input-wrapper"
+                                                    onClick={() => {
+
+                                                        if (!formData.targetRole.trim()) {
+
+                                                            showSkillMessage(
+                                                                "Please select your target role first."
+                                                            );
+
+                                                        }
+
+                                                    }}
+                                                >
+
+
+
+
+
+                                                    {
+
+                                                        selectedSkills.map((skill) => (
+
+                                                            <div
+                                                                key={skill}
+                                                                className="profile-page-skill-chip"
+                                                            >
+
+                                                                <span>{skill}</span>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSkillRemove(skill)}
+                                                                >
+
+                                                                    ×
+
+                                                                </button>
+
+                                                            </div>
+
+                                                        ))
+
+                                                    }
+
+                                                    <input type="text"
+                                                        value={skillInput}
+                                                        onChange={handleSkillInputChange}
+                                                        onKeyDown={handleSkillKeyDown}
+                                                        onFocus={() => {
 
                                                             if (!formData.targetRole.trim()) {
 
@@ -3148,401 +3200,354 @@ const [mockInterviewCount, setMockInterviewCount] = useState(0);
                                                                     "Please select your target role first."
                                                                 );
 
+                                                                return;
+
                                                             }
+
+                                                            setShowSkillSuggestions(true);
 
                                                         }}
-                                                    >
+                                                        onBlur={() => {
 
+                                                            window.setTimeout(() => {
 
+                                                                setShowSkillSuggestions(false);
 
+                                                                setActiveSkillIndex(-1);
 
+                                                            }, 150);
 
-                                                        {
+                                                        }}
 
-                                                            selectedSkills.map((skill) => (
+                                                        className="profile-page-skill-input"
+                                                        placeholder={
 
-                                                                <div
-                                                                    key={skill}
-                                                                    className="profile-page-skill-chip"
-                                                                >
+                                                            !formData.targetRole
 
-                                                                    <span>{skill}</span>
+                                                                ? "Select target role first"
 
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleSkillRemove(skill)}
-                                                                    >
+                                                                : isSkillLoading
 
-                                                                        ×
+                                                                    ? "Searching skills..."
 
-                                                                    </button>
-
-                                                                </div>
-
-                                                            ))
+                                                                    : "Search technical skills"
 
                                                         }
-
-                                                        <input type="text"
-                                                            value={skillInput}
-                                                            onChange={handleSkillInputChange}
-                                                            onKeyDown={handleSkillKeyDown}
-                                                            onFocus={() => {
-
-                                                                if (!formData.targetRole.trim()) {
-
-                                                                    showSkillMessage(
-                                                                        "Please select your target role first."
-                                                                    );
-
-                                                                    return;
-
-                                                                }
-
-                                                                setShowSkillSuggestions(true);
-
-                                                            }}
-                                                            onBlur={() => {
-
-                                                                window.setTimeout(() => {
-
-                                                                    setShowSkillSuggestions(false);
-
-                                                                    setActiveSkillIndex(-1);
-
-                                                                }, 150);
-
-                                                            }}
-
-                                                            className="profile-page-skill-input"
-                                                            placeholder={
-
-                                                                !formData.targetRole
-
-                                                                    ? "Select target role first"
-
-                                                                    : isSkillLoading
-
-                                                                        ? "Searching skills..."
-
-                                                                        : "Search technical skills"
-
-                                                            }
-                                                            disabled={!formData.targetRole.trim()}
-                                                            autoComplete="off"
-                                                        />
-
-                                                    </div>
-
-                                                    <>
-
-                                                        {
-
-                                                            showSkillSuggestions && (
-
-                                                                <div className="profile-page-skill-suggestions">
-
-                                                                    {
-
-                                                                        isSkillLoading && (
-
-                                                                            <div className="profile-page-skill-loading">
-
-                                                                                Searching skills...
-
-                                                                            </div>
-
-                                                                        )
-
-                                                                    }
-
-                                                                    {
-
-                                                                        !isSkillLoading &&
-
-                                                                        skillSuggestions.length === 0 && (
-
-                                                                            <div className="profile-page-skill-empty">
-
-                                                                                No matching skills found.
-
-                                                                            </div>
-
-                                                                        )
-
-                                                                    }
-
-                                                                    {
-
-                                                                        !isSkillLoading &&
-
-                                                                        skillSuggestions.map((skill, index) => (
-
-                                                                            <button
-
-                                                                                ref={
-
-                                                                                    index === activeSkillIndex
-
-                                                                                        ?
-
-                                                                                        activeSuggestionRef
-
-                                                                                        :
-
-                                                                                        null
-
-                                                                                }
-
-                                                                                key={skill}
-
-                                                                                type="button"
-
-                                                                                className={
-
-                                                                                    index === activeSkillIndex
-
-                                                                                        ?
-
-                                                                                        "profile-page-skill-suggestion active"
-
-                                                                                        :
-
-                                                                                        "profile-page-skill-suggestion"
-
-                                                                                }
-
-                                                                                onMouseDown={(e) => {
-
-                                                                                    e.preventDefault();
-
-                                                                                    handleSkillSelect(skill);
-
-                                                                                }}
-
-                                                                            >
-
-                                                                                {skill}
-
-                                                                            </button>
-
-                                                                        ))
-
-                                                                    }
-
-                                                                </div>
-
-                                                            )
-
-                                                        }
-
-                                                        {
-
-                                                            skillValidation && (
-
-                                                                <small className="profile-page-error">
-
-                                                                    {skillValidation}
-
-                                                                </small>
-
-                                                            )
-
-                                                        }
-
-                                                    </>
+                                                        disabled={!formData.targetRole.trim()}
+                                                        autoComplete="off"
+                                                    />
 
                                                 </div>
 
-                                            ) : (
-
-                                                <div className="profile-page-skills-preview">
+                                                <>
 
                                                     {
 
-                                                        selectedSkills.length > 0
+                                                        showSkillSuggestions && (
 
-                                                            ?
+                                                            <div className="profile-page-skill-suggestions">
 
-                                                            selectedSkills.map(skill => (
+                                                                {
 
-                                                                <span
-                                                                    key={skill}
-                                                                    className="profile-page-skill-chip readonly"
-                                                                >
+                                                                    isSkillLoading && (
 
-                                                                    {skill}
+                                                                        <div className="profile-page-skill-loading">
 
-                                                                </span>
+                                                                            Searching skills...
 
-                                                            ))
+                                                                        </div>
 
-                                                            :
+                                                                    )
 
-                                                            <div className="profile-page-skills-empty">
+                                                                }
 
-                                                                No technical skills added yet.
+                                                                {
+
+                                                                    !isSkillLoading &&
+
+                                                                    skillSuggestions.length === 0 && (
+
+                                                                        <div className="profile-page-skill-empty">
+
+                                                                            No matching skills found.
+
+                                                                        </div>
+
+                                                                    )
+
+                                                                }
+
+                                                                {
+
+                                                                    !isSkillLoading &&
+
+                                                                    skillSuggestions.map((skill, index) => (
+
+                                                                        <button
+
+                                                                            ref={
+
+                                                                                index === activeSkillIndex
+
+                                                                                    ?
+
+                                                                                    activeSuggestionRef
+
+                                                                                    :
+
+                                                                                    null
+
+                                                                            }
+
+                                                                            key={skill}
+
+                                                                            type="button"
+
+                                                                            className={
+
+                                                                                index === activeSkillIndex
+
+                                                                                    ?
+
+                                                                                    "profile-page-skill-suggestion active"
+
+                                                                                    :
+
+                                                                                    "profile-page-skill-suggestion"
+
+                                                                            }
+
+                                                                            onMouseDown={(e) => {
+
+                                                                                e.preventDefault();
+
+                                                                                handleSkillSelect(skill);
+
+                                                                            }}
+
+                                                                        >
+
+                                                                            {skill}
+
+                                                                        </button>
+
+                                                                    ))
+
+                                                                }
 
                                                             </div>
 
+                                                        )
+
                                                     }
 
-                                                </div>
+                                                    {
 
-                                            )
+                                                        skillValidation && (
 
-                                        }
+                                                            <small className="profile-page-error">
 
-                                    </div>
+                                                                {skillValidation}
+
+                                                            </small>
+
+                                                        )
+
+                                                    }
+
+                                                </>
+
+                                            </div>
+
+                                        ) : (
+
+                                            <div className="profile-page-skills-preview">
+
+                                                {
+
+                                                    selectedSkills.length > 0
+
+                                                        ?
+
+                                                        selectedSkills.map(skill => (
+
+                                                            <span
+                                                                key={skill}
+                                                                className="profile-page-skill-chip readonly"
+                                                            >
+
+                                                                {skill}
+
+                                                            </span>
+
+                                                        ))
+
+                                                        :
+
+                                                        <div className="profile-page-skills-empty">
+
+                                                            No technical skills added yet.
+
+                                                        </div>
+
+                                                }
+
+                                            </div>
+
+                                        )
+
+                                    }
+
                                 </div>
                             </div>
+                        </div>
 
-                        </>
+                    </>
 
-                    </form>
-
-                </div>
-
-                <ImageCropModal
-                    isOpen={isCropOpen}
-                    image={cropImage}
-                    onClose={() => {
-                        if (cropImage) {
-                            URL.revokeObjectURL(cropImage);
-                        }
-                        setCropImage(null);
-
-                        setOriginalImageFile(null);
-
-                        setIsCropOpen(false);
-
-                    }}
-                    onSave={(file) => {
-
-                        const preview = URL.createObjectURL(file);
-
-                        setSelectedFile(file);
-
-                        setSelectedImage(preview);
-
-                        checkForChanges(formData, selectedSkills);
-
-                        setHasChanges(true);
-
-                        setImageError(false);
-
-                        if (cropImage) {
-                            URL.revokeObjectURL(cropImage);
-                        }
-
-                        setCropImage(null);
-
-                        setOriginalImageFile(null);
-
-                        setIsCropOpen(false);
-
-                    }}
-                />
-
-
-                <ConfirmationModal
-                    isOpen={showDiscardModal}
-                    title="Discard Changes?"
-                    message="You have unsaved changes. Are you sure you want to discard them?"
-                    confirmText="Discard"
-                    cancelText="Keep Editing"
-                    onCancel={() => setShowDiscardModal(false)}
-                    onConfirm={async () => {
-
-                        setShowDiscardModal(false);
-
-                        if (selectedImage) {
-                            URL.revokeObjectURL(selectedImage);
-                        }
-
-                        setSelectedImage(null);
-
-                        setSelectedFile(null);
-
-                        setHasChanges(false);
-
-                        setImageError(false);
-
-                        setErrors({});
-
-                        setMessage({
-                            type: "",
-                            text: ""
-                        });
-
-                        try {
-
-                            const basicUser = await getCurrentUser();
-
-                            const profile = await getProfile();
-
-                            const currentUser = {
-
-                                ...basicUser,
-
-                                ...profile
-
-                            };
-
-                            setUser(currentUser);
-
-                            setOriginalProfile({
-
-                                ...currentUser,
-
-                                skills: currentUser.skills || []
-
-                            });
-
-                            setSelectedSkills(currentUser.skills || []);
-
-                            setFormData({
-
-                                name: currentUser.name || "",
-                                username: currentUser.username || "",
-                                email: currentUser.email || "",
-                                journeyType: currentUser.journeyType || "",
-                                targetRole: currentUser.targetRole || "",
-                                experienceLevel: currentUser.experienceLevel || "",
-                                collegeName: currentUser.college || "",
-                                degree: currentUser.course || "",
-                                graduationYear: currentUser.graduationYear || "",
-                                currentCompany: currentUser.currentCompany || "",
-                                university: currentUser.university || "",
-                                designation: currentUser.designation || "",
-                                employmentType: currentUser.employmentType || "",
-                                skills: currentUser.skills || [],
-                                phone: currentUser.phone || "",
-                                gender: currentUser.gender || "",
-                                githubUrl: currentUser.githubUrl || "",
-                                linkedinUrl: currentUser.linkedinUrl || "",
-                                portfolioUrl: currentUser.portfolioUrl || "",
-                                personalWebsite: currentUser.personalWebsite || "",
-                                dateOfBirth: currentUser.dateOfBirth || "",
-                                yearsOfExperience: currentUser.yearsOfExperience || "",
-                                careerGoal: currentUser.careerGoal || ""
-
-                            });
-
-                            setIsEditing(false);
-
-                        } catch (error) {
-
-                            console.error(error);
-
-                        }
-
-                    }}
-                />
+                </form>
 
             </div>
 
-        );
+            <ImageCropModal
+                isOpen={isCropOpen}
+                image={cropImage}
+                onClose={() => {
+                    if (cropImage) {
+                        URL.revokeObjectURL(cropImage);
+                    }
+                    setCropImage(null);
+
+                    setOriginalImageFile(null);
+
+                    setIsCropOpen(false);
+
+                }}
+                onSave={(file) => {
+
+                    const preview = URL.createObjectURL(file);
+
+                    setSelectedFile(file);
+
+                    setSelectedImage(preview);
+
+                    checkForChanges(formData, selectedSkills);
+
+                    setHasChanges(true);
+
+                    setImageError(false);
+
+                    if (cropImage) {
+                        URL.revokeObjectURL(cropImage);
+                    }
+
+                    setCropImage(null);
+
+                    setOriginalImageFile(null);
+
+                    setIsCropOpen(false);
+
+                }}
+            />
 
 
-    }
+            <ConfirmationModal
+                isOpen={showDiscardModal}
+                title="Discard Changes?"
+                message="You have unsaved changes. Are you sure you want to discard them?"
+                confirmText="Discard"
+                cancelText="Keep Editing"
+                onCancel={() => setShowDiscardModal(false)}
+                onConfirm={async () => {
+
+                    setShowDiscardModal(false);
+
+                    if (selectedImage) {
+                        URL.revokeObjectURL(selectedImage);
+                    }
+
+                    setSelectedImage(null);
+
+                    setSelectedFile(null);
+
+                    setHasChanges(false);
+
+                    setImageError(false);
+
+                    setErrors({});
+
+                    setMessage({
+                        type: "",
+                        text: ""
+                    });
+
+                    try {
+
+                        const basicUser = await getCurrentUser();
+
+                        const profile = await getProfile();
+
+                        const currentUser = {
+
+                            ...basicUser,
+
+                            ...profile
+
+                        };
+
+                        setUser(currentUser);
+
+                        setOriginalProfile({
+
+                            ...currentUser,
+
+                            skills: currentUser.skills || []
+
+                        });
+
+                        setSelectedSkills(currentUser.skills || []);
+
+                        setFormData({
+
+                            name: currentUser.name || "",
+                            username: currentUser.username || "",
+                            email: currentUser.email || "",
+                            journeyType: currentUser.journeyType || "",
+                            targetRole: currentUser.targetRole || "",
+                            experienceLevel: currentUser.experienceLevel || "",
+                            collegeName: currentUser.college || "",
+                            degree: currentUser.course || "",
+                            graduationYear: currentUser.graduationYear || "",
+                            currentCompany: currentUser.currentCompany || "",
+                            university: currentUser.university || "",
+                            designation: currentUser.designation || "",
+                            employmentType: currentUser.employmentType || "",
+                            skills: currentUser.skills || [],
+                            phone: currentUser.phone || "",
+                            gender: currentUser.gender || "",
+                            githubUrl: currentUser.githubUrl || "",
+                            linkedinUrl: currentUser.linkedinUrl || "",
+                            portfolioUrl: currentUser.portfolioUrl || "",
+                            personalWebsite: currentUser.personalWebsite || "",
+                            dateOfBirth: currentUser.dateOfBirth || "",
+                            yearsOfExperience: currentUser.yearsOfExperience || "",
+                            careerGoal: currentUser.careerGoal || ""
+
+                        });
+
+                        setIsEditing(false);
+
+                    } catch (error) {
+
+                        console.error(error);
+
+                    }
+
+                }}
+            />
+
+        </div>
+
+    );
+
+
+}
