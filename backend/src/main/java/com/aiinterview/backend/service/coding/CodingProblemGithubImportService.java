@@ -47,36 +47,97 @@ public class CodingProblemGithubImportService {
             String problemPath
     ) {
 
-        if (repository == null ||
-                repository.isBlank()) {
+        validateRepository(repository);
+        validateProblemPath(problemPath);
 
-            throw new IllegalArgumentException(
-                    "GitHub repository is required."
-            );
-        }
-
-        if (problemPath == null ||
-                problemPath.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Problem path is required."
-            );
-        }
+        String normalizedRepository =
+                normalizeRepository(repository);
 
         String normalizedPath =
-                problemPath
-                        .trim()
-                        .replaceAll(
-                                "^/+|/+$",
-                                ""
-                        );
+                normalizePath(problemPath);
+
+        return importSingleProblem(
+                normalizedRepository,
+                normalizedPath
+        );
+    }
+
+    public BulkImportResult importRepository(
+            String repository
+    ) {
+
+        validateRepository(repository);
+
+        String normalizedRepository =
+                normalizeRepository(repository);
+
+        List<String> files =
+                githubService.getRepositoryFiles(
+                        normalizedRepository
+                );
+
+        if (files.isEmpty()) {
+
+            return new BulkImportResult(
+                    normalizedRepository,
+                    0,
+                    0,
+                    0,
+                    List.of()
+            );
+        }
+
+        List<String> problemPaths =
+                extractProblemPaths(files);
+
+        int imported = 0;
+        int failed = 0;
+
+        List<String> failedPaths =
+                new ArrayList<>();
+
+        for (String problemPath :
+                problemPaths) {
+
+            try {
+
+                importSingleProblem(
+                        normalizedRepository,
+                        problemPath
+                );
+
+                imported++;
+
+            } catch (Exception exception) {
+
+                failed++;
+
+                failedPaths.add(
+                        problemPath
+                );
+            }
+        }
+
+        return new BulkImportResult(
+                normalizedRepository,
+                problemPaths.size(),
+                imported,
+                failed,
+                failedPaths
+        );
+    }
+
+    private CodingProblem importSingleProblem(
+            String repository,
+            String problemPath
+    ) {
 
         String problemJsonPath =
-                normalizedPath +
+                problemPath +
                         "/problem.json";
 
         String testsJsonPath =
-                normalizedPath +
+                problemPath +
                         "/tests.json";
 
         String problemJson =
@@ -88,7 +149,8 @@ public class CodingProblemGithubImportService {
         if (problemJson.isBlank()) {
 
             throw new IllegalStateException(
-                    "problem.json not found in GitHub repository."
+                    "problem.json not found: "
+                            + problemJsonPath
             );
         }
 
@@ -99,19 +161,27 @@ public class CodingProblemGithubImportService {
                             problemJson
                     );
 
-            CodingProblem problem =
-                    findExistingProblem(
-                            text(
-                                    problemNode,
-                                    "title"
-                            )
+            String title =
+                    text(
+                            problemNode,
+                            "title"
                     );
 
-            if (problem == null) {
+            if (title.isBlank()) {
 
-                problem =
-                        new CodingProblem();
+                throw new IllegalStateException(
+                        "Problem title is required."
+                );
             }
+
+            CodingProblem problem =
+                    codingProblemRepository
+                            .findByTitleIgnoreCase(
+                                    title.trim()
+                            )
+                            .orElseGet(
+                                    CodingProblem::new
+                            );
 
             updateProblem(
                     problem,
@@ -138,10 +208,56 @@ public class CodingProblemGithubImportService {
         } catch (Exception exception) {
 
             throw new IllegalStateException(
-                    "Unable to import GitHub coding problem.",
+                    "Unable to import GitHub coding problem: "
+                            + problemPath,
                     exception
             );
         }
+    }
+
+    private List<String> extractProblemPaths(
+            List<String> files
+    ) {
+
+        List<String> paths =
+                new ArrayList<>();
+
+        for (String file :
+                files) {
+
+            if (file == null ||
+                    file.isBlank()) {
+
+                continue;
+            }
+
+            String normalized =
+                    normalizePath(file);
+
+            if (!normalized.endsWith(
+                    "/problem.json"
+            )) {
+
+                continue;
+            }
+
+            String problemPath =
+                    normalized.substring(
+                            0,
+                            normalized.length()
+                                    - "/problem.json".length()
+                    );
+
+            if (
+                    !problemPath.isBlank() &&
+                    !paths.contains(problemPath)
+            ) {
+
+                paths.add(problemPath);
+            }
+        }
+
+        return paths;
     }
 
     private void updateProblem(
@@ -163,7 +279,7 @@ public class CodingProblemGithubImportService {
         }
 
         problem.setTitle(
-                title
+                title.trim()
         );
 
         problem.setDescription(
@@ -266,9 +382,11 @@ public class CodingProblemGithubImportService {
                         "languageConfigurations"
                 );
 
-        if (configurations.isMissingNode() ||
+        if (
+                configurations.isMissingNode() ||
                 configurations.isNull() ||
-                !configurations.isObject()) {
+                !configurations.isObject()
+        ) {
 
             return "{}";
         }
@@ -297,8 +415,10 @@ public class CodingProblemGithubImportService {
                         "starterCode"
                 );
 
-        if (starterCode.isMissingNode() ||
-                starterCode.isNull()) {
+        if (
+                starterCode.isMissingNode() ||
+                starterCode.isNull()
+        ) {
 
             return "";
         }
@@ -322,12 +442,13 @@ public class CodingProblemGithubImportService {
                         );
 
         if (existingTestCases.isEmpty()) {
-
             return;
         }
 
-        for (CodingTestCase testCase :
-                existingTestCases) {
+        for (
+                CodingTestCase testCase :
+                existingTestCases
+        ) {
 
             testCase.setActive(false);
         }
@@ -350,7 +471,6 @@ public class CodingProblemGithubImportService {
                 );
 
         if (testsJson.isBlank()) {
-
             return;
         }
 
@@ -369,7 +489,6 @@ public class CodingProblemGithubImportService {
                             );
 
             if (!testCasesNode.isArray()) {
-
                 return;
             }
 
@@ -378,8 +497,10 @@ public class CodingProblemGithubImportService {
 
             int testCaseNumber = 1;
 
-            for (JsonNode node :
-                    testCasesNode) {
+            for (
+                    JsonNode node :
+                    testCasesNode
+            ) {
 
                 String input =
                         text(
@@ -393,8 +514,10 @@ public class CodingProblemGithubImportService {
                                 "expectedOutput"
                         );
 
-                if (input.isBlank() &&
-                        expectedOutput.isBlank()) {
+                if (
+                        input.isBlank() &&
+                        expectedOutput.isBlank()
+                ) {
 
                     continue;
                 }
@@ -438,29 +561,62 @@ public class CodingProblemGithubImportService {
         }
     }
 
-    private CodingProblem findExistingProblem(
-            String title
+    private void validateRepository(
+            String repository
     ) {
 
-        if (title == null ||
-                title.isBlank()) {
+        if (
+                repository == null ||
+                repository.isBlank()
+        ) {
 
-            return null;
+            throw new IllegalArgumentException(
+                    "GitHub repository is required."
+            );
         }
+    }
 
-        return codingProblemRepository
-                .findAll()
-                .stream()
-                .filter(
-                        problem ->
-                                problem.getTitle() != null &&
-                                problem.getTitle()
-                                        .equalsIgnoreCase(
-                                                title.trim()
-                                        )
+    private void validateProblemPath(
+            String problemPath
+    ) {
+
+        if (
+                problemPath == null ||
+                problemPath.isBlank()
+        ) {
+
+            throw new IllegalArgumentException(
+                    "Problem path is required."
+            );
+        }
+    }
+
+    private String normalizeRepository(
+            String repository
+    ) {
+
+        return repository
+                .trim()
+                .replaceAll(
+                        "^https?://github\\.com/",
+                        ""
                 )
-                .findFirst()
-                .orElse(null);
+                .replaceAll(
+                        "/+$",
+                        ""
+                );
+    }
+
+    private String normalizePath(
+            String path
+    ) {
+
+        return path
+                .trim()
+                .replaceAll(
+                        "^/+|/+$",
+                        ""
+                );
     }
 
     private String text(
@@ -471,8 +627,10 @@ public class CodingProblemGithubImportService {
         JsonNode value =
                 node.path(field);
 
-        if (value.isMissingNode() ||
-                value.isNull()) {
+        if (
+                value.isMissingNode() ||
+                value.isNull()
+        ) {
 
             return "";
         }
@@ -487,8 +645,10 @@ public class CodingProblemGithubImportService {
         List<String> values =
                 new ArrayList<>();
 
-        if (node == null ||
-                !node.isArray()) {
+        if (
+                node == null ||
+                !node.isArray()
+        ) {
 
             return values;
         }
@@ -496,8 +656,10 @@ public class CodingProblemGithubImportService {
         for (JsonNode item :
                 node) {
 
-            if (!item.isNull() &&
-                    !item.asText().isBlank()) {
+            if (
+                    !item.isNull() &&
+                    !item.asText().isBlank()
+            ) {
 
                 values.add(
                         item.asText()
@@ -506,5 +668,54 @@ public class CodingProblemGithubImportService {
         }
 
         return values;
+    }
+
+    public static class BulkImportResult {
+
+        private final String repository;
+        private final int discovered;
+        private final int imported;
+        private final int failed;
+        private final List<String> failedPaths;
+
+        public BulkImportResult(
+                String repository,
+                int discovered,
+                int imported,
+                int failed,
+                List<String> failedPaths
+        ) {
+
+            this.repository = repository;
+            this.discovered = discovered;
+            this.imported = imported;
+            this.failed = failed;
+            this.failedPaths =
+                    failedPaths == null
+                            ? List.of()
+                            : List.copyOf(
+                                    failedPaths
+                            );
+        }
+
+        public String getRepository() {
+            return repository;
+        }
+
+        public int getDiscovered() {
+            return discovered;
+        }
+
+        public int getImported() {
+            return imported;
+        }
+
+        public int getFailed() {
+            return failed;
+        }
+
+        public List<String> getFailedPaths() {
+            return failedPaths;
+        }
     }
 }
