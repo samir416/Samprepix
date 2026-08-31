@@ -6,12 +6,13 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,13 +20,21 @@ import java.util.List;
 public class CodingProblemGithubService {
 
     private static final int MAX_FILES = 20000;
+    private static final Duration CONNECT_TIMEOUT =
+            Duration.ofSeconds(10);
+    private static final Duration REQUEST_TIMEOUT =
+            Duration.ofSeconds(30);
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
     public CodingProblemGithubService() {
+
         this.httpClient =
                 HttpClient.newBuilder()
+                        .connectTimeout(
+                                CONNECT_TIMEOUT
+                        )
                         .followRedirects(
                                 HttpClient.Redirect.NORMAL
                         )
@@ -39,23 +48,30 @@ public class CodingProblemGithubService {
             String repository
     ) {
 
-        if (repository == null ||
-                repository.isBlank()) {
+        if (
+                repository == null ||
+                repository.isBlank()
+        ) {
+            return Collections.emptyList();
+        }
+
+        String normalizedRepository;
+
+        try {
+
+            normalizedRepository =
+                    normalizeRepository(
+                            repository
+                    );
+
+        } catch (Exception exception) {
 
             return Collections.emptyList();
         }
 
-        String normalizedRepository =
-                repository
-                        .trim()
-                        .replaceAll(
-                                "^https?://github\\.com/",
-                                ""
-                        )
-                        .replaceAll(
-                                "/+$",
-                                ""
-                        );
+        if (normalizedRepository.isBlank()) {
+            return Collections.emptyList();
+        }
 
         try {
 
@@ -64,99 +80,107 @@ public class CodingProblemGithubService {
                             normalizedRepository
                     );
 
+            String url =
+                    "https://api.github.com/repos/"
+                            + normalizedRepository
+                            + "/git/trees/"
+                            + encodeBranch(
+                                    branch
+                            )
+                            + "?recursive=1";
+
+            HttpResponse<String> response =
+                    sendGet(url);
+
+            if (
+                    response.statusCode() != 200
+            ) {
+                return Collections.emptyList();
+            }
+
+            if (
+                    response.body() == null ||
+                    response.body().isBlank()
+            ) {
+                return Collections.emptyList();
+            }
+
+            JsonNode root =
+                    objectMapper.readTree(
+                            response.body()
+                    );
+
+            JsonNode tree =
+                    root.path("tree");
+
+            if (
+                    !tree.isArray()
+            ) {
+                return Collections.emptyList();
+            }
+
             List<String> files =
                     new ArrayList<>();
 
-            collectFilesRecursively(
-                    normalizedRepository,
-                    "",
-                    branch,
-                    files
-            );
+            for (
+                    JsonNode node :
+                    tree
+            ) {
+
+                if (
+                        files.size() >= MAX_FILES
+                ) {
+                    break;
+                }
+
+                String type =
+                        node.path(
+                                "type"
+                        ).asText("");
+
+                String path =
+                        node.path(
+                                "path"
+                        ).asText("");
+
+                if (
+                        !"blob".equalsIgnoreCase(type) ||
+                        path.isBlank()
+                ) {
+                    continue;
+                }
+
+                if (
+                        isProblemDefinition(
+                                path
+                        )
+                ) {
+
+                    files.add(
+                            normalizePath(
+                                    path
+                            )
+                    );
+                }
+            }
 
             return files;
 
-        } catch (Exception exception) {
+        } catch (
+                IOException |
+                InterruptedException |
+                IllegalArgumentException exception
+        ) {
+
+            if (
+                    exception instanceof InterruptedException
+            ) {
+
+                Thread.currentThread()
+                        .interrupt();
+            }
 
             return Collections.emptyList();
-        }
-    }
-
-    private void collectFilesRecursively(
-            String repository,
-            String path,
-            String branch,
-            List<String> files
-    ) throws IOException, InterruptedException {
-
-        if (files.size() >= MAX_FILES) {
-            return;
-        }
-
-        String url =
-                "https://api.github.com/repos/"
-                        + repository
-                        + "/contents";
-
-        if (!path.isBlank()) {
-            url += "/" + path;
-        }
-
-        url += "?ref=" + branch;
-
-        HttpResponse<String> response =
-                sendGet(url);
-
-        if (response.statusCode() != 200) {
-            return;
-        }
-
-        JsonNode root =
-                objectMapper.readTree(
-                        response.body()
-                );
-
-        if (!root.isArray()) {
-            return;
-        }
-
-        for (JsonNode node : root) {
-
-            if (files.size() >= MAX_FILES) {
-                return;
-            }
-
-            String type =
-                    node.path("type").asText();
-
-            String itemPath =
-                    node.path("path").asText();
-
-            if (itemPath.isBlank()) {
-                continue;
-            }
-
-            if ("file".equals(type)) {
-
-                if (isPotentialProblemFile(
-                        itemPath
-                )) {
-
-                    files.add(itemPath);
-                }
-
-                continue;
-            }
-
-            if ("dir".equals(type)) {
-
-                collectFilesRecursively(
-                        repository,
-                        itemPath,
-                        branch,
-                        files
-                );
-            }
         }
     }
 
@@ -165,73 +189,71 @@ public class CodingProblemGithubService {
             String path
     ) {
 
-        if (repository == null ||
+        if (
+                repository == null ||
                 repository.isBlank() ||
                 path == null ||
-                path.isBlank()) {
+                path.isBlank()
+        ) {
+            return "";
+        }
+
+        String normalizedRepository;
+
+        String normalizedPath;
+
+        try {
+
+            normalizedRepository =
+                    normalizeRepository(
+                            repository
+                    );
+
+            normalizedPath =
+                    normalizePath(
+                            path
+                    );
+
+        } catch (Exception exception) {
 
             return "";
         }
 
-        String normalizedRepository =
-                repository
-                        .trim()
-                        .replaceAll(
-                                "^https?://github\\.com/",
-                                ""
-                        )
-                        .replaceAll(
-                                "/+$",
-                                ""
-                        );
-
-        String normalizedPath =
-                path
-                        .trim()
-                        .replaceFirst(
-                                "^/+",
-                                ""
-                        );
-
-        String url =
-                "https://api.github.com/repos/"
-                        + normalizedRepository
-                        + "/contents/"
-                        + normalizedPath;
+        if (
+                normalizedRepository.isBlank() ||
+                normalizedPath.isBlank()
+        ) {
+            return "";
+        }
 
         try {
 
-            HttpResponse<String> response =
-                    sendGet(url);
-
-            if (response.statusCode() != 200) {
-                return "";
-            }
-
-            JsonNode root =
-                    objectMapper.readTree(
-                            response.body()
+            String branch =
+                    getDefaultBranch(
+                            normalizedRepository
                     );
 
-            String encodedContent =
-                    root.path("content").asText();
+            String rawUrl =
+                    buildRawFileUrl(
+                            normalizedRepository,
+                            branch,
+                            normalizedPath
+                    );
 
-            if (encodedContent.isBlank()) {
-                return "";
+            HttpResponse<String> rawResponse =
+                    sendGet(rawUrl);
+
+            if (
+                    rawResponse.statusCode() == 200 &&
+                    rawResponse.body() != null
+            ) {
+
+                return rawResponse.body();
             }
 
-            String cleanContent =
-                    encodedContent
-                            .replaceAll(
-                                    "\\s+",
-                                    ""
-                            );
-
-            return new String(
-                    Base64.getDecoder().decode(
-                            cleanContent
-                    ),
-                    StandardCharsets.UTF_8
+            return getFileContentFromApi(
+                    normalizedRepository,
+                    normalizedPath
             );
 
         } catch (
@@ -240,8 +262,102 @@ public class CodingProblemGithubService {
                 IllegalArgumentException exception
         ) {
 
+            if (
+                    exception instanceof InterruptedException
+            ) {
+
+                Thread.currentThread()
+                        .interrupt();
+            }
+
             return "";
         }
+    }
+
+    private String getFileContentFromApi(
+            String repository,
+            String path
+    ) throws IOException, InterruptedException {
+
+        String encodedPath =
+                encodePath(
+                        path
+                );
+
+        String url =
+                "https://api.github.com/repos/"
+                        + repository
+                        + "/contents/"
+                        + encodedPath;
+
+        HttpResponse<String> response =
+                sendGet(url);
+
+        if (
+                response.statusCode() != 200 ||
+                response.body() == null ||
+                response.body().isBlank()
+        ) {
+            return "";
+        }
+
+        JsonNode root =
+                objectMapper.readTree(
+                        response.body()
+                );
+
+        if (
+                root == null ||
+                !root.isObject()
+        ) {
+            return "";
+        }
+
+        String encoding =
+                root.path(
+                        "encoding"
+                ).asText("");
+
+        String content =
+                root.path(
+                        "content"
+                ).asText("");
+
+        if (
+                content.isBlank()
+        ) {
+            return "";
+        }
+
+        if (
+                "base64".equalsIgnoreCase(
+                        encoding
+                )
+        ) {
+
+            try {
+
+                byte[] decoded =
+                        java.util.Base64
+                                .getMimeDecoder()
+                                .decode(
+                                        content
+                                );
+
+                return new String(
+                        decoded,
+                        StandardCharsets.UTF_8
+                );
+
+            } catch (
+                    IllegalArgumentException exception
+            ) {
+
+                return "";
+            }
+        }
+
+        return content;
     }
 
     private String getDefaultBranch(
@@ -255,8 +371,11 @@ public class CodingProblemGithubService {
         HttpResponse<String> response =
                 sendGet(url);
 
-        if (response.statusCode() != 200) {
-
+        if (
+                response.statusCode() != 200 ||
+                response.body() == null ||
+                response.body().isBlank()
+        ) {
             return "main";
         }
 
@@ -268,15 +387,15 @@ public class CodingProblemGithubService {
         String branch =
                 root.path(
                         "default_branch"
-                ).asText();
+                ).asText("");
 
-        if (branch == null ||
-                branch.isBlank()) {
-
+        if (
+                branch.isBlank()
+        ) {
             return "main";
         }
 
-        return branch;
+        return branch.trim();
     }
 
     private HttpResponse<String> sendGet(
@@ -287,6 +406,9 @@ public class CodingProblemGithubService {
                 HttpRequest.newBuilder()
                         .uri(
                                 URI.create(url)
+                        )
+                        .timeout(
+                                REQUEST_TIMEOUT
                         )
                         .header(
                                 "Accept",
@@ -309,52 +431,272 @@ public class CodingProblemGithubService {
         );
     }
 
-    private boolean isPotentialProblemFile(
+    private boolean isProblemDefinition(
             String path
     ) {
 
-        String lowerPath =
-                path.toLowerCase();
+        String normalized =
+                normalizePath(
+                        path
+                ).toLowerCase();
 
         if (
-                lowerPath.contains("/.git/") ||
-                lowerPath.startsWith(".git/")
+                normalized.startsWith(".git/") ||
+                normalized.contains("/.git/")
         ) {
-
             return false;
         }
 
         if (
-                lowerPath.contains(
+                normalized.startsWith(
+                        "node_modules/"
+                ) ||
+                normalized.contains(
                         "/node_modules/"
+                )
+        ) {
+            return false;
+        }
+
+        if (
+                normalized.startsWith(
+                        "target/"
                 ) ||
-                lowerPath.contains(
+                normalized.contains(
                         "/target/"
+                )
+        ) {
+            return false;
+        }
+
+        if (
+                normalized.startsWith(
+                        "build/"
                 ) ||
-                lowerPath.contains(
+                normalized.contains(
                         "/build/"
+                )
+        ) {
+            return false;
+        }
+
+        if (
+                normalized.startsWith(
+                        "dist/"
                 ) ||
-                lowerPath.contains(
+                normalized.contains(
                         "/dist/"
                 )
         ) {
-
             return false;
         }
 
-        return lowerPath.endsWith(".json") ||
-                lowerPath.endsWith(".md") ||
-                lowerPath.endsWith(".txt") ||
-                lowerPath.endsWith(".yaml") ||
-                lowerPath.endsWith(".yml") ||
-                lowerPath.endsWith(".java") ||
-                lowerPath.endsWith(".py") ||
-                lowerPath.endsWith(".js") ||
-                lowerPath.endsWith(".ts") ||
-                lowerPath.endsWith(".cpp") ||
-                lowerPath.endsWith(".c") ||
-                lowerPath.endsWith(".cs") ||
-                lowerPath.endsWith(".go") ||
-                lowerPath.endsWith(".rs");
+        if (
+                normalized.startsWith(
+                        ".idea/"
+                ) ||
+                normalized.contains(
+                        "/.idea/"
+                )
+        ) {
+            return false;
+        }
+
+        return normalized.endsWith(
+                "/problem.json"
+        );
+    }
+
+    private String buildRawFileUrl(
+            String repository,
+            String branch,
+            String path
+    ) {
+
+        return "https://raw.githubusercontent.com/"
+                + repository
+                + "/"
+                + encodeBranch(
+                        branch
+                )
+                + "/"
+                + encodePath(
+                        path
+                );
+    }
+
+    private String encodeBranch(
+            String branch
+    ) {
+
+        if (
+                branch == null ||
+                branch.isBlank()
+        ) {
+            return "main";
+        }
+
+        String normalizedBranch =
+                branch.trim();
+
+        String[] parts =
+                normalizedBranch.split(
+                        "/"
+                );
+
+        StringBuilder result =
+                new StringBuilder();
+
+        for (
+                int index = 0;
+                index < parts.length;
+                index++
+        ) {
+
+            if (
+                    index > 0
+            ) {
+                result.append("/");
+            }
+
+            result.append(
+                    encodeSegment(
+                            parts[index]
+                    )
+            );
+        }
+
+        return result.toString();
+    }
+
+    private String encodePath(
+            String path
+    ) {
+
+        String normalizedPath =
+                normalizePath(
+                        path
+                );
+
+        if (
+                normalizedPath.isBlank()
+        ) {
+            return "";
+        }
+
+        String[] parts =
+                normalizedPath.split(
+                        "/"
+                );
+
+        StringBuilder result =
+                new StringBuilder();
+
+        for (
+                int index = 0;
+                index < parts.length;
+                index++
+        ) {
+
+            if (
+                    index > 0
+            ) {
+                result.append("/");
+            }
+
+            result.append(
+                    encodeSegment(
+                            parts[index]
+                    )
+            );
+        }
+
+        return result.toString();
+    }
+
+    private String encodeSegment(
+            String value
+    ) {
+
+        return URLEncoder
+                .encode(
+                        value,
+                        StandardCharsets.UTF_8
+                )
+                .replace(
+                        "+",
+                        "%20"
+                );
+    }
+
+    private String normalizeRepository(
+            String repository
+    ) {
+
+        String normalized =
+                repository.trim();
+
+        normalized =
+                normalized.replaceAll(
+                        "^https?://(www\\.)?github\\.com/",
+                        ""
+                );
+
+        normalized =
+                normalized.replaceAll(
+                        "/+$",
+                        ""
+                );
+
+        normalized =
+                normalized.replaceAll(
+                        "\\.git$",
+                        ""
+                );
+
+        normalized =
+                normalized.replaceAll(
+                        "/+$",
+                        ""
+                );
+
+        if (
+                normalized.contains("/")
+        ) {
+
+            String[] parts =
+                    normalized.split("/");
+
+            if (
+                    parts.length >= 2
+            ) {
+
+                return parts[0].trim()
+                        + "/"
+                        + parts[1].trim();
+            }
+        }
+
+        return normalized.trim();
+    }
+
+    private String normalizePath(
+            String path
+    ) {
+
+        return path
+                .trim()
+                .replace(
+                        "\\",
+                        "/"
+                )
+                .replaceAll(
+                        "^/+",
+                        ""
+                )
+                .replaceAll(
+                        "/+$",
+                        ""
+                );
     }
 }

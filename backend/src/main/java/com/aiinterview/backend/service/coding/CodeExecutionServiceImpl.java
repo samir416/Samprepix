@@ -28,15 +28,10 @@ public class CodeExecutionServiceImpl
         implements CodeExecutionService {
 
     private final CodingProblemRepository codingProblemRepository;
-
     private final CodingTestCaseRepository codingTestCaseRepository;
-
     private final FunctionExecutionWrapperService wrapperService;
-
     private final HttpClient httpClient;
-
     private final ObjectMapper objectMapper;
-
     private final String pistonUrl;
 
     public CodeExecutionServiceImpl(
@@ -92,8 +87,10 @@ public class CodeExecutionServiceImpl
             );
         }
 
-        if (request.getLanguage() == null ||
-                request.getLanguage().isBlank()) {
+        if (
+                request.getLanguage() == null ||
+                request.getLanguage().isBlank()
+        ) {
 
             return errorResponse(
                     "Programming language is required.",
@@ -101,8 +98,10 @@ public class CodeExecutionServiceImpl
             );
         }
 
-        if (request.getCode() == null ||
-                request.getCode().isBlank()) {
+        if (
+                request.getCode() == null ||
+                request.getCode().isBlank()
+        ) {
 
             return errorResponse(
                     "Code cannot be empty.",
@@ -125,14 +124,24 @@ public class CodeExecutionServiceImpl
             );
         }
 
+        if (!problem.isActive()) {
+
+            return errorResponse(
+                    "This coding problem is no longer active.",
+                    "Inactive coding problem."
+            );
+        }
+
         List<CodingTestCase> testCases =
                 codingTestCaseRepository
                         .findByProblemAndActiveTrueOrderByTestCaseNumberAsc(
                                 problem
                         );
 
-        if (testCases == null ||
-                testCases.isEmpty()) {
+        if (
+                testCases == null ||
+                testCases.isEmpty()
+        ) {
 
             return errorResponse(
                     "No active test cases are available for this problem.",
@@ -141,9 +150,7 @@ public class CodeExecutionServiceImpl
         }
 
         String runtimeLanguage;
-
         String runtimeVersion;
-
         String fileName;
 
         try {
@@ -169,13 +176,18 @@ public class CodeExecutionServiceImpl
         } catch (Exception exception) {
 
             return errorResponse(
-                    exception.getMessage(),
+                    safeMessage(
+                            exception,
+                            "Language configuration is invalid."
+                    ),
                     "Language configuration error."
             );
         }
 
-        if (runtimeLanguage == null ||
-                runtimeLanguage.isBlank()) {
+        if (
+                runtimeLanguage == null ||
+                runtimeLanguage.isBlank()
+        ) {
 
             return errorResponse(
                     "The selected language is not configured for this problem.",
@@ -183,8 +195,10 @@ public class CodeExecutionServiceImpl
             );
         }
 
-        if (runtimeVersion == null ||
-                runtimeVersion.isBlank()) {
+        if (
+                runtimeVersion == null ||
+                runtimeVersion.isBlank()
+        ) {
 
             return errorResponse(
                     "The selected language runtime version is not configured.",
@@ -192,8 +206,10 @@ public class CodeExecutionServiceImpl
             );
         }
 
-        if (fileName == null ||
-                fileName.isBlank()) {
+        if (
+                fileName == null ||
+                fileName.isBlank()
+        ) {
 
             return errorResponse(
                     "The selected language filename is not configured.",
@@ -205,13 +221,13 @@ public class CodeExecutionServiceImpl
                 new ArrayList<>();
 
         int passedTests = 0;
-
         int failedTests = 0;
-
         long totalRuntime = 0L;
 
-        for (CodingTestCase testCase :
-                testCases) {
+        for (
+                CodingTestCase testCase :
+                testCases
+        ) {
 
             CodeExecutionTestCaseResponse result =
                     executeTestCase(
@@ -223,16 +239,11 @@ public class CodeExecutionServiceImpl
                             testCase
                     );
 
-            results.add(
-                    result
-            );
+            results.add(result);
 
             if (result.isPassed()) {
-
                 passedTests++;
-
             } else {
-
                 failedTests++;
             }
 
@@ -245,6 +256,12 @@ public class CodeExecutionServiceImpl
             if (
                     "COMPILE_ERROR".equals(
                             result.getStatus()
+                    ) ||
+                    "EXECUTION_ERROR".equals(
+                            result.getStatus()
+                    ) ||
+                    "TIME_LIMIT_EXCEEDED".equals(
+                            result.getStatus()
                     )
             ) {
 
@@ -253,47 +270,14 @@ public class CodeExecutionServiceImpl
         }
 
         boolean allPassed =
-                passedTests ==
-                        testCases.size();
+                !results.isEmpty() &&
+                passedTests == testCases.size();
 
-        boolean compileError =
-                results.stream()
-                        .anyMatch(
-                                result ->
-                                        "COMPILE_ERROR"
-                                                .equals(
-                                                        result.getStatus()
-                                                )
-                        );
-
-        boolean runtimeError =
-                results.stream()
-                        .anyMatch(
-                                result ->
-                                        "RUNTIME_ERROR"
-                                                .equals(
-                                                        result.getStatus()
-                                                )
-                        );
-
-        String status;
-
-        if (allPassed) {
-
-            status = "ACCEPTED";
-
-        } else if (compileError) {
-
-            status = "COMPILE_ERROR";
-
-        } else if (runtimeError) {
-
-            status = "RUNTIME_ERROR";
-
-        } else {
-
-            status = "WRONG_ANSWER";
-        }
+        String status =
+                determineOverallStatus(
+                        results,
+                        allPassed
+                );
 
         String message;
 
@@ -306,9 +290,9 @@ public class CodeExecutionServiceImpl
 
             message =
                     passedTests +
-                    " of " +
-                    testCases.size() +
-                    " test cases passed.";
+                            " of " +
+                            testCases.size() +
+                            " test cases passed.";
         }
 
         return CodeExecutionResponse.builder()
@@ -383,9 +367,7 @@ public class CodeExecutionServiceImpl
                             "version",
                             runtimeVersion,
                             "files",
-                            List.of(
-                                    sourceFile
-                            )
+                            List.of(sourceFile)
                     );
 
             String requestBody =
@@ -422,8 +404,7 @@ public class CodeExecutionServiceImpl
             HttpResponse<String> response =
                     httpClient.send(
                             httpRequest,
-                            HttpResponse.BodyHandlers
-                                    .ofString()
+                            HttpResponse.BodyHandlers.ofString()
                     );
 
             long requestRuntime =
@@ -438,8 +419,8 @@ public class CodeExecutionServiceImpl
                 return failedTestCase(
                         testCase,
                         "EXECUTION_ERROR",
-                        "Execution server returned HTTP " +
-                                response.statusCode(),
+                        "Execution server returned HTTP "
+                                + response.statusCode(),
                         requestRuntime
                 );
             }
@@ -462,68 +443,96 @@ public class CodeExecutionServiceImpl
                             response.body()
                     );
 
+            if (
+                    root == null ||
+                    !root.isObject()
+            ) {
+
+                return failedTestCase(
+                        testCase,
+                        "EXECUTION_ERROR",
+                        "Execution server returned an invalid response.",
+                        requestRuntime
+                );
+            }
+
             JsonNode compileNode =
-                    root.path(
-                            "compile"
-                    );
+                    root.path("compile");
 
             JsonNode runNode =
-                    root.path(
-                            "run"
-                    );
+                    root.path("run");
 
-            int compileCode =
-                    compileNode
-                            .path("code")
-                            .asInt(0);
+            if (
+                    !compileNode.isMissingNode() &&
+                    !compileNode.isNull()
+            ) {
 
-            String compileStdout =
-                    compileNode
-                            .path("stdout")
-                            .asText("");
+                int compileCode =
+                        compileNode
+                                .path("code")
+                                .asInt(0);
 
-            String compileStderr =
-                    compileNode
-                            .path("stderr")
-                            .asText("");
+                String compileStdout =
+                        compileNode
+                                .path("stdout")
+                                .asText("");
 
-            if (compileCode != 0) {
+                String compileStderr =
+                        compileNode
+                                .path("stderr")
+                                .asText("");
 
-                return CodeExecutionTestCaseResponse
-                        .builder()
-                        .testCaseNumber(
-                                testCase
-                                        .getTestCaseNumber()
-                        )
-                        .passed(false)
-                        .input(
-                                visibleValue(
-                                        testCase,
-                                        testCase.getInput()
-                                )
-                        )
-                        .expectedOutput(
-                                visibleValue(
-                                        testCase,
-                                        testCase
-                                                .getExpectedOutput()
-                                )
-                        )
-                        .actualOutput(null)
-                        .error(
-                                firstNonBlank(
-                                        compileStderr,
-                                        compileStdout,
-                                        "Compilation failed."
-                                )
-                        )
-                        .runtime(
-                                requestRuntime
-                        )
-                        .status(
-                                "COMPILE_ERROR"
-                        )
-                        .build();
+                if (compileCode != 0) {
+
+                    return CodeExecutionTestCaseResponse
+                            .builder()
+                            .testCaseNumber(
+                                    testCase
+                                            .getTestCaseNumber()
+                            )
+                            .passed(false)
+                            .input(
+                                    visibleValue(
+                                            testCase,
+                                            testCase.getInput()
+                                    )
+                            )
+                            .expectedOutput(
+                                    visibleValue(
+                                            testCase,
+                                            testCase
+                                                    .getExpectedOutput()
+                                    )
+                            )
+                            .actualOutput(null)
+                            .error(
+                                    firstNonBlank(
+                                            compileStderr,
+                                            compileStdout,
+                                            "Compilation failed."
+                                    )
+                            )
+                            .runtime(
+                                    requestRuntime
+                            )
+                            .status(
+                                    "COMPILE_ERROR"
+                            )
+                            .build();
+                }
+            }
+
+            if (
+                    runNode.isMissingNode() ||
+                    runNode.isNull()
+            ) {
+
+                return failedTestCase(
+                        testCase,
+                        "EXECUTION_ERROR",
+                        "Execution server did not return a run result.",
+                        requestRuntime
+                );
             }
 
             int runCode =
@@ -549,12 +558,17 @@ public class CodeExecutionServiceImpl
                             );
 
             if (runtime <= 0) {
-
-                runtime =
-                        requestRuntime;
+                runtime = requestRuntime;
             }
 
             if (runCode != 0) {
+
+                String error =
+                        firstNonBlank(
+                                stderr,
+                                stdout,
+                                "Program execution failed."
+                        );
 
                 return CodeExecutionTestCaseResponse
                         .builder()
@@ -577,19 +591,9 @@ public class CodeExecutionServiceImpl
                                 )
                         )
                         .actualOutput(null)
-                       .error(
-        firstNonBlank(
-                stderr,
-                "",
-                "Program execution failed."
-        )
-)
-                        .runtime(
-                                runtime
-                        )
-                        .status(
-                                "RUNTIME_ERROR"
-                        )
+                        .error(error)
+                        .runtime(runtime)
+                        .status("RUNTIME_ERROR")
                         .build();
             }
 
@@ -640,9 +644,7 @@ public class CodeExecutionServiceImpl
                                     ? ""
                                     : stderr
                     )
-                    .runtime(
-                            runtime
-                    )
+                    .runtime(runtime)
                     .status(
                             passed
                                     ? "PASSED"
@@ -650,7 +652,9 @@ public class CodeExecutionServiceImpl
                     )
                     .build();
 
-        } catch (java.net.http.HttpTimeoutException exception) {
+        } catch (
+                java.net.http.HttpTimeoutException exception
+        ) {
 
             return failedTestCase(
                     testCase,
@@ -678,13 +682,86 @@ public class CodeExecutionServiceImpl
             return failedTestCase(
                     testCase,
                     "EXECUTION_ERROR",
-                    exception.getMessage() == null
-                            ? "Unable to execute code."
-                            : exception.getMessage(),
+                    safeMessage(
+                            exception,
+                            "Unable to execute code."
+                    ),
                     System.currentTimeMillis()
                             - startTime
             );
         }
+    }
+
+    private String determineOverallStatus(
+            List<CodeExecutionTestCaseResponse> results,
+            boolean allPassed
+    ) {
+
+        if (allPassed) {
+            return "ACCEPTED";
+        }
+
+        for (
+                CodeExecutionTestCaseResponse result :
+                results
+        ) {
+
+            if (
+                    "COMPILE_ERROR".equals(
+                            result.getStatus()
+                    )
+            ) {
+
+                return "COMPILE_ERROR";
+            }
+        }
+
+        for (
+                CodeExecutionTestCaseResponse result :
+                results
+        ) {
+
+            if (
+                    "TIME_LIMIT_EXCEEDED".equals(
+                            result.getStatus()
+                    )
+            ) {
+
+                return "TIME_LIMIT_EXCEEDED";
+            }
+        }
+
+        for (
+                CodeExecutionTestCaseResponse result :
+                results
+        ) {
+
+            if (
+                    "RUNTIME_ERROR".equals(
+                            result.getStatus()
+                    )
+            ) {
+
+                return "RUNTIME_ERROR";
+            }
+        }
+
+        for (
+                CodeExecutionTestCaseResponse result :
+                results
+        ) {
+
+            if (
+                    "EXECUTION_ERROR".equals(
+                            result.getStatus()
+                    )
+            ) {
+
+                return "EXECUTION_ERROR";
+            }
+        }
+
+        return "WRONG_ANSWER";
     }
 
     private CodeExecutionTestCaseResponse failedTestCase(
@@ -716,14 +793,12 @@ public class CodeExecutionServiceImpl
                 )
                 .actualOutput(null)
                 .error(
-                        error
+                        error == null
+                                ? ""
+                                : error
                 )
-                .runtime(
-                        runtime
-                )
-                .status(
-                        status
-                )
+                .runtime(runtime)
+                .status(status)
                 .build();
     }
 
@@ -733,6 +808,7 @@ public class CodeExecutionServiceImpl
     ) {
 
         if (
+                testCase == null ||
                 testCase.isHidden()
         ) {
 
@@ -747,7 +823,6 @@ public class CodeExecutionServiceImpl
     ) {
 
         if (output == null) {
-
             return "";
         }
 
@@ -867,6 +942,23 @@ public class CodeExecutionServiceImpl
         }
 
         return "";
+    }
+
+    private String safeMessage(
+            Exception exception,
+            String fallback
+    ) {
+
+        if (
+                exception == null ||
+                exception.getMessage() == null ||
+                exception.getMessage().isBlank()
+        ) {
+
+            return fallback;
+        }
+
+        return exception.getMessage();
     }
 
     private CodeExecutionResponse errorResponse(

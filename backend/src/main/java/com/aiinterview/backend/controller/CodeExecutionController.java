@@ -21,33 +21,21 @@ import org.springframework.web.bind.annotation.*;
 public class CodeExecutionController {
 
     private final CodeExecutionService codeExecutionService;
-
     private final CodingProblemRepository codingProblemRepository;
-
     private final UserRepository userRepository;
-
-    private final GitHubConnectionRepository
-            gitHubConnectionRepository;
-
-    private final CodingProgressService
-            codingProgressService;
-
-    private final FunctionExecutionWrapperService
-            wrapperService;
-
-    private final GitHubRepositoryService
-            gitHubRepositoryService;
+    private final GitHubConnectionRepository gitHubConnectionRepository;
+    private final CodingProgressService codingProgressService;
+    private final FunctionExecutionWrapperService wrapperService;
+    private final GitHubRepositoryService gitHubRepositoryService;
 
     public CodeExecutionController(
             CodeExecutionService codeExecutionService,
             CodingProblemRepository codingProblemRepository,
             UserRepository userRepository,
-            GitHubConnectionRepository
-                    gitHubConnectionRepository,
+            GitHubConnectionRepository gitHubConnectionRepository,
             CodingProgressService codingProgressService,
             FunctionExecutionWrapperService wrapperService,
-            GitHubRepositoryService
-                    gitHubRepositoryService
+            GitHubRepositoryService gitHubRepositoryService
     ) {
 
         this.codeExecutionService =
@@ -93,6 +81,8 @@ public class CodeExecutionController {
             Authentication authentication
     ) {
 
+        validateRequest(request);
+
         User user =
                 getAuthenticatedUser(
                         authentication
@@ -103,15 +93,12 @@ public class CodeExecutionController {
                         request
                 );
 
-        boolean successful =
-                response.isPassed();
+        if (!response.isPassed()) {
 
-        codingProgressService.updateSubmission(
-                user,
-                successful
-        );
-
-        if (!successful) {
+            codingProgressService.updateSubmission(
+                    user,
+                    false
+            );
 
             return ResponseEntity.ok(
                     response
@@ -130,34 +117,33 @@ public class CodeExecutionController {
                                         )
                         );
 
-        codingProgressService
-                .saveCodeState(
-                        user,
-                        problem,
-                        request.getLanguage(),
-                        request.getCode()
-                );
+        codingProgressService.updateSubmission(
+                user,
+                true
+        );
 
-        codingProgressService
-                .markProblemCompleted(
-                        user,
-                        problem
-                );
+        codingProgressService.saveCodeState(
+                user,
+                problem,
+                request.getLanguage(),
+                request.getCode()
+        );
+
+        codingProgressService.markProblemCompleted(
+                user,
+                problem
+        );
+
+        response.setMessage(
+                "All test cases passed. Coding progress saved."
+        );
 
         GitHubConnection connection =
                 gitHubConnectionRepository
                         .findByUser(user)
                         .orElse(null);
 
-        if (connection == null ||
-                connection.getAccessToken() == null ||
-                connection.getAccessToken().isBlank() ||
-                connection.getRepositoryUrl() == null ||
-                connection.getRepositoryUrl().isBlank()) {
-
-            response.setMessage(
-                    "All test cases passed. Coding progress saved."
-            );
+        if (!isGitHubConnectionUsable(connection)) {
 
             return ResponseEntity.ok(
                     response
@@ -178,26 +164,16 @@ public class CodeExecutionController {
                             fileName
                     );
 
-            String commitMessage =
-                    "Solve: " +
-                    problem.getTitle();
-
-            GitHubRepositoryService.GitHubPushResult
-                    pushResult =
-                    gitHubRepositoryService.pushSolution(
-                            user,
-                            connection.getRepositoryUrl(),
-                            solutionPath,
-                            request.getCode(),
-                            commitMessage
-                    );
+            gitHubRepositoryService.pushSolution(
+                    user,
+                    connection.getRepositoryUrl(),
+                    solutionPath,
+                    request.getCode(),
+                    "Solve: " + problem.getTitle()
+            );
 
             response.setMessage(
                     "All test cases passed. Solution committed to GitHub."
-            );
-
-            return ResponseEntity.ok(
-                    response
             );
 
         } catch (Exception exception) {
@@ -208,11 +184,61 @@ public class CodeExecutionController {
                                     exception.getMessage()
                             )
             );
+        }
 
-            return ResponseEntity.ok(
-                    response
+        return ResponseEntity.ok(
+                response
+        );
+    }
+
+    private void validateRequest(
+            CodeExecutionRequest request
+    ) {
+
+        if (request == null) {
+
+            throw new IllegalArgumentException(
+                    "Execution request cannot be null."
             );
         }
+
+        if (request.getProblemId() == null) {
+
+            throw new IllegalArgumentException(
+                    "Problem ID is required."
+            );
+        }
+
+        if (
+                request.getLanguage() == null ||
+                request.getLanguage().isBlank()
+        ) {
+
+            throw new IllegalArgumentException(
+                    "Programming language is required."
+            );
+        }
+
+        if (
+                request.getCode() == null ||
+                request.getCode().isBlank()
+        ) {
+
+            throw new IllegalArgumentException(
+                    "Code cannot be empty."
+            );
+        }
+    }
+
+    private boolean isGitHubConnectionUsable(
+            GitHubConnection connection
+    ) {
+
+        return connection != null &&
+                connection.getAccessToken() != null &&
+                !connection.getAccessToken().isBlank() &&
+                connection.getRepositoryUrl() != null &&
+                !connection.getRepositoryUrl().isBlank();
     }
 
     private String buildSolutionPath(
@@ -239,7 +265,6 @@ public class CodeExecutionController {
                         );
 
         if (safeTitle.isBlank()) {
-
             safeTitle = "problem";
         }
 
@@ -270,9 +295,11 @@ public class CodeExecutionController {
             Authentication authentication
     ) {
 
-        if (authentication == null ||
+        if (
+                authentication == null ||
                 authentication.getName() == null ||
-                authentication.getName().isBlank()) {
+                authentication.getName().isBlank()
+        ) {
 
             throw new IllegalStateException(
                     "Authenticated user not found."
@@ -295,8 +322,10 @@ public class CodeExecutionController {
             String message
     ) {
 
-        if (message == null ||
-                message.isBlank()) {
+        if (
+                message == null ||
+                message.isBlank()
+        ) {
 
             return "Unknown GitHub error.";
         }

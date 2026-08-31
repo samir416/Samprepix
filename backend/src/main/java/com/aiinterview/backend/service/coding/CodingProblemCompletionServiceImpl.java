@@ -64,6 +64,8 @@ public class CodingProblemCompletionServiceImpl
                                     .completed(false)
                                     .submissionCount(0)
                                     .successfulSubmissionCount(0)
+                                    .language(null)
+                                    .submittedCode(null)
                                     .build();
 
                     return completionRepository.save(
@@ -90,48 +92,58 @@ public class CodingProblemCompletionServiceImpl
                         problem
                 );
 
-        Integer submissionCount =
-                completion.getSubmissionCount();
+        LocalDateTime now =
+                LocalDateTime.now();
 
-        if (submissionCount == null) {
-            submissionCount = 0;
-        }
+        int submissionCount =
+                completion.getSubmissionCount() == null
+                        ? 0
+                        : completion.getSubmissionCount();
 
         completion.setSubmissionCount(
                 submissionCount + 1
         );
 
-        completion.setLanguage(language);
-        completion.setSubmittedCode(code);
-        completion.setLastAttemptAt(
-                LocalDateTime.now()
+        completion.setLanguage(
+                normalizeLanguage(language)
+        );
+
+        completion.setSubmittedCode(
+                code
         );
 
         if (completion.getFirstAttemptAt() == null) {
+
             completion.setFirstAttemptAt(
-                    LocalDateTime.now()
+                    now
             );
         }
 
+        completion.setLastAttemptAt(
+                now
+        );
+
         if (successful) {
 
-            Integer successfulCount =
+            int successfulSubmissionCount =
                     completion
-                            .getSuccessfulSubmissionCount();
-
-            if (successfulCount == null) {
-                successfulCount = 0;
-            }
+                            .getSuccessfulSubmissionCount() == null
+                            ? 0
+                            : completion
+                                    .getSuccessfulSubmissionCount();
 
             completion.setSuccessfulSubmissionCount(
-                    successfulCount + 1
+                    successfulSubmissionCount + 1
             );
 
             if (!completion.isCompleted()) {
 
-                completion.setCompleted(true);
+                completion.setCompleted(
+                        true
+                );
+
                 completion.setCompletedAt(
-                        LocalDateTime.now()
+                        now
                 );
             }
         }
@@ -158,23 +170,36 @@ public class CodingProblemCompletionServiceImpl
                         problem
                 );
 
-        completion.setLanguage(language);
-        completion.setSubmittedCode(code);
-        completion.setLastAttemptAt(
-                LocalDateTime.now()
+        LocalDateTime now =
+                LocalDateTime.now();
+
+        completion.setLanguage(
+                normalizeLanguage(language)
+        );
+
+        completion.setSubmittedCode(
+                code
         );
 
         if (completion.getFirstAttemptAt() == null) {
+
             completion.setFirstAttemptAt(
-                    LocalDateTime.now()
+                    now
             );
         }
 
+        completion.setLastAttemptAt(
+                now
+        );
+
         if (!completion.isCompleted()) {
 
-            completion.setCompleted(true);
+            completion.setCompleted(
+                    true
+            );
+
             completion.setCompletedAt(
-                    LocalDateTime.now()
+                    now
             );
         }
 
@@ -242,9 +267,31 @@ public class CodingProblemCompletionServiceImpl
                 );
     }
 
-    private void validateUser(User user) {
+    private String normalizeLanguage(
+            String language
+    ) {
 
-        if (user == null || user.getId() == null) {
+        if (language == null) {
+            return null;
+        }
+
+        String normalized =
+                language.trim();
+
+        return normalized.isBlank()
+                ? null
+                : normalized;
+    }
+
+    private void validateUser(
+            User user
+    ) {
+
+        if (
+                user == null ||
+                user.getId() == null
+        ) {
+
             throw new IllegalArgumentException(
                     "User is required."
             );
@@ -255,8 +302,10 @@ public class CodingProblemCompletionServiceImpl
             CodingProblem problem
     ) {
 
-        if (problem == null ||
-                problem.getId() == null) {
+        if (
+                problem == null ||
+                problem.getId() == null
+        ) {
 
             throw new IllegalArgumentException(
                     "Coding problem is required."

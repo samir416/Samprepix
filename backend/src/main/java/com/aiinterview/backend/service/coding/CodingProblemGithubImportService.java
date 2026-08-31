@@ -10,18 +10,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
-@Transactional
 public class CodingProblemGithubImportService {
 
     private final CodingProblemGithubService githubService;
-
     private final CodingProblemRepository codingProblemRepository;
-
     private final CodingTestCaseRepository codingTestCaseRepository;
-
     private final ObjectMapper objectMapper;
 
     public CodingProblemGithubImportService(
@@ -29,6 +27,7 @@ public class CodingProblemGithubImportService {
             CodingProblemRepository codingProblemRepository,
             CodingTestCaseRepository codingTestCaseRepository
     ) {
+
         this.githubService =
                 githubService;
 
@@ -42,6 +41,7 @@ public class CodingProblemGithubImportService {
                 new ObjectMapper();
     }
 
+    @Transactional
     public CodingProblem importProblem(
             String repository,
             String problemPath
@@ -50,18 +50,66 @@ public class CodingProblemGithubImportService {
         validateRepository(repository);
         validateProblemPath(problemPath);
 
-        String normalizedRepository =
-                normalizeRepository(repository);
-
-        String normalizedPath =
-                normalizePath(problemPath);
-
         return importSingleProblem(
-                normalizedRepository,
-                normalizedPath
+                normalizeRepository(repository),
+                normalizeProblemPath(problemPath)
         );
     }
 
+    @Transactional
+    public List<CodingProblem> importAllProblems(
+            String repository
+    ) {
+
+        validateRepository(repository);
+
+        String normalizedRepository =
+                normalizeRepository(repository);
+
+        List<String> files =
+                githubService.getRepositoryFiles(
+                        normalizedRepository
+                );
+
+        if (files.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> problemPaths =
+                extractProblemPaths(files);
+
+        if (problemPaths.isEmpty()) {
+            return List.of();
+        }
+
+        List<CodingProblem> importedProblems =
+                new ArrayList<>();
+
+        for (
+                String problemPath :
+                problemPaths
+        ) {
+
+            try {
+
+                CodingProblem problem =
+                        importSingleProblem(
+                                normalizedRepository,
+                                problemPath
+                        );
+
+                if (problem != null) {
+                    importedProblems.add(problem);
+                }
+
+            } catch (Exception ignored) {
+            }
+        }
+
+        return importedProblems;
+    }
+
+    @Transactional
     public BulkImportResult importRepository(
             String repository
     ) {
@@ -90,14 +138,19 @@ public class CodingProblemGithubImportService {
         List<String> problemPaths =
                 extractProblemPaths(files);
 
+        int discovered =
+                problemPaths.size();
+
         int imported = 0;
         int failed = 0;
 
         List<String> failedPaths =
                 new ArrayList<>();
 
-        for (String problemPath :
-                problemPaths) {
+        for (
+                String problemPath :
+                problemPaths
+        ) {
 
             try {
 
@@ -120,7 +173,7 @@ public class CodingProblemGithubImportService {
 
         return new BulkImportResult(
                 normalizedRepository,
-                problemPaths.size(),
+                discovered,
                 imported,
                 failed,
                 failedPaths
@@ -132,12 +185,17 @@ public class CodingProblemGithubImportService {
             String problemPath
     ) {
 
+        String normalizedPath =
+                normalizeProblemPath(
+                        problemPath
+                );
+
         String problemJsonPath =
-                problemPath +
+                normalizedPath +
                         "/problem.json";
 
         String testsJsonPath =
-                problemPath +
+                normalizedPath +
                         "/tests.json";
 
         String problemJson =
@@ -146,7 +204,10 @@ public class CodingProblemGithubImportService {
                         problemJsonPath
                 );
 
-        if (problemJson.isBlank()) {
+        if (
+                problemJson == null ||
+                problemJson.isBlank()
+        ) {
 
             throw new IllegalStateException(
                     "problem.json not found: "
@@ -161,11 +222,21 @@ public class CodingProblemGithubImportService {
                             problemJson
                     );
 
+            if (
+                    problemNode == null ||
+                    !problemNode.isObject()
+            ) {
+
+                throw new IllegalStateException(
+                        "Invalid problem.json format."
+                );
+            }
+
             String title =
                     text(
                             problemNode,
                             "title"
-                    );
+                    ).trim();
 
             if (title.isBlank()) {
 
@@ -177,7 +248,7 @@ public class CodingProblemGithubImportService {
             CodingProblem problem =
                     codingProblemRepository
                             .findByTitleIgnoreCase(
-                                    title.trim()
+                                    title
                             )
                             .orElseGet(
                                     CodingProblem::new
@@ -207,57 +278,20 @@ public class CodingProblemGithubImportService {
 
         } catch (Exception exception) {
 
+            if (
+                    exception instanceof IllegalStateException
+            ) {
+
+                throw (IllegalStateException)
+                        exception;
+            }
+
             throw new IllegalStateException(
                     "Unable to import GitHub coding problem: "
-                            + problemPath,
+                            + normalizedPath,
                     exception
             );
         }
-    }
-
-    private List<String> extractProblemPaths(
-            List<String> files
-    ) {
-
-        List<String> paths =
-                new ArrayList<>();
-
-        for (String file :
-                files) {
-
-            if (file == null ||
-                    file.isBlank()) {
-
-                continue;
-            }
-
-            String normalized =
-                    normalizePath(file);
-
-            if (!normalized.endsWith(
-                    "/problem.json"
-            )) {
-
-                continue;
-            }
-
-            String problemPath =
-                    normalized.substring(
-                            0,
-                            normalized.length()
-                                    - "/problem.json".length()
-                    );
-
-            if (
-                    !problemPath.isBlank() &&
-                    !paths.contains(problemPath)
-            ) {
-
-                paths.add(problemPath);
-            }
-        }
-
-        return paths;
     }
 
     private void updateProblem(
@@ -269,7 +303,15 @@ public class CodingProblemGithubImportService {
                 text(
                         node,
                         "title"
-                );
+                ).trim();
+
+        String difficulty =
+                text(
+                        node,
+                        "difficulty"
+                )
+                .trim()
+                .toUpperCase();
 
         if (title.isBlank()) {
 
@@ -278,9 +320,11 @@ public class CodingProblemGithubImportService {
             );
         }
 
-        problem.setTitle(
-                title.trim()
-        );
+        if (difficulty.isBlank()) {
+            difficulty = "MEDIUM";
+        }
+
+        problem.setTitle(title);
 
         problem.setDescription(
                 text(
@@ -290,65 +334,52 @@ public class CodingProblemGithubImportService {
         );
 
         problem.setDifficulty(
-                text(
-                        node,
-                        "difficulty"
+                normalizeDifficulty(
+                        difficulty
                 )
-                .trim()
-                .toUpperCase()
         );
 
         problem.setTags(
                 stringList(
-                        node.path("tags")
+                        firstExistingNode(
+                                node,
+                                "tags",
+                                "topics"
+                        )
                 )
         );
 
         problem.setInputExample(
-                text(
+                firstText(
                         node,
-                        "inputExample"
+                        "inputExample",
+                        "input",
+                        "exampleInput"
                 )
         );
 
         problem.setOutputExample(
-                text(
+                firstText(
                         node,
-                        "outputExample"
+                        "outputExample",
+                        "output",
+                        "exampleOutput"
                 )
         );
 
         problem.setConstraints(
                 stringList(
-                        node.path("constraints")
+                        firstExistingNode(
+                                node,
+                                "constraints",
+                                "constraint"
+                        )
                 )
         );
 
-        problem.setFunctionName(
-                text(
-                        node,
-                        "functionName"
-                )
-        );
-
-        problem.setFunctionSignature(
-                text(
-                        node,
-                        "functionSignature"
-                )
-        );
-
-        problem.setReturnType(
-                text(
-                        node,
-                        "returnType"
-                )
-        );
-
-        problem.setParameterTypes(
-                text(
-                        node,
-                        "parameterTypes"
+        problem.setStarterCode(
+                extractStarterCode(
+                        node
                 )
         );
 
@@ -358,19 +389,84 @@ public class CodingProblemGithubImportService {
                 )
         );
 
-        problem.setStarterCode(
-                extractDefaultStarterCode(
+        problem.setFunctionName(
+                firstText(
+                        node,
+                        "functionName",
+                        "methodName"
+                )
+        );
+
+        problem.setFunctionSignature(
+                firstText(
+                        node,
+                        "functionSignature",
+                        "signature"
+                )
+        );
+
+        problem.setReturnType(
+                firstText(
+                        node,
+                        "returnType"
+                )
+        );
+
+        problem.setParameterTypes(
+                extractParameterTypes(
                         node
                 )
         );
 
         problem.setMinimumExperienceLevel(
-                node.path(
-                        "minimumExperienceLevel"
-                ).asInt(1)
+                extractMinimumExperienceLevel(
+                        node
+                )
         );
 
-        problem.setActive(true);
+        problem.setActive(
+                node.path("active")
+                        .isMissingNode()
+                        ||
+                        node.path("active")
+                                .asBoolean(true)
+        );
+    }
+
+    private String extractStarterCode(
+            JsonNode node
+    ) {
+
+        JsonNode starterCode =
+                firstExistingNode(
+                        node,
+                        "starterCodes",
+                        "starterCode"
+                );
+
+        if (
+                starterCode == null ||
+                starterCode.isMissingNode() ||
+                starterCode.isNull()
+        ) {
+
+            return "";
+        }
+
+        if (starterCode.isTextual()) {
+            return starterCode.asText();
+        }
+
+        try {
+
+            return objectMapper.writeValueAsString(
+                    starterCode
+            );
+
+        } catch (Exception exception) {
+
+            return "";
+        }
     }
 
     private String extractLanguageConfigurations(
@@ -378,17 +474,24 @@ public class CodingProblemGithubImportService {
     ) {
 
         JsonNode configurations =
-                node.path(
-                        "languageConfigurations"
+                firstExistingNode(
+                        node,
+                        "languageConfigurations",
+                        "languages",
+                        "languageConfig"
                 );
 
         if (
+                configurations == null ||
                 configurations.isMissingNode() ||
-                configurations.isNull() ||
-                !configurations.isObject()
+                configurations.isNull()
         ) {
 
-            return "{}";
+            return "";
+        }
+
+        if (configurations.isTextual()) {
+            return configurations.asText();
         }
 
         try {
@@ -399,36 +502,92 @@ public class CodingProblemGithubImportService {
 
         } catch (Exception exception) {
 
-            throw new IllegalStateException(
-                    "Unable to process language configurations.",
-                    exception
-            );
+            return "";
         }
     }
 
-    private String extractDefaultStarterCode(
+    private String extractParameterTypes(
             JsonNode node
     ) {
 
-        JsonNode starterCode =
-                node.path(
-                        "starterCode"
+        JsonNode parameterTypes =
+                firstExistingNode(
+                        node,
+                        "parameterTypes",
+                        "parameters"
                 );
 
         if (
-                starterCode.isMissingNode() ||
-                starterCode.isNull()
+                parameterTypes == null ||
+                parameterTypes.isMissingNode() ||
+                parameterTypes.isNull()
         ) {
 
             return "";
         }
 
-        if (starterCode.isTextual()) {
-
-            return starterCode.asText();
+        if (parameterTypes.isTextual()) {
+            return parameterTypes.asText();
         }
 
-        return starterCode.toString();
+        try {
+
+            return objectMapper.writeValueAsString(
+                    parameterTypes
+            );
+
+        } catch (Exception exception) {
+
+            return "";
+        }
+    }
+
+    private Integer extractMinimumExperienceLevel(
+            JsonNode node
+    ) {
+
+        JsonNode value =
+                firstExistingNode(
+                        node,
+                        "minimumExperienceLevel",
+                        "experienceLevel",
+                        "minExperienceLevel"
+                );
+
+        if (
+                value == null ||
+                value.isMissingNode() ||
+                value.isNull()
+        ) {
+
+            return 1;
+        }
+
+        if (
+                value.isInt() ||
+                value.isLong()
+        ) {
+
+            return Math.max(
+                    1,
+                    value.asInt(1)
+            );
+        }
+
+        try {
+
+            return Math.max(
+                    1,
+                    Integer.parseInt(
+                            value.asText()
+                                    .trim()
+                    )
+            );
+
+        } catch (Exception exception) {
+
+            return 1;
+        }
     }
 
     private void deactivateExistingTestCases(
@@ -441,7 +600,10 @@ public class CodingProblemGithubImportService {
                                 problem
                         );
 
-        if (existingTestCases.isEmpty()) {
+        if (
+                existingTestCases.isEmpty()
+        ) {
+
             return;
         }
 
@@ -470,7 +632,11 @@ public class CodingProblemGithubImportService {
                         testsJsonPath
                 );
 
-        if (testsJson.isBlank()) {
+        if (
+                testsJson == null ||
+                testsJson.isBlank()
+        ) {
+
             return;
         }
 
@@ -481,14 +647,31 @@ public class CodingProblemGithubImportService {
                             testsJson
                     );
 
-            JsonNode testCasesNode =
-                    root.isArray()
-                            ? root
-                            : root.path(
-                                    "testCases"
-                            );
+            JsonNode testCasesNode;
 
-            if (!testCasesNode.isArray()) {
+            if (
+                    root != null &&
+                    root.isArray()
+            ) {
+
+                testCasesNode = root;
+
+            } else {
+
+                testCasesNode =
+                        firstExistingNode(
+                                root,
+                                "testCases",
+                                "tests",
+                                "cases"
+                        );
+            }
+
+            if (
+                    testCasesNode == null ||
+                    !testCasesNode.isArray()
+            ) {
+
                 return;
             }
 
@@ -503,15 +686,18 @@ public class CodingProblemGithubImportService {
             ) {
 
                 String input =
-                        text(
+                        firstText(
                                 node,
-                                "input"
+                                "input",
+                                "stdin"
                         );
 
                 String expectedOutput =
-                        text(
+                        firstText(
                                 node,
-                                "expectedOutput"
+                                "expectedOutput",
+                                "output",
+                                "expected"
                         );
 
                 if (
@@ -533,9 +719,8 @@ public class CodingProblemGithubImportService {
                                         expectedOutput
                                 )
                                 .hidden(
-                                        node.path(
-                                                "hidden"
-                                        ).asBoolean(false)
+                                        node.path("hidden")
+                                                .asBoolean(false)
                                 )
                                 .active(true)
                                 .build();
@@ -545,7 +730,9 @@ public class CodingProblemGithubImportService {
                 );
             }
 
-            if (!testCases.isEmpty()) {
+            if (
+                    !testCases.isEmpty()
+            ) {
 
                 codingTestCaseRepository.saveAll(
                         testCases
@@ -555,10 +742,252 @@ public class CodingProblemGithubImportService {
         } catch (Exception exception) {
 
             throw new IllegalStateException(
-                    "Unable to import GitHub test cases.",
+                    "Unable to import GitHub test cases: "
+                            + testsJsonPath,
                     exception
             );
         }
+    }
+
+    private List<String> extractProblemPaths(
+            List<String> files
+    ) {
+
+        Set<String> uniquePaths =
+                new LinkedHashSet<>();
+
+        for (
+                String file :
+                files
+        ) {
+
+            if (
+                    file == null ||
+                    file.isBlank()
+            ) {
+
+                continue;
+            }
+
+            String normalized =
+                    normalizePath(file);
+
+            if (
+                    !normalized
+                            .toLowerCase()
+                            .endsWith(
+                                    "/problem.json"
+                            )
+            ) {
+
+                continue;
+            }
+
+            String problemPath =
+                    normalized.substring(
+                            0,
+                            normalized.length()
+                                    - "/problem.json"
+                                    .length()
+                    );
+
+            if (
+                    !problemPath.isBlank()
+            ) {
+
+                uniquePaths.add(
+                        problemPath
+                );
+            }
+        }
+
+        return new ArrayList<>(
+                uniquePaths
+        );
+    }
+
+    private JsonNode firstExistingNode(
+            JsonNode node,
+            String... fields
+    ) {
+
+        if (
+                node == null ||
+                fields == null
+        ) {
+
+            return null;
+        }
+
+        for (
+                String field :
+                fields
+        ) {
+
+            if (
+                    field == null ||
+                    field.isBlank()
+            ) {
+
+                continue;
+            }
+
+            JsonNode value =
+                    node.path(field);
+
+            if (
+                    !value.isMissingNode() &&
+                    !value.isNull()
+            ) {
+
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private String firstText(
+            JsonNode node,
+            String... fields
+    ) {
+
+        JsonNode value =
+                firstExistingNode(
+                        node,
+                        fields
+                );
+
+        if (value == null) {
+            return "";
+        }
+
+        if (
+                value.isTextual() ||
+                value.isNumber() ||
+                value.isBoolean()
+        ) {
+
+            return value.asText();
+        }
+
+        return "";
+    }
+
+    private String text(
+            JsonNode node,
+            String field
+    ) {
+
+        if (
+                node == null ||
+                field == null ||
+                field.isBlank()
+        ) {
+
+            return "";
+        }
+
+        JsonNode value =
+                node.path(field);
+
+        if (
+                value.isMissingNode() ||
+                value.isNull()
+        ) {
+
+            return "";
+        }
+
+        return value.asText();
+    }
+
+    private List<String> stringList(
+            JsonNode node
+    ) {
+
+        List<String> values =
+                new ArrayList<>();
+
+        if (
+                node == null ||
+                node.isMissingNode() ||
+                node.isNull()
+        ) {
+
+            return values;
+        }
+
+        if (node.isTextual()) {
+
+            String value =
+                    node.asText().trim();
+
+            if (!value.isBlank()) {
+                values.add(value);
+            }
+
+            return values;
+        }
+
+        if (!node.isArray()) {
+            return values;
+        }
+
+        for (
+                JsonNode item :
+                node
+        ) {
+
+            if (
+                    item == null ||
+                    item.isNull()
+            ) {
+
+                continue;
+            }
+
+            String value =
+                    item.asText().trim();
+
+            if (!value.isBlank()) {
+                values.add(value);
+            }
+        }
+
+        return values;
+    }
+
+    private String normalizeDifficulty(
+            String difficulty
+    ) {
+
+        String normalized =
+                difficulty
+                        .trim()
+                        .toUpperCase();
+
+        if (normalized.equals("EASY")) {
+            return "EASY";
+        }
+
+        if (
+                normalized.equals("MEDIUM") ||
+                normalized.equals("INTERMEDIATE")
+        ) {
+
+            return "MEDIUM";
+        }
+
+        if (
+                normalized.equals("HARD") ||
+                normalized.equals("ADVANCED")
+        ) {
+
+            return "HARD";
+        }
+
+        return "MEDIUM";
     }
 
     private void validateRepository(
@@ -602,6 +1031,10 @@ public class CodingProblemGithubImportService {
                         ""
                 )
                 .replaceAll(
+                        "\\.git$",
+                        ""
+                )
+                .replaceAll(
                         "/+$",
                         ""
                 );
@@ -613,61 +1046,43 @@ public class CodingProblemGithubImportService {
 
         return path
                 .trim()
+                .replace(
+                        "\\",
+                        "/"
+                )
                 .replaceAll(
-                        "^/+|/+$",
+                        "^/+",
+                        ""
+                )
+                .replaceAll(
+                        "/+$",
                         ""
                 );
     }
 
-    private String text(
-            JsonNode node,
-            String field
+    private String normalizeProblemPath(
+            String path
     ) {
 
-        JsonNode value =
-                node.path(field);
+        String normalized =
+                normalizePath(path);
 
         if (
-                value.isMissingNode() ||
-                value.isNull()
+                normalized
+                        .toLowerCase()
+                        .endsWith(
+                                "/problem.json"
+                        )
         ) {
 
-            return "";
+            return normalized.substring(
+                    0,
+                    normalized.length()
+                            - "/problem.json".length()
+            );
         }
 
-        return value.asText();
-    }
-
-    private List<String> stringList(
-            JsonNode node
-    ) {
-
-        List<String> values =
-                new ArrayList<>();
-
-        if (
-                node == null ||
-                !node.isArray()
-        ) {
-
-            return values;
-        }
-
-        for (JsonNode item :
-                node) {
-
-            if (
-                    !item.isNull() &&
-                    !item.asText().isBlank()
-            ) {
-
-                values.add(
-                        item.asText()
-                );
-            }
-        }
-
-        return values;
+        return normalized;
     }
 
     public static class BulkImportResult {
@@ -686,10 +1101,18 @@ public class CodingProblemGithubImportService {
                 List<String> failedPaths
         ) {
 
-            this.repository = repository;
-            this.discovered = discovered;
-            this.imported = imported;
-            this.failed = failed;
+            this.repository =
+                    repository;
+
+            this.discovered =
+                    discovered;
+
+            this.imported =
+                    imported;
+
+            this.failed =
+                    failed;
+
             this.failedPaths =
                     failedPaths == null
                             ? List.of()

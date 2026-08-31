@@ -4,18 +4,17 @@ import com.aiinterview.backend.dto.coding.CodingProblemResponse;
 import com.aiinterview.backend.dto.coding.CodingPublicTestCaseResponse;
 import com.aiinterview.backend.entity.CodingProblem;
 import com.aiinterview.backend.entity.CodingTestCase;
-import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.repository.CodingTestCaseRepository;
-import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.service.coding.CodingProblemService;
+import com.aiinterview.backend.service.coding.PistonRuntimeService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -24,36 +23,69 @@ public class CodingProblemController {
 
     private final CodingProblemService codingProblemService;
     private final CodingTestCaseRepository codingTestCaseRepository;
-    private final UserRepository userRepository;
+    private final PistonRuntimeService pistonRuntimeService;
     private final ObjectMapper objectMapper;
 
     public CodingProblemController(
             CodingProblemService codingProblemService,
             CodingTestCaseRepository codingTestCaseRepository,
-            UserRepository userRepository
+            PistonRuntimeService pistonRuntimeService,
+            ObjectMapper objectMapper
     ) {
-        this.codingProblemService = codingProblemService;
-        this.codingTestCaseRepository = codingTestCaseRepository;
-        this.userRepository = userRepository;
-        this.objectMapper = new ObjectMapper();
+        this.codingProblemService =
+                codingProblemService;
+
+        this.codingTestCaseRepository =
+                codingTestCaseRepository;
+
+        this.pistonRuntimeService =
+                pistonRuntimeService;
+
+        this.objectMapper =
+                objectMapper;
     }
 
     @GetMapping
-    public ResponseEntity<List<CodingProblemResponse>> getProblems(
-            Authentication authentication
-    ) {
-
-        User user = getAuthenticatedUser(authentication);
-
-        Integer experienceLevel = getExperienceLevel(user);
-
-        List<CodingProblem> problems =
-                codingProblemService.getProblemsForExperience(
-                        experienceLevel
-                );
+    public ResponseEntity<List<CodingProblemResponse>> getProblems() {
 
         return ResponseEntity.ok(
-                problems.stream()
+                codingProblemService
+                        .getProblems()
+                        .stream()
+                        .map(this::toResponse)
+                        .toList()
+        );
+    }
+
+    @GetMapping("/difficulty/{difficulty}")
+    public ResponseEntity<List<CodingProblemResponse>>
+    getProblemsByDifficulty(
+            @PathVariable String difficulty
+    ) {
+
+        return ResponseEntity.ok(
+                codingProblemService
+                        .getProblemsByDifficulty(
+                                difficulty
+                        )
+                        .stream()
+                        .map(this::toResponse)
+                        .toList()
+        );
+    }
+
+    @GetMapping("/experience/{experienceLevel}")
+    public ResponseEntity<List<CodingProblemResponse>>
+    getProblemsForExperience(
+            @PathVariable Integer experienceLevel
+    ) {
+
+        return ResponseEntity.ok(
+                codingProblemService
+                        .getProblemsForExperience(
+                                experienceLevel
+                        )
+                        .stream()
                         .map(this::toResponse)
                         .toList()
         );
@@ -65,39 +97,13 @@ public class CodingProblemController {
     ) {
 
         CodingProblem problem =
-                codingProblemService.getProblemById(problemId);
+                codingProblemService.getProblemById(
+                        problemId
+                );
 
         return ResponseEntity.ok(
                 toResponse(problem)
         );
-    }
-
-    @GetMapping("/difficulty/{difficulty}")
-    public ResponseEntity<List<CodingProblemResponse>> getProblemsByDifficulty(
-            @PathVariable String difficulty,
-            Authentication authentication
-    ) {
-
-        User user = getAuthenticatedUser(authentication);
-
-        Integer experienceLevel = getExperienceLevel(user);
-
-        List<CodingProblem> problems =
-                codingProblemService.getProblemsForExperience(
-                        experienceLevel
-                );
-
-        List<CodingProblemResponse> filteredProblems =
-                problems.stream()
-                        .filter(problem ->
-                                problem.getDifficulty() != null &&
-                                problem.getDifficulty()
-                                        .equalsIgnoreCase(difficulty)
-                        )
-                        .map(this::toResponse)
-                        .toList();
-
-        return ResponseEntity.ok(filteredProblems);
     }
 
     private CodingProblemResponse toResponse(
@@ -110,55 +116,469 @@ public class CodingProblemController {
                                 problem
                         );
 
-        List<CodingPublicTestCaseResponse> publicTestCases =
-                testCases.stream()
-                        .map(testCase ->
-                                CodingPublicTestCaseResponse
-                                        .builder()
-                                        .testCaseNumber(
-                                                testCase.getTestCaseNumber()
-                                        )
-                                        .input(
-                                                testCase.getInput()
-                                        )
-                                        .expectedOutput(
-                                                testCase.getExpectedOutput()
-                                        )
-                                        .build()
-                        )
+        List<CodingPublicTestCaseResponse>
+                publicTestCases =
+                testCases
+                        .stream()
+                        .map(this::toPublicTestCaseResponse)
                         .toList();
 
-        Map<String, Object> languageConfigurations =
+        Map<String, Object>
+                languageConfigurations =
                 parseLanguageConfigurations(
                         problem.getLanguageConfigurations()
                 );
 
-        Map<String, String> starterCodes =
-                parseStarterCodes(
-                        problem.getStarterCode(),
+        Map<String, Object>
+                executableConfigurations =
+                filterAvailableLanguageConfigurations(
                         languageConfigurations
                 );
 
-        return CodingProblemResponse.builder()
+        Map<String, String>
+                starterCodes =
+                parseStarterCodes(
+                        problem.getStarterCode(),
+                        executableConfigurations
+                );
+
+        return CodingProblemResponse
+                .builder()
                 .id(problem.getId())
                 .title(problem.getTitle())
                 .description(problem.getDescription())
                 .difficulty(problem.getDifficulty())
-                .tags(problem.getTags())
+                .tags(
+                        problem.getTags() == null
+                                ? List.of()
+                                : List.copyOf(
+                                        problem.getTags()
+                                )
+                )
                 .inputExample(problem.getInputExample())
                 .outputExample(problem.getOutputExample())
-                .constraints(problem.getConstraints())
+                .constraints(
+                        problem.getConstraints() == null
+                                ? List.of()
+                                : List.copyOf(
+                                        problem.getConstraints()
+                                )
+                )
                 .minimumExperienceLevel(
                         problem.getMinimumExperienceLevel()
                 )
                 .active(problem.isActive())
                 .starterCodes(starterCodes)
-                .languageConfigurations(languageConfigurations)
+                .languageConfigurations(
+                        executableConfigurations
+                )
                 .testCases(publicTestCases)
                 .build();
     }
 
-    private Map<String, String> parseStarterCodes(
+    private CodingPublicTestCaseResponse
+    toPublicTestCaseResponse(
+            CodingTestCase testCase
+    ) {
+
+        return CodingPublicTestCaseResponse
+                .builder()
+                .testCaseNumber(
+                        testCase.getTestCaseNumber()
+                )
+                .input(
+                        testCase.getInput()
+                )
+                .expectedOutput(
+                        testCase.getExpectedOutput()
+                )
+                .build();
+    }
+
+    private Map<String, Object>
+    filterAvailableLanguageConfigurations(
+            Map<String, Object> configurations
+    ) {
+
+        Map<String, Object> result =
+                new LinkedHashMap<>();
+
+        if (
+                configurations == null ||
+                configurations.isEmpty()
+        ) {
+            return result;
+        }
+
+        List<PistonRuntimeService.PistonRuntime>
+                runtimes;
+
+        try {
+
+            runtimes =
+                    pistonRuntimeService.getRuntimes();
+
+        } catch (Exception exception) {
+
+            return result;
+        }
+
+        if (
+                runtimes == null ||
+                runtimes.isEmpty()
+        ) {
+            return result;
+        }
+
+        for (
+                Map.Entry<String, Object> entry :
+                configurations.entrySet()
+        ) {
+
+            String configurationKey =
+                    normalizeLanguageKey(
+                            entry.getKey()
+                    );
+
+            if (
+                    configurationKey.isBlank()
+            ) {
+                continue;
+            }
+
+            if (
+                    !(entry.getValue()
+                            instanceof Map<?, ?> rawMap)
+            ) {
+                continue;
+            }
+
+            Map<String, Object> configuration =
+                    copyConfiguration(
+                            rawMap
+                    );
+
+            String runtimeLanguage =
+                    readConfigurationValue(
+                            configuration,
+                            "runtimeLanguage"
+                    );
+
+            if (
+                    runtimeLanguage == null ||
+                    runtimeLanguage.isBlank()
+            ) {
+                runtimeLanguage =
+                        configurationKey;
+            }
+
+            String requestedVersion =
+                    readConfigurationValue(
+                            configuration,
+                            "runtimeVersion"
+                    );
+
+            PistonRuntimeService.PistonRuntime runtime;
+
+            try {
+
+                runtime =
+                        pistonRuntimeService.findRuntime(
+                                runtimeLanguage,
+                                requestedVersion
+                        );
+
+            } catch (Exception exception) {
+
+                continue;
+            }
+
+            if (runtime == null) {
+                continue;
+            }
+
+            configuration.put(
+                    "runtimeLanguage",
+                    runtime.getLanguage()
+            );
+
+            configuration.put(
+                    "runtimeVersion",
+                    runtime.getVersion()
+            );
+
+            ensureDisplayMetadata(
+                    configuration,
+                    runtime.getLanguage()
+            );
+
+            result.put(
+                    configurationKey,
+                    configuration
+            );
+        }
+
+        return result;
+    }
+
+    private Map<String, Object>
+    copyConfiguration(
+            Map<?, ?> rawMap
+    ) {
+
+        Map<String, Object> configuration =
+                new LinkedHashMap<>();
+
+        for (
+                Map.Entry<?, ?> entry :
+                rawMap.entrySet()
+        ) {
+
+            if (
+                    entry.getKey() == null
+            ) {
+                continue;
+            }
+
+            configuration.put(
+                    entry.getKey().toString(),
+                    entry.getValue()
+            );
+        }
+
+        return configuration;
+    }
+
+    private void ensureDisplayMetadata(
+            Map<String, Object> configuration,
+            String runtimeLanguage
+    ) {
+
+        if (
+                !configuration.containsKey(
+                        "displayName"
+                ) ||
+                isBlankValue(
+                        configuration.get(
+                                "displayName"
+                        )
+                )
+        ) {
+
+            configuration.put(
+                    "displayName",
+                    buildDisplayName(
+                            runtimeLanguage
+                    )
+            );
+        }
+
+        if (
+                !configuration.containsKey(
+                        "monacoLanguage"
+                ) ||
+                isBlankValue(
+                        configuration.get(
+                                "monacoLanguage"
+                        )
+                )
+        ) {
+
+            configuration.put(
+                    "monacoLanguage",
+                    getMonacoLanguage(
+                            runtimeLanguage
+                    )
+            );
+        }
+    }
+
+    private String buildDisplayName(
+            String language
+    ) {
+
+        if (
+                language == null ||
+                language.isBlank()
+        ) {
+            return "Language";
+        }
+
+        String normalized =
+                language
+                        .trim()
+                        .toLowerCase(
+                                Locale.ROOT
+                        );
+
+        return switch (normalized) {
+
+            case "java" ->
+                    "Java";
+
+            case "python", "python3" ->
+                    "Python";
+
+            case "javascript", "js", "node", "nodejs" ->
+                    "JavaScript";
+
+            case "typescript", "ts" ->
+                    "TypeScript";
+
+            case "kotlin" ->
+                    "Kotlin";
+
+            case "go", "golang" ->
+                    "Go";
+
+            case "rust", "rs" ->
+                    "Rust";
+
+            case "c" ->
+                    "C";
+
+            case "c++", "cpp", "cxx" ->
+                    "C++";
+
+            case "c#", "csharp", "cs" ->
+                    "C#";
+
+            case "php" ->
+                    "PHP";
+
+            case "ruby" ->
+                    "Ruby";
+
+            case "swift" ->
+                    "Swift";
+
+            case "dart" ->
+                    "Dart";
+
+            case "scala" ->
+                    "Scala";
+
+            case "bash", "shell", "sh" ->
+                    "Bash";
+
+            default ->
+                    Character.toUpperCase(
+                            language.charAt(0)
+                    ) +
+                    language.substring(1);
+        };
+    }
+
+    private String getMonacoLanguage(
+            String language
+    ) {
+
+        if (
+                language == null ||
+                language.isBlank()
+        ) {
+            return "plaintext";
+        }
+
+        String normalized =
+                language
+                        .trim()
+                        .toLowerCase(
+                                Locale.ROOT
+                        );
+
+        return switch (normalized) {
+
+            case "cpp", "c++", "cxx" ->
+                    "cpp";
+
+            case "csharp", "c#", "cs" ->
+                    "csharp";
+
+            case "javascript", "js", "node", "nodejs" ->
+                    "javascript";
+
+            case "typescript", "ts" ->
+                    "typescript";
+
+            case "golang" ->
+                    "go";
+
+            case "bash", "shell", "sh" ->
+                    "shell";
+
+            case "python3", "py" ->
+                    "python";
+
+            case "rs" ->
+                    "rust";
+
+            case "kt" ->
+                    "kotlin";
+
+            default ->
+                    normalized;
+        };
+    }
+
+    private String readConfigurationValue(
+            Map<String, Object> configuration,
+            String key
+    ) {
+
+        if (
+                configuration == null ||
+                key == null ||
+                key.isBlank()
+        ) {
+            return null;
+        }
+
+        Object value =
+                configuration.get(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        String result =
+                value.toString().trim();
+
+        return result.isBlank()
+                ? null
+                : result;
+    }
+
+    private boolean isBlankValue(
+            Object value
+    ) {
+
+        return value == null ||
+                value.toString()
+                        .trim()
+                        .isBlank();
+    }
+
+    private String normalizeLanguageKey(
+            String language
+    ) {
+
+        if (
+                language == null ||
+                language.isBlank()
+        ) {
+            return "";
+        }
+
+        return language
+                .trim()
+                .toLowerCase(
+                        Locale.ROOT
+                );
+    }
+
+    private Map<String, String>
+    parseStarterCodes(
             String starterCode,
             Map<String, Object> languageConfigurations
     ) {
@@ -166,107 +586,132 @@ public class CodingProblemController {
         Map<String, String> starterCodes =
                 new LinkedHashMap<>();
 
-        if (languageConfigurations != null &&
-                !languageConfigurations.isEmpty()) {
+        if (
+                languageConfigurations != null &&
+                !languageConfigurations.isEmpty()
+        ) {
 
-            for (Map.Entry<String, Object> entry :
-                    languageConfigurations.entrySet()) {
+            for (
+                    Map.Entry<String, Object> entry :
+                    languageConfigurations.entrySet()
+            ) {
 
-                String language = entry.getKey();
+                String language =
+                        normalizeLanguageKey(
+                                entry.getKey()
+                        );
 
-                if (language == null ||
-                        language.isBlank()) {
+                if (
+                        language.isBlank()
+                ) {
                     continue;
                 }
 
-                if (!(entry.getValue() instanceof Map<?, ?> config)) {
+                if (
+                        !(entry.getValue()
+                                instanceof Map<?, ?> config)
+                ) {
                     continue;
                 }
 
-                Object starter = config.get("starterCode");
+                Object starter =
+                        config.get(
+                                "starterCode"
+                        );
 
                 if (starter == null) {
-                    starter = config.get("starter_code");
+
+                    starter =
+                            config.get(
+                                    "starter_code"
+                            );
                 }
 
-                if (starter != null &&
-                        !starter.toString().isBlank()) {
+                if (
+                        starter != null &&
+                        !starter.toString()
+                                .isBlank()
+                ) {
 
                     starterCodes.put(
-                            language.trim().toLowerCase(),
+                            language,
                             starter.toString()
                     );
                 }
             }
         }
 
-        if (!starterCodes.isEmpty()) {
+        if (
+                !starterCodes.isEmpty()
+        ) {
             return starterCodes;
         }
 
-        if (starterCode == null ||
-                starterCode.isBlank()) {
-
+        if (
+                starterCode == null ||
+                starterCode.isBlank()
+        ) {
             return starterCodes;
         }
 
-        String[] sections =
-                starterCode.split(
-                        "\\r?\\n\\r?\\n"
-                );
+        try {
 
-        for (String section : sections) {
-
-            if (section == null ||
-                    section.isBlank()) {
-                continue;
-            }
-
-            int separator =
-                    section.indexOf(":\n");
-
-            if (separator < 0) {
-                separator =
-                        section.indexOf(":\r\n");
-            }
-
-            if (separator <= 0) {
-                continue;
-            }
-
-            String language =
-                    section.substring(
-                            0,
-                            separator
-                    )
-                    .trim()
-                    .toLowerCase();
-
-            String code =
-                    section.substring(
-                            separator + 2
+            Map<String, String> parsed =
+                    objectMapper.readValue(
+                            starterCode,
+                            new TypeReference<
+                                    Map<String, String>
+                            >() {
+                            }
                     );
 
-            if (!language.isBlank() &&
-                    !code.isBlank()) {
+            if (
+                    parsed != null &&
+                    !parsed.isEmpty()
+            ) {
 
-                starterCodes.put(
-                        language,
-                        code
-                );
+                for (
+                        Map.Entry<String, String> entry :
+                        parsed.entrySet()
+                ) {
+
+                    String language =
+                            normalizeLanguageKey(
+                                    entry.getKey()
+                            );
+
+                    String code =
+                            entry.getValue();
+
+                    if (
+                            !language.isBlank() &&
+                            code != null &&
+                            !code.isBlank()
+                    ) {
+
+                        starterCodes.put(
+                                language,
+                                code
+                        );
+                    }
+                }
             }
+
+        } catch (Exception ignored) {
         }
 
         return starterCodes;
     }
 
-    private Map<String, Object> parseLanguageConfigurations(
+    private Map<String, Object>
+    parseLanguageConfigurations(
             String configurations
     ) {
 
-        if (configurations == null ||
-                configurations.isBlank()) {
-
+        if (
+                configurations == null ||
+                configurations.isBlank()
+        ) {
             return new LinkedHashMap<>();
         }
 
@@ -275,80 +720,26 @@ public class CodingProblemController {
             Map<String, Object> parsed =
                     objectMapper.readValue(
                             configurations,
-                            new TypeReference<Map<String, Object>>() {
+                            new TypeReference<
+                                    Map<String, Object>
+                            >() {
                             }
                     );
 
-            if (parsed == null) {
+            if (
+                    parsed == null ||
+                    parsed.isEmpty()
+            ) {
                 return new LinkedHashMap<>();
             }
 
-            return new LinkedHashMap<>(parsed);
+            return new LinkedHashMap<>(
+                    parsed
+            );
 
         } catch (Exception exception) {
 
             return new LinkedHashMap<>();
         }
-    }
-
-    private Integer getExperienceLevel(
-            User user
-    ) {
-
-        if (user.getProfile() == null ||
-                user.getProfile()
-                        .getExperienceLevel() == null ||
-                user.getProfile()
-                        .getExperienceLevel()
-                        .isBlank()) {
-
-            return 1;
-        }
-
-        String experience =
-                user.getProfile()
-                        .getExperienceLevel()
-                        .trim()
-                        .toUpperCase();
-
-        return switch (experience) {
-
-            case "BEGINNER" ->
-                    1;
-
-            case "INTERMEDIATE" ->
-                    2;
-
-            case "ADVANCED" ->
-                    3;
-
-            default ->
-                    1;
-        };
-    }
-
-    private User getAuthenticatedUser(
-            Authentication authentication
-    ) {
-
-        if (authentication == null ||
-                authentication.getName() == null ||
-                authentication.getName().isBlank()) {
-
-            throw new IllegalStateException(
-                    "Authenticated user not found."
-            );
-        }
-
-        return userRepository
-                .findByEmail(
-                        authentication.getName()
-                )
-                .orElseThrow(
-                        () ->
-                                new IllegalStateException(
-                                        "User account not found."
-                                )
-                );
     }
 }

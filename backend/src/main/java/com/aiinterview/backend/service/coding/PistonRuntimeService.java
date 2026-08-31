@@ -9,11 +9,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
 public class PistonRuntimeService {
+
+    private static final Duration REQUEST_TIMEOUT =
+            Duration.ofSeconds(15);
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -21,23 +26,48 @@ public class PistonRuntimeService {
     @Value("${app.piston.url}")
     private String pistonExecuteUrl;
 
-    public PistonRuntimeService() {
-        this.webClient = WebClient.builder().build();
-        this.objectMapper = new ObjectMapper();
+    public PistonRuntimeService(
+            WebClient.Builder webClientBuilder,
+            ObjectMapper objectMapper
+    ) {
+        this.webClient =
+                webClientBuilder.build();
+
+        this.objectMapper =
+                objectMapper;
     }
 
     public List<PistonRuntime> getRuntimes() {
 
-        String baseUrl = getBaseUrl();
+        String baseUrl =
+                getBaseUrl();
 
-        String response = webClient
-                .get()
-                .uri(baseUrl + "/api/v2/runtimes")
-                .retrieve()
-                .bodyToMono(String.class)
-                .block(Duration.ofSeconds(15));
+        String response;
 
-        if (response == null || response.isBlank()) {
+        try {
+
+            response =
+                    webClient
+                            .get()
+                            .uri(
+                                    baseUrl +
+                                            "/api/v2/runtimes"
+                            )
+                            .retrieve()
+                            .bodyToMono(String.class)
+                            .block(
+                                    REQUEST_TIMEOUT
+                            );
+
+        } catch (Exception exception) {
+
+            return Collections.emptyList();
+        }
+
+        if (
+                response == null ||
+                response.isBlank()
+        ) {
             return Collections.emptyList();
         }
 
@@ -46,48 +76,74 @@ public class PistonRuntimeService {
             List<Map<String, Object>> data =
                     objectMapper.readValue(
                             response,
-                            new TypeReference<List<Map<String, Object>>>() {}
+                            new TypeReference<
+                                    List<Map<String, Object>>
+                                    >() {
+                                    }
                     );
 
-            List<PistonRuntime> runtimes = new ArrayList<>();
+            if (
+                    data == null ||
+                    data.isEmpty()
+            ) {
+                return Collections.emptyList();
+            }
 
-            for (Map<String, Object> item : data) {
+            Map<String, PistonRuntime> uniqueRuntimes =
+                    new LinkedHashMap<>();
 
-                String language =
-                        value(item.get("language"));
+            for (
+                    Map<String, Object> item :
+                    data
+            ) {
 
-                String version =
-                        value(item.get("version"));
-
-                if (language == null || version == null) {
+                if (item == null) {
                     continue;
                 }
 
-                List<String> aliases = new ArrayList<>();
+                String language =
+                        value(
+                                item.get("language")
+                        );
 
-                Object aliasValue =
-                        item.get("aliases");
+                String version =
+                        value(
+                                item.get("version")
+                        );
 
-                if (aliasValue instanceof List<?> list) {
-
-                    for (Object alias : list) {
-
-                        if (alias != null) {
-                            aliases.add(alias.toString());
-                        }
-                    }
+                if (
+                        language == null ||
+                        version == null
+                ) {
+                    continue;
                 }
 
-                runtimes.add(
+                List<String> aliases =
+                        readAliases(
+                                item.get("aliases")
+                        );
+
+                PistonRuntime runtime =
                         new PistonRuntime(
                                 language,
                                 version,
                                 aliases
-                        )
+                        );
+
+                String key =
+                        normalize(language) +
+                                "|" +
+                                normalize(version);
+
+                uniqueRuntimes.put(
+                        key,
+                        runtime
                 );
             }
 
-            return runtimes;
+            return new ArrayList<>(
+                    uniqueRuntimes.values()
+            );
 
         } catch (Exception exception) {
 
@@ -98,33 +154,138 @@ public class PistonRuntimeService {
         }
     }
 
+    public List<PistonRuntime> getAvailableLanguages() {
+
+        List<PistonRuntime> runtimes =
+                getRuntimes();
+
+        if (runtimes.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<String, PistonRuntime> languages =
+                new LinkedHashMap<>();
+
+        for (
+                PistonRuntime runtime :
+                runtimes
+        ) {
+
+            String key =
+                    canonicalLanguage(
+                            runtime.getLanguage()
+                    );
+
+            if (
+                    key.isBlank()
+            ) {
+                continue;
+            }
+
+            if (
+                    !languages.containsKey(key)
+            ) {
+
+                languages.put(
+                        key,
+                        runtime
+                );
+            }
+        }
+
+        return new ArrayList<>(
+                languages.values()
+        );
+    }
+
     public PistonRuntime findRuntime(
             String language,
             String version
     ) {
 
-        if (language == null || language.isBlank()) {
+        if (
+                language == null ||
+                language.isBlank()
+        ) {
 
             throw new IllegalArgumentException(
                     "Programming language cannot be empty."
             );
         }
 
-        return getRuntimes()
-                .stream()
-                .filter(runtime ->
-                        runtime.matches(
-                                language,
-                                version
-                        )
-                )
-                .findFirst()
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Piston runtime not available for: "
-                                        + language
-                        )
+        List<PistonRuntime> runtimes =
+                getRuntimes();
+
+        if (runtimes.isEmpty()) {
+
+            throw new IllegalStateException(
+                    "No Piston runtimes are currently available."
+            );
+        }
+
+        String requestedLanguage =
+                canonicalLanguage(
+                        language
                 );
+
+        String requestedVersion =
+                version == null
+                        ? ""
+                        : version.trim();
+
+        if (
+                requestedLanguage.isBlank()
+        ) {
+
+            throw new IllegalArgumentException(
+                    "Programming language is invalid."
+            );
+        }
+
+        if (
+                !requestedVersion.isBlank() &&
+                !"*".equals(
+                        requestedVersion
+                )
+        ) {
+
+            for (
+                    PistonRuntime runtime :
+                    runtimes
+            ) {
+
+                if (
+                        runtime.matches(
+                                requestedLanguage,
+                                requestedVersion
+                        )
+                ) {
+
+                    return runtime;
+                }
+            }
+        }
+
+        for (
+                PistonRuntime runtime :
+                runtimes
+        ) {
+
+            if (
+                    runtime.matches(
+                            requestedLanguage,
+                            null
+                    )
+            ) {
+
+                return runtime;
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Piston runtime not available for: "
+                        + language
+        );
     }
 
     public boolean isRuntimeAvailable(
@@ -147,6 +308,40 @@ public class PistonRuntimeService {
         }
     }
 
+    private List<String> readAliases(
+            Object aliasValue
+    ) {
+
+        if (
+                !(aliasValue instanceof List<?> list)
+        ) {
+
+            return new ArrayList<>();
+        }
+
+        List<String> aliases =
+                new ArrayList<>();
+
+        for (
+                Object alias :
+                list
+        ) {
+
+            String value =
+                    value(alias);
+
+            if (
+                    value != null &&
+                    !aliases.contains(value)
+            ) {
+
+                aliases.add(value);
+            }
+        }
+
+        return aliases;
+    }
+
     private String getBaseUrl() {
 
         if (
@@ -160,23 +355,35 @@ public class PistonRuntimeService {
         }
 
         String url =
-                pistonExecuteUrl.trim();
+                pistonExecuteUrl
+                        .trim()
+                        .replaceAll(
+                                "/+$",
+                                ""
+                        );
 
         String executePath =
                 "/api/v2/execute";
 
-        if (url.endsWith(executePath)) {
+        if (
+                url.endsWith(
+                        executePath
+                )
+        ) {
 
             return url.substring(
                     0,
-                    url.length() - executePath.length()
+                    url.length()
+                            - executePath.length()
             );
         }
 
-        return url.replaceAll("/+$", "");
+        return url;
     }
 
-    private String value(Object value) {
+    private String value(
+            Object value
+    ) {
 
         if (value == null) {
             return null;
@@ -188,6 +395,72 @@ public class PistonRuntimeService {
         return result.isBlank()
                 ? null
                 : result;
+    }
+
+    private String normalize(
+            String value
+    ) {
+
+        if (
+                value == null ||
+                value.isBlank()
+        ) {
+
+            return "";
+        }
+
+        return value
+                .trim()
+                .toLowerCase(
+                        Locale.ROOT
+                );
+    }
+
+    private String canonicalLanguage(
+            String language
+    ) {
+
+        String normalized =
+                normalize(language);
+
+        return switch (normalized) {
+
+            case "js",
+                 "node",
+                 "nodejs" ->
+                    "javascript";
+
+            case "ts" ->
+                    "typescript";
+
+            case "golang" ->
+                    "go";
+
+            case "cpp",
+                 "cxx" ->
+                    "c++";
+
+            case "csharp",
+                 "cs" ->
+                    "c#";
+
+            case "py",
+                 "python3" ->
+                    "python";
+
+            case "rs" ->
+                    "rust";
+
+            case "kt" ->
+                    "kotlin";
+
+            case "sh",
+                 "shell" ->
+                    "bash";
+
+            default ->
+                    normalized;
+        };
     }
 
     public static class PistonRuntime {
@@ -202,31 +475,39 @@ public class PistonRuntimeService {
                 List<String> aliases
         ) {
 
-            this.language = language;
-            this.version = version;
+            this.language =
+                    language;
+
+            this.version =
+                    version;
+
             this.aliases =
                     aliases == null
                             ? new ArrayList<>()
-                            : new ArrayList<>(aliases);
+                            : new ArrayList<>(
+                                    aliases
+                            );
         }
 
         public String getLanguage() {
+
             return language;
         }
 
         public String getVersion() {
+
             return version;
         }
 
         public List<String> getAliases() {
+
             return Collections.unmodifiableList(
                     aliases
             );
         }
 
-        public boolean matches(
-                String requestedLanguage,
-                String requestedVersion
+        public boolean matchesLanguage(
+                String requestedLanguage
         ) {
 
             if (
@@ -237,38 +518,125 @@ public class PistonRuntimeService {
                 return false;
             }
 
-            boolean languageMatches =
-                    language.equalsIgnoreCase(
-                            requestedLanguage.trim()
+            String requested =
+                    canonicalize(
+                            requestedLanguage
                     );
 
-            if (!languageMatches) {
-
-                languageMatches =
-                        aliases.stream()
-                                .anyMatch(alias ->
-                                        alias.equalsIgnoreCase(
-                                                requestedLanguage.trim()
-                                        )
-                                );
-            }
-
-            if (!languageMatches) {
-                return false;
-            }
-
             if (
-                    requestedVersion == null ||
-                    requestedVersion.isBlank() ||
-                    "*".equals(requestedVersion)
+                    canonicalize(language)
+                            .equals(requested)
             ) {
 
                 return true;
             }
 
-            return version.equalsIgnoreCase(
-                    requestedVersion.trim()
-            );
+            return aliases.stream()
+                    .filter(
+                            alias ->
+                                    alias != null &&
+                                    !alias.isBlank()
+                    )
+                    .anyMatch(
+                            alias ->
+                                    canonicalize(alias)
+                                            .equals(requested)
+                    );
+        }
+
+        public boolean matchesVersion(
+                String requestedVersion
+        ) {
+
+            if (
+                    requestedVersion == null ||
+                    requestedVersion.isBlank() ||
+                    "*".equals(
+                            requestedVersion.trim()
+                    )
+            ) {
+
+                return true;
+            }
+
+            return version != null &&
+                    version
+                            .trim()
+                            .equalsIgnoreCase(
+                                    requestedVersion.trim()
+                            );
+        }
+
+        public boolean matches(
+                String requestedLanguage,
+                String requestedVersion
+        ) {
+
+            return matchesLanguage(
+                    requestedLanguage
+            ) &&
+                    matchesVersion(
+                            requestedVersion
+                    );
+        }
+
+        private static String canonicalize(
+                String language
+        ) {
+
+            if (
+                    language == null ||
+                    language.isBlank()
+            ) {
+
+                return "";
+            }
+
+            String normalized =
+                    language
+                            .trim()
+                            .toLowerCase(
+                                    Locale.ROOT
+                            );
+
+            return switch (normalized) {
+
+                case "js",
+                     "node",
+                     "nodejs" ->
+                        "javascript";
+
+                case "ts" ->
+                        "typescript";
+
+                case "golang" ->
+                        "go";
+
+                case "cpp",
+                     "cxx" ->
+                        "c++";
+
+                case "csharp",
+                     "cs" ->
+                        "c#";
+
+                case "py",
+                     "python3" ->
+                        "python";
+
+                case "rs" ->
+                        "rust";
+
+                case "kt" ->
+                        "kotlin";
+
+                case "sh",
+                     "shell" ->
+                        "bash";
+
+                default ->
+                        normalized;
+            };
         }
     }
 }

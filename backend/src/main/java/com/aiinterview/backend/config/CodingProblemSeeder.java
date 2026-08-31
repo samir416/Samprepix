@@ -7,7 +7,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +14,8 @@ import java.util.Map;
 @Configuration
 public class CodingProblemSeeder {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper =
+            new ObjectMapper();
 
     @Bean
     CommandLineRunner seedCodingProblems(
@@ -60,12 +60,13 @@ public class CodingProblemSeeder {
 
                 applyFunctionMetadata(problem);
 
-                if (problem.getLanguageConfigurations() == null ||
-                        problem.getLanguageConfigurations().isBlank()) {
+                if (
+                        problem.getLanguageConfigurations() == null ||
+                        problem.getLanguageConfigurations().isBlank()
+                ) {
 
                     applyProblemConfiguration(problem);
                     changed = true;
-                    continue;
                 }
 
                 if (isManagedProblem(title)) {
@@ -75,21 +76,25 @@ public class CodingProblemSeeder {
                                     problem.getLanguageConfigurations()
                             );
 
-                    Map<String, Object> updated =
-                            enrichConfigurations(
-                                    problem,
-                                    configurations
+                    if (!configurations.isEmpty()) {
+
+                        String json =
+                                writeJson(
+                                        configurations
+                                );
+
+                        if (
+                                !json.equals(
+                                        problem.getLanguageConfigurations()
+                                )
+                        ) {
+
+                            problem.setLanguageConfigurations(
+                                    json
                             );
 
-                    String json =
-                            writeJson(updated);
-
-                    if (!json.equals(
-                            problem.getLanguageConfigurations()
-                    )) {
-
-                        problem.setLanguageConfigurations(json);
-                        changed = true;
+                            changed = true;
+                        }
                     }
                 }
             }
@@ -114,111 +119,6 @@ public class CodingProblemSeeder {
                 title.contains("number of islands") ||
                 title.contains("course schedule") ||
                 title.contains("trapping rain");
-    }
-
-    private Map<String, Object> enrichConfigurations(
-            CodingProblem problem,
-            Map<String, Object> existing
-    ) {
-
-        Map<String, Object> configurations =
-                new LinkedHashMap<>();
-
-        if (existing != null) {
-            configurations.putAll(existing);
-        }
-
-        addLanguageIfMissing(
-                configurations,
-                problem,
-                "java",
-                "Java",
-                "java",
-                "15.0.2",
-                "Main.java",
-                javaStarterCode(problem),
-                "java"
-        );
-
-        addLanguageIfMissing(
-                configurations,
-                problem,
-                "python",
-                "Python",
-                "python",
-                "3.12.0",
-                "main.py",
-                pythonStarterCode(problem),
-                "python"
-        );
-
-        addLanguageIfMissing(
-                configurations,
-                problem,
-                "kotlin",
-                "Kotlin",
-                "kotlin",
-                "1.8.20",
-                "Main.kt",
-                kotlinStarterCode(problem),
-                "kotlin"
-        );
-
-        addLanguageIfMissing(
-                configurations,
-                problem,
-                "go",
-                "Go",
-                "go",
-                "1.16.2",
-                "main.go",
-                goStarterCode(problem),
-                "go"
-        );
-
-        addLanguageIfMissing(
-                configurations,
-                problem,
-                "rust",
-                "Rust",
-                "rust",
-                "1.68.2",
-                "main.rs",
-                rustStarterCode(problem),
-                "rust"
-        );
-
-        return configurations;
-    }
-
-    private void addLanguageIfMissing(
-            Map<String, Object> configurations,
-            CodingProblem problem,
-            String key,
-            String displayName,
-            String runtimeLanguage,
-            String runtimeVersion,
-            String fileName,
-            String starterCode,
-            String monacoLanguage
-    ) {
-
-        if (configurations.containsKey(key)) {
-            return;
-        }
-
-        configurations.put(
-                key,
-                language(
-                        displayName,
-                        runtimeLanguage,
-                        runtimeVersion,
-                        fileName,
-                        starterCode,
-                        "{{USER_CODE}}",
-                        monacoLanguage
-                )
-        );
     }
 
     private Map<String, Object> readConfigurations(
@@ -511,9 +411,13 @@ public class CodingProblemSeeder {
         if (title.contains("two sum")) {
 
             problem.setFunctionName("twoSum");
-            problem.setFunctionSignature("twoSum(nums, target)");
+            problem.setFunctionSignature(
+                    "twoSum(nums, target)"
+            );
             problem.setReturnType("array");
-            problem.setParameterTypes("array,integer");
+            problem.setParameterTypes(
+                    "array,integer"
+            );
 
             return;
         }
@@ -521,9 +425,13 @@ public class CodingProblemSeeder {
         if (title.contains("valid parentheses")) {
 
             problem.setFunctionName("isValid");
-            problem.setFunctionSignature("isValid(s)");
+            problem.setFunctionSignature(
+                    "isValid(s)"
+            );
             problem.setReturnType("boolean");
-            problem.setParameterTypes("string");
+            problem.setParameterTypes(
+                    "string"
+            );
 
             return;
         }
@@ -531,9 +439,13 @@ public class CodingProblemSeeder {
         if (title.contains("best time")) {
 
             problem.setFunctionName("maxProfit");
-            problem.setFunctionSignature("maxProfit(prices)");
+            problem.setFunctionSignature(
+                    "maxProfit(prices)"
+            );
             problem.setReturnType("integer");
-            problem.setParameterTypes("integer[]");
+            problem.setParameterTypes(
+                    "integer[]"
+            );
 
             return;
         }
@@ -541,33 +453,55 @@ public class CodingProblemSeeder {
         if (title.contains("binary search")) {
 
             problem.setFunctionName("search");
-            problem.setFunctionSignature("search(nums, target)");
+            problem.setFunctionSignature(
+                    "search(nums, target)"
+            );
             problem.setReturnType("integer");
-            problem.setParameterTypes("integer[],integer");
+            problem.setParameterTypes(
+                    "integer[],integer"
+            );
 
             return;
         }
 
         if (title.contains("longest substring")) {
 
-            problem.setFunctionName("lengthOfLongestSubstring");
+            problem.setFunctionName(
+                    "lengthOfLongestSubstring"
+            );
+
             problem.setFunctionSignature(
                     "lengthOfLongestSubstring(s)"
             );
-            problem.setReturnType("integer");
-            problem.setParameterTypes("string");
+
+            problem.setReturnType(
+                    "integer"
+            );
+
+            problem.setParameterTypes(
+                    "string"
+            );
 
             return;
         }
 
         if (title.contains("product of array")) {
 
-            problem.setFunctionName("productExceptSelf");
+            problem.setFunctionName(
+                    "productExceptSelf"
+            );
+
             problem.setFunctionSignature(
                     "productExceptSelf(nums)"
             );
-            problem.setReturnType("integer[]");
-            problem.setParameterTypes("integer[]");
+
+            problem.setReturnType(
+                    "integer[]"
+            );
+
+            problem.setParameterTypes(
+                    "integer[]"
+            );
 
             return;
         }
@@ -575,41 +509,81 @@ public class CodingProblemSeeder {
         if (title.contains("merge intervals")) {
 
             problem.setFunctionName("merge");
-            problem.setFunctionSignature("merge(intervals)");
-            problem.setReturnType("integer[][]");
-            problem.setParameterTypes("integer[][]");
+
+            problem.setFunctionSignature(
+                    "merge(intervals)"
+            );
+
+            problem.setReturnType(
+                    "integer[][]"
+            );
+
+            problem.setParameterTypes(
+                    "integer[][]"
+            );
 
             return;
         }
 
         if (title.contains("number of islands")) {
 
-            problem.setFunctionName("numIslands");
-            problem.setFunctionSignature("numIslands(grid)");
-            problem.setReturnType("integer");
-            problem.setParameterTypes("character[][]");
+            problem.setFunctionName(
+                    "numIslands"
+            );
+
+            problem.setFunctionSignature(
+                    "numIslands(grid)"
+            );
+
+            problem.setReturnType(
+                    "integer"
+            );
+
+            problem.setParameterTypes(
+                    "character[][]"
+            );
 
             return;
         }
 
         if (title.contains("course schedule")) {
 
-            problem.setFunctionName("canFinish");
+            problem.setFunctionName(
+                    "canFinish"
+            );
+
             problem.setFunctionSignature(
                     "canFinish(numCourses, prerequisites)"
             );
-            problem.setReturnType("boolean");
-            problem.setParameterTypes("integer,integer[][]");
+
+            problem.setReturnType(
+                    "boolean"
+            );
+
+            problem.setParameterTypes(
+                    "integer,integer[][]"
+            );
 
             return;
         }
 
         if (title.contains("trapping rain")) {
 
-            problem.setFunctionName("trap");
-            problem.setFunctionSignature("trap(height)");
-            problem.setReturnType("integer");
-            problem.setParameterTypes("integer[]");
+            problem.setFunctionName(
+                    "trap"
+            );
+
+            problem.setFunctionSignature(
+                    "trap(height)"
+            );
+
+            problem.setReturnType(
+                    "integer"
+            );
+
+            problem.setParameterTypes(
+                    "integer[]"
+            );
         }
     }
 
@@ -705,13 +679,40 @@ public class CodingProblemSeeder {
         Map<String, Object> configuration =
                 new LinkedHashMap<>();
 
-        configuration.put("displayName", displayName);
-        configuration.put("runtimeLanguage", runtimeLanguage);
-        configuration.put("runtimeVersion", runtimeVersion);
-        configuration.put("fileName", fileName);
-        configuration.put("monacoLanguage", monacoLanguage);
-        configuration.put("starterCode", starterCode);
-        configuration.put("executionTemplate", executionTemplate);
+        configuration.put(
+                "displayName",
+                displayName
+        );
+
+        configuration.put(
+                "runtimeLanguage",
+                runtimeLanguage
+        );
+
+        configuration.put(
+                "runtimeVersion",
+                runtimeVersion
+        );
+
+        configuration.put(
+                "fileName",
+                fileName
+        );
+
+        configuration.put(
+                "monacoLanguage",
+                monacoLanguage
+        );
+
+        configuration.put(
+                "starterCode",
+                starterCode
+        );
+
+        configuration.put(
+                "executionTemplate",
+                executionTemplate
+        );
 
         return configuration;
     }
@@ -720,7 +721,9 @@ public class CodingProblemSeeder {
             CodingProblem problem
     ) {
 
-        return switch (problem.getFunctionName()) {
+        return switch (
+                problem.getFunctionName()
+        ) {
 
             case "twoSum" -> """
 public static int[] twoSum(int[] nums, int target) {
@@ -793,7 +796,9 @@ public static void solve() {
             CodingProblem problem
     ) {
 
-        return switch (problem.getFunctionName()) {
+        return switch (
+                problem.getFunctionName()
+        ) {
 
             case "twoSum" -> """
 def twoSum(nums, target):
@@ -856,7 +861,9 @@ def solve():
             CodingProblem problem
     ) {
 
-        return switch (problem.getFunctionName()) {
+        return switch (
+                problem.getFunctionName()
+        ) {
 
             case "twoSum" -> """
 fun twoSum(nums: IntArray, target: Int): IntArray {
@@ -929,7 +936,9 @@ fun solve() {
             CodingProblem problem
     ) {
 
-        return switch (problem.getFunctionName()) {
+        return switch (
+                problem.getFunctionName()
+        ) {
 
             case "twoSum" -> """
 func twoSum(nums []int, target int) []int {
@@ -1002,7 +1011,9 @@ func solve() {
             CodingProblem problem
     ) {
 
-        return switch (problem.getFunctionName()) {
+        return switch (
+                problem.getFunctionName()
+        ) {
 
             case "twoSum" -> """
 fn two_sum(nums: Vec<i32>, target: i32) -> Vec<i32> {
@@ -1080,7 +1091,9 @@ fn solve() {
 
         try {
 
-            return objectMapper.writeValueAsString(value);
+            return objectMapper.writeValueAsString(
+                    value
+            );
 
         } catch (Exception exception) {
 

@@ -9,12 +9,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/coding/github")
 public class CodingProblemGithubController {
 
-    private final CodingProblemGithubImportService
-            codingProblemGithubImportService;
+    private final CodingProblemGithubImportService codingProblemGithubImportService;
 
     public CodingProblemGithubController(
-            CodingProblemGithubImportService
-                    codingProblemGithubImportService
+            CodingProblemGithubImportService codingProblemGithubImportService
     ) {
         this.codingProblemGithubImportService =
                 codingProblemGithubImportService;
@@ -27,12 +25,25 @@ public class CodingProblemGithubController {
     ) {
 
         CodingProblem problem =
-                codingProblemGithubImportService
-                        .importProblem(
-                                repository,
-                                problemPath
-                        );
+                codingProblemGithubImportService.importProblem(
+                        repository,
+                        problemPath
+                );
 
         return ResponseEntity.ok(problem);
+    }
+
+    @PostMapping("/import-all")
+    public ResponseEntity<CodingProblemGithubImportService.BulkImportResult>
+    importAllProblems(
+            @RequestParam String repository
+    ) {
+
+        CodingProblemGithubImportService.BulkImportResult result =
+                codingProblemGithubImportService.importRepository(
+                        repository
+                );
+
+        return ResponseEntity.ok(result);
     }
 }

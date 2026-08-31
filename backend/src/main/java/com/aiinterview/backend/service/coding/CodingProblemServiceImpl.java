@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class CodingProblemServiceImpl
         implements CodingProblemService {
 
@@ -22,7 +22,6 @@ public class CodingProblemServiceImpl
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<CodingProblem> getProblems() {
 
         return codingProblemRepository
@@ -30,32 +29,45 @@ public class CodingProblemServiceImpl
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<CodingProblem> getProblemsByDifficulty(
             String difficulty
     ) {
 
-        if (difficulty == null ||
-                difficulty.isBlank()) {
+        if (
+                difficulty == null ||
+                difficulty.isBlank()
+        ) {
+            return List.of();
+        }
 
+        String normalizedDifficulty =
+                difficulty
+                        .trim()
+                        .toUpperCase();
+
+        if (
+                !normalizedDifficulty.equals("EASY") &&
+                !normalizedDifficulty.equals("MEDIUM") &&
+                !normalizedDifficulty.equals("HARD")
+        ) {
             return List.of();
         }
 
         return codingProblemRepository
                 .findByDifficultyAndActiveTrue(
-                        difficulty.trim().toUpperCase()
+                        normalizedDifficulty
                 );
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<CodingProblem> getProblemsForExperience(
             Integer experienceLevel
     ) {
 
-        if (experienceLevel == null ||
-                experienceLevel < 1) {
-
+        if (
+                experienceLevel == null ||
+                experienceLevel < 1
+        ) {
             return List.of();
         }
 
@@ -66,7 +78,6 @@ public class CodingProblemServiceImpl
     }
 
     @Override
-    @Transactional(readOnly = true)
     public CodingProblem getProblemById(
             Long id
     ) {
