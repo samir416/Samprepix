@@ -3,12 +3,14 @@ package com.aiinterview.backend.controller;
 import com.aiinterview.backend.dto.coding.CodeExecutionRequest;
 import com.aiinterview.backend.dto.coding.CodeExecutionResponse;
 import com.aiinterview.backend.entity.CodingProblem;
+import com.aiinterview.backend.entity.CodingProblemCompletion;
 import com.aiinterview.backend.entity.GitHubConnection;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.repository.CodingProblemRepository;
 import com.aiinterview.backend.repository.GitHubConnectionRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.service.coding.CodeExecutionService;
+import com.aiinterview.backend.service.coding.CodingProblemCompletionService;
 import com.aiinterview.backend.service.coding.CodingProgressService;
 import com.aiinterview.backend.service.coding.FunctionExecutionWrapperService;
 import com.aiinterview.backend.service.coding.GitHubRepositoryService;
@@ -25,6 +27,7 @@ public class CodeExecutionController {
     private final UserRepository userRepository;
     private final GitHubConnectionRepository gitHubConnectionRepository;
     private final CodingProgressService codingProgressService;
+    private final CodingProblemCompletionService codingProblemCompletionService;
     private final FunctionExecutionWrapperService wrapperService;
     private final GitHubRepositoryService gitHubRepositoryService;
 
@@ -34,30 +37,19 @@ public class CodeExecutionController {
             UserRepository userRepository,
             GitHubConnectionRepository gitHubConnectionRepository,
             CodingProgressService codingProgressService,
+            CodingProblemCompletionService codingProblemCompletionService,
             FunctionExecutionWrapperService wrapperService,
             GitHubRepositoryService gitHubRepositoryService
     ) {
-
-        this.codeExecutionService =
-                codeExecutionService;
-
-        this.codingProblemRepository =
-                codingProblemRepository;
-
-        this.userRepository =
-                userRepository;
-
-        this.gitHubConnectionRepository =
-                gitHubConnectionRepository;
-
-        this.codingProgressService =
-                codingProgressService;
-
-        this.wrapperService =
-                wrapperService;
-
-        this.gitHubRepositoryService =
-                gitHubRepositoryService;
+        this.codeExecutionService = codeExecutionService;
+        this.codingProblemRepository = codingProblemRepository;
+        this.userRepository = userRepository;
+        this.gitHubConnectionRepository = gitHubConnectionRepository;
+        this.codingProgressService = codingProgressService;
+        this.codingProblemCompletionService =
+                codingProblemCompletionService;
+        this.wrapperService = wrapperService;
+        this.gitHubRepositoryService = gitHubRepositoryService;
     }
 
     @PostMapping("/execute")
@@ -65,14 +57,12 @@ public class CodeExecutionController {
             @RequestBody CodeExecutionRequest request
     ) {
 
-        CodeExecutionResponse response =
-                codeExecutionService.execute(
-                        request
-                );
+        validateRequest(request);
 
-        return ResponseEntity.ok(
-                response
-        );
+        CodeExecutionResponse response =
+                codeExecutionService.execute(request);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/submit")
@@ -84,32 +74,11 @@ public class CodeExecutionController {
         validateRequest(request);
 
         User user =
-                getAuthenticatedUser(
-                        authentication
-                );
-
-        CodeExecutionResponse response =
-                codeExecutionService.execute(
-                        request
-                );
-
-        if (!response.isPassed()) {
-
-            codingProgressService.updateSubmission(
-                    user,
-                    false
-            );
-
-            return ResponseEntity.ok(
-                    response
-            );
-        }
+                getAuthenticatedUser(authentication);
 
         CodingProblem problem =
                 codingProblemRepository
-                        .findById(
-                                request.getProblemId()
-                        )
+                        .findById(request.getProblemId())
                         .orElseThrow(
                                 () ->
                                         new IllegalStateException(
@@ -117,10 +86,29 @@ public class CodeExecutionController {
                                         )
                         );
 
+        CodeExecutionResponse response =
+                codeExecutionService.execute(request);
+
+        boolean successful =
+                response.isPassed();
+
         codingProgressService.updateSubmission(
                 user,
-                true
+                successful
         );
+
+        CodingProblemCompletion completion =
+                codingProblemCompletionService.recordSubmission(
+                        user,
+                        problem,
+                        request.getLanguage(),
+                        request.getCode(),
+                        successful
+                );
+
+        if (!successful) {
+            return ResponseEntity.ok(response);
+        }
 
         codingProgressService.saveCodeState(
                 user,
@@ -144,10 +132,7 @@ public class CodeExecutionController {
                         .orElse(null);
 
         if (!isGitHubConnectionUsable(connection)) {
-
-            return ResponseEntity.ok(
-                    response
-            );
+            return ResponseEntity.ok(response);
         }
 
         try {
@@ -186,9 +171,7 @@ public class CodeExecutionController {
             );
         }
 
-        return ResponseEntity.ok(
-                response
-        );
+        return ResponseEntity.ok(response);
     }
 
     private void validateRequest(
@@ -196,14 +179,12 @@ public class CodeExecutionController {
     ) {
 
         if (request == null) {
-
             throw new IllegalArgumentException(
                     "Execution request cannot be null."
             );
         }
 
         if (request.getProblemId() == null) {
-
             throw new IllegalArgumentException(
                     "Problem ID is required."
             );
@@ -213,7 +194,6 @@ public class CodeExecutionController {
                 request.getLanguage() == null ||
                 request.getLanguage().isBlank()
         ) {
-
             throw new IllegalArgumentException(
                     "Programming language is required."
             );
@@ -223,7 +203,6 @@ public class CodeExecutionController {
                 request.getCode() == null ||
                 request.getCode().isBlank()
         ) {
-
             throw new IllegalArgumentException(
                     "Code cannot be empty."
             );
@@ -300,7 +279,6 @@ public class CodeExecutionController {
                 authentication.getName() == null ||
                 authentication.getName().isBlank()
         ) {
-
             throw new IllegalStateException(
                     "Authenticated user not found."
             );
@@ -326,7 +304,6 @@ public class CodeExecutionController {
                 message == null ||
                 message.isBlank()
         ) {
-
             return "Unknown GitHub error.";
         }
 

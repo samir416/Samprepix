@@ -4,20 +4,30 @@ const API = axios.create({
     baseURL: "http://localhost:8080/api/coding"
 });
 
+const ROOT_API = axios.create({
+    baseURL: "http://localhost:8080/api"
+});
+
+const addAuthToken = (config) => {
+    const token =
+        localStorage.getItem("token");
+
+    if (token) {
+        config.headers.Authorization =
+            `Bearer ${token}`;
+    }
+
+    return config;
+};
+
 API.interceptors.request.use(
-    (config) => {
+    (config) => addAuthToken(config),
+    (error) =>
+        Promise.reject(error)
+);
 
-        const token =
-            localStorage.getItem("token");
-
-        if (token) {
-
-            config.headers.Authorization =
-                `Bearer ${token}`;
-        }
-
-        return config;
-    },
+ROOT_API.interceptors.request.use(
+    (config) => addAuthToken(config),
     (error) =>
         Promise.reject(error)
 );
@@ -131,13 +141,16 @@ export const getCodingHint = (
     language,
     code
 ) =>
-    API.post(
-        "/hint",
+    ROOT_API.post(
+        "/ai/coding-hint",
+        null,
         {
-            problemTitle,
-            problemDescription,
-            language,
-            code
+            params: {
+                problemTitle,
+                problemDescription,
+                language,
+                code
+            }
         }
     );
 

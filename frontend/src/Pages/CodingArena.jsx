@@ -22,13 +22,11 @@ import {
     saveCodingState,
     executeCodingCode,
     submitCodingCode,
-    getCodingHint
+    getCodingHint,
+    getCodingRuntimes
 } from "../services/codingService";
 
-import API from "../services/codingService";
-
 export default function CodingArena() {
-
     const [language, setLanguage] = useState("");
     const [searchLanguage, setSearchLanguage] = useState("");
     const [showLanguages, setShowLanguages] = useState(false);
@@ -38,7 +36,6 @@ export default function CodingArena() {
 
     const [problems, setProblems] = useState([]);
     const [progress, setProgress] = useState(null);
-
     const [selectedProblemIndex, setSelectedProblemIndex] = useState(null);
 
     const [codeMap, setCodeMap] = useState({});
@@ -53,7 +50,6 @@ export default function CodingArena() {
     const [showAiHint, setShowAiHint] = useState(false);
 
     const [showProblemMenu, setShowProblemMenu] = useState(false);
-
     const [problemSearch, setProblemSearch] = useState("");
     const [problemFilter, setProblemFilter] = useState("all");
 
@@ -70,24 +66,18 @@ export default function CodingArena() {
             ? problems[selectedProblemIndex] || null
             : null;
 
-    const hasSelectedProblem =
-        selectedProblem !== null;
+    const hasSelectedProblem = selectedProblem !== null;
 
     const normalizeLanguageValue = (value) => {
-
         if (!value) {
             return "";
         }
 
-        return String(value)
-            .trim()
-            .toLowerCase();
+        return String(value).trim().toLowerCase();
     };
 
     const getLanguageDefaults = (value) => {
-
-        const normalized =
-            normalizeLanguageValue(value);
+        const normalized = normalizeLanguageValue(value);
 
         const defaults = {
             java: {
@@ -192,25 +182,23 @@ export default function CodingArena() {
             }
         };
 
-        return defaults[normalized] || {
-            label:
-                String(value).charAt(0).toUpperCase() +
-                String(value).slice(1),
-            monacoLanguage:
-                normalized || "plaintext",
-            runtimeLanguage:
-                normalized
-        };
+        return (
+            defaults[normalized] || {
+                label:
+                    String(value).charAt(0).toUpperCase() +
+                    String(value).slice(1),
+                monacoLanguage: normalized || "plaintext",
+                runtimeLanguage: normalized
+            }
+        );
     };
 
     const parseLanguageConfigurations = (problem) => {
-
         if (!problem) {
             return {};
         }
 
-        const raw =
-            problem.languageConfigurations;
+        const raw = problem.languageConfigurations;
 
         if (
             raw &&
@@ -225,9 +213,7 @@ export default function CodingArena() {
         }
 
         try {
-
-            const parsed =
-                JSON.parse(raw);
+            const parsed = JSON.parse(raw);
 
             if (
                 parsed &&
@@ -236,9 +222,7 @@ export default function CodingArena() {
             ) {
                 return parsed;
             }
-
         } catch {
-
             return {};
         }
 
@@ -246,7 +230,6 @@ export default function CodingArena() {
     };
 
     const getConfiguredLanguages = (problem) => {
-
         if (!problem) {
             return [];
         }
@@ -262,81 +245,71 @@ export default function CodingArena() {
                         typeof configuration === "object" &&
                         !Array.isArray(configuration)
                 )
-                .map(
-                    ([value, configuration]) => {
+                .map(([value, configuration]) => {
+                    const defaults =
+                        getLanguageDefaults(value);
 
-                        const defaults =
-                            getLanguageDefaults(value);
-
-                        return {
-                            value,
-                            label:
-                                configuration.displayName ||
-                                configuration.name ||
-                                defaults.label,
-                            monacoLanguage:
-                                configuration.monacoLanguage ||
-                                defaults.monacoLanguage,
-                            runtimeLanguage:
-                                configuration.runtimeLanguage ||
-                                defaults.runtimeLanguage,
-                            runtimeVersion:
-                                configuration.runtimeVersion || "",
-                            fileName:
-                                configuration.fileName || "",
-                            starterCode:
-                                configuration.starterCode || "",
-                            executionTemplate:
-                                configuration.executionTemplate || ""
-                        };
-                    }
-                );
+                    return {
+                        value,
+                        label:
+                            configuration.displayName ||
+                            configuration.name ||
+                            defaults.label,
+                        monacoLanguage:
+                            configuration.monacoLanguage ||
+                            defaults.monacoLanguage,
+                        runtimeLanguage:
+                            configuration.runtimeLanguage ||
+                            defaults.runtimeLanguage,
+                        runtimeVersion:
+                            configuration.runtimeVersion || "",
+                        fileName:
+                            configuration.fileName || "",
+                        starterCode:
+                            configuration.starterCode || "",
+                        executionTemplate:
+                            configuration.executionTemplate || ""
+                    };
+                });
 
         if (configurationLanguages.length > 0) {
             return configurationLanguages;
         }
 
-        const starterCodes =
-            problem.starterCodes;
+        const starterCodes = problem.starterCodes;
 
         if (
             starterCodes &&
             typeof starterCodes === "object" &&
             !Array.isArray(starterCodes)
         ) {
+            return Object.keys(starterCodes).map((value) => {
+                const defaults =
+                    getLanguageDefaults(value);
 
-            return Object.keys(starterCodes).map(
-                (value) => {
-
-                    const defaults =
-                        getLanguageDefaults(value);
-
-                    return {
-                        value,
-                        label: defaults.label,
-                        monacoLanguage:
-                            defaults.monacoLanguage,
-                        runtimeLanguage:
-                            defaults.runtimeLanguage,
-                        runtimeVersion: "",
-                        fileName: "",
-                        starterCode:
-                            typeof starterCodes[value] === "string"
-                                ? starterCodes[value]
-                                : "",
-                        executionTemplate: ""
-                    };
-                }
-            );
+                return {
+                    value,
+                    label: defaults.label,
+                    monacoLanguage:
+                        defaults.monacoLanguage,
+                    runtimeLanguage:
+                        defaults.runtimeLanguage,
+                    runtimeVersion: "",
+                    fileName: "",
+                    starterCode:
+                        typeof starterCodes[value] === "string"
+                            ? starterCodes[value]
+                            : "",
+                    executionTemplate: ""
+                };
+            });
         }
 
         if (
             typeof problem.starterCode === "string" &&
             problem.starterCode.trim()
         ) {
-
             try {
-
                 const parsed =
                     JSON.parse(problem.starterCode);
 
@@ -345,10 +318,8 @@ export default function CodingArena() {
                     typeof parsed === "object" &&
                     !Array.isArray(parsed)
                 ) {
-
                     return Object.keys(parsed).map(
                         (value) => {
-
                             const defaults =
                                 getLanguageDefaults(value);
 
@@ -362,7 +333,8 @@ export default function CodingArena() {
                                 runtimeVersion: "",
                                 fileName: "",
                                 starterCode:
-                                    typeof parsed[value] === "string"
+                                    typeof parsed[value] ===
+                                    "string"
                                         ? parsed[value]
                                         : "",
                                 executionTemplate: ""
@@ -370,9 +342,7 @@ export default function CodingArena() {
                         }
                     );
                 }
-
             } catch {
-
                 return [];
             }
         }
@@ -380,122 +350,104 @@ export default function CodingArena() {
         return [];
     };
 
-    const availableLanguages =
-        useMemo(() => {
+    const availableLanguages = useMemo(() => {
+        const configured =
+            getConfiguredLanguages(selectedProblem);
 
-            const configured =
-                getConfiguredLanguages(
-                    selectedProblem
-                );
+        if (configured.length === 0) {
+            return [];
+        }
 
-            if (configured.length === 0) {
-                return [];
-            }
+        if (runtimes.length === 0) {
+            return configured;
+        }
 
-            if (runtimes.length === 0) {
-                return configured;
-            }
+        return configured
+            .map((configuration) => {
+                const normalizedConfigured =
+                    normalizeLanguageValue(
+                        configuration.runtimeLanguage ||
+                        configuration.value
+                    );
 
-            return configured
-                .map((configuration) => {
+                const runtime =
+                    runtimes.find((item) => {
+                        const runtimeLanguage =
+                            normalizeLanguageValue(
+                                item.language
+                            );
 
-                    const normalizedConfigured =
-                        normalizeLanguageValue(
-                            configuration.runtimeLanguage ||
-                            configuration.value
-                        );
+                        const aliases =
+                            Array.isArray(item.aliases)
+                                ? item.aliases
+                                : [];
 
-                    const runtime =
-                        runtimes.find(
-                            (item) => {
-
-                                const runtimeLanguage =
+                        return (
+                            runtimeLanguage ===
+                                normalizedConfigured ||
+                            aliases.some(
+                                (alias) =>
                                     normalizeLanguageValue(
-                                        item.language
-                                    );
-
-                                const aliases =
-                                    Array.isArray(
-                                        item.aliases
-                                    )
-                                        ? item.aliases
-                                        : [];
-
-                                return (
-                                    runtimeLanguage ===
-                                    normalizedConfigured ||
-                                    aliases.some(
-                                        (alias) =>
-                                            normalizeLanguageValue(
-                                                alias
-                                            ) ===
-                                            normalizedConfigured
-                                    )
-                                );
-                            }
+                                        alias
+                                    ) ===
+                                    normalizedConfigured
+                            )
                         );
+                    });
 
-                    if (!runtime) {
-                        return null;
-                    }
+                if (!runtime) {
+                    return null;
+                }
 
-                    return {
-                        ...configuration,
-                        runtimeLanguage:
-                            runtime.language,
-                        runtimeVersion:
-                            runtime.version
-                    };
-                })
-                .filter(Boolean);
-
-        }, [
-            selectedProblem,
-            runtimes
-        ]);
+                return {
+                    ...configuration,
+                    runtimeLanguage:
+                        runtime.language,
+                    runtimeVersion:
+                        runtime.version
+                };
+            })
+            .filter(Boolean);
+    }, [selectedProblem, runtimes]);
 
     const filteredLanguages =
-        availableLanguages.filter(
-            (item) =>
+        availableLanguages.filter((item) => {
+            const query =
+                searchLanguage.toLowerCase();
+
+            return (
                 item.label
                     .toLowerCase()
-                    .includes(
-                        searchLanguage.toLowerCase()
-                    ) ||
+                    .includes(query) ||
                 item.value
                     .toLowerCase()
-                    .includes(
-                        searchLanguage.toLowerCase()
-                    ) ||
+                    .includes(query) ||
                 item.runtimeLanguage
                     .toLowerCase()
-                    .includes(
-                        searchLanguage.toLowerCase()
-                    )
-        );
+                    .includes(query)
+            );
+        });
 
     const getProblemLanguages = (problem) => {
-
         return getConfiguredLanguages(problem);
     };
 
     const filteredProblems = useMemo(() => {
-
         const query =
             problemSearch.trim().toLowerCase();
 
         return problems.filter((problem) => {
-
             const difficulty =
                 String(
                     problem?.difficulty || ""
-                ).trim().toLowerCase();
+                )
+                    .trim()
+                    .toLowerCase();
 
-            const matchesFilter =
-                problemFilter === "all" ||
-                difficulty === problemFilter;
-
-            if (!matchesFilter) {
+            if (
+                problemFilter !== "all" &&
+                difficulty !== problemFilter
+            ) {
                 return false;
             }
 
@@ -516,8 +468,8 @@ export default function CodingArena() {
             const tags =
                 Array.isArray(problem?.tags)
                     ? problem.tags
-                        .join(" ")
-                        .toLowerCase()
+                          .join(" ")
+                          .toLowerCase()
                     : "";
 
             return (
@@ -526,7 +478,6 @@ export default function CodingArena() {
                 tags.includes(query)
             );
         });
-
     }, [
         problems,
         problemSearch,
@@ -537,11 +488,7 @@ export default function CodingArena() {
         problem,
         currentLanguage
     ) => {
-
-        if (
-            !problem ||
-            !currentLanguage
-        ) {
+        if (!problem || !currentLanguage) {
             return "";
         }
 
@@ -554,30 +501,31 @@ export default function CodingArena() {
         if (
             configuration &&
             typeof configuration === "object" &&
-            typeof configuration.starterCode === "string"
+            typeof configuration.starterCode ===
+                "string"
         ) {
-
             return configuration.starterCode;
         }
 
         const matchingConfiguration =
-            Object.entries(configurations)
-                .find(
-                    ([key]) =>
-                        normalizeLanguageValue(key) ===
-                        normalizeLanguageValue(
-                            currentLanguage
-                        )
-                );
+            Object.entries(configurations).find(
+                ([key]) =>
+                    normalizeLanguageValue(key) ===
+                    normalizeLanguageValue(
+                        currentLanguage
+                    )
+            );
 
         if (
             matchingConfiguration &&
             matchingConfiguration[1] &&
-            typeof matchingConfiguration[1] === "object" &&
-            typeof matchingConfiguration[1].starterCode === "string"
+            typeof matchingConfiguration[1] ===
+                "object" &&
+            typeof matchingConfiguration[1]
+                .starterCode === "string"
         ) {
-
-            return matchingConfiguration[1].starterCode;
+            return matchingConfiguration[1]
+                .starterCode;
         }
 
         const starterCodes =
@@ -588,7 +536,6 @@ export default function CodingArena() {
             typeof starterCodes === "object" &&
             !Array.isArray(starterCodes)
         ) {
-
             const exact =
                 starterCodes[currentLanguage];
 
@@ -599,7 +546,9 @@ export default function CodingArena() {
             const matchingKey =
                 Object.keys(starterCodes).find(
                     (key) =>
-                        normalizeLanguageValue(key) ===
+                        normalizeLanguageValue(
+                            key
+                        ) ===
                         normalizeLanguageValue(
                             currentLanguage
                         )
@@ -613,40 +562,44 @@ export default function CodingArena() {
         if (
             typeof problem.starterCode === "string"
         ) {
-
             try {
-
                 const parsed =
-                    JSON.parse(problem.starterCode);
+                    JSON.parse(
+                        problem.starterCode
+                    );
 
                 if (
                     parsed &&
                     typeof parsed === "object"
                 ) {
-
                     if (
-                        typeof parsed[currentLanguage] ===
-                        "string"
+                        typeof parsed[
+                            currentLanguage
+                        ] === "string"
                     ) {
-                        return parsed[currentLanguage];
+                        return parsed[
+                            currentLanguage
+                        ];
                     }
 
                     const matchingKey =
                         Object.keys(parsed).find(
                             (key) =>
-                                normalizeLanguageValue(key) ===
+                                normalizeLanguageValue(
+                                    key
+                                ) ===
                                 normalizeLanguageValue(
                                     currentLanguage
                                 )
                         );
 
                     if (matchingKey) {
-                        return parsed[matchingKey] || "";
+                        return (
+                            parsed[matchingKey] || ""
+                        );
                     }
                 }
-
             } catch {
-
                 return problem.starterCode;
             }
         }
@@ -654,8 +607,12 @@ export default function CodingArena() {
         return (
             getProblemLanguages(problem).find(
                 (item) =>
-                    normalizeLanguageValue(item.value) ===
-                    normalizeLanguageValue(currentLanguage)
+                    normalizeLanguageValue(
+                        item.value
+                    ) ===
+                    normalizeLanguageValue(
+                        currentLanguage
+                    )
             )?.starterCode || ""
         );
     };
@@ -664,16 +621,11 @@ export default function CodingArena() {
         problemId,
         currentLanguage
     ) => {
-
         return `${problemId}_${currentLanguage}`;
     };
 
     const getCurrentCode = () => {
-
-        if (
-            !selectedProblem ||
-            !language
-        ) {
+        if (!selectedProblem || !language) {
             return "";
         }
 
@@ -699,11 +651,15 @@ export default function CodingArena() {
     };
 
     const getMonacoLanguage = () => {
-
         const selected =
             availableLanguages.find(
                 (item) =>
-                    item.value === language
+                    normalizeLanguageValue(
+                        item.value
+                    ) ===
+                    normalizeLanguageValue(
+                        language
+                    )
             );
 
         return (
@@ -715,19 +671,20 @@ export default function CodingArena() {
     };
 
     const getFilteredSelectedIndex = () => {
-
         if (!selectedProblem) {
             return -1;
         }
 
         return filteredProblems.findIndex(
             (problem) =>
-                problem.id === selectedProblem.id
+                problem.id ===
+                selectedProblem.id
         );
     };
 
-    const selectProblemById = async (problemId) => {
-
+    const selectProblemById = async (
+        problemId
+    ) => {
         const index =
             problems.findIndex(
                 (problem) =>
@@ -742,40 +699,31 @@ export default function CodingArena() {
     };
 
     const loadPistonRuntimes = async () => {
-
         try {
-
             setRuntimesLoading(true);
 
             const response =
-                await API.get("/runtimes");
+                await getCodingRuntimes();
 
-            const data =
+            setRuntimes(
                 Array.isArray(response.data)
                     ? response.data
-                    : [];
-
-            setRuntimes(data);
-
+                    : []
+            );
         } catch (requestError) {
-
             console.error(
                 "Failed to load Piston runtimes",
                 requestError
             );
 
             setRuntimes([]);
-
         } finally {
-
             setRuntimesLoading(false);
         }
     };
 
     const loadCodingArena = async () => {
-
         try {
-
             setLoading(true);
             setError("");
 
@@ -788,7 +736,9 @@ export default function CodingArena() {
             ]);
 
             const backendProblems =
-                Array.isArray(problemsResponse.data)
+                Array.isArray(
+                    problemsResponse.data
+                )
                     ? problemsResponse.data
                     : [];
 
@@ -798,18 +748,20 @@ export default function CodingArena() {
             setProblems(backendProblems);
             setProgress(backendProgress);
 
-            if (backendProblems.length === 0) {
-
+            if (
+                backendProblems.length === 0
+            ) {
                 setSelectedProblemIndex(null);
-
                 return;
             }
 
             const currentProblemId =
-                backendProgress?.currentProblem?.id;
+                backendProgress
+                    ?.currentProblem?.id;
 
             const lastSelectedProblemId =
-                backendProgress?.lastSelectedProblem?.id;
+                backendProgress
+                    ?.lastSelectedProblem?.id;
 
             const restoredProblemId =
                 currentProblemId ||
@@ -818,10 +770,10 @@ export default function CodingArena() {
             let restoredIndex =
                 restoredProblemId
                     ? backendProblems.findIndex(
-                        (problem) =>
-                            problem.id ===
-                            restoredProblemId
-                    )
+                          (problem) =>
+                              problem.id ===
+                              restoredProblemId
+                      )
                     : -1;
 
             if (restoredIndex === -1) {
@@ -833,7 +785,9 @@ export default function CodingArena() {
             );
 
             const restoredProblem =
-                backendProblems[restoredIndex];
+                backendProblems[
+                    restoredIndex
+                ];
 
             const restoredLanguages =
                 getProblemLanguages(
@@ -858,28 +812,33 @@ export default function CodingArena() {
             const initialLanguage =
                 restoredLanguageExists
                     ? progressLanguage
-                    : restoredLanguages[0]?.value || "";
+                    : restoredLanguages[0]
+                          ?.value || "";
 
             const initialLanguageData =
                 restoredLanguages.find(
                     (item) =>
-                        item.value ===
-                        initialLanguage
+                        normalizeLanguageValue(
+                            item.value
+                        ) ===
+                        normalizeLanguageValue(
+                            initialLanguage
+                        )
                 );
 
             setLanguage(initialLanguage);
 
             setSearchLanguage(
                 initialLanguageData?.label ||
-                initialLanguage
+                    initialLanguage
             );
 
             if (
                 backendProgress?.lastCode &&
                 backendProgress?.lastLanguage &&
-                backendProgress?.lastSelectedProblem?.id
+                backendProgress
+                    ?.lastSelectedProblem?.id
             ) {
-
                 const key =
                     getCodeKey(
                         backendProgress
@@ -887,71 +846,61 @@ export default function CodingArena() {
                         backendProgress.lastLanguage
                     );
 
-                setCodeMap(
-                    (previous) => ({
-                        ...previous,
-                        [key]:
-                            backendProgress.lastCode
-                    })
-                );
+                setCodeMap((previous) => ({
+                    ...previous,
+                    [key]:
+                        backendProgress.lastCode
+                }));
             }
-
         } catch (requestError) {
-
             console.error(
                 "Failed to load Coding Arena",
                 requestError
             );
 
             setError(
-                requestError?.response?.data?.message ||
-                requestError?.response?.data?.error ||
-                "Unable to load Coding Arena."
+                requestError?.response?.data
+                    ?.message ||
+                    requestError?.response?.data
+                        ?.error ||
+                    "Unable to load Coding Arena."
             );
 
             setProblems([]);
             setSelectedProblemIndex(null);
-
         } finally {
-
             setLoading(false);
         }
     };
 
     useEffect(() => {
-
         loadCodingArena();
         loadPistonRuntimes();
 
         return () => {
-
             if (saveTimerRef.current) {
-                clearTimeout(saveTimerRef.current);
+                clearTimeout(
+                    saveTimerRef.current
+                );
             }
-
         };
-
     }, []);
 
     useEffect(() => {
-
         if (!selectedProblem) {
             return;
         }
 
-        const languages =
-            availableLanguages;
-
-        if (languages.length === 0) {
-
+        if (
+            availableLanguages.length === 0
+        ) {
             setLanguage("");
             setSearchLanguage("");
-
             return;
         }
 
         const currentExists =
-            languages.some(
+            availableLanguages.some(
                 (item) =>
                     normalizeLanguageValue(
                         item.value
@@ -962,13 +911,12 @@ export default function CodingArena() {
             );
 
         if (!currentExists) {
-
             const progressLanguage =
                 progress?.lastLanguage;
 
             const progressExists =
                 progressLanguage &&
-                languages.some(
+                availableLanguages.some(
                     (item) =>
                         normalizeLanguageValue(
                             item.value
@@ -981,23 +929,27 @@ export default function CodingArena() {
             const nextLanguage =
                 progressExists
                     ? progressLanguage
-                    : languages[0].value;
+                    : availableLanguages[0]
+                          .value;
 
             const nextLanguageData =
-                languages.find(
+                availableLanguages.find(
                     (item) =>
-                        item.value ===
-                        nextLanguage
+                        normalizeLanguageValue(
+                            item.value
+                        ) ===
+                        normalizeLanguageValue(
+                            nextLanguage
+                        )
                 );
 
             setLanguage(nextLanguage);
 
             setSearchLanguage(
                 nextLanguageData?.label ||
-                nextLanguage
+                    nextLanguage
             );
         }
-
     }, [
         selectedProblem,
         availableLanguages,
@@ -1006,9 +958,9 @@ export default function CodingArena() {
     ]);
 
     useEffect(() => {
-
-        const handleOutsideClick = (event) => {
-
+        const handleOutsideClick = (
+            event
+        ) => {
             if (
                 dropdownRef.current &&
                 !dropdownRef.current.contains(
@@ -1034,20 +986,17 @@ export default function CodingArena() {
         );
 
         return () => {
-
             document.removeEventListener(
                 "mousedown",
                 handleOutsideClick
             );
-
         };
-
     }, []);
 
-    const handleProblemSelect = async (index) => {
-
-        const problem =
-            problems[index];
+    const handleProblemSelect = async (
+        index
+    ) => {
+        const problem = problems[index];
 
         if (!problem) {
             return;
@@ -1078,20 +1027,25 @@ export default function CodingArena() {
         const nextLanguage =
             currentLanguageExists
                 ? language
-                : problemLanguages[0]?.value || "";
+                : problemLanguages[0]
+                      ?.value || "";
 
         const nextLanguageData =
             problemLanguages.find(
                 (item) =>
-                    item.value ===
-                    nextLanguage
+                    normalizeLanguageValue(
+                        item.value
+                    ) ===
+                    normalizeLanguageValue(
+                        nextLanguage
+                    )
             );
 
         setLanguage(nextLanguage);
 
         setSearchLanguage(
             nextLanguageData?.label ||
-            nextLanguage
+                nextLanguage
         );
 
         const key =
@@ -1107,30 +1061,24 @@ export default function CodingArena() {
                 key
             )
         ) {
-
-            setCodeMap(
-                (previous) => ({
-                    ...previous,
-                    [key]:
-                        getStarterCode(
-                            problem,
-                            nextLanguage
-                        )
-                })
-            );
+            setCodeMap((previous) => ({
+                ...previous,
+                [key]:
+                    getStarterCode(
+                        problem,
+                        nextLanguage
+                    )
+            }));
         }
 
         try {
-
             const response =
                 await selectCodingProblem(
                     problem.id
                 );
 
             setProgress(response.data);
-
         } catch (requestError) {
-
             console.error(
                 "Failed to save selected problem",
                 requestError
@@ -1139,13 +1087,10 @@ export default function CodingArena() {
     };
 
     const handlePreviousProblem = async () => {
-
         const currentIndex =
             getFilteredSelectedIndex();
 
-        if (
-            currentIndex <= 0
-        ) {
+        if (currentIndex <= 0) {
             return;
         }
 
@@ -1157,14 +1102,13 @@ export default function CodingArena() {
     };
 
     const handleNextProblem = async () => {
-
         const currentIndex =
             getFilteredSelectedIndex();
 
         if (
             currentIndex === -1 ||
             currentIndex >=
-            filteredProblems.length - 1
+                filteredProblems.length - 1
         ) {
             return;
         }
@@ -1177,16 +1121,11 @@ export default function CodingArena() {
     };
 
     const handleCodeChange = (value) => {
-
-        if (
-            !selectedProblem ||
-            !language
-        ) {
+        if (!selectedProblem || !language) {
             return;
         }
 
-        const nextCode =
-            value || "";
+        const nextCode = value || "";
 
         const key =
             getCodeKey(
@@ -1194,57 +1133,47 @@ export default function CodingArena() {
                 language
             );
 
-        setCodeMap(
-            (previous) => ({
-                ...previous,
-                [key]: nextCode
-            })
-        );
+        setCodeMap((previous) => ({
+            ...previous,
+            [key]: nextCode
+        }));
 
         if (saveTimerRef.current) {
-            clearTimeout(saveTimerRef.current);
+            clearTimeout(
+                saveTimerRef.current
+            );
         }
 
         saveTimerRef.current =
-            setTimeout(
-                async () => {
-
-                    try {
-
-                        const response =
-                            await saveCodingState(
-                                selectedProblem.id,
-                                language,
-                                nextCode
-                            );
-
-                        setProgress(
-                            response.data
+            setTimeout(async () => {
+                try {
+                    const response =
+                        await saveCodingState(
+                            selectedProblem.id,
+                            language,
+                            nextCode
                         );
 
-                    } catch (requestError) {
-
-                        console.error(
-                            "Failed to save code state",
-                            requestError
-                        );
-                    }
-
-                },
-                800
-            );
+                    setProgress(
+                        response.data
+                    );
+                } catch (requestError) {
+                    console.error(
+                        "Failed to save code state",
+                        requestError
+                    );
+                }
+            }, 800);
     };
 
     const handleLanguageChange = (
         selectedLanguage
     ) => {
-
         if (!selectedLanguage) {
             return;
         }
 
         if (selectedProblem) {
-
             const key =
                 getCodeKey(
                     selectedProblem.id,
@@ -1257,17 +1186,14 @@ export default function CodingArena() {
                     key
                 )
             ) {
-
-                setCodeMap(
-                    (previous) => ({
-                        ...previous,
-                        [key]:
-                            getStarterCode(
-                                selectedProblem,
-                                selectedLanguage
-                            )
-                    })
-                );
+                setCodeMap((previous) => ({
+                    ...previous,
+                    [key]:
+                        getStarterCode(
+                            selectedProblem,
+                            selectedLanguage
+                        )
+                }));
             }
         }
 
@@ -1276,23 +1202,27 @@ export default function CodingArena() {
         const selected =
             availableLanguages.find(
                 (item) =>
-                    item.value ===
-                    selectedLanguage
+                    normalizeLanguageValue(
+                        item.value
+                    ) ===
+                    normalizeLanguageValue(
+                        selectedLanguage
+                    )
             );
 
         setSearchLanguage(
             selected?.label ||
-            selectedLanguage
+                selectedLanguage
         );
 
         setShowLanguages(false);
         setExecutionResult(null);
         setAiHint("");
         setAiHintError("");
+        setShowAiHint(false);
     };
 
     const handleAiHint = async () => {
-
         if (
             !selectedProblem ||
             !language ||
@@ -1301,15 +1231,14 @@ export default function CodingArena() {
             return;
         }
 
-        const code =
-            getCurrentCode();
+        const code = getCurrentCode();
 
         setIsGeneratingHint(true);
         setAiHintError("");
+        setAiHint("");
         setShowAiHint(true);
 
         try {
-
             const response =
                 await getCodingHint(
                     selectedProblem.title,
@@ -1319,38 +1248,37 @@ export default function CodingArena() {
                 );
 
             const hint =
-                typeof response.data === "string"
+                typeof response.data ===
+                "string"
                     ? response.data
                     : response.data?.hint ||
                       response.data?.message ||
                       "";
 
-            if (!hint.trim()) {
+            if (!String(hint).trim()) {
                 throw new Error(
                     "AI returned an empty hint."
                 );
             }
 
-            setAiHint(hint.trim());
-
+            setAiHint(
+                String(hint).trim()
+            );
         } catch (requestError) {
-
             console.error(
                 "AI hint generation failed",
                 requestError
             );
 
-            setAiHint("");
-
             setAiHintError(
-                requestError?.response?.data?.message ||
-                requestError?.response?.data?.error ||
-                requestError?.message ||
-                "Unable to generate AI hint."
+                requestError?.response?.data
+                    ?.message ||
+                    requestError?.response?.data
+                        ?.error ||
+                    requestError?.message ||
+                    "Unable to generate AI hint."
             );
-
         } finally {
-
             setIsGeneratingHint(false);
         }
     };
@@ -1358,29 +1286,27 @@ export default function CodingArena() {
     const buildExecutionError = (
         requestError,
         fallbackMessage
-    ) => {
-
-        return {
-            status: "ERROR",
-            passed: false,
-            totalTests: 0,
-            passedTests: 0,
-            failedTests: 0,
-            runtime: 0,
-            memory: 0,
-            output: "",
-            expectedOutput: "",
-            error:
-                requestError?.response?.data?.message ||
-                requestError?.response?.data?.error ||
-                fallbackMessage,
-            message: fallbackMessage,
-            testCases: []
-        };
-    };
+    ) => ({
+        status: "ERROR",
+        passed: false,
+        totalTests: 0,
+        passedTests: 0,
+        failedTests: 0,
+        runtime: 0,
+        memory: 0,
+        output: "",
+        expectedOutput: "",
+        error:
+            requestError?.response?.data
+                ?.message ||
+            requestError?.response?.data
+                ?.error ||
+            fallbackMessage,
+        message: fallbackMessage,
+        testCases: []
+    });
 
     const handleRun = async () => {
-
         if (
             !hasSelectedProblem ||
             !language ||
@@ -1390,11 +1316,9 @@ export default function CodingArena() {
             return;
         }
 
-        const code =
-            getCurrentCode();
+        const code = getCurrentCode();
 
         if (!code.trim()) {
-
             setExecutionResult({
                 status: "ERROR",
                 passed: false,
@@ -1415,7 +1339,6 @@ export default function CodingArena() {
         }
 
         try {
-
             setIsExecuting(true);
             setExecutionResult(null);
 
@@ -1429,9 +1352,7 @@ export default function CodingArena() {
             setExecutionResult(
                 response.data
             );
-
         } catch (requestError) {
-
             console.error(
                 "Code execution failed",
                 requestError
@@ -1443,15 +1364,12 @@ export default function CodingArena() {
                     "Code execution failed."
                 )
             );
-
         } finally {
-
             setIsExecuting(false);
         }
     };
 
     const handleSubmit = async () => {
-
         if (
             !hasSelectedProblem ||
             !language ||
@@ -1461,11 +1379,9 @@ export default function CodingArena() {
             return;
         }
 
-        const code =
-            getCurrentCode();
+        const code = getCurrentCode();
 
         if (!code.trim()) {
-
             setExecutionResult({
                 status: "ERROR",
                 passed: false,
@@ -1486,7 +1402,6 @@ export default function CodingArena() {
         }
 
         try {
-
             setIsSubmitting(true);
             setExecutionResult(null);
 
@@ -1503,27 +1418,21 @@ export default function CodingArena() {
             setExecutionResult(result);
 
             if (result?.passed === true) {
-
                 try {
-
                     const progressResponse =
                         await getCodingProgress();
 
                     setProgress(
                         progressResponse.data
                     );
-
                 } catch (progressError) {
-
                     console.error(
                         "Failed to refresh coding progress",
                         progressError
                     );
                 }
             }
-
         } catch (requestError) {
-
             console.error(
                 "Failed to submit coding problem",
                 requestError
@@ -1535,21 +1444,20 @@ export default function CodingArena() {
                     "Unable to submit code."
                 )
             );
-
         } finally {
-
             setIsSubmitting(false);
         }
     };
 
     const renderExecutionResult = () => {
-
         if (!executionResult) {
             return null;
         }
 
         const testCases =
-            Array.isArray(executionResult.testCases)
+            Array.isArray(
+                executionResult.testCases
+            )
                 ? executionResult.testCases
                 : [];
 
@@ -1565,9 +1473,11 @@ export default function CodingArena() {
         const progressWidth =
             totalTests > 0
                 ? `${Math.min(
-                    100,
-                    (passedTests / totalTests) * 100
-                )}%`
+                      100,
+                      (passedTests /
+                          totalTests) *
+                          100
+                  )}%`
                 : "0%";
 
         return (
@@ -1581,43 +1491,35 @@ export default function CodingArena() {
                 <div className="run-top">
                     <div>
                         <strong>
-                            {
-                                executionResult.status ||
-                                "RESULT"
-                            }
+                            {executionResult.status ||
+                                "RESULT"}
                         </strong>
 
                         <span>
-                            {
-                                executionResult.message ||
-                                ""
-                            }
+                            {executionResult.message ||
+                                ""}
                         </span>
                     </div>
 
                     <div>
-                        {
-                            executionResult.runtime !==
-                            undefined
-                                ? `${executionResult.runtime} ms`
-                                : ""
-                        }
+                        {executionResult.runtime !==
+                        undefined
+                            ? `${executionResult.runtime} ms`
+                            : ""}
                     </div>
                 </div>
 
-                {
-                    totalTests > 0 && (
-                        <div className="run-progress">
-                            <div
-                                className="run-fill"
-                                style={{
-                                    width:
-                                        progressWidth
-                                }}
-                            />
-                        </div>
-                    )
-                }
+                {totalTests > 0 && (
+                    <div className="run-progress">
+                        <div
+                            className="run-fill"
+                            style={{
+                                width:
+                                    progressWidth
+                            }}
+                        />
+                    </div>
+                )}
 
                 <div className="execution-summary">
                     <span>
@@ -1625,9 +1527,9 @@ export default function CodingArena() {
                     </span>
 
                     <span>
-                        Failed: {
-                            executionResult.failedTests || 0
-                        }
+                        Failed:{" "}
+                        {executionResult.failedTests ||
+                            0}
                     </span>
 
                     <span>
@@ -1635,121 +1537,100 @@ export default function CodingArena() {
                     </span>
                 </div>
 
-                {
-                    executionResult.error && (
-                        <div className="execution-error">
-                            {
-                                executionResult.error
-                            }
-                        </div>
-                    )
-                }
+                {executionResult.error && (
+                    <div className="execution-error">
+                        {executionResult.error}
+                    </div>
+                )}
 
-                {
-                    testCases.length > 0 && (
-                        <div className="execution-testcases">
-                            {
-                                testCases.map(
-                                    (testCase) => (
-                                        <div
-                                            className={
-                                                testCase.passed
-                                                    ? "execution-testcase passed"
-                                                    : "execution-testcase failed"
-                                            }
-                                            key={
+                {testCases.length > 0 && (
+                    <div className="execution-testcases">
+                        {testCases.map(
+                            (testCase) => (
+                                <div
+                                    className={
+                                        testCase.passed
+                                            ? "execution-testcase passed"
+                                            : "execution-testcase failed"
+                                    }
+                                    key={
+                                        testCase.testCaseNumber
+                                    }
+                                >
+                                    <div className="execution-testcase-header">
+                                        <strong>
+                                            Test Case{" "}
+                                            {
                                                 testCase.testCaseNumber
                                             }
-                                        >
-                                            <div className="execution-testcase-header">
-                                                <strong>
-                                                    Test Case {
-                                                        testCase.testCaseNumber
-                                                    }
-                                                </strong>
+                                        </strong>
 
-                                                <span>
+                                        <span>
+                                            {testCase.passed
+                                                ? "Passed"
+                                                : "Failed"}
+                                        </span>
+                                    </div>
+
+                                    <div className="execution-testcase-content">
+                                        {testCase.input !==
+                                            null &&
+                                            testCase.input !==
+                                                undefined && (
+                                                <p>
+                                                    <strong>
+                                                        Input:
+                                                    </strong>{" "}
                                                     {
-                                                        testCase.passed
-                                                            ? "Passed"
-                                                            : "Failed"
+                                                        testCase.input
                                                     }
-                                                </span>
-                                            </div>
+                                                </p>
+                                            )}
 
-                                            <div className="execution-testcase-content">
-                                                {
-                                                    testCase.input !==
-                                                    null &&
-                                                    testCase.input !==
-                                                    undefined && (
-                                                        <p>
-                                                            <strong>
-                                                                Input:
-                                                            </strong>
-                                                            {" "}
-                                                            {
-                                                                testCase.input
-                                                            }
-                                                        </p>
-                                                    )
-                                                }
+                                        {testCase.expectedOutput !==
+                                            null &&
+                                            testCase.expectedOutput !==
+                                                undefined && (
+                                                <p>
+                                                    <strong>
+                                                        Expected:
+                                                    </strong>{" "}
+                                                    {
+                                                        testCase.expectedOutput
+                                                    }
+                                                </p>
+                                            )}
 
-                                                {
-                                                    testCase.expectedOutput !==
-                                                    null &&
-                                                    testCase.expectedOutput !==
-                                                    undefined && (
-                                                        <p>
-                                                            <strong>
-                                                                Expected:
-                                                            </strong>
-                                                            {" "}
-                                                            {
-                                                                testCase.expectedOutput
-                                                            }
-                                                        </p>
-                                                    )
-                                                }
+                                        {testCase.actualOutput !==
+                                            null &&
+                                            testCase.actualOutput !==
+                                                undefined && (
+                                                <p>
+                                                    <strong>
+                                                        Output:
+                                                    </strong>{" "}
+                                                    {
+                                                        testCase.actualOutput
+                                                    }
+                                                </p>
+                                            )}
 
+                                        {testCase.error && (
+                                            <p>
+                                                <strong>
+                                                    Error:
+                                                </strong>{" "}
                                                 {
-                                                    testCase.actualOutput !==
-                                                    null &&
-                                                    testCase.actualOutput !==
-                                                    undefined && (
-                                                        <p>
-                                                            <strong>
-                                                                Output:
-                                                            </strong>
-                                                            {" "}
-                                                            {
-                                                                testCase.actualOutput
-                                                            }
-                                                        </p>
-                                                    )
+                                                    testCase.error
                                                 }
-
-                                                {
-                                                    testCase.error && (
-                                                        <p>
-                                                            <strong>
-                                                                Error:
-                                                            </strong>
-                                                            {" "}
-                                                            {
-                                                                testCase.error
-                                                            }
-                                                        </p>
-                                                    )
-                                                }
-                                            </div>
-                                        </div>
-                                    )
-                                )
-                            }
-                        </div>
-                    )
-                }
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        )}
+                    </div>
+                )}
             </div>
         );
     };
@@ -1759,304 +1640,276 @@ export default function CodingArena() {
 
     return (
         <section className="coding-page">
-
             <div className="coding-topbar">
-
                 <div
                     className="problem-head"
                     ref={problemMenuRef}
                 >
-
                     <span
                         className="coding-problem-trigger"
                         onClick={() =>
                             setShowProblemMenu(
-                                (previous) => !previous
+                                (previous) =>
+                                    !previous
                             )
                         }
                     >
                         PROBLEM
-                        {
-                            selectedProblem
-                                ? ` · ${selectedProblem.difficulty}`
-                                : ""
-                        }
+                        {selectedProblem
+                            ? ` · ${selectedProblem.difficulty}`
+                            : ""}
                     </span>
 
                     <h1
                         className="coding-problem-trigger"
                         onClick={() =>
                             setShowProblemMenu(
-                                (previous) => !previous
+                                (previous) =>
+                                    !previous
                             )
                         }
                     >
-                        {
-                            selectedProblem
-                                ? `${selectedProblem.id}. ${selectedProblem.title}`
-                                : "Your Next Challenge Awaits"
-                        }
+                        {selectedProblem
+                            ? `${selectedProblem.id}. ${selectedProblem.title}`
+                            : "Your Next Challenge Awaits"}
                     </h1>
 
-                    {
-                        showProblemMenu && (
-                            <div className="coding-problem-menu">
+                    {showProblemMenu && (
+                        <div className="coding-problem-menu">
+                            <div className="coding-problem-menu-header">
+                                <div>
+                                    <span>
+                                        CODING ARENA
+                                    </span>
 
-                                <div className="coding-problem-menu-header">
+                                    <h3>
+                                        Choose a Problem
+                                    </h3>
+                                </div>
 
-                                    <div>
-                                        <span>
-                                            CODING ARENA
-                                        </span>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowProblemMenu(
+                                            false
+                                        )
+                                    }
+                                >
+                                    <FiX />
+                                </button>
+                            </div>
 
-                                        <h3>
-                                            Choose a Problem
-                                        </h3>
-                                    </div>
+                            <div className="coding-problem-controls">
+                                <div className="coding-problem-search">
+                                    <FiSearch />
 
+                                    <input
+                                        type="text"
+                                        value={
+                                            problemSearch
+                                        }
+                                        placeholder="Search problems..."
+                                        onChange={(
+                                            event
+                                        ) =>
+                                            setProblemSearch(
+                                                event
+                                                    .target
+                                                    .value
+                                            )
+                                        }
+                                    />
+
+                                    {problemSearch && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setProblemSearch(
+                                                    ""
+                                                )
+                                            }
+                                        >
+                                            <FiX />
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="coding-problem-filters">
                                     <button
                                         type="button"
+                                        className={
+                                            problemFilter ===
+                                            "all"
+                                                ? "problem-filter active"
+                                                : "problem-filter"
+                                        }
                                         onClick={() =>
-                                            setShowProblemMenu(
-                                                false
+                                            setProblemFilter(
+                                                "all"
                                             )
                                         }
                                     >
-                                        <FiX />
+                                        <FiList />
+                                        All
                                     </button>
 
+                                    <button
+                                        type="button"
+                                        className={
+                                            problemFilter ===
+                                            "easy"
+                                                ? "problem-filter active easy-filter"
+                                                : "problem-filter easy-filter"
+                                        }
+                                        onClick={() =>
+                                            setProblemFilter(
+                                                "easy"
+                                            )
+                                        }
+                                    >
+                                        Easy
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className={
+                                            problemFilter ===
+                                            "medium"
+                                                ? "problem-filter active medium-filter"
+                                                : "problem-filter medium-filter"
+                                        }
+                                        onClick={() =>
+                                            setProblemFilter(
+                                                "medium"
+                                            )
+                                        }
+                                    >
+                                        Medium
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className={
+                                            problemFilter ===
+                                            "hard"
+                                                ? "problem-filter active hard-filter"
+                                                : "problem-filter hard-filter"
+                                        }
+                                        onClick={() =>
+                                            setProblemFilter(
+                                                "hard"
+                                            )
+                                        }
+                                    >
+                                        Hard
+                                    </button>
                                 </div>
 
-                                <div className="coding-problem-controls">
-
-                                    <div className="coding-problem-search">
-
-                                        <FiSearch />
-
-                                        <input
-                                            type="text"
-                                            value={
-                                                problemSearch
-                                            }
-                                            placeholder="Search problems..."
-                                            onChange={(event) =>
-                                                setProblemSearch(
-                                                    event.target.value
-                                                )
-                                            }
-                                        />
-
+                                <div className="coding-problem-count">
+                                    <span>
                                         {
-                                            problemSearch && (
+                                            filteredProblems.length
+                                        }{" "}
+                                        problems
+                                    </span>
+
+                                    {problems.length !==
+                                        filteredProblems.length && (
+                                        <span>
+                                            of{" "}
+                                            {
+                                                problems.length
+                                            }
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="coding-problem-list">
+                                {filteredProblems.length >
+                                0 ? (
+                                    filteredProblems.map(
+                                        (problem) => {
+                                            const index =
+                                                problems.findIndex(
+                                                    (
+                                                        item
+                                                    ) =>
+                                                        item.id ===
+                                                        problem.id
+                                                );
+
+                                            return (
                                                 <button
                                                     type="button"
+                                                    key={
+                                                        problem.id
+                                                    }
+                                                    className={
+                                                        index ===
+                                                        selectedProblemIndex
+                                                            ? "coding-problem-option active"
+                                                            : "coding-problem-option"
+                                                    }
                                                     onClick={() =>
-                                                        setProblemSearch(
-                                                            ""
+                                                        handleProblemSelect(
+                                                            index
                                                         )
                                                     }
                                                 >
-                                                    <FiX />
+                                                    <span className="coding-problem-option-number">
+                                                        {
+                                                            problem.id
+                                                        }
+                                                    </span>
+
+                                                    <span className="coding-problem-option-content">
+                                                        <strong>
+                                                            {
+                                                                problem.title
+                                                            }
+                                                        </strong>
+
+                                                        <small>
+                                                            {Array.isArray(
+                                                                problem.tags
+                                                            )
+                                                                ? problem.tags.join(
+                                                                      " · "
+                                                                  )
+                                                                : ""}
+                                                        </small>
+                                                    </span>
+
+                                                    <span
+                                                        className={`coding-problem-option-difficulty ${String(
+                                                            problem.difficulty ||
+                                                                ""
+                                                        ).toLowerCase()}`}
+                                                    >
+                                                        {
+                                                            problem.difficulty
+                                                        }
+                                                    </span>
                                                 </button>
-                                            )
+                                            );
                                         }
-
+                                    )
+                                ) : (
+                                    <div className="coding-problem-empty">
+                                        {loading
+                                            ? "Loading problems..."
+                                            : problemSearch
+                                              ? "No problems match your search."
+                                              : "No problems found for this filter."}
                                     </div>
-
-                                    <div className="coding-problem-filters">
-
-                                        <button
-                                            type="button"
-                                            className={
-                                                problemFilter === "all"
-                                                    ? "problem-filter active"
-                                                    : "problem-filter"
-                                            }
-                                            onClick={() =>
-                                                setProblemFilter(
-                                                    "all"
-                                                )
-                                            }
-                                        >
-                                            <FiList />
-                                            All
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className={
-                                                problemFilter === "easy"
-                                                    ? "problem-filter active easy-filter"
-                                                    : "problem-filter easy-filter"
-                                            }
-                                            onClick={() =>
-                                                setProblemFilter(
-                                                    "easy"
-                                                )
-                                            }
-                                        >
-                                            Easy
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className={
-                                                problemFilter === "medium"
-                                                    ? "problem-filter active medium-filter"
-                                                    : "problem-filter medium-filter"
-                                            }
-                                            onClick={() =>
-                                                setProblemFilter(
-                                                    "medium"
-                                                )
-                                            }
-                                        >
-                                            Medium
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className={
-                                                problemFilter === "hard"
-                                                    ? "problem-filter active hard-filter"
-                                                    : "problem-filter hard-filter"
-                                            }
-                                            onClick={() =>
-                                                setProblemFilter(
-                                                    "hard"
-                                                )
-                                            }
-                                        >
-                                            Hard
-                                        </button>
-
-                                    </div>
-
-                                    <div className="coding-problem-count">
-                                        <span>
-                                            {
-                                                filteredProblems.length
-                                            }{" "}
-                                            problems
-                                        </span>
-
-                                        {
-                                            problems.length !==
-                                            filteredProblems.length && (
-                                                <span>
-                                                    of {
-                                                        problems.length
-                                                    }
-                                                </span>
-                                            )
-                                        }
-                                    </div>
-
-                                </div>
-
-                                <div className="coding-problem-list">
-
-                                    {
-                                        filteredProblems.length > 0
-                                            ? filteredProblems.map(
-                                                (problem) => {
-
-                                                    const index =
-                                                        problems.findIndex(
-                                                            (item) =>
-                                                                item.id ===
-                                                                problem.id
-                                                        );
-
-                                                    return (
-                                                        <button
-                                                            type="button"
-                                                            key={
-                                                                problem.id
-                                                            }
-                                                            className={
-                                                                index ===
-                                                                selectedProblemIndex
-                                                                    ? "coding-problem-option active"
-                                                                    : "coding-problem-option"
-                                                            }
-                                                            onClick={() =>
-                                                                handleProblemSelect(
-                                                                    index
-                                                                )
-                                                            }
-                                                        >
-
-                                                            <span className="coding-problem-option-number">
-                                                                {
-                                                                    problem.id
-                                                                }
-                                                            </span>
-
-                                                            <span className="coding-problem-option-content">
-
-                                                                <strong>
-                                                                    {
-                                                                        problem.title
-                                                                    }
-                                                                </strong>
-
-                                                                <small>
-                                                                    {
-                                                                        Array.isArray(
-                                                                            problem.tags
-                                                                        )
-                                                                            ? problem.tags.join(
-                                                                                " · "
-                                                                            )
-                                                                            : ""
-                                                                    }
-                                                                </small>
-
-                                                            </span>
-
-                                                            <span
-                                                                className={
-                                                                    `coding-problem-option-difficulty ${
-                                                                        String(
-                                                                            problem.difficulty ||
-                                                                            ""
-                                                                        ).toLowerCase()
-                                                                    }`
-                                                                }
-                                                            >
-                                                                {
-                                                                    problem.difficulty
-                                                                }
-                                                            </span>
-
-                                                        </button>
-                                                    );
-                                                }
-                                            )
-                                            : (
-                                                <div className="coding-problem-empty">
-                                                    {
-                                                        loading
-                                                            ? "Loading problems..."
-                                                            : problemSearch
-                                                                ? "No problems match your search."
-                                                                : "No problems found for this filter."
-                                                    }
-                                                </div>
-                                            )
-                                    }
-
-                                </div>
-
+                                )}
                             </div>
-                        )
-                    }
-
+                        </div>
+                    )}
                 </div>
 
                 <div className="coding-actions">
-
                     <button
                         className="coding-mobile-problem-btn"
                         type="button"
@@ -2064,7 +1917,8 @@ export default function CodingArena() {
                             handlePreviousProblem
                         }
                         disabled={
-                            filteredCurrentIndex <= 0
+                            filteredCurrentIndex <=
+                            0
                         }
                     >
                         <FiArrowLeft />
@@ -2078,9 +1932,11 @@ export default function CodingArena() {
                             handleNextProblem
                         }
                         disabled={
-                            filteredCurrentIndex === -1 ||
+                            filteredCurrentIndex ===
+                                -1 ||
                             filteredCurrentIndex >=
-                            filteredProblems.length - 1
+                                filteredProblems.length -
+                                    1
                         }
                     >
                         Next
@@ -2096,17 +1952,12 @@ export default function CodingArena() {
                             isExecuting ||
                             isSubmitting
                         }
-                        onClick={
-                            handleRun
-                        }
+                        onClick={handleRun}
                     >
                         <FiPlay />
-
-                        {
-                            isExecuting
-                                ? "Running..."
-                                : "Run"
-                        }
+                        {isExecuting
+                            ? "Running..."
+                            : "Run"}
                     </button>
 
                     <button
@@ -2118,163 +1969,129 @@ export default function CodingArena() {
                             isExecuting ||
                             isSubmitting
                         }
-                        onClick={
-                            handleSubmit
-                        }
+                        onClick={handleSubmit}
                     >
-                        {
-                            isSubmitting
-                                ? "Submitting..."
-                                : "Submit"
-                        }
+                        {isSubmitting
+                            ? "Submitting..."
+                            : "Submit"}
                     </button>
-
                 </div>
-
             </div>
 
             <div className="coding-grid">
-
                 <div className="problem-card">
-
-                    {
-                        loading ? (
-                            <div className="coding-empty-problem">
-                                Loading your coding arena...
-                            </div>
-                        ) : selectedProblem ? (
-                            <>
-                                <div className="problem-tags">
-
-                                    <span className="tag-green">
-                                        {
-                                            selectedProblem.difficulty
-                                        }
-                                    </span>
-
+                    {loading ? (
+                        <div className="coding-empty-problem">
+                            Loading your coding arena...
+                        </div>
+                    ) : selectedProblem ? (
+                        <>
+                            <div className="problem-tags">
+                                <span className="tag-green">
                                     {
-                                        Array.isArray(
-                                            selectedProblem.tags
-                                        ) &&
-                                        selectedProblem.tags.map(
-                                            (tag, index) => (
-                                                <span
-                                                    key={
-                                                        `${tag}-${index}`
-                                                    }
-                                                    className="tag-blue"
-                                                >
-                                                    {tag}
-                                                </span>
-                                            )
-                                        )
+                                        selectedProblem.difficulty
                                     }
+                                </span>
 
-                                    <div className="problem-time">
-                                        ⏱ 15:24
-                                    </div>
-
-                                </div>
-
-                                <div className="problem-description">
-                                    <p>
-                                        {
-                                            selectedProblem.description
-                                        }
-                                    </p>
-                                </div>
-
-                                {
-                                    (
-                                        selectedProblem.inputExample ||
-                                        selectedProblem.outputExample
-                                    ) && (
-                                        <div className="example-box">
-
-                                            {
-                                                selectedProblem.inputExample && (
-                                                    <p>
-                                                        <strong>
-                                                            Input:
-                                                        </strong>
-                                                        {
-                                                            ` ${selectedProblem.inputExample}`
-                                                        }
-                                                    </p>
-                                                )
-                                            }
-
-                                            {
-                                                selectedProblem.outputExample && (
-                                                    <p>
-                                                        <strong>
-                                                            Output:
-                                                        </strong>
-                                                        {
-                                                            ` ${selectedProblem.outputExample}`
-                                                        }
-                                                    </p>
-                                                )
-                                            }
-
-                                        </div>
-                                    )
-                                }
-
-                                {
-                                    Array.isArray(
-                                        selectedProblem.constraints
-                                    ) &&
-                                    selectedProblem.constraints.length > 0 && (
-                                        <div className="constraints-box">
-
-                                            <h3>
-                                                Constraints
-                                            </h3>
-
-                                            <ul>
+                                {Array.isArray(
+                                    selectedProblem.tags
+                                ) &&
+                                    selectedProblem.tags.map(
+                                        (
+                                            tag,
+                                            index
+                                        ) => (
+                                            <span
+                                                key={`${tag}-${index}`}
+                                                className="tag-blue"
+                                            >
                                                 {
-                                                    selectedProblem.constraints.map(
-                                                        (
-                                                            constraint,
-                                                            index
-                                                        ) => (
-                                                            <li
-                                                                key={
-                                                                    index
-                                                                }
-                                                            >
-                                                                {
-                                                                    constraint
-                                                                }
-                                                            </li>
-                                                        )
-                                                    )
+                                                    tag
                                                 }
-                                            </ul>
-
-                                        </div>
-                                    )
-                                }
-                            </>
-                        ) : (
-                            <div className="coding-empty-problem">
-                                {
-                                    error ||
-                                    "Your Next Challenge Awaits"
-                                }
+                                            </span>
+                                        )
+                                    )}
                             </div>
-                        )
-                    }
 
+                            <div className="problem-description">
+                                <p>
+                                    {
+                                        selectedProblem.description
+                                    }
+                                </p>
+                            </div>
+
+                            {(selectedProblem.inputExample ||
+                                selectedProblem.outputExample) && (
+                                <div className="example-box">
+                                    {selectedProblem.inputExample && (
+                                        <p>
+                                            <strong>
+                                                Input:
+                                            </strong>{" "}
+                                            {
+                                                selectedProblem.inputExample
+                                            }
+                                        </p>
+                                    )}
+
+                                    {selectedProblem.outputExample && (
+                                        <p>
+                                            <strong>
+                                                Output:
+                                            </strong>{" "}
+                                            {
+                                                selectedProblem.outputExample
+                                            }
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {Array.isArray(
+                                selectedProblem.constraints
+                            ) &&
+                                selectedProblem
+                                    .constraints
+                                    .length >
+                                    0 && (
+                                    <div className="constraints-box">
+                                        <h3>
+                                            Constraints
+                                        </h3>
+
+                                        <ul>
+                                            {selectedProblem.constraints.map(
+                                                (
+                                                    constraint,
+                                                    index
+                                                ) => (
+                                                    <li
+                                                        key={
+                                                            index
+                                                        }
+                                                    >
+                                                        {
+                                                            constraint
+                                                        }
+                                                    </li>
+                                                )
+                                            )}
+                                        </ul>
+                                    </div>
+                                )}
+                        </>
+                    ) : (
+                        <div className="coding-empty-problem">
+                            {error ||
+                                "Your Next Challenge Awaits"}
+                        </div>
+                    )}
                 </div>
 
                 <div className="editor-column">
-
                     <div className="editor-card">
-
                         <div className="editor-header">
-
                             <div className="editor-dots">
                                 <span></span>
                                 <span></span>
@@ -2285,7 +2102,6 @@ export default function CodingArena() {
                                 className="language-search-wrapper"
                                 ref={dropdownRef}
                             >
-
                                 <FiSearch className="search-icon" />
 
                                 <input
@@ -2296,68 +2112,62 @@ export default function CodingArena() {
                                     placeholder={
                                         runtimesLoading
                                             ? "Loading languages..."
-                                            : availableLanguages.length > 0
-                                                ? "Search language..."
-                                                : "No language available"
+                                            : availableLanguages.length >
+                                                0
+                                              ? "Search language..."
+                                              : "No language available"
                                     }
                                     className="language-search"
                                     disabled={
                                         !hasSelectedProblem ||
-                                        availableLanguages.length === 0 ||
+                                        availableLanguages.length ===
+                                            0 ||
                                         runtimesLoading
                                     }
                                     onFocus={() => {
-
                                         if (
-                                            availableLanguages.length ===
+                                            availableLanguages.length >
                                             0
                                         ) {
-                                            return;
+                                            setShowLanguages(
+                                                true
+                                            );
                                         }
-
-                                        setShowLanguages(true);
                                     }}
-                                    onClick={() => {
-
-                                        if (
-                                            availableLanguages.length ===
-                                            0
-                                        ) {
-                                            return;
-                                        }
-
-                                        setShowLanguages(true);
-                                    }}
-                                    onChange={(event) => {
-
+                                    onChange={(
+                                        event
+                                    ) => {
                                         setSearchLanguage(
-                                            event.target.value
+                                            event
+                                                .target
+                                                .value
                                         );
 
-                                        setShowLanguages(true);
+                                        setShowLanguages(
+                                            true
+                                        );
                                     }}
-                                    onKeyDown={(event) => {
-
+                                    onKeyDown={(
+                                        event
+                                    ) => {
                                         if (
                                             event.key ===
                                             "ArrowDown"
                                         ) {
-
                                             event.preventDefault();
 
-                                            optionRefs.current
-                                                [0]
-                                                ?.scrollIntoView({
+                                            optionRefs.current[0]?.scrollIntoView(
+                                                {
                                                     block:
                                                         "nearest"
-                                                });
+                                                }
+                                            );
                                         }
 
                                         if (
                                             event.key ===
                                             "Enter"
                                         ) {
-
                                             event.preventDefault();
 
                                             if (
@@ -2374,7 +2184,9 @@ export default function CodingArena() {
                                             event.key ===
                                             "Escape"
                                         ) {
-                                            setShowLanguages(false);
+                                            setShowLanguages(
+                                                false
+                                            );
                                         }
                                     }}
                                 />
@@ -2382,93 +2194,82 @@ export default function CodingArena() {
                                 <FiChevronDown
                                     className="dropdown-arrow"
                                     onClick={() => {
-
                                         if (
-                                            availableLanguages.length ===
+                                            availableLanguages.length >
                                             0
                                         ) {
-                                            return;
+                                            setShowLanguages(
+                                                (
+                                                    previous
+                                                ) =>
+                                                    !previous
+                                            );
                                         }
-
-                                        setShowLanguages(
-                                            (previous) =>
-                                                !previous
-                                        );
                                     }}
                                 />
 
-                                {
-                                    showLanguages && (
-                                        <div className="language-dropdown">
-
-                                            {
-                                                filteredLanguages.length > 0
-                                                    ? filteredLanguages.map(
-                                                        (item, index) => (
-                                                            <div
-                                                                key={
-                                                                    `${item.value}-${item.runtimeVersion}`
+                                {showLanguages && (
+                                    <div className="language-dropdown">
+                                        {filteredLanguages.length >
+                                        0 ? (
+                                            filteredLanguages.map(
+                                                (
+                                                    item,
+                                                    index
+                                                ) => (
+                                                    <div
+                                                        key={`${item.value}-${item.runtimeVersion}`}
+                                                        ref={(
+                                                            element
+                                                        ) =>
+                                                            (optionRefs.current[
+                                                                index
+                                                            ] =
+                                                                element)
+                                                        }
+                                                        className="language-item"
+                                                        onClick={() =>
+                                                            handleLanguageChange(
+                                                                item.value
+                                                            )
+                                                        }
+                                                    >
+                                                        <div>
+                                                            <h4>
+                                                                {
+                                                                    item.label
                                                                 }
-                                                                ref={
-                                                                    (element) =>
-                                                                        optionRefs.current[
-                                                                            index
-                                                                        ] =
-                                                                            element
+                                                            </h4>
+
+                                                            <p>
+                                                                {
+                                                                    item.runtimeLanguage
                                                                 }
-                                                                className={
-                                                                    "language-item"
-                                                                }
-                                                                onClick={() =>
-                                                                    handleLanguageChange(
-                                                                        item.value
-                                                                    )
-                                                                }
-                                                            >
-
-                                                                <div>
-                                                                    <h4>
-                                                                        {
-                                                                            item.label
-                                                                        }
-                                                                    </h4>
-
-                                                                    <p>
-                                                                        {
-                                                                            item.runtimeLanguage
-                                                                        }
-                                                                        {
-                                                                            item.runtimeVersion
-                                                                                ? ` · ${item.runtimeVersion}`
-                                                                                : ""
-                                                                        }
-                                                                    </p>
-                                                                </div>
-
-                                                                <span>
-                                                                    {
-                                                                        item.value
-                                                                    }
-                                                                </span>
-
-                                                            </div>
-                                                        )
-                                                    )
-                                                    : (
-                                                        <div className="language-item">
-                                                            <div>
-                                                                <h4>
-                                                                    No language found
-                                                                </h4>
-                                                            </div>
+                                                                {item.runtimeVersion
+                                                                    ? ` · ${item.runtimeVersion}`
+                                                                    : ""}
+                                                            </p>
                                                         </div>
-                                                    )
-                                            }
 
-                                        </div>
-                                    )
-                                }
-
+                                                        <span>
+                                                            {
+                                                                item.value
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                )
+                                            )
+                                        ) : (
+                                            <div className="language-item">
+                                                <div>
+                                                    <h4>
+                                                        No language found
+                                                    </h4>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <button
@@ -2485,17 +2286,13 @@ export default function CodingArena() {
                             >
                                 <FiCpu />
 
-                                {
-                                    isGeneratingHint
-                                        ? "Thinking..."
-                                        : "AI Hint"
-                                }
+                                {isGeneratingHint
+                                    ? "Thinking..."
+                                    : "AI Hint"}
                             </button>
-
                         </div>
 
                         <div className="monaco-wrapper">
-
                             <Editor
                                 height="100%"
                                 theme="vs-dark"
@@ -2525,195 +2322,176 @@ export default function CodingArena() {
                                         !language
                                 }}
                             />
-
                         </div>
-
                     </div>
 
-                    {
-                        showAiHint && (
-                            <div className="ai-hint-panel">
-
-                                <div className="ai-hint-panel-header">
-
-                                    <div>
-                                        <FiCpu />
-                                        <strong>
-                                            AI Hint
-                                        </strong>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setShowAiHint(false)
-                                        }
-                                    >
-                                        <FiX />
-                                    </button>
-
+                    {showAiHint && (
+                        <div className="ai-hint-panel">
+                            <div className="ai-hint-panel-header">
+                                <div>
+                                    <FiCpu />
+                                    <strong>
+                                        AI Hint
+                                    </strong>
                                 </div>
 
-                                <div className="ai-hint-panel-content">
-
-                                    {
-                                        isGeneratingHint ? (
-                                            <div className="ai-hint-loading">
-
-                                                <span></span>
-                                                <span></span>
-                                                <span></span>
-
-                                                <p>
-                                                    Analyzing your approach...
-                                                </p>
-
-                                            </div>
-                                        ) : aiHintError ? (
-                                            <div className="ai-hint-error">
-                                                {aiHintError}
-                                            </div>
-                                        ) : aiHint ? (
-                                            <p>
-                                                {aiHint}
-                                            </p>
-                                        ) : (
-                                            <p>
-                                                Click AI Hint to get guidance for this problem.
-                                            </p>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowAiHint(
+                                            false
                                         )
                                     }
-
-                                </div>
-
+                                >
+                                    <FiX />
+                                </button>
                             </div>
-                        )
-                    }
+
+                            <div className="ai-hint-panel-content">
+                                {isGeneratingHint ? (
+                                    <div className="ai-hint-loading">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+
+                                        <p>
+                                            Analyzing your approach...
+                                        </p>
+                                    </div>
+                                ) : aiHintError ? (
+                                    <div className="ai-hint-error">
+                                        {
+                                            aiHintError
+                                        }
+                                    </div>
+                                ) : aiHint ? (
+                                    <p>
+                                        {aiHint}
+                                    </p>
+                                ) : (
+                                    <p>
+                                        Click AI Hint to get guidance for this problem.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="testcase-card">
-
                         <div className="testcase-top">
-
                             <h3>
                                 Test cases
                             </h3>
 
                             <span>
-                                {
-                                    executionResult
-                                        ? `${executionResult.passedTests || 0}/${executionResult.totalTests || 0} passed`
-                                        : hasSelectedProblem
-                                            ? `${Array.isArray(
+                                {executionResult
+                                    ? `${executionResult.passedTests || 0}/${executionResult.totalTests || 0} passed`
+                                    : hasSelectedProblem
+                                      ? `${
+                                            Array.isArray(
                                                 selectedProblem.testCases
                                             )
-                                                ? selectedProblem.testCases.length
-                                                : 0} public cases`
-                                            : "Select a problem"
-                                }
+                                                ? selectedProblem
+                                                      .testCases
+                                                      .length
+                                                : 0
+                                        } public cases`
+                                      : "Select a problem"}
                             </span>
-
                         </div>
 
-                        {
-                            executionResult &&
-                            Array.isArray(
-                                executionResult.testCases
-                            ) &&
-                            executionResult.testCases.length > 0
-                                ? executionResult.testCases.map(
-                                    (testCase) => (
-                                        <div
-                                            className="case-item"
-                                            key={
-                                                testCase.testCaseNumber
-                                            }
-                                        >
-                                            <p>
-                                                <strong>
-                                                    Test Case {
-                                                        testCase.testCaseNumber
-                                                    }
-                                                </strong>
-                                                {" · "}
+                        {executionResult &&
+                        Array.isArray(
+                            executionResult.testCases
+                        ) &&
+                        executionResult
+                            .testCases.length >
+                            0 ? (
+                            executionResult.testCases.map(
+                                (testCase) => (
+                                    <div
+                                        className="case-item"
+                                        key={
+                                            testCase.testCaseNumber
+                                        }
+                                    >
+                                        <p>
+                                            <strong>
+                                                Test Case{" "}
                                                 {
-                                                    testCase.passed
-                                                        ? "Passed"
-                                                        : "Failed"
-                                                }
-                                            </p>
-
-                                            <span>
-                                                {
-                                                    testCase.passed
-                                                        ? "✓"
-                                                        : "✕"
-                                                }
-                                            </span>
-                                        </div>
-                                    )
-                                )
-                                : selectedProblem &&
-                                  Array.isArray(
-                                      selectedProblem.testCases
-                                  ) &&
-                                  selectedProblem.testCases.length > 0
-                                    ? selectedProblem.testCases.map(
-                                        (testCase) => (
-                                            <div
-                                                className="case-item"
-                                                key={
                                                     testCase.testCaseNumber
                                                 }
-                                            >
-                                                <p>
-                                                    Test Case {
-                                                        testCase.testCaseNumber
-                                                    }
-                                                </p>
+                                            </strong>{" "}
+                                            ·{" "}
+                                            {testCase.passed
+                                                ? "Passed"
+                                                : "Failed"}
+                                        </p>
 
-                                                <span>
-                                                    ○
-                                                </span>
-                                            </div>
-                                        )
-                                    )
-                                    : selectedProblem ? (
-                                        <>
-                                            <div className="case-item">
-                                                <p>
-                                                    Input: {
-                                                        selectedProblem.inputExample ||
-                                                        "Sample input"
-                                                    }
-                                                </p>
-                                            </div>
+                                        <span>
+                                            {testCase.passed
+                                                ? "✓"
+                                                : "✕"}
+                                        </span>
+                                    </div>
+                                )
+                            )
+                        ) : selectedProblem &&
+                          Array.isArray(
+                              selectedProblem.testCases
+                          ) &&
+                          selectedProblem
+                              .testCases.length >
+                              0 ? (
+                            selectedProblem.testCases.map(
+                                (testCase) => (
+                                    <div
+                                        className="case-item"
+                                        key={
+                                            testCase.testCaseNumber
+                                        }
+                                    >
+                                        <p>
+                                            Test Case{" "}
+                                            {
+                                                testCase.testCaseNumber
+                                            }
+                                        </p>
 
-                                            <div className="case-item">
-                                                <p>
-                                                    Expected: {
-                                                        selectedProblem.outputExample ||
-                                                        "Sample output"
-                                                    }
-                                                </p>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="coding-empty-problem">
-                                            Select a problem to view test cases
-                                        </div>
-                                    )
-                        }
+                                        <span>
+                                            ○
+                                        </span>
+                                    </div>
+                                )
+                            )
+                        ) : selectedProblem ? (
+                            <>
+                                <div className="case-item">
+                                    <p>
+                                        Input:{" "}
+                                        {selectedProblem.inputExample ||
+                                            "Sample input"}
+                                    </p>
+                                </div>
 
+                                <div className="case-item">
+                                    <p>
+                                        Expected:{" "}
+                                        {selectedProblem.outputExample ||
+                                            "Sample output"}
+                                    </p>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="coding-empty-problem">
+                                Select a problem to view test cases
+                            </div>
+                        )}
                     </div>
 
-                    {
-                        renderExecutionResult()
-                    }
-
+                    {renderExecutionResult()}
                 </div>
-
             </div>
-
         </section>
     );
 }

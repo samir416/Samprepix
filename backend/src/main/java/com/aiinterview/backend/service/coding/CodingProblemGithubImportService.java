@@ -25,20 +25,13 @@ public class CodingProblemGithubImportService {
     public CodingProblemGithubImportService(
             CodingProblemGithubService githubService,
             CodingProblemRepository codingProblemRepository,
-            CodingTestCaseRepository codingTestCaseRepository
+            CodingTestCaseRepository codingTestCaseRepository,
+            ObjectMapper objectMapper
     ) {
-
-        this.githubService =
-                githubService;
-
-        this.codingProblemRepository =
-                codingProblemRepository;
-
-        this.codingTestCaseRepository =
-                codingTestCaseRepository;
-
-        this.objectMapper =
-                new ObjectMapper();
+        this.githubService = githubService;
+        this.codingProblemRepository = codingProblemRepository;
+        this.codingTestCaseRepository = codingTestCaseRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -71,18 +64,17 @@ public class CodingProblemGithubImportService {
                         normalizedRepository
                 );
 
-        if (files.isEmpty()) {
+        if (
+                files == null ||
+                files.isEmpty()
+        ) {
             return List.of();
         }
 
         List<String> problemPaths =
                 extractProblemPaths(files);
 
-        if (problemPaths.isEmpty()) {
-            return List.of();
-        }
-
-        List<CodingProblem> importedProblems =
+        List<CodingProblem> problems =
                 new ArrayList<>();
 
         for (
@@ -99,14 +91,14 @@ public class CodingProblemGithubImportService {
                         );
 
                 if (problem != null) {
-                    importedProblems.add(problem);
+                    problems.add(problem);
                 }
 
             } catch (Exception ignored) {
             }
         }
 
-        return importedProblems;
+        return problems;
     }
 
     @Transactional
@@ -124,13 +116,17 @@ public class CodingProblemGithubImportService {
                         normalizedRepository
                 );
 
-        if (files.isEmpty()) {
+        if (
+                files == null ||
+                files.isEmpty()
+        ) {
 
             return new BulkImportResult(
                     normalizedRepository,
                     0,
                     0,
                     0,
+                    List.of(),
                     List.of()
             );
         }
@@ -143,6 +139,9 @@ public class CodingProblemGithubImportService {
 
         int imported = 0;
         int failed = 0;
+
+        List<String> importedPaths =
+                new ArrayList<>();
 
         List<String> failedPaths =
                 new ArrayList<>();
@@ -161,6 +160,10 @@ public class CodingProblemGithubImportService {
 
                 imported++;
 
+                importedPaths.add(
+                        problemPath
+                );
+
             } catch (Exception exception) {
 
                 failed++;
@@ -176,7 +179,8 @@ public class CodingProblemGithubImportService {
                 discovered,
                 imported,
                 failed,
-                failedPaths
+                failedPaths,
+                importedPaths
         );
     }
 
@@ -276,15 +280,11 @@ public class CodingProblemGithubImportService {
 
             return savedProblem;
 
+        } catch (IllegalStateException exception) {
+
+            throw exception;
+
         } catch (Exception exception) {
-
-            if (
-                    exception instanceof IllegalStateException
-            ) {
-
-                throw (IllegalStateException)
-                        exception;
-            }
 
             throw new IllegalStateException(
                     "Unable to import GitHub coding problem: "
@@ -465,7 +465,10 @@ public class CodingProblemGithubImportService {
 
         } catch (Exception exception) {
 
-            return "";
+            throw new IllegalStateException(
+                    "Invalid starter code configuration.",
+                    exception
+            );
         }
     }
 
@@ -502,7 +505,10 @@ public class CodingProblemGithubImportService {
 
         } catch (Exception exception) {
 
-            return "";
+            throw new IllegalStateException(
+                    "Invalid language configuration.",
+                    exception
+            );
         }
     }
 
@@ -538,7 +544,10 @@ public class CodingProblemGithubImportService {
 
         } catch (Exception exception) {
 
-            return "";
+            throw new IllegalStateException(
+                    "Invalid parameter type configuration.",
+                    exception
+            );
         }
     }
 
@@ -601,6 +610,7 @@ public class CodingProblemGithubImportService {
                         );
 
         if (
+                existingTestCases == null ||
                 existingTestCases.isEmpty()
         ) {
 
@@ -672,7 +682,10 @@ public class CodingProblemGithubImportService {
                     !testCasesNode.isArray()
             ) {
 
-                return;
+                throw new IllegalStateException(
+                        "Invalid tests.json format: "
+                                + testsJsonPath
+                );
             }
 
             List<CodingTestCase> testCases =
@@ -708,6 +721,16 @@ public class CodingProblemGithubImportService {
                     continue;
                 }
 
+                if (
+                        expectedOutput.isBlank()
+                ) {
+
+                    throw new IllegalStateException(
+                            "Expected output is required for test case "
+                                    + testCaseNumber
+                    );
+                }
+
                 CodingTestCase testCase =
                         CodingTestCase.builder()
                                 .problem(problem)
@@ -738,6 +761,10 @@ public class CodingProblemGithubImportService {
                         testCases
                 );
             }
+
+        } catch (IllegalStateException exception) {
+
+            throw exception;
 
         } catch (Exception exception) {
 
@@ -1003,6 +1030,21 @@ public class CodingProblemGithubImportService {
                     "GitHub repository is required."
             );
         }
+
+        String normalized =
+                normalizeRepository(
+                        repository
+                );
+
+        if (
+                normalized.isBlank() ||
+                !normalized.contains("/")
+        ) {
+
+            throw new IllegalArgumentException(
+                    "GitHub repository must use owner/repository format."
+            );
+        }
     }
 
     private void validateProblemPath(
@@ -1016,6 +1058,18 @@ public class CodingProblemGithubImportService {
 
             throw new IllegalArgumentException(
                     "Problem path is required."
+            );
+        }
+
+        String normalized =
+                normalizeProblemPath(
+                        problemPath
+                );
+
+        if (normalized.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Problem path is invalid."
             );
         }
     }
@@ -1092,13 +1146,15 @@ public class CodingProblemGithubImportService {
         private final int imported;
         private final int failed;
         private final List<String> failedPaths;
+        private final List<String> importedPaths;
 
         public BulkImportResult(
                 String repository,
                 int discovered,
                 int imported,
                 int failed,
-                List<String> failedPaths
+                List<String> failedPaths,
+                List<String> importedPaths
         ) {
 
             this.repository =
@@ -1118,6 +1174,13 @@ public class CodingProblemGithubImportService {
                             ? List.of()
                             : List.copyOf(
                                     failedPaths
+                            );
+
+            this.importedPaths =
+                    importedPaths == null
+                            ? List.of()
+                            : List.copyOf(
+                                    importedPaths
                             );
         }
 
@@ -1139,6 +1202,10 @@ public class CodingProblemGithubImportService {
 
         public List<String> getFailedPaths() {
             return failedPaths;
+        }
+
+        public List<String> getImportedPaths() {
+            return importedPaths;
         }
     }
 }

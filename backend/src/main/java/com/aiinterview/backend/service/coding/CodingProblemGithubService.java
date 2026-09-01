@@ -20,15 +20,19 @@ import java.util.List;
 public class CodingProblemGithubService {
 
     private static final int MAX_FILES = 20000;
+
     private static final Duration CONNECT_TIMEOUT =
             Duration.ofSeconds(10);
+
     private static final Duration REQUEST_TIMEOUT =
             Duration.ofSeconds(30);
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public CodingProblemGithubService() {
+    public CodingProblemGithubService(
+            ObjectMapper objectMapper
+    ) {
 
         this.httpClient =
                 HttpClient.newBuilder()
@@ -41,35 +45,25 @@ public class CodingProblemGithubService {
                         .build();
 
         this.objectMapper =
-                new ObjectMapper();
+                objectMapper;
     }
 
     public List<String> getRepositoryFiles(
             String repository
     ) {
 
+        String normalizedRepository =
+                normalizeRepository(
+                        repository
+                );
+
         if (
-                repository == null ||
-                repository.isBlank()
+                normalizedRepository.isBlank() ||
+                !isValidRepository(
+                        normalizedRepository
+                )
         ) {
-            return Collections.emptyList();
-        }
 
-        String normalizedRepository;
-
-        try {
-
-            normalizedRepository =
-                    normalizeRepository(
-                            repository
-                    );
-
-        } catch (Exception exception) {
-
-            return Collections.emptyList();
-        }
-
-        if (normalizedRepository.isBlank()) {
             return Collections.emptyList();
         }
 
@@ -84,9 +78,7 @@ public class CodingProblemGithubService {
                     "https://api.github.com/repos/"
                             + normalizedRepository
                             + "/git/trees/"
-                            + encodeBranch(
-                                    branch
-                            )
+                            + encodeBranch(branch)
                             + "?recursive=1";
 
             HttpResponse<String> response =
@@ -95,6 +87,7 @@ public class CodingProblemGithubService {
             if (
                     response.statusCode() != 200
             ) {
+
                 return Collections.emptyList();
             }
 
@@ -102,6 +95,7 @@ public class CodingProblemGithubService {
                     response.body() == null ||
                     response.body().isBlank()
             ) {
+
                 return Collections.emptyList();
             }
 
@@ -113,9 +107,7 @@ public class CodingProblemGithubService {
             JsonNode tree =
                     root.path("tree");
 
-            if (
-                    !tree.isArray()
-            ) {
+            if (!tree.isArray()) {
                 return Collections.emptyList();
             }
 
@@ -134,32 +126,27 @@ public class CodingProblemGithubService {
                 }
 
                 String type =
-                        node.path(
-                                "type"
-                        ).asText("");
+                        node.path("type")
+                                .asText("");
 
                 String path =
-                        node.path(
-                                "path"
-                        ).asText("");
+                        node.path("path")
+                                .asText("");
 
                 if (
                         !"blob".equalsIgnoreCase(type) ||
                         path.isBlank()
                 ) {
+
                     continue;
                 }
 
                 if (
-                        isProblemDefinition(
-                                path
-                        )
+                        isProblemDefinition(path)
                 ) {
 
                     files.add(
-                            normalizePath(
-                                    path
-                            )
+                            normalizePath(path)
                     );
                 }
             }
@@ -189,40 +176,23 @@ public class CodingProblemGithubService {
             String path
     ) {
 
-        if (
-                repository == null ||
-                repository.isBlank() ||
-                path == null ||
-                path.isBlank()
-        ) {
-            return "";
-        }
+        String normalizedRepository =
+                normalizeRepository(
+                        repository
+                );
 
-        String normalizedRepository;
-
-        String normalizedPath;
-
-        try {
-
-            normalizedRepository =
-                    normalizeRepository(
-                            repository
-                    );
-
-            normalizedPath =
-                    normalizePath(
-                            path
-                    );
-
-        } catch (Exception exception) {
-
-            return "";
-        }
+        String normalizedPath =
+                normalizePath(
+                        path
+                );
 
         if (
-                normalizedRepository.isBlank() ||
+                !isValidRepository(
+                        normalizedRepository
+                ) ||
                 normalizedPath.isBlank()
         ) {
+
             return "";
         }
 
@@ -277,12 +247,12 @@ public class CodingProblemGithubService {
     private String getFileContentFromApi(
             String repository,
             String path
-    ) throws IOException, InterruptedException {
+    )
+            throws IOException,
+            InterruptedException {
 
         String encodedPath =
-                encodePath(
-                        path
-                );
+                encodePath(path);
 
         String url =
                 "https://api.github.com/repos/"
@@ -298,6 +268,7 @@ public class CodingProblemGithubService {
                 response.body() == null ||
                 response.body().isBlank()
         ) {
+
             return "";
         }
 
@@ -310,22 +281,19 @@ public class CodingProblemGithubService {
                 root == null ||
                 !root.isObject()
         ) {
+
             return "";
         }
 
         String encoding =
-                root.path(
-                        "encoding"
-                ).asText("");
+                root.path("encoding")
+                        .asText("");
 
         String content =
-                root.path(
-                        "content"
-                ).asText("");
+                root.path("content")
+                        .asText("");
 
-        if (
-                content.isBlank()
-        ) {
+        if (content.isBlank()) {
             return "";
         }
 
@@ -340,9 +308,7 @@ public class CodingProblemGithubService {
                 byte[] decoded =
                         java.util.Base64
                                 .getMimeDecoder()
-                                .decode(
-                                        content
-                                );
+                                .decode(content);
 
                 return new String(
                         decoded,
@@ -362,7 +328,9 @@ public class CodingProblemGithubService {
 
     private String getDefaultBranch(
             String repository
-    ) throws IOException, InterruptedException {
+    )
+            throws IOException,
+            InterruptedException {
 
         String url =
                 "https://api.github.com/repos/"
@@ -376,6 +344,7 @@ public class CodingProblemGithubService {
                 response.body() == null ||
                 response.body().isBlank()
         ) {
+
             return "main";
         }
 
@@ -385,13 +354,10 @@ public class CodingProblemGithubService {
                 );
 
         String branch =
-                root.path(
-                        "default_branch"
-                ).asText("");
+                root.path("default_branch")
+                        .asText("");
 
-        if (
-                branch.isBlank()
-        ) {
+        if (branch.isBlank()) {
             return "main";
         }
 
@@ -400,7 +366,9 @@ public class CodingProblemGithubService {
 
     private HttpResponse<String> sendGet(
             String url
-    ) throws IOException, InterruptedException {
+    )
+            throws IOException,
+            InterruptedException {
 
         HttpRequest request =
                 HttpRequest.newBuilder()
@@ -427,7 +395,8 @@ public class CodingProblemGithubService {
 
         return httpClient.send(
                 request,
-                HttpResponse.BodyHandlers.ofString()
+                HttpResponse.BodyHandlers
+                        .ofString()
         );
     }
 
@@ -436,69 +405,54 @@ public class CodingProblemGithubService {
     ) {
 
         String normalized =
-                normalizePath(
-                        path
-                ).toLowerCase();
+                normalizePath(path)
+                        .toLowerCase();
 
         if (
                 normalized.startsWith(".git/") ||
                 normalized.contains("/.git/")
         ) {
+
             return false;
         }
 
         if (
-                normalized.startsWith(
-                        "node_modules/"
-                ) ||
-                normalized.contains(
-                        "/node_modules/"
-                )
+                normalized.startsWith("node_modules/") ||
+                normalized.contains("/node_modules/")
         ) {
+
             return false;
         }
 
         if (
-                normalized.startsWith(
-                        "target/"
-                ) ||
-                normalized.contains(
-                        "/target/"
-                )
+                normalized.startsWith("target/") ||
+                normalized.contains("/target/")
         ) {
+
             return false;
         }
 
         if (
-                normalized.startsWith(
-                        "build/"
-                ) ||
-                normalized.contains(
-                        "/build/"
-                )
+                normalized.startsWith("build/") ||
+                normalized.contains("/build/")
         ) {
+
             return false;
         }
 
         if (
-                normalized.startsWith(
-                        "dist/"
-                ) ||
-                normalized.contains(
-                        "/dist/"
-                )
+                normalized.startsWith("dist/") ||
+                normalized.contains("/dist/")
         ) {
+
             return false;
         }
 
         if (
-                normalized.startsWith(
-                        ".idea/"
-                ) ||
-                normalized.contains(
-                        "/.idea/"
-                )
+                normalized.startsWith(".idea/") ||
+                normalized.contains("/.idea/")
         ) {
+
             return false;
         }
 
@@ -516,13 +470,9 @@ public class CodingProblemGithubService {
         return "https://raw.githubusercontent.com/"
                 + repository
                 + "/"
-                + encodeBranch(
-                        branch
-                )
+                + encodeBranch(branch)
                 + "/"
-                + encodePath(
-                        path
-                );
+                + encodePath(path);
     }
 
     private String encodeBranch(
@@ -533,6 +483,7 @@ public class CodingProblemGithubService {
                 branch == null ||
                 branch.isBlank()
         ) {
+
             return "main";
         }
 
@@ -553,9 +504,7 @@ public class CodingProblemGithubService {
                 index++
         ) {
 
-            if (
-                    index > 0
-            ) {
+            if (index > 0) {
                 result.append("/");
             }
 
@@ -574,20 +523,14 @@ public class CodingProblemGithubService {
     ) {
 
         String normalizedPath =
-                normalizePath(
-                        path
-                );
+                normalizePath(path);
 
-        if (
-                normalizedPath.isBlank()
-        ) {
+        if (normalizedPath.isBlank()) {
             return "";
         }
 
         String[] parts =
-                normalizedPath.split(
-                        "/"
-                );
+                normalizedPath.split("/");
 
         StringBuilder result =
                 new StringBuilder();
@@ -598,9 +541,7 @@ public class CodingProblemGithubService {
                 index++
         ) {
 
-            if (
-                    index > 0
-            ) {
+            if (index > 0) {
                 result.append("/");
             }
 
@@ -633,6 +574,14 @@ public class CodingProblemGithubService {
             String repository
     ) {
 
+        if (
+                repository == null ||
+                repository.isBlank()
+        ) {
+
+            return "";
+        }
+
         String normalized =
                 repository.trim();
 
@@ -660,29 +609,54 @@ public class CodingProblemGithubService {
                         ""
                 );
 
+        String[] parts =
+                normalized.split("/");
+
         if (
-                normalized.contains("/")
+                parts.length < 2 ||
+                parts[0].isBlank() ||
+                parts[1].isBlank()
         ) {
 
-            String[] parts =
-                    normalized.split("/");
-
-            if (
-                    parts.length >= 2
-            ) {
-
-                return parts[0].trim()
-                        + "/"
-                        + parts[1].trim();
-            }
+            return "";
         }
 
-        return normalized.trim();
+        return parts[0].trim()
+                + "/"
+                + parts[1].trim();
+    }
+
+    private boolean isValidRepository(
+            String repository
+    ) {
+
+        if (
+                repository == null ||
+                repository.isBlank()
+        ) {
+
+            return false;
+        }
+
+        String[] parts =
+                repository.split("/");
+
+        return parts.length == 2
+                && !parts[0].isBlank()
+                && !parts[1].isBlank();
     }
 
     private String normalizePath(
             String path
     ) {
+
+        if (
+                path == null ||
+                path.isBlank()
+        ) {
+
+            return "";
+        }
 
         return path
                 .trim()

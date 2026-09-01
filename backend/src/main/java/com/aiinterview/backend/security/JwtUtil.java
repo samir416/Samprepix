@@ -3,34 +3,30 @@ package com.aiinterview.backend.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+@Component
 public final class JwtUtil {
 
     private static final long EXPIRATION_TIME =
             1000L * 60 * 60 * 24;
 
-    private static final SecretKey SECRET_KEY =
-            createSecretKey();
+    private static SecretKey SECRET_KEY;
 
-    private JwtUtil() {
+    public JwtUtil(
+            @Value("${app.jwt.secret}") String secret
+    ) {
+        SECRET_KEY = createSecretKey(secret);
     }
 
-    private static SecretKey createSecretKey() {
-
-        String secret =
-                System.getProperty("app.jwt.secret");
-
-        if (
-                secret == null ||
-                secret.isBlank()
-        ) {
-            secret =
-                    System.getenv("APP_JWT_SECRET");
-        }
+    private static SecretKey createSecretKey(
+            String secret
+    ) {
 
         if (
                 secret == null ||
