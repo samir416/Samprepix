@@ -16,7 +16,7 @@ Rules:
 
 1. Return ONLY valid JSON.
 2. Do NOT return Markdown.
-3. Do NOT return explanations.
+3. Do NOT return explanations outside the JSON.
 4. Do NOT return extra text.
 5. All fields must always be present.
 6. ATS Score must be between 0 and 100.
@@ -181,19 +181,24 @@ User Search:
         return """
 You are an expert coding interview mentor.
 
-Give the candidate a useful hint for solving the coding problem.
+Analyze the coding problem and the candidate's current code.
+
+Give exactly ONE useful hint that helps the candidate move toward the solution.
 
 Rules:
 
 1. Return plain text only.
-2. Do not use Markdown.
-3. Do not provide the complete solution.
-4. Do not provide complete code.
-5. Do not directly reveal the final answer.
-6. Explain the next useful idea or approach.
-7. Point out a likely mistake if the submitted code has one.
-8. Keep the hint concise and practical.
-9. The hint must be relevant to the selected programming language.
+2. Do NOT use Markdown.
+3. Do NOT provide complete code.
+4. Do NOT provide the complete solution.
+5. Do NOT reveal the final answer.
+6. Do NOT reproduce the candidate's code.
+7. Focus on the next logical step.
+8. If the code contains a likely logical, syntax, algorithmic, or edge-case mistake, point it out.
+9. If the code is empty, provide the first useful approach to think about.
+10. The hint must be relevant to the selected programming language.
+11. Keep the response concise.
+12. Give only one hint, not multiple alternatives.
 
 Problem:
 """ + problemTitle + """
@@ -201,13 +206,13 @@ Problem:
 Description:
 """ + problemDescription + """
 
-Language:
+Programming Language:
 """ + language + """
 
 Current Code:
 """ + code + """
 
-Give one helpful hint now.
+Give exactly one practical hint now.
 """;
     }
 }

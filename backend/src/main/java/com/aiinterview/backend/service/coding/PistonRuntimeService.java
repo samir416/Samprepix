@@ -45,7 +45,6 @@ public class PistonRuntimeService {
         String response;
 
         try {
-
             response =
                     webClient
                             .get()
@@ -58,9 +57,7 @@ public class PistonRuntimeService {
                             .block(
                                     REQUEST_TIMEOUT
                             );
-
         } catch (Exception exception) {
-
             return Collections.emptyList();
         }
 
@@ -131,11 +128,11 @@ public class PistonRuntimeService {
                         );
 
                 String key =
-                        normalize(language) +
+                        canonicalLanguage(language) +
                                 "|" +
                                 normalize(version);
 
-                uniqueRuntimes.put(
+                uniqueRuntimes.putIfAbsent(
                         key,
                         runtime
                 );
@@ -176,21 +173,14 @@ public class PistonRuntimeService {
                             runtime.getLanguage()
                     );
 
-            if (
-                    key.isBlank()
-            ) {
+            if (key.isBlank()) {
                 continue;
             }
 
-            if (
-                    !languages.containsKey(key)
-            ) {
-
-                languages.put(
-                        key,
-                        runtime
-                );
-            }
+            languages.putIfAbsent(
+                    key,
+                    runtime
+            );
         }
 
         return new ArrayList<>(
@@ -207,7 +197,6 @@ public class PistonRuntimeService {
                 language == null ||
                 language.isBlank()
         ) {
-
             throw new IllegalArgumentException(
                     "Programming language cannot be empty."
             );
@@ -217,7 +206,6 @@ public class PistonRuntimeService {
                 getRuntimes();
 
         if (runtimes.isEmpty()) {
-
             throw new IllegalStateException(
                     "No Piston runtimes are currently available."
             );
@@ -236,7 +224,6 @@ public class PistonRuntimeService {
         if (
                 requestedLanguage.isBlank()
         ) {
-
             throw new IllegalArgumentException(
                     "Programming language is invalid."
             );
@@ -260,7 +247,6 @@ public class PistonRuntimeService {
                                 requestedVersion
                         )
                 ) {
-
                     return runtime;
                 }
             }
@@ -277,7 +263,6 @@ public class PistonRuntimeService {
                             null
                     )
             ) {
-
                 return runtime;
             }
         }
@@ -315,7 +300,6 @@ public class PistonRuntimeService {
         if (
                 !(aliasValue instanceof List<?> list)
         ) {
-
             return new ArrayList<>();
         }
 
@@ -334,7 +318,6 @@ public class PistonRuntimeService {
                     value != null &&
                     !aliases.contains(value)
             ) {
-
                 aliases.add(value);
             }
         }
@@ -348,7 +331,6 @@ public class PistonRuntimeService {
                 pistonExecuteUrl == null ||
                 pistonExecuteUrl.isBlank()
         ) {
-
             throw new IllegalStateException(
                     "app.piston.url is not configured."
             );
@@ -370,7 +352,6 @@ public class PistonRuntimeService {
                         executePath
                 )
         ) {
-
             return url.substring(
                     0,
                     url.length()
@@ -405,7 +386,6 @@ public class PistonRuntimeService {
                 value == null ||
                 value.isBlank()
         ) {
-
             return "";
         }
 
@@ -490,12 +470,10 @@ public class PistonRuntimeService {
         }
 
         public String getLanguage() {
-
             return language;
         }
 
         public String getVersion() {
-
             return version;
         }
 
@@ -514,7 +492,6 @@ public class PistonRuntimeService {
                     requestedLanguage == null ||
                     requestedLanguage.isBlank()
             ) {
-
                 return false;
             }
 
@@ -527,7 +504,6 @@ public class PistonRuntimeService {
                     canonicalize(language)
                             .equals(requested)
             ) {
-
                 return true;
             }
 
@@ -555,7 +531,6 @@ public class PistonRuntimeService {
                             requestedVersion.trim()
                     )
             ) {
-
                 return true;
             }
 
@@ -588,7 +563,6 @@ public class PistonRuntimeService {
                     language == null ||
                     language.isBlank()
             ) {
-
                 return "";
             }
 
@@ -604,38 +578,38 @@ public class PistonRuntimeService {
                 case "js",
                      "node",
                      "nodejs" ->
-                        "javascript";
+                    "javascript";
 
                 case "ts" ->
-                        "typescript";
+                    "typescript";
 
                 case "golang" ->
-                        "go";
+                    "go";
 
                 case "cpp",
                      "cxx" ->
-                        "c++";
+                    "c++";
 
                 case "csharp",
                      "cs" ->
-                        "c#";
+                    "c#";
 
                 case "py",
                      "python3" ->
-                        "python";
+                    "python";
 
                 case "rs" ->
-                        "rust";
+                    "rust";
 
                 case "kt" ->
-                        "kotlin";
+                    "kotlin";
 
                 case "sh",
                      "shell" ->
-                        "bash";
+                    "bash";
 
                 default ->
-                        normalized;
+                    normalized;
             };
         }
     }
