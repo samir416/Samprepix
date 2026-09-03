@@ -7,6 +7,7 @@ import com.aiinterview.backend.repository.CodingTestCaseRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,21 @@ import java.util.List;
 @Configuration
 public class CodingTestCaseDataInitializer {
 
+    private static final List<String> MANAGED_TITLES = List.of(
+            "Two Sum",
+            "Valid Parentheses",
+            "Best Time to Buy and Sell Stock",
+            "Binary Search",
+            "Longest Substring Without Repeating Characters",
+            "Product of Array Except Self",
+            "Merge Intervals",
+            "Number of Islands",
+            "Course Schedule",
+            "Trapping Rain Water"
+    );
+
     @Bean
+    @Order(3)
     CommandLineRunner initializeCodingTestCases(
             CodingProblemRepository codingProblemRepository,
             CodingTestCaseRepository codingTestCaseRepository
@@ -22,27 +37,49 @@ public class CodingTestCaseDataInitializer {
 
         return args -> {
 
-            List<CodingProblem> problems =
-                    codingProblemRepository.findByActiveTrue();
+            for (String title : MANAGED_TITLES) {
+                codingProblemRepository.findByTitleIgnoreCase(title).ifPresent(problem -> {
+                    List<CodingTestCase> existing =
+                            codingTestCaseRepository
+                                    .findByProblemAndActiveTrueOrderByTestCaseNumberAsc(
+                                            problem
+                                    );
 
-            for (CodingProblem problem : problems) {
-
-                List<CodingTestCase> existing =
-                        codingTestCaseRepository
-                                .findByProblemAndActiveTrueOrderByTestCaseNumberAsc(
-                                        problem
-                                );
-
-                if (existing != null && !existing.isEmpty()) {
-                    continue;
-                }
-
-                createSeededTestCasesIfSupported(
-                        problem,
-                        codingTestCaseRepository
-                );
+                    if (existing != null && !existing.isEmpty()) {
+                        repairKnownSeedData(problem, existing, codingTestCaseRepository);
+                    } else {
+                        createSeededTestCasesIfSupported(
+                                problem,
+                                codingTestCaseRepository
+                        );
+                    }
+                });
             }
         };
+    }
+
+    private void repairKnownSeedData(
+            CodingProblem problem,
+            List<CodingTestCase> testCases,
+            CodingTestCaseRepository repository
+    ) {
+
+        if (!normalizeTitle(problem.getTitle()).contains("two sum")) {
+            return;
+        }
+
+        for (CodingTestCase testCase : testCases) {
+            if (testCase.getTestCaseNumber() == 4 &&
+                    testCase.isHidden() &&
+                    "1 5 3 7 9\n10".equals(testCase.getInput()) &&
+                    "1 3".equals(testCase.getExpectedOutput())) {
+
+                // The original expected pair does not add to the target.
+                // This keeps existing custom test data untouched.
+                testCase.setExpectedOutput("0 4");
+                repository.save(testCase);
+            }
+        }
     }
 
     private void createSeededTestCasesIfSupported(

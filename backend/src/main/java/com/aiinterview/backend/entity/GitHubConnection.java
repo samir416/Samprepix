@@ -48,7 +48,7 @@ public class GitHubConnection {
     @Lob
     @Column(
             name = "access_token",
-            nullable = false
+            nullable = true
     )
     private String accessToken;
 

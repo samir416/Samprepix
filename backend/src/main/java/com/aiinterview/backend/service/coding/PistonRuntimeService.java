@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -16,6 +18,9 @@ import java.util.Map;
 
 @Service
 public class PistonRuntimeService {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(PistonRuntimeService.class);
 
     private static final Duration REQUEST_TIMEOUT =
             Duration.ofSeconds(15);
@@ -58,14 +63,21 @@ public class PistonRuntimeService {
                                     REQUEST_TIMEOUT
                             );
         } catch (Exception exception) {
-            return Collections.emptyList();
+            logger.error("Unable to retrieve Piston runtimes from {}", baseUrl, exception);
+            throw new IllegalStateException(
+                    "Unable to retrieve Piston runtimes. Verify that Piston is running at " +
+                            baseUrl + ".",
+                    exception
+            );
         }
 
         if (
                 response == null ||
                 response.isBlank()
         ) {
-            return Collections.emptyList();
+            throw new IllegalStateException(
+                    "Piston returned an empty runtime list from " + baseUrl + "."
+            );
         }
 
         try {

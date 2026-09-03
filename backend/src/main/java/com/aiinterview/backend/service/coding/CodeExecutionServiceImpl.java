@@ -30,6 +30,7 @@ public class CodeExecutionServiceImpl
     private final CodingProblemRepository codingProblemRepository;
     private final CodingTestCaseRepository codingTestCaseRepository;
     private final FunctionExecutionWrapperService wrapperService;
+    private final PistonRuntimeService pistonRuntimeService;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String pistonUrl;
@@ -38,6 +39,7 @@ public class CodeExecutionServiceImpl
             CodingProblemRepository codingProblemRepository,
             CodingTestCaseRepository codingTestCaseRepository,
             FunctionExecutionWrapperService wrapperService,
+            PistonRuntimeService pistonRuntimeService,
             @Value("${app.piston.url:http://localhost:2000/api/v2/execute}")
             String pistonUrl
     ) {
@@ -51,11 +53,15 @@ public class CodeExecutionServiceImpl
         this.wrapperService =
                 wrapperService;
 
+        this.pistonRuntimeService =
+                pistonRuntimeService;
+
         this.pistonUrl =
                 pistonUrl;
 
         this.httpClient =
                 HttpClient.newBuilder()
+                        .version(HttpClient.Version.HTTP_1_1)
                         .connectTimeout(
                                 Duration.ofSeconds(10)
                         )
@@ -161,11 +167,20 @@ public class CodeExecutionServiceImpl
                             request.getLanguage()
                     );
 
-            runtimeVersion =
+            String configuredRuntimeVersion =
                     wrapperService.getRuntimeVersion(
                             problem,
                             request.getLanguage()
                     );
+
+            PistonRuntimeService.PistonRuntime runtime =
+                    pistonRuntimeService.findRuntime(
+                            runtimeLanguage,
+                            configuredRuntimeVersion
+                    );
+
+            runtimeLanguage = runtime.getLanguage();
+            runtimeVersion = runtime.getVersion();
 
             fileName =
                     wrapperService.getFileName(
@@ -192,17 +207,6 @@ public class CodeExecutionServiceImpl
             return errorResponse(
                     "The selected language is not configured for this problem.",
                     "Missing runtime language."
-            );
-        }
-
-        if (
-                runtimeVersion == null ||
-                runtimeVersion.isBlank()
-        ) {
-
-            return errorResponse(
-                    "The selected language runtime version is not configured.",
-                    "Missing runtime version."
             );
         }
 
@@ -355,28 +359,11 @@ public class CodeExecutionServiceImpl
             Map<String, Object> sourceFile =
                     Map.of(
                             "name",
-                            fileName,
-                            "content",
-                            executableCode
-                    );
-
-            Map<String, Object> payload =
-                    Map.of(
-                            "language",
-                            runtimeLanguage,
-                            "version",
-                            runtimeVersion,
-                            "files",
-                            List.of(sourceFile)
-                    );
-
-            String requestBody =
-                    objectMapper.writeValueAsString(
-                            payload
                     );
 
             HttpRequest httpRequest =
                     HttpRequest.newBuilder()
+                            .version(HttpClient.Version.HTTP_1_1)
                             .uri(
                                     URI.create(
                                             pistonUrl
@@ -420,7 +407,8 @@ public class CodeExecutionServiceImpl
                         testCase,
                         "EXECUTION_ERROR",
                         "Execution server returned HTTP "
-                                + response.statusCode(),
+                                + response.statusCode() + ": " +
+                                compactExecutionServerError(response.body()),
                         requestRuntime
                 );
             }
@@ -597,21 +585,13 @@ public class CodeExecutionServiceImpl
                         .build();
             }
 
-            String actualOutput =
-                    normalizeOutput(
-                            stdout
-                    );
+            String actualOutput = normalizeOutput(stdout);
 
-            String expectedOutput =
-                    normalizeOutput(
-                            testCase
-                                    .getExpectedOutput()
-                    );
+            String expectedOutput = normalizeOutput(
+                    testCase.getExpectedOutput()
+            );
 
-            boolean passed =
-                    actualOutput.equals(
-                            expectedOutput
-                    );
+            boolean passed = outputsMatch(actualOutput, expectedOutput);
 
             return CodeExecutionTestCaseResponse
                     .builder()
@@ -838,6 +818,20 @@ public class CodeExecutionServiceImpl
                 .trim();
     }
 
+    private boolean outputsMatch(String actualOutput, String expectedOutput) {
+
+        return canonicalizeComparableOutput(actualOutput)
+                .equals(canonicalizeComparableOutput(expectedOutput));
+    }
+
+    private String canonicalizeComparableOutput(String output) {
+
+        return normalizeOutput(output)
+                .replaceAll("[\\[\\](){},]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
     private String firstNonBlank(
             String first,
             String second,
@@ -861,6 +855,19 @@ public class CodeExecutionServiceImpl
         }
 
         return fallback;
+    }
+
+    private String compactExecutionServerError(String responseBody) {
+
+        if (responseBody == null || responseBody.isBlank()) {
+            return "No error details returned.";
+        }
+
+        String compact = responseBody.replaceAll("\\s+", " ").trim();
+
+        return compact.length() > 500
+                ? compact.substring(0, 500) + "..."
+                : compact;
     }
 
     private String getLastOutput(

@@ -32,8 +32,20 @@ ROOT_API.interceptors.request.use(
         Promise.reject(error)
 );
 
-export const getCodingProblems = () =>
-    API.get("/problems");
+export const getCodingProblems = (
+    page = 0,
+    size = 50,
+    search = "",
+    difficulty = ""
+) =>
+    API.get("/problems", {
+        params: {
+            page,
+            size,
+            search: search || undefined,
+            difficulty: difficulty || undefined
+        }
+    });
 
 export const getCodingProblem = (
     problemId
@@ -143,14 +155,11 @@ export const getCodingHint = (
 ) =>
     ROOT_API.post(
         "/ai/coding-hint",
-        null,
         {
-            params: {
-                problemTitle,
-                problemDescription,
-                language,
-                code
-            }
+            problemTitle,
+            problemDescription,
+            language,
+            code
         }
     );
 

@@ -2,6 +2,7 @@ package com.aiinterview.backend.controller;
 
 import com.aiinterview.backend.dto.coding.CodingProblemResponse;
 import com.aiinterview.backend.dto.coding.CodingPublicTestCaseResponse;
+import com.aiinterview.backend.dto.coding.CodingProblemListResponse;
 import com.aiinterview.backend.entity.CodingProblem;
 import com.aiinterview.backend.entity.CodingTestCase;
 import com.aiinterview.backend.repository.CodingTestCaseRepository;
@@ -16,6 +17,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/api/coding/problems")
@@ -46,15 +50,38 @@ public class CodingProblemController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CodingProblemResponse>> getProblems() {
+    public ResponseEntity<Page<CodingProblemListResponse>> getProblems(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String difficulty
+    ) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(Math.max(1, size), 100);
+        PageRequest pageable = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Direction.ASC, "id")
+        );
 
         return ResponseEntity.ok(
                 codingProblemService
-                        .getProblems()
-                        .stream()
-                        .map(this::toResponse)
-                        .toList()
+                        .searchProblems(search, difficulty, pageable)
+                        .map(this::toListResponse)
         );
+    }
+
+    private CodingProblemListResponse toListResponse(CodingProblem problem) {
+        return CodingProblemListResponse.builder()
+                .id(problem.getId())
+                .title(problem.getTitle())
+                .difficulty(problem.getDifficulty())
+                .tags(problem.getTags() == null
+                        ? List.of()
+                        : List.copyOf(problem.getTags()))
+                .minimumExperienceLevel(problem.getMinimumExperienceLevel())
+                .active(problem.isActive())
+                .build();
     }
 
     @GetMapping("/difficulty/{difficulty}")
@@ -210,18 +237,14 @@ public class CodingProblemController {
             return result;
         }
 
-        List<PistonRuntimeService.PistonRuntime>
-                runtimes;
+                List<PistonRuntimeService.PistonRuntime>
+                                runtimes;
 
-        try {
-
-            runtimes =
-                    pistonRuntimeService.getRuntimes();
-
-        } catch (Exception exception) {
-
-            return result;
-        }
+                try {
+                        runtimes = pistonRuntimeService.getRuntimes();
+                } catch (Exception exception) {
+                        return configurations;
+                }
 
         if (
                 runtimes == null ||
@@ -289,7 +312,6 @@ public class CodingProblemController {
                         );
 
             } catch (Exception exception) {
-
                 continue;
             }
 

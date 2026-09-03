@@ -1,19 +1,26 @@
 package com.aiinterview.backend.controller;
 
-import com.aiinterview.backend.dto.ai.AIResponse;
 import com.aiinterview.backend.service.ai.AIService;
+import com.aiinterview.backend.service.coding.CodingHintService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai")
 public class AIController {
 
     private final AIService aiService;
+        private final CodingHintService codingHintService;
 
-    public AIController(AIService aiService) {
+        public AIController(
+                        AIService aiService,
+                        CodingHintService codingHintService
+        ) {
         this.aiService = aiService;
+                this.codingHintService = codingHintService;
     }
 
     @GetMapping("/test")
@@ -41,13 +48,19 @@ public class AIController {
 
     @PostMapping("/coding-hint")
     public ResponseEntity<?> generateCodingHint(
-            @RequestParam String problemTitle,
-            @RequestParam String problemDescription,
-            @RequestParam String language,
-            @RequestParam String code
+            @RequestBody(required = false) Map<String, String> payload,
+            @RequestParam(required = false) String problemTitle,
+            @RequestParam(required = false) String problemDescription,
+            @RequestParam(required = false) String language,
+            @RequestParam(required = false) String code
     ) {
 
         try {
+
+            problemTitle = valueFrom(payload, "problemTitle", problemTitle);
+            problemDescription = valueFrom(payload, "problemDescription", problemDescription);
+            language = valueFrom(payload, "language", language);
+            code = valueFrom(payload, "code", code);
 
             if (
                     problemTitle == null ||
@@ -80,27 +93,13 @@ public class AIController {
                 code = "";
             }
 
-            String hint =
-                    aiService.generateCodingHint(
+            Map<String, Object> hint =
+                    codingHintService.generateHint(
                             problemTitle,
                             problemDescription,
                             language,
                             code
                     );
-
-            if (
-                    hint == null ||
-                    hint.isBlank()
-            ) {
-                return ResponseEntity
-                        .status(
-                                HttpStatus.INTERNAL_SERVER_ERROR
-                        )
-                        .body(
-                                "AI service returned an empty hint."
-                        );
-            }
-
             return ResponseEntity.ok(hint);
 
         } catch (IllegalArgumentException exception) {
@@ -117,10 +116,10 @@ public class AIController {
                     .status(
                             HttpStatus.INTERNAL_SERVER_ERROR
                     )
-                    .body(
-                            "AI service failed: "
-                                    + getErrorMessage(exception)
-                    );
+                    .body(Map.of(
+                            "success", false,
+                            "message", "AI Hint is temporarily unavailable."
+                    ));
         }
     }
 
@@ -147,5 +146,18 @@ public class AIController {
 
         return exception.getClass()
                 .getSimpleName();
+    }
+
+    private String valueFrom(
+            Map<String, String> payload,
+            String key,
+            String fallback
+    ) {
+
+        if (payload == null || payload.get(key) == null) {
+            return fallback;
+        }
+
+        return payload.get(key);
     }
 }

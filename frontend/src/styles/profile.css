@@ -56,6 +56,67 @@ body.dark-theme{
     border-radius:30px;
 }
 
+.profile-github-management{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+    width:100%;
+}
+
+.profile-github-management p,
+.profile-github-management span{
+    color:var(--profile-text-light);
+    font-size:13px;
+    line-height:1.5;
+}
+
+.profile-github-management select,
+.profile-github-management input{
+    width:100%;
+    max-width:460px;
+}
+
+.profile-github-manual{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    width:100%;
+    max-width:560px;
+}
+
+.profile-github-action{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:38px;
+    padding:0 14px;
+    border:0;
+    border-radius:10px;
+    color:#fff;
+    background:var(--profile-primary);
+    font-size:13px;
+    font-weight:700;
+    text-decoration:none;
+    cursor:pointer;
+}
+
+.profile-github-action:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+}
+
+.profile-github-error{
+    color:#dc2626 !important;
+}
+
+@media (max-width:600px){
+    .profile-github-manual{
+        flex-direction:column;
+        align-items:stretch;
+    }
+}
+
 .profile-header{
     display:flex;
     justify-content:space-between;

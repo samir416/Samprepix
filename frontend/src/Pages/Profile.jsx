@@ -5,7 +5,9 @@ import {
     uploadProfilePicture,
     removeProfilePicture,
     getSkillSuggestions,
-    getGitHubRepository
+    getGitHubRepository,
+    getGitHubRepositories,
+    saveGitHubRepository
 } from "../services/profileService";
 
 import { getCompletedInterviewCount } from "../services/interviewService";
@@ -29,8 +31,15 @@ export default function Profile() {
 
     const [githubRepository, setGithubRepository] = useState({
         connected: false,
-        repositoryUrl: ""
+        repositoryUrl: "",
+        repositories: [],
+        loading: false,
+        saving: false,
+        error: ""
     });
+
+    const [githubRepositoryInput, setGithubRepositoryInput] = useState("");
+    const [githubRepositorySearch, setGithubRepositorySearch] = useState("");
 
     const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
@@ -515,9 +524,27 @@ export default function Profile() {
                 setGithubRepository({
                     connected:
                         repository?.connected === true,
-                    repositoryUrl:
-                        repository?.repositoryUrl || ""
+                    repositoryUrl: repository?.repositoryUrl || "",
+                    repositories: [],
+                    loading: repository?.connected === true,
+                    saving: false,
+                    error: ""
                 });
+
+                setGithubRepositoryInput(
+                    repository?.repositoryUrl || ""
+                );
+
+                if (repository?.connected === true) {
+                    const repositories = await getGitHubRepositories();
+                    setGithubRepository((previous) => ({
+                        ...previous,
+                        repositories: Array.isArray(repositories?.repositories)
+                            ? repositories.repositories
+                            : [],
+                        loading: false
+                    }));
+                }
 
             } catch (error) {
 
@@ -528,7 +555,11 @@ export default function Profile() {
 
                 setGithubRepository({
                     connected: false,
-                    repositoryUrl: ""
+                    repositoryUrl: "",
+                    repositories: [],
+                    loading: false,
+                    saving: false,
+                    error: "Unable to load GitHub status."
                 });
 
             }
@@ -538,6 +569,40 @@ export default function Profile() {
         loadGitHubRepository();
 
     }, []);
+
+    const handleGitHubRepositorySave = async (repositoryUrl) => {
+        setGithubRepository((previous) => ({
+            ...previous,
+            saving: true,
+            error: ""
+        }));
+
+        try {
+            const saved = await saveGitHubRepository(repositoryUrl);
+            setGithubRepository((previous) => ({
+                ...previous,
+                connected: saved?.connected === true,
+                repositoryUrl: saved?.repositoryUrl || repositoryUrl,
+                saving: false,
+                error: ""
+            }));
+            setGithubRepositoryInput(saved?.repositoryUrl || repositoryUrl);
+        } catch (requestError) {
+            setGithubRepository((previous) => ({
+                ...previous,
+                saving: false,
+                error: requestError?.response?.data?.message ||
+                    "Unable to save that GitHub repository."
+            }));
+        }
+    };
+
+    const filteredGitHubRepositories = githubRepository.repositories.filter(
+        (repository) =>
+            String(repository.fullName || repository.name || "")
+                .toLowerCase()
+                .includes(githubRepositorySearch.trim().toLowerCase())
+    );
 
     useEffect(() => {
 
@@ -2948,13 +3013,95 @@ export default function Profile() {
 
                                     </label>
 
-                                    {
+                                    <div className="profile-github-management">
+                                        <strong>
+                                            {githubRepository.connected
+                                                ? "GitHub Connected"
+                                                : "GitHub not connected"}
+                                        </strong>
 
-                                        githubRepository.connected &&
-                                            githubRepository.repositoryUrl
+                                        {!githubRepository.connected && (
+                                            <p>
+                                                Connect GitHub to save successful Coding Arena solutions automatically.
+                                            </p>
+                                        )}
 
-                                            ?
+                                        {githubRepository.connected &&
+                                            githubRepository.repositories.length > 0 && (
+                                                <>
+                                                    <input
+                                                        type="search"
+                                                        value={githubRepositorySearch}
+                                                        onChange={(event) =>
+                                                            setGithubRepositorySearch(event.target.value)}
+                                                        placeholder="Search repositories"
+                                                        className="profile-page-input"
+                                                    />
+                                                    <select
+                                                        value={githubRepository.repositoryUrl}
+                                                        onChange={(event) =>
+                                                            handleGitHubRepositorySave(event.target.value)}
+                                                        disabled={githubRepository.loading || githubRepository.saving}
+                                                        className="profile-page-input"
+                                                    >
+                                                        <option value="">Select repository</option>
+                                                        {filteredGitHubRepositories.map((repository) => (
+                                                            <option
+                                                                key={repository.id || repository.fullName}
+                                                                value={repository.htmlUrl}
+                                                            >
+                                                                {repository.fullName || repository.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </>
+                                            )}
 
+                                        {githubRepository.loading && (
+                                            <span>Loading repositories...</span>
+                                        )}
+
+                                        {githubRepository.connected &&
+                                            !githubRepository.loading &&
+                                            githubRepository.repositories.length === 0 && (
+                                                <span>No accessible repositories found.</span>
+                                            )}
+
+                                        {!githubRepository.connected && (
+                                            <a
+                                                href="http://localhost:8080/oauth2/login/github"
+                                                className="profile-github-action"
+                                            >
+                                                Connect GitHub
+                                            </a>
+                                        )}
+
+                                        {!githubRepository.connected && (
+                                            <div className="profile-github-manual">
+                                                <input
+                                                    type="url"
+                                                    value={githubRepositoryInput}
+                                                    onChange={(event) =>
+                                                        setGithubRepositoryInput(event.target.value)}
+                                                    placeholder="https://github.com/username/repository"
+                                                    className="profile-page-input"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleGitHubRepositorySave(githubRepositoryInput)}
+                                                    disabled={
+                                                        !githubRepositoryInput.trim() ||
+                                                        githubRepository.saving
+                                                    }
+                                                    className="profile-github-action"
+                                                >
+                                                    {githubRepository.saving ? "Saving..." : "Save Repository"}
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {githubRepository.repositoryUrl && (
                                             <a
                                                 href={githubRepository.repositoryUrl}
                                                 target="_blank"
@@ -2963,16 +3110,20 @@ export default function Profile() {
                                             >
                                                 {githubRepository.repositoryUrl}
                                             </a>
+                                        )}
 
-                                            :
-
+                                        {!githubRepository.connected && githubRepository.repositoryUrl && (
                                             <span>
-
-                                                GitHub repository not connected
-
+                                                Connect GitHub to enable automatic solution syncing.
                                             </span>
+                                        )}
 
-                                    }
+                                        {githubRepository.error && (
+                                            <span className="profile-github-error">
+                                                {githubRepository.error}
+                                            </span>
+                                        )}
+                                    </div>
 
                                 </div>
 

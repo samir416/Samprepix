@@ -5,9 +5,11 @@ import com.aiinterview.backend.security.oauth.OAuth2AuthenticationFailureHandler
 import com.aiinterview.backend.security.oauth.OAuth2AuthenticationSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import java.util.List;
@@ -74,6 +76,11 @@ public class SecurityConfig {
                                                 .successHandler(successHandler)
 
                                                 .failureHandler(failureHandler))
+
+                                                .exceptionHandling(exception -> exception
+                                                                .defaultAuthenticationEntryPointFor(
+                                                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                                                                request -> request.getRequestURI().startsWith("/api/")))
 
                                 .authorizeHttpRequests(auth -> auth
 

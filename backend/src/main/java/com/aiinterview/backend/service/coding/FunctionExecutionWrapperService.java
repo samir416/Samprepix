@@ -124,6 +124,17 @@ public class FunctionExecutionWrapperService {
                         ? ""
                         : input.trim();
 
+        if (!isLegacyFunction(problem.getFunctionName())) {
+            String template = stringValue(configuration.get("executionTemplate"));
+            if (template != null && !template.isBlank() && !template.trim().equals("{{USER_CODE}}")) {
+                return buildConfiguredCode(configuration, userCode, testInput);
+            }
+            if ("java".equalsIgnoreCase(runtimeLanguage.trim())) {
+                return buildGenericJavaCode(userCode, testInput);
+            }
+            return userCode;
+        }
+
         return switch (
                 runtimeLanguage
                         .trim()
@@ -172,6 +183,32 @@ public class FunctionExecutionWrapperService {
                             testInput
                     );
         };
+    }
+
+    private boolean isLegacyFunction(String functionName) {
+        if (functionName == null || functionName.isBlank()) {
+            return false;
+        }
+        return switch (functionName) {
+            case "twoSum", "isValid", "maxProfit", "search",
+                 "lengthOfLongestSubstring", "productExceptSelf", "merge",
+                 "numIslands", "canFinish", "trap" -> true;
+            default -> false;
+        };
+    }
+
+    private String buildGenericJavaCode(String userCode, String input) {
+        if (userCode.contains("class Main") || (userCode.contains("class ") && userCode.contains("static void main"))) {
+            return userCode;
+        }
+        return """
+import java.util.*;
+import java.io.*;
+
+public class Main {
+%s
+}
+""".formatted(indent(userCode, 4));
     }
 
     public Map<String, Object> getLanguageConfiguration(

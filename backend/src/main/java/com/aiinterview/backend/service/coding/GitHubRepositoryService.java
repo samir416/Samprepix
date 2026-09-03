@@ -14,6 +14,8 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -63,7 +65,7 @@ public class GitHubRepositoryService {
     ) {
 
         GitHubConnection connection =
-                getConnection(user);
+                getConnection(user, true);
 
         RepositoryReference repository =
                 parseRepositoryUrl(repositoryUrl);
@@ -115,7 +117,9 @@ public class GitHubRepositoryService {
 
         connection.setRepositoryUrl(
                 normalizeRepositoryUrl(
-                        htmlUrl
+                                "https://github.com/" +
+                                                repository.owner() + "/" +
+                                                repository.repository()
                 )
         );
 
@@ -143,6 +147,30 @@ public class GitHubRepositoryService {
                 )
                 .build();
     }
+
+        public List<Map<String, Object>> getRepositories(User user) {
+                GitHubConnection connection = getConnection(user, false);
+                return fetchUserRepositories(connection.getAccessToken());
+        }
+
+        public String saveRepositoryReference(User user, String repositoryUrl) {
+                RepositoryReference repository = parseRepositoryUrl(repositoryUrl);
+                String normalizedRepositoryUrl = normalizeRepositoryUrl(
+                                "https://github.com/" +
+                                                repository.owner() + "/" +
+                                                repository.repository()
+                );
+
+                GitHubConnection connection = gitHubConnectionRepository
+                                .findByUser(user)
+                                .orElseGet(GitHubConnection::new);
+
+                connection.setUser(user);
+                connection.setRepositoryUrl(normalizedRepositoryUrl);
+                gitHubConnectionRepository.save(connection);
+
+                return normalizedRepositoryUrl;
+        }
 
     public GitHubPushResult pushSolution(
             User user,
@@ -183,7 +211,7 @@ public class GitHubRepositoryService {
         }
 
         GitHubConnection connection =
-                getConnection(user);
+                getConnection(user, true);
 
         RepositoryReference repository =
                 parseRepositoryUrl(repositoryUrl);
@@ -408,9 +436,7 @@ public class GitHubRepositoryService {
         }
     }
 
-    private GitHubConnection getConnection(
-            User user
-    ) {
+    private GitHubConnection getConnection(User user, boolean requireToken) {
 
         if (
                 user == null ||
@@ -432,10 +458,10 @@ public class GitHubRepositoryService {
                                         )
                         );
 
-        if (
+        if (requireToken && (
                 connection.getAccessToken() == null ||
                 connection.getAccessToken().isBlank()
-        ) {
+        )) {
 
             throw new IllegalStateException(
                     "GitHub authorization is missing. Please reconnect GitHub."
@@ -444,6 +470,52 @@ public class GitHubRepositoryService {
 
         return connection;
     }
+
+        private List<Map<String, Object>> fetchUserRepositories(String accessToken) {
+                String endpoint = GITHUB_API + "/user/repos?per_page=100&sort=updated";
+                HttpRequest request = githubRequest(accessToken, endpoint).GET().build();
+
+                try {
+                        HttpResponse<String> response = httpClient.send(
+                                        request,
+                                        HttpResponse.BodyHandlers.ofString()
+                        );
+
+                        if (response.statusCode() != 200) {
+                                throw githubApiException(
+                                                response,
+                                                "Unable to load your GitHub repositories."
+                                );
+                        }
+
+                        JsonNode root = objectMapper.readTree(response.body());
+                        List<Map<String, Object>> repositories = new ArrayList<>();
+
+                        if (root.isArray()) {
+                                for (JsonNode item : root) {
+                                        repositories.add(Map.of(
+                                                        "id", item.path("id").asLong(0),
+                                                        "name", item.path("name").asText(""),
+                                                        "fullName", item.path("full_name").asText(""),
+                                                        "htmlUrl", item.path("html_url").asText(""),
+                                                        "private", item.path("private").asBoolean(false),
+                                                        "defaultBranch", item.path("default_branch").asText("main")
+                                        ));
+                                }
+                        }
+
+                        return repositories;
+                } catch (java.io.IOException | InterruptedException exception) {
+                        if (exception instanceof InterruptedException) {
+                                Thread.currentThread().interrupt();
+                        }
+
+                        throw new IllegalStateException(
+                                        "Unable to connect to GitHub.",
+                                        exception
+                        );
+                }
+        }
 
     private RepositoryReference parseRepositoryUrl(
             String repositoryUrl

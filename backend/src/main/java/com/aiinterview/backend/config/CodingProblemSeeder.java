@@ -3,16 +3,33 @@ package com.aiinterview.backend.config;
 import com.aiinterview.backend.entity.CodingProblem;
 import com.aiinterview.backend.repository.CodingProblemRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.core.annotation.Order;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Configuration
 public class CodingProblemSeeder {
+
+    private static final List<String> MANAGED_TITLES = List.of(
+            "Two Sum",
+            "Valid Parentheses",
+            "Best Time to Buy and Sell Stock",
+            "Binary Search",
+            "Longest Substring Without Repeating Characters",
+            "Product of Array Except Self",
+            "Merge Intervals",
+            "Number of Islands",
+            "Course Schedule",
+            "Trapping Rain Water"
+    );
 
     private final ObjectMapper objectMapper;
 
@@ -21,6 +38,7 @@ public class CodingProblemSeeder {
     }
 
     @Bean
+    @Order(2)
     CommandLineRunner seedCodingProblems(
             CodingProblemRepository repository
     ) {
@@ -47,59 +65,30 @@ public class CodingProblemSeeder {
                 return;
             }
 
-            List<CodingProblem> problems =
-                    repository.findAll();
+            for (String managedTitle : MANAGED_TITLES) {
+                Optional<CodingProblem> existing = repository.findByTitleIgnoreCase(managedTitle);
+                if (existing.isPresent()) {
+                    CodingProblem problem = existing.get();
+                    boolean changed = false;
+                    applyFunctionMetadata(problem);
 
-            boolean changed = false;
-
-            for (CodingProblem problem : problems) {
-
-                String title =
-                        problem.getTitle() == null
-                                ? ""
-                                : problem.getTitle()
-                                        .trim()
-                                        .toLowerCase();
-
-                applyFunctionMetadata(problem);
-
-                if (
-                        problem.getLanguageConfigurations() == null ||
-                        problem.getLanguageConfigurations().isBlank()
-                ) {
-
-                    applyProblemConfiguration(problem);
-                    changed = true;
-
-                } else if (isManagedProblem(title)) {
-
-                    Map<String, Object> configurations =
-                            readConfigurations(
-                                    problem.getLanguageConfigurations()
-                            );
-
-                    Map<String, Object> normalized =
-                            normalizeConfigurations(
-                                    configurations
-                            );
-
-                    String json =
-                            writeJson(normalized);
-
-                    if (
-                            !json.equals(
-                                    problem.getLanguageConfigurations()
-                            )
-                    ) {
-
-                        problem.setLanguageConfigurations(json);
+                    if (problem.getLanguageConfigurations() == null || problem.getLanguageConfigurations().isBlank()) {
+                        applyProblemConfiguration(problem);
                         changed = true;
+                    } else {
+                        Map<String, Object> configurations = readConfigurations(problem.getLanguageConfigurations());
+                        Map<String, Object> normalized = normalizeConfigurations(configurations);
+                        String json = writeJson(normalized);
+                        if (!json.equals(problem.getLanguageConfigurations())) {
+                            problem.setLanguageConfigurations(json);
+                            changed = true;
+                        }
+                    }
+
+                    if (changed) {
+                        repository.save(problem);
                     }
                 }
-            }
-
-            if (changed) {
-                repository.saveAll(problems);
             }
         };
     }
@@ -127,7 +116,8 @@ public class CodingProblemSeeder {
             Map<String, Object> configurations =
                     objectMapper.readValue(
                             json,
-                            LinkedHashMap.class
+                            new TypeReference<Map<String, Object>>() {
+                            }
                     );
 
             return configurations == null

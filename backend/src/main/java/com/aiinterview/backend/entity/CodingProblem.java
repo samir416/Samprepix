@@ -7,18 +7,29 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "coding_problems")
+@Table(
+        name = "coding_problems",
+        indexes = {
+                @Index(name = "idx_coding_problem_active", columnList = "active"),
+                @Index(name = "idx_coding_problem_difficulty_active", columnList = "difficulty, active"),
+                @Index(name = "idx_coding_problem_title", columnList = "title"),
+                @Index(name = "uk_coding_problem_slug", columnList = "slug", unique = true),
+                @Index(name = "uk_coding_problem_source_id", columnList = "source_id", unique = true)
+        }
+)
 @Data
 @Builder
 @NoArgsConstructor
@@ -28,6 +39,12 @@ public class CodingProblem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+        @Column(length = 180)
+        private String slug;
+
+        @Column(name = "source_id", length = 180)
+        private String sourceId;
 
     @Column(nullable = false, length = 150)
     private String title;
@@ -45,6 +62,7 @@ public class CodingProblem {
     )
     @Column(name = "tag", length = 100)
     @Builder.Default
+        @BatchSize(size = 50)
     private List<String> tags = new ArrayList<>();
 
     @Column(columnDefinition = "TEXT")
@@ -88,5 +106,6 @@ public class CodingProblem {
     private Integer minimumExperienceLevel;
 
     @Column(nullable = false)
+        @Builder.Default
     private boolean active = true;
 }

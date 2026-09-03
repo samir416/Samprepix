@@ -17,6 +17,7 @@ import {
 
 import {
     getCodingProblems,
+    getCodingProblem,
     getCodingProgress,
     selectCodingProblem,
     saveCodingState,
@@ -33,14 +34,20 @@ export default function CodingArena() {
 
     const [runtimes, setRuntimes] = useState([]);
     const [runtimesLoading, setRuntimesLoading] = useState(false);
+    const [runtimeError, setRuntimeError] = useState("");
 
     const [problems, setProblems] = useState([]);
+    const [selectedProblemDetails, setSelectedProblemDetails] = useState(null);
+    const [problemPage, setProblemPage] = useState(0);
+    const [problemTotal, setProblemTotal] = useState(0);
+    const [problemListLoading, setProblemListLoading] = useState(false);
     const [progress, setProgress] = useState(null);
     const [selectedProblemIndex, setSelectedProblemIndex] = useState(null);
 
     const [codeMap, setCodeMap] = useState({});
 
     const [executionResult, setExecutionResult] = useState(null);
+    const [lastSuccessfulRun, setLastSuccessfulRun] = useState(null);
     const [isExecuting, setIsExecuting] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -60,11 +67,14 @@ export default function CodingArena() {
     const optionRefs = useRef([]);
     const problemMenuRef = useRef(null);
     const saveTimerRef = useRef(null);
+    const problemSearchTimerRef = useRef(null);
+    const problemListRef = useRef(null);
 
     const selectedProblem =
-        selectedProblemIndex !== null
+        selectedProblemDetails ||
+        (selectedProblemIndex !== null
             ? problems[selectedProblemIndex] || null
-            : null;
+            : null);
 
     const hasSelectedProblem = selectedProblem !== null;
 
@@ -359,7 +369,7 @@ export default function CodingArena() {
         }
 
         if (runtimes.length === 0) {
-            return configured;
+            return [];
         }
 
         return configured
@@ -710,6 +720,7 @@ export default function CodingArena() {
                     ? response.data
                     : []
             );
+            setRuntimeError("");
         } catch (requestError) {
             console.error(
                 "Failed to load Piston runtimes",
@@ -717,8 +728,53 @@ export default function CodingArena() {
             );
 
             setRuntimes([]);
+            setRuntimeError(
+                getApiErrorMessage(requestError) ||
+                "Live code execution is unavailable because Piston could not be reached."
+            );
         } finally {
             setRuntimesLoading(false);
+        }
+    };
+
+    const loadProblemPage = async (
+        page = 0,
+        append = false,
+        search = problemSearch,
+        difficulty = problemFilter === "all" ? "" : problemFilter
+    ) => {
+        if (problemListLoading) {
+            return;
+        }
+
+        try {
+            setProblemListLoading(true);
+
+            const response = await getCodingProblems(
+                page,
+                50,
+                search,
+                difficulty
+            );
+
+            const result = response.data || {};
+            const content = Array.isArray(result.content)
+                ? result.content
+                : [];
+
+            setProblems((previous) =>
+                append ? [...previous, ...content] : content
+            );
+            setProblemPage(page);
+            setProblemTotal(Number(result.totalElements) || content.length);
+        } catch (requestError) {
+            console.error("Failed to load coding problem page", requestError);
+            setError(
+                requestError?.response?.data?.message ||
+                "Unable to load coding problems."
+            );
+        } finally {
+            setProblemListLoading(false);
         }
     };
 
@@ -727,25 +783,27 @@ export default function CodingArena() {
             setLoading(true);
             setError("");
 
-            const [
-                problemsResponse,
-                progressResponse
-            ] = await Promise.all([
-                getCodingProblems(),
-                getCodingProgress()
-            ]);
+            const [problemsResponse, progressResponse] =
+                await Promise.all([
+                    getCodingProblems(0, 50, "", ""),
+                    getCodingProgress()
+                ]);
 
-            const backendProblems =
-                Array.isArray(
-                    problemsResponse.data
-                )
-                    ? problemsResponse.data
-                    : [];
+            const backendProblems = Array.isArray(
+                problemsResponse.data?.content
+            )
+                ? problemsResponse.data.content
+                : [];
 
             const backendProgress =
                 progressResponse.data || null;
 
             setProblems(backendProblems);
+            setProblemPage(0);
+            setProblemTotal(
+                Number(problemsResponse.data?.totalElements) ||
+                    backendProblems.length
+            );
             setProgress(backendProgress);
 
             if (
@@ -789,9 +847,19 @@ export default function CodingArena() {
                     restoredIndex
                 ];
 
+            let restoredProblemDetails = restoredProblem;
+
+            if (restoredProblem?.id) {
+                const detailResponse = await getCodingProblem(
+                    restoredProblem.id
+                );
+                restoredProblemDetails = detailResponse.data;
+                setSelectedProblemDetails(restoredProblemDetails);
+            }
+
             const restoredLanguages =
                 getProblemLanguages(
-                    restoredProblem
+                    restoredProblemDetails
                 );
 
             const progressLanguage =
@@ -1002,16 +1070,30 @@ export default function CodingArena() {
             return;
         }
 
+        let problemDetails = problem;
+        setSelectedProblemDetails(null);
+
+        try {
+            const response = await getCodingProblem(problem.id);
+            problemDetails = response.data;
+            setSelectedProblemDetails(problemDetails);
+        } catch (requestError) {
+            console.error("Failed to load coding problem details", requestError);
+            setError("Unable to load the selected coding problem.");
+            return;
+        }
+
         setSelectedProblemIndex(index);
         setShowProblemMenu(false);
 
         setExecutionResult(null);
+        setLastSuccessfulRun(null);
         setAiHint("");
         setAiHintError("");
         setShowAiHint(false);
 
         const problemLanguages =
-            getProblemLanguages(problem);
+            getProblemLanguages(problemDetails);
 
         const currentLanguageExists =
             problemLanguages.some(
@@ -1064,8 +1146,8 @@ export default function CodingArena() {
             setCodeMap((previous) => ({
                 ...previous,
                 [key]:
-                    getStarterCode(
-                        problem,
+                        getStarterCode(
+                        problemDetails,
                         nextLanguage
                     )
             }));
@@ -1120,6 +1202,46 @@ export default function CodingArena() {
         );
     };
 
+    const handleProblemSearchChange = (value) => {
+        setProblemSearch(value);
+
+        if (problemSearchTimerRef.current) {
+            clearTimeout(problemSearchTimerRef.current);
+        }
+
+        problemSearchTimerRef.current = setTimeout(() => {
+            loadProblemPage(
+                0,
+                false,
+                value,
+                problemFilter === "all" ? "" : problemFilter
+            );
+        }, 300);
+    };
+
+    const handleProblemFilterChange = (value) => {
+        setProblemFilter(value);
+        loadProblemPage(
+            0,
+            false,
+            problemSearch,
+            value === "all" ? "" : value
+        );
+    };
+
+    const handleProblemListScroll = (event) => {
+        const element = event.currentTarget;
+
+        if (
+            element.scrollTop + element.clientHeight >=
+                element.scrollHeight - 80 &&
+            !problemListLoading &&
+            problems.length < problemTotal
+        ) {
+            loadProblemPage(problemPage + 1, true);
+        }
+    };
+
     const handleCodeChange = (value) => {
         if (!selectedProblem || !language) {
             return;
@@ -1137,6 +1259,8 @@ export default function CodingArena() {
             ...previous,
             [key]: nextCode
         }));
+
+        setLastSuccessfulRun(null);
 
         if (saveTimerRef.current) {
             clearTimeout(
@@ -1217,6 +1341,7 @@ export default function CodingArena() {
 
         setShowLanguages(false);
         setExecutionResult(null);
+        setLastSuccessfulRun(null);
         setAiHint("");
         setAiHintError("");
         setShowAiHint(false);
@@ -1247,13 +1372,10 @@ export default function CodingArena() {
                     code
                 );
 
-            const hint =
-                typeof response.data ===
-                "string"
+            const hint = response.data?.hint ||
+                (typeof response.data === "string"
                     ? response.data
-                    : response.data?.hint ||
-                      response.data?.message ||
-                      "";
+                    : response.data?.message || "");
 
             if (!String(hint).trim()) {
                 throw new Error(
@@ -1271,10 +1393,7 @@ export default function CodingArena() {
             );
 
             setAiHintError(
-                requestError?.response?.data
-                    ?.message ||
-                    requestError?.response?.data
-                        ?.error ||
+                getApiErrorMessage(requestError) ||
                     requestError?.message ||
                     "Unable to generate AI hint."
             );
@@ -1305,6 +1424,16 @@ export default function CodingArena() {
         message: fallbackMessage,
         testCases: []
     });
+
+    const getApiErrorMessage = (requestError) => {
+        const data = requestError?.response?.data;
+
+        if (typeof data === "string" && data.trim()) {
+            return data.trim();
+        }
+
+        return data?.message || data?.error || "";
+    };
 
     const handleRun = async () => {
         if (
@@ -1341,6 +1470,7 @@ export default function CodingArena() {
         try {
             setIsExecuting(true);
             setExecutionResult(null);
+            setLastSuccessfulRun(null);
 
             const response =
                 await executeCodingCode(
@@ -1352,6 +1482,19 @@ export default function CodingArena() {
             setExecutionResult(
                 response.data
             );
+
+            if (response.data?.passed === true) {
+                setLastSuccessfulRun({
+                    problemId: selectedProblem.id,
+                    language,
+                    code,
+                    success: true,
+                    allPublicTestsPassed: true,
+                    timestamp: Date.now()
+                });
+            } else {
+                setLastSuccessfulRun(null);
+            }
         } catch (requestError) {
             console.error(
                 "Code execution failed",
@@ -1374,12 +1517,39 @@ export default function CodingArena() {
             !hasSelectedProblem ||
             !language ||
             isExecuting ||
-            isSubmitting
+            isSubmitting ||
+            !lastSuccessfulRun ||
+            lastSuccessfulRun.problemId !== selectedProblem?.id ||
+            lastSuccessfulRun.language !== language ||
+            lastSuccessfulRun.code !== getCurrentCode()
         ) {
             return;
         }
 
         const code = getCurrentCode();
+
+        if (
+            !lastSuccessfulRun ||
+            lastSuccessfulRun.problemId !== selectedProblem.id ||
+            lastSuccessfulRun.language !== language ||
+            lastSuccessfulRun.code !== code
+        ) {
+            setExecutionResult({
+                status: "ERROR",
+                passed: false,
+                totalTests: 0,
+                passedTests: 0,
+                failedTests: 0,
+                runtime: 0,
+                memory: 0,
+                output: "",
+                expectedOutput: "",
+                error: "Run the current code successfully before submitting.",
+                message: "Submit is locked until the current code passes Run.",
+                testCases: []
+            });
+            return;
+        }
 
         if (!code.trim()) {
             setExecutionResult({
@@ -1432,6 +1602,8 @@ export default function CodingArena() {
                     );
                 }
             }
+
+            setLastSuccessfulRun(null);
         } catch (requestError) {
             console.error(
                 "Failed to submit coding problem",
@@ -1709,13 +1881,11 @@ export default function CodingArena() {
                                             problemSearch
                                         }
                                         placeholder="Search problems..."
-                                        onChange={(
+                                            onChange={(
                                             event
                                         ) =>
-                                            setProblemSearch(
-                                                event
-                                                    .target
-                                                    .value
+                                            handleProblemSearchChange(
+                                                event.target.value
                                             )
                                         }
                                     />
@@ -1724,7 +1894,7 @@ export default function CodingArena() {
                                         <button
                                             type="button"
                                             onClick={() =>
-                                                setProblemSearch(
+                                                handleProblemSearchChange(
                                                     ""
                                                 )
                                             }
@@ -1744,7 +1914,7 @@ export default function CodingArena() {
                                                 : "problem-filter"
                                         }
                                         onClick={() =>
-                                            setProblemFilter(
+                                            handleProblemFilterChange(
                                                 "all"
                                             )
                                         }
@@ -1762,7 +1932,7 @@ export default function CodingArena() {
                                                 : "problem-filter easy-filter"
                                         }
                                         onClick={() =>
-                                            setProblemFilter(
+                                            handleProblemFilterChange(
                                                 "easy"
                                             )
                                         }
@@ -1779,7 +1949,7 @@ export default function CodingArena() {
                                                 : "problem-filter medium-filter"
                                         }
                                         onClick={() =>
-                                            setProblemFilter(
+                                            handleProblemFilterChange(
                                                 "medium"
                                             )
                                         }
@@ -1796,7 +1966,7 @@ export default function CodingArena() {
                                                 : "problem-filter hard-filter"
                                         }
                                         onClick={() =>
-                                            setProblemFilter(
+                                            handleProblemFilterChange(
                                                 "hard"
                                             )
                                         }
@@ -1813,19 +1983,22 @@ export default function CodingArena() {
                                         problems
                                     </span>
 
-                                    {problems.length !==
-                                        filteredProblems.length && (
+                                    {problemTotal > problems.length && (
                                         <span>
                                             of{" "}
                                             {
-                                                problems.length
+                                                problemTotal
                                             }
                                         </span>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="coding-problem-list">
+                            <div
+                                className="coding-problem-list"
+                                ref={problemListRef}
+                                onScroll={handleProblemListScroll}
+                            >
                                 {filteredProblems.length >
                                 0 ? (
                                     filteredProblems.map(
@@ -1904,6 +2077,12 @@ export default function CodingArena() {
                                               : "No problems found for this filter."}
                                     </div>
                                 )}
+
+                                {problemListLoading && problems.length > 0 && (
+                                    <div className="coding-problem-empty">
+                                        Loading more problems...
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -1950,7 +2129,8 @@ export default function CodingArena() {
                             !hasSelectedProblem ||
                             !language ||
                             isExecuting ||
-                            isSubmitting
+                            isSubmitting ||
+                            !getCurrentCode().trim()
                         }
                         onClick={handleRun}
                     >
@@ -1967,7 +2147,12 @@ export default function CodingArena() {
                             !hasSelectedProblem ||
                             !language ||
                             isExecuting ||
-                            isSubmitting
+                            isSubmitting ||
+                            !lastSuccessfulRun ||
+                            lastSuccessfulRun.problemId !== selectedProblem?.id ||
+                            lastSuccessfulRun.language !== language ||
+                            lastSuccessfulRun.code !== getCurrentCode() ||
+                            lastSuccessfulRun.allPublicTestsPassed !== true
                         }
                         onClick={handleSubmit}
                     >
@@ -2112,10 +2297,12 @@ export default function CodingArena() {
                                     placeholder={
                                         runtimesLoading
                                             ? "Loading languages..."
-                                            : availableLanguages.length >
-                                                0
-                                              ? "Search language..."
-                                              : "No language available"
+                                                                                                : runtimeError
+                                                                                                    ? "Runtime unavailable"
+                                                                                                    : availableLanguages.length >
+                                                                                                                0
+                                                                                                            ? "Search language..."
+                                                                                                            : "No languages configured"
                                     }
                                     className="language-search"
                                     disabled={

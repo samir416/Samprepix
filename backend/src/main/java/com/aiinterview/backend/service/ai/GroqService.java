@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
@@ -199,7 +200,7 @@ public class GroqService implements AIService {
                     .bodyValue(request)
                     .retrieve()
                     .onStatus(
-                            HttpStatusCode::isError,
+                            response -> response != null && response.isError(),
                             response ->
                                     response.bodyToMono(
                                             String.class
@@ -229,6 +230,13 @@ public class GroqService implements AIService {
                             exception.getStatusCode(),
                             exception.getResponseBodyAsString()
                     ),
+                    exception
+            );
+
+        } catch (WebClientRequestException exception) {
+
+            throw new IllegalStateException(
+                    "Unable to reach the Groq API. Check your network and DNS connection.",
                     exception
             );
 

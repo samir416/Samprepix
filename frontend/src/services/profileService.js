@@ -119,3 +119,24 @@ export const getGitHubRepository =
 
         return response.data;
     };
+
+export const getGitHubRepositories =
+    async () => {
+        const response = await axios.get(
+            `${GITHUB_API}/repositories`,
+            getAuthConfig()
+        );
+
+        return response.data;
+    };
+
+export const saveGitHubRepository =
+    async (repositoryUrl) => {
+        const response = await axios.post(
+            `${GITHUB_API}/repository`,
+            { repositoryUrl },
+            getAuthConfig()
+        );
+
+        return response.data;
+    };

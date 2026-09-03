@@ -43,12 +43,15 @@ public class CodingProblemCompletion {
     private CodingProblem problem;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean completed = false;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer submissionCount = 0;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer successfulSubmissionCount = 0;
 
     @Column(length = 30)

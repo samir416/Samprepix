@@ -3,7 +3,6 @@ package com.aiinterview.backend.controller;
 import com.aiinterview.backend.dto.coding.CodeExecutionRequest;
 import com.aiinterview.backend.dto.coding.CodeExecutionResponse;
 import com.aiinterview.backend.entity.CodingProblem;
-import com.aiinterview.backend.entity.CodingProblemCompletion;
 import com.aiinterview.backend.entity.GitHubConnection;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.repository.CodingProblemRepository;
@@ -17,6 +16,7 @@ import com.aiinterview.backend.service.coding.GitHubRepositoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/coding")
@@ -97,8 +97,7 @@ public class CodeExecutionController {
                 successful
         );
 
-        CodingProblemCompletion completion =
-                codingProblemCompletionService.recordSubmission(
+        codingProblemCompletionService.recordSubmission(
                         user,
                         problem,
                         request.getLanguage(),
@@ -154,7 +153,8 @@ public class CodeExecutionController {
                     connection.getRepositoryUrl(),
                     solutionPath,
                     request.getCode(),
-                    "Solve: " + problem.getTitle()
+                    "Solve " + problem.getTitle() +
+                            " in " + request.getLanguage()
             );
 
             response.setMessage(
@@ -247,27 +247,49 @@ public class CodeExecutionController {
             safeTitle = "problem";
         }
 
-        String safeFileName =
-                fileName == null ||
-                        fileName.isBlank()
-                        ? "solution"
-                        : fileName
-                                .trim()
-                                .replace(
-                                        "\\",
-                                        "/"
-                                )
-                                .replaceAll(
-                                        "^/+",
-                                        ""
-                                );
+        String topic = problem.getTags() == null || problem.getTags().isEmpty()
+                ? "general"
+                : problem.getTags().get(0);
 
-        return "coding-solutions/" +
-                problem.getId() +
-                "-" +
-                safeTitle +
-                "/" +
-                safeFileName;
+        String safeTopic = topic == null ? "general" : topic
+                .trim()
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-+|-+$", "");
+
+        if (safeTopic.isBlank()) {
+            safeTopic = "general";
+        }
+
+        String normalizedFileName = fileName == null || fileName.isBlank()
+                ? "solution"
+                : fileName.trim().replace("\\", "/");
+
+        String extension = normalizedFileName.lastIndexOf('.') >= 0
+                ? normalizedFileName.substring(normalizedFileName.lastIndexOf('.'))
+                : "";
+
+        return safeTopic + "/" + safeTitle + "/" +
+                requestLanguageFolder(fileName) + "/solution" + extension;
+    }
+
+    private String requestLanguageFolder(String fileName) {
+        String extension = fileName == null ? "" : fileName.toLowerCase();
+
+        if (extension.endsWith(".py")) return "python";
+        if (extension.endsWith(".kt")) return "kotlin";
+        if (extension.endsWith(".go")) return "go";
+        if (extension.endsWith(".rs")) return "rust";
+        if (extension.endsWith(".js")) return "javascript";
+        if (extension.endsWith(".ts")) return "typescript";
+        if (extension.endsWith(".cpp")) return "cpp";
+        if (extension.endsWith(".c")) return "c";
+        if (extension.endsWith(".cs")) return "csharp";
+        if (extension.endsWith(".php")) return "php";
+        if (extension.endsWith(".rb")) return "ruby";
+        if (extension.endsWith(".swift")) return "swift";
+        if (extension.endsWith(".dart")) return "dart";
+        return "java";
     }
 
     private User getAuthenticatedUser(

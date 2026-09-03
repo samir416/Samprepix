@@ -4,6 +4,8 @@ import com.aiinterview.backend.entity.CodingProblem;
 import com.aiinterview.backend.repository.CodingProblemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -95,6 +97,51 @@ public class CodingProblemServiceImpl
                         new IllegalArgumentException(
                                 "Coding problem not found."
                         )
+                );
+    }
+
+    @Override
+    public Page<CodingProblem> searchProblems(
+            String search,
+            String difficulty,
+            Pageable pageable
+    ) {
+        String normalizedSearch = search == null ? "" : search.trim();
+        String normalizedDifficulty = difficulty == null
+                ? ""
+                : difficulty.trim().toUpperCase();
+
+        if (!normalizedDifficulty.isBlank() &&
+                !normalizedDifficulty.equals("EASY") &&
+                !normalizedDifficulty.equals("MEDIUM") &&
+                !normalizedDifficulty.equals("HARD")) {
+            return Page.empty(pageable);
+        }
+
+        if (normalizedDifficulty.isBlank() && normalizedSearch.isBlank()) {
+            return codingProblemRepository.findByActiveTrue(pageable);
+        }
+
+        if (normalizedDifficulty.isBlank()) {
+            return codingProblemRepository
+                    .searchActiveProblems(
+                            normalizedSearch,
+                            pageable
+                    );
+        }
+
+        if (normalizedSearch.isBlank()) {
+            return codingProblemRepository.findByDifficultyAndActiveTrue(
+                    normalizedDifficulty,
+                    pageable
+            );
+        }
+
+        return codingProblemRepository
+                .searchActiveProblemsByDifficulty(
+                        normalizedDifficulty,
+                        normalizedSearch,
+                        pageable
                 );
     }
 }
