@@ -54,7 +54,8 @@ public class CodingProblemController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String difficulty
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) String tag
     ) {
         int safePage = Math.max(0, page);
         int safeSize = Math.min(Math.max(1, size), 100);
@@ -66,8 +67,15 @@ public class CodingProblemController {
 
         return ResponseEntity.ok(
                 codingProblemService
-                        .searchProblems(search, difficulty, pageable)
+                        .searchProblems(search, difficulty, tag, pageable)
                         .map(this::toListResponse)
+        );
+    }
+
+    @GetMapping("/tags")
+    public ResponseEntity<List<String>> getAvailableTags() {
+        return ResponseEntity.ok(
+                codingProblemService.getAvailableTags()
         );
     }
 

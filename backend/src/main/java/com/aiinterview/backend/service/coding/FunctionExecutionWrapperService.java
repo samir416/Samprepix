@@ -127,7 +127,11 @@ public class FunctionExecutionWrapperService {
         if (!isLegacyFunction(problem.getFunctionName())) {
             String template = stringValue(configuration.get("executionTemplate"));
             if (template != null && !template.isBlank() && !template.trim().equals("{{USER_CODE}}")) {
-                return buildConfiguredCode(configuration, userCode, testInput);
+                String code = buildConfiguredCode(configuration, userCode, testInput);
+                if ("java".equalsIgnoreCase(runtimeLanguage.trim()) && !code.contains("class ")) {
+                    return buildGenericJavaCode(code, testInput);
+                }
+                return code;
             }
             if ("java".equalsIgnoreCase(runtimeLanguage.trim())) {
                 return buildGenericJavaCode(userCode, testInput);
@@ -1420,6 +1424,11 @@ println!("{}", trap(height));
                     );
         }
 
+        clean = clean.trim();
+        if (!clean.contains(",") && clean.matches(".*\\s+.*")) {
+            clean = String.join(", ", clean.split("\\s+"));
+        }
+
         return clean.trim();
     }
 
@@ -2295,6 +2304,14 @@ println!("{}", trap(height));
 
         String clean =
                 input.trim();
+
+        if (clean.contains("\n")) {
+            String[] lines = clean.split("\\r?\\n", 2);
+            return new String[]{
+                    lines[0].trim(),
+                    lines.length > 1 ? lines[1].trim() : "0"
+            };
+        }
 
         int equalsIndex =
                 clean.indexOf("=");

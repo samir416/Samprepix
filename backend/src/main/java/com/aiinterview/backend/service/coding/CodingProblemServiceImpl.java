@@ -106,10 +106,21 @@ public class CodingProblemServiceImpl
             String difficulty,
             Pageable pageable
     ) {
+        return searchProblems(search, difficulty, null, pageable);
+    }
+
+    @Override
+    public Page<CodingProblem> searchProblems(
+            String search,
+            String difficulty,
+            String tag,
+            Pageable pageable
+    ) {
         String normalizedSearch = search == null ? "" : search.trim();
         String normalizedDifficulty = difficulty == null
                 ? ""
                 : difficulty.trim().toUpperCase();
+        String normalizedTag = tag == null ? "" : tag.trim();
 
         if (!normalizedDifficulty.isBlank() &&
                 !normalizedDifficulty.equals("EASY") &&
@@ -118,30 +129,44 @@ public class CodingProblemServiceImpl
             return Page.empty(pageable);
         }
 
-        if (normalizedDifficulty.isBlank() && normalizedSearch.isBlank()) {
-            return codingProblemRepository.findByActiveTrue(pageable);
-        }
+        if (normalizedTag.isBlank()) {
+            if (normalizedDifficulty.isBlank() && normalizedSearch.isBlank()) {
+                return codingProblemRepository.findByActiveTrue(pageable);
+            }
 
-        if (normalizedDifficulty.isBlank()) {
+            if (normalizedDifficulty.isBlank()) {
+                return codingProblemRepository
+                        .searchActiveProblems(
+                                normalizedSearch,
+                                pageable
+                        );
+            }
+
+            if (normalizedSearch.isBlank()) {
+                return codingProblemRepository.findByDifficultyAndActiveTrue(
+                        normalizedDifficulty,
+                        pageable
+                );
+            }
+
             return codingProblemRepository
-                    .searchActiveProblems(
+                    .searchActiveProblemsByDifficulty(
+                            normalizedDifficulty,
                             normalizedSearch,
                             pageable
                     );
         }
 
-        if (normalizedSearch.isBlank()) {
-            return codingProblemRepository.findByDifficultyAndActiveTrue(
-                    normalizedDifficulty,
-                    pageable
-            );
-        }
+        return codingProblemRepository.searchActiveProblemsFiltered(
+                normalizedDifficulty.isBlank() ? null : normalizedDifficulty,
+                normalizedTag,
+                normalizedSearch.isBlank() ? null : normalizedSearch,
+                pageable
+        );
+    }
 
-        return codingProblemRepository
-                .searchActiveProblemsByDifficulty(
-                        normalizedDifficulty,
-                        normalizedSearch,
-                        pageable
-                );
+    @Override
+    public List<String> getAvailableTags() {
+        return codingProblemRepository.findDistinctActiveTags();
     }
 }

@@ -36,16 +36,21 @@ export const getCodingProblems = (
     page = 0,
     size = 50,
     search = "",
-    difficulty = ""
+    difficulty = "",
+    tag = ""
 ) =>
     API.get("/problems", {
         params: {
             page,
             size,
             search: search || undefined,
-            difficulty: difficulty || undefined
+            difficulty: difficulty || undefined,
+            tag: tag || undefined
         }
     });
+
+export const getCodingProblemTags = () =>
+    API.get("/problems/tags");
 
 export const getCodingProblem = (
     problemId

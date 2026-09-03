@@ -64,6 +64,10 @@ public class CodingProblemDatasetImporter {
             Set<String> existingSlugs = new HashSet<>(problemRepository.findAllSlugs());
             Set<String> existingTitles = new HashSet<>(problemRepository.findAllTitlesLower());
 
+            // Track IDs within the file itself
+            Set<String> seenInFileSourceIds = new HashSet<>();
+            Set<String> seenInFileSlugs = new HashSet<>();
+
             List<ImportedProblem> batch = new ArrayList<>(BATCH_SIZE);
 
             long startTime = System.currentTimeMillis();
@@ -87,16 +91,20 @@ public class CodingProblemDatasetImporter {
                                 node,
                                 objectMapper,
                                 lineNumber,
-                                existingSourceIds,
-                                existingSlugs
+                                seenInFileSourceIds,
+                                seenInFileSlugs
                         );
 
                         String titleLower = imported.problem().getTitle().trim().toLowerCase(Locale.ROOT);
-                        if (existingTitles.contains(titleLower)) {
+                        if (existingSourceIds.contains(imported.sourceId()) ||
+                                existingSlugs.contains(imported.slug()) ||
+                                existingTitles.contains(titleLower)) {
                             report.skippedDuplicates++;
                             continue;
                         }
 
+                        existingSourceIds.add(imported.sourceId());
+                        existingSlugs.add(imported.slug());
                         existingTitles.add(titleLower);
                         batch.add(imported);
 

@@ -359,6 +359,26 @@ public class CodeExecutionServiceImpl
             Map<String, Object> sourceFile =
                     Map.of(
                             "name",
+                            fileName,
+                            "content",
+                            executableCode
+                    );
+
+            Map<String, Object> payload =
+                    Map.of(
+                            "language",
+                            runtimeLanguage,
+                            "version",
+                            runtimeVersion,
+                            "files",
+                            List.of(sourceFile),
+                            "stdin",
+                            testCase.getInput() != null ? testCase.getInput() : ""
+                    );
+
+            String requestBody =
+                    objectMapper.writeValueAsString(
+                            payload
                     );
 
             HttpRequest httpRequest =

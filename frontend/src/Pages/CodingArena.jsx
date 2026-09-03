@@ -24,7 +24,8 @@ import {
     executeCodingCode,
     submitCodingCode,
     getCodingHint,
-    getCodingRuntimes
+    getCodingRuntimes,
+    getCodingProblemTags
 } from "../services/codingService";
 
 export default function CodingArena() {
@@ -59,6 +60,8 @@ export default function CodingArena() {
     const [showProblemMenu, setShowProblemMenu] = useState(false);
     const [problemSearch, setProblemSearch] = useState("");
     const [problemFilter, setProblemFilter] = useState("all");
+    const [topicFilter, setTopicFilter] = useState("all");
+    const [availableTopics, setAvailableTopics] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -461,6 +464,13 @@ export default function CodingArena() {
                 return false;
             }
 
+            if (
+                topicFilter !== "all" &&
+                !(Array.isArray(problem?.tags) && problem.tags.some((t) => String(t).toLowerCase() === topicFilter.toLowerCase()))
+            ) {
+                return false;
+            }
+
             if (!query) {
                 return true;
             }
@@ -491,7 +501,8 @@ export default function CodingArena() {
     }, [
         problems,
         problemSearch,
-        problemFilter
+        problemFilter,
+        topicFilter
     ]);
 
     const getStarterCode = (
@@ -741,7 +752,8 @@ export default function CodingArena() {
         page = 0,
         append = false,
         search = problemSearch,
-        difficulty = problemFilter === "all" ? "" : problemFilter
+        difficulty = problemFilter === "all" ? "" : problemFilter,
+        tag = topicFilter === "all" ? "" : topicFilter
     ) => {
         if (problemListLoading) {
             return;
@@ -754,7 +766,8 @@ export default function CodingArena() {
                 page,
                 50,
                 search,
-                difficulty
+                difficulty,
+                tag
             );
 
             const result = response.data || {};
@@ -783,11 +796,16 @@ export default function CodingArena() {
             setLoading(true);
             setError("");
 
-            const [problemsResponse, progressResponse] =
+            const [problemsResponse, progressResponse, tagsResponse] =
                 await Promise.all([
-                    getCodingProblems(0, 50, "", ""),
-                    getCodingProgress()
+                    getCodingProblems(0, 50, "", "", ""),
+                    getCodingProgress(),
+                    getCodingProblemTags().catch(() => ({ data: [] }))
                 ]);
+
+            if (Array.isArray(tagsResponse?.data)) {
+                setAvailableTopics(tagsResponse.data);
+            }
 
             const backendProblems = Array.isArray(
                 problemsResponse.data?.content
@@ -1214,7 +1232,8 @@ export default function CodingArena() {
                 0,
                 false,
                 value,
-                problemFilter === "all" ? "" : problemFilter
+                problemFilter === "all" ? "" : problemFilter,
+                topicFilter === "all" ? "" : topicFilter
             );
         }, 300);
     };
@@ -1225,6 +1244,18 @@ export default function CodingArena() {
             0,
             false,
             problemSearch,
+            value === "all" ? "" : value,
+            topicFilter === "all" ? "" : topicFilter
+        );
+    };
+
+    const handleTopicFilterChange = (value) => {
+        setTopicFilter(value);
+        loadProblemPage(
+            0,
+            false,
+            problemSearch,
+            problemFilter === "all" ? "" : problemFilter,
             value === "all" ? "" : value
         );
     };
@@ -1974,6 +2005,24 @@ export default function CodingArena() {
                                         Hard
                                     </button>
                                 </div>
+
+                                {availableTopics.length > 0 && (
+                                    <div className="coding-topic-filter-row">
+                                        <select
+                                            className="coding-topic-select"
+                                            value={topicFilter}
+                                            onChange={(e) => handleTopicFilterChange(e.target.value)}
+                                            aria-label="Filter problems by topic"
+                                        >
+                                            <option value="all">All Topics ({availableTopics.length})</option>
+                                            {availableTopics.map((topic) => (
+                                                <option key={topic} value={topic}>
+                                                    {topic}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
 
                                 <div className="coding-problem-count">
                                     <span>
