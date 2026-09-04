@@ -16,6 +16,7 @@ public class CodingProblemListResponse {
     private Long id;
     private String title;
     private String difficulty;
+    private String category;
     private List<String> tags;
     private Integer minimumExperienceLevel;
     private boolean active;

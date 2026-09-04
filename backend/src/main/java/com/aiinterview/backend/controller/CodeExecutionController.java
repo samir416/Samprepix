@@ -13,9 +13,13 @@ import com.aiinterview.backend.service.coding.CodingProblemCompletionService;
 import com.aiinterview.backend.service.coding.CodingProgressService;
 import com.aiinterview.backend.service.coding.FunctionExecutionWrapperService;
 import com.aiinterview.backend.service.coding.GitHubRepositoryService;
+import com.aiinterview.backend.dto.coding.GitHubSyncResult;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @RestController
@@ -30,6 +34,7 @@ public class CodeExecutionController {
     private final CodingProblemCompletionService codingProblemCompletionService;
     private final FunctionExecutionWrapperService wrapperService;
     private final GitHubRepositoryService gitHubRepositoryService;
+    private final ConcurrentHashMap<String, Long> inFlightExecutions = new ConcurrentHashMap<>();
 
     public CodeExecutionController(
             CodeExecutionService codeExecutionService,
@@ -54,15 +59,36 @@ public class CodeExecutionController {
 
     @PostMapping("/execute")
     public ResponseEntity<CodeExecutionResponse> executeCode(
-            @RequestBody CodeExecutionRequest request
+            @RequestBody CodeExecutionRequest request,
+            Authentication authentication
     ) {
 
         validateRequest(request);
 
-        CodeExecutionResponse response =
-                codeExecutionService.execute(request);
+        String userKey = (authentication != null && authentication.getName() != null)
+                ? authentication.getName() + ":" + request.getProblemId()
+                : "anon:" + request.getProblemId();
 
-        return ResponseEntity.ok(response);
+        Long existingStart = inFlightExecutions.get(userKey);
+        if (existingStart != null && (System.currentTimeMillis() - existingStart < 60_000L)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(
+                    CodeExecutionResponse.builder()
+                            .status("EXECUTION_ERROR")
+                            .passed(false)
+                            .message("A code execution is already in progress for this problem. Please wait.")
+                            .build()
+            );
+        }
+
+        inFlightExecutions.put(userKey, System.currentTimeMillis());
+        try {
+            CodeExecutionResponse response =
+                    codeExecutionService.execute(request, false);
+
+            return ResponseEntity.ok(response);
+        } finally {
+            inFlightExecutions.remove(userKey);
+        }
     }
 
     @PostMapping("/submit")
@@ -76,102 +102,188 @@ public class CodeExecutionController {
         User user =
                 getAuthenticatedUser(authentication);
 
-        CodingProblem problem =
-                codingProblemRepository
-                        .findById(request.getProblemId())
-                        .orElseThrow(
-                                () ->
-                                        new IllegalStateException(
-                                                "Coding problem not found."
-                                        )
-                        );
+        String userKey = user.getEmail() + ":" + request.getProblemId();
 
-        CodeExecutionResponse response =
-                codeExecutionService.execute(request);
-
-        boolean successful =
-                response.isPassed();
-
-        codingProgressService.updateSubmission(
-                user,
-                successful
-        );
-
-        codingProblemCompletionService.recordSubmission(
-                        user,
-                        problem,
-                        request.getLanguage(),
-                        request.getCode(),
-                        successful
-                );
-
-        if (!successful) {
-            return ResponseEntity.ok(response);
+        Long existingStart = inFlightExecutions.get(userKey);
+        if (existingStart != null && (System.currentTimeMillis() - existingStart < 60_000L)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(
+                    CodeExecutionResponse.builder()
+                            .status("EXECUTION_ERROR")
+                            .passed(false)
+                            .message("A submission is already in progress for this problem. Please wait.")
+                            .build()
+            );
         }
 
-        codingProgressService.saveCodeState(
-                user,
-                problem,
-                request.getLanguage(),
-                request.getCode()
-        );
+        inFlightExecutions.put(userKey, System.currentTimeMillis());
+        try {
+            CodingProblem problem =
+                    codingProblemRepository
+                            .findById(request.getProblemId())
+                            .orElseThrow(
+                                    () ->
+                                            new IllegalStateException(
+                                                    "Coding problem not found."
+                                            )
+                            );
 
-        codingProgressService.markProblemCompleted(
-                user,
-                problem
-        );
+            CodeExecutionResponse response =
+                    codeExecutionService.execute(request, true);
 
-        response.setMessage(
-                "All test cases passed. Coding progress saved."
-        );
+            boolean successful =
+                    response.isPassed();
 
-        GitHubConnection connection =
-                gitHubConnectionRepository
-                        .findByUser(user)
-                        .orElse(null);
+            codingProgressService.updateSubmission(
+                    user,
+                    successful
+            );
+
+            codingProblemCompletionService.recordSubmission(
+                    user,
+                    problem,
+                    request.getLanguage(),
+                    request.getCode(),
+                    successful
+            );
+
+            if (!successful) {
+                return ResponseEntity.ok(response);
+            }
+
+            codingProgressService.saveCodeState(
+                    user,
+                    problem,
+                    request.getLanguage(),
+                    request.getCode()
+            );
+
+            codingProgressService.markProblemCompleted(
+                    user,
+                    problem
+            );
+
+            response.setMessage(
+                    "All test cases passed. Coding progress saved."
+            );
+
+            GitHubConnection connection =
+                    gitHubConnectionRepository
+                            .findByUser(user)
+                            .orElse(null);
+
+            if (!isGitHubConnectionUsable(connection)) {
+                response.setGitHubSync(
+                        GitHubSyncResult.builder()
+                                .connected(false)
+                                .synced(false)
+                                .alreadySynced(false)
+                                .message("GitHub not connected. Connect GitHub in Profile to enable automatic solution syncing.")
+                                .build()
+                );
+                return ResponseEntity.ok(response);
+            }
+
+            try {
+                GitHubRepositoryService.GitHubPushResult pushResult =
+                        gitHubRepositoryService.syncSolution(
+                                user,
+                                connection.getRepositoryUrl(),
+                                problem,
+                                request.getLanguage(),
+                                request.getCode()
+                        );
+
+                response.setGitHubSync(pushResult.toSyncResult());
+
+                if (pushResult.isAlreadySynced()) {
+                    response.setMessage(
+                            "All test cases passed. Solution already synced to GitHub."
+                    );
+                } else if (pushResult.getSolutionNumber() != null && pushResult.getSolutionNumber() > 1) {
+                    response.setMessage(
+                            "All test cases passed. Solution " + pushResult.getSolutionNumber() + " synced to GitHub."
+                    );
+                } else {
+                    response.setMessage(
+                            "All test cases passed. Solution committed to GitHub."
+                    );
+                }
+
+            } catch (Exception exception) {
+                response.setGitHubSync(
+                        GitHubSyncResult.builder()
+                                .connected(true)
+                                .synced(false)
+                                .alreadySynced(false)
+                                .error(safeMessage(exception.getMessage()))
+                                .message("GitHub sync failed: " + safeMessage(exception.getMessage()))
+                                .build()
+                );
+
+                response.setMessage(
+                        "All test cases passed and progress was saved, but GitHub sync failed: "
+                                + safeMessage(
+                                        exception.getMessage()
+                                )
+                );
+            }
+
+            return ResponseEntity.ok(response);
+        } finally {
+            inFlightExecutions.remove(userKey);
+        }
+    }
+
+    @PostMapping("/sync-github")
+    public ResponseEntity<GitHubSyncResult> retryGitHubSync(
+            @RequestBody CodeExecutionRequest request,
+            Authentication authentication
+    ) {
+
+        validateRequest(request);
+
+        User user = getAuthenticatedUser(authentication);
+
+        CodingProblem problem = codingProblemRepository
+                .findById(request.getProblemId())
+                .orElseThrow(() -> new IllegalStateException("Coding problem not found."));
+
+        GitHubConnection connection = gitHubConnectionRepository
+                .findByUser(user)
+                .orElse(null);
 
         if (!isGitHubConnectionUsable(connection)) {
-            return ResponseEntity.ok(response);
+            return ResponseEntity.badRequest().body(
+                    GitHubSyncResult.builder()
+                            .connected(false)
+                            .synced(false)
+                            .error("GitHub is not connected. Connect GitHub in Profile to enable automatic solution syncing.")
+                            .message("GitHub is not connected.")
+                            .build()
+            );
         }
 
         try {
-
-            String fileName =
-                    wrapperService.getFileName(
+            GitHubRepositoryService.GitHubPushResult pushResult =
+                    gitHubRepositoryService.syncSolution(
+                            user,
+                            connection.getRepositoryUrl(),
                             problem,
-                            request.getLanguage()
+                            request.getLanguage(),
+                            request.getCode()
                     );
 
-            String solutionPath =
-                    buildSolutionPath(
-                            problem,
-                            fileName
-                    );
-
-            gitHubRepositoryService.pushSolution(
-                    user,
-                    connection.getRepositoryUrl(),
-                    solutionPath,
-                    request.getCode(),
-                    "Solve " + problem.getTitle() +
-                            " in " + request.getLanguage()
-            );
-
-            response.setMessage(
-                    "All test cases passed. Solution committed to GitHub."
-            );
-
+            return ResponseEntity.ok(pushResult.toSyncResult());
         } catch (Exception exception) {
-
-            response.setMessage(
-                    "All test cases passed and progress was saved, but the GitHub commit failed: "
-                            + safeMessage(
-                                    exception.getMessage()
-                            )
+            return ResponseEntity.badRequest().body(
+                    GitHubSyncResult.builder()
+                            .connected(true)
+                            .synced(false)
+                            .error(safeMessage(exception.getMessage()))
+                            .message("GitHub sync failed: " + safeMessage(exception.getMessage()))
+                            .build()
             );
         }
-
-        return ResponseEntity.ok(response);
     }
 
     private void validateRequest(
@@ -289,6 +401,25 @@ public class CodeExecutionController {
         if (extension.endsWith(".rb")) return "ruby";
         if (extension.endsWith(".swift")) return "swift";
         if (extension.endsWith(".dart")) return "dart";
+        if (extension.endsWith(".rkt")) return "racket";
+        if (extension.endsWith(".r")) return "r";
+        if (extension.endsWith(".groovy")) return "groovy";
+        if (extension.endsWith(".fsx") || extension.endsWith(".fs")) return "fsharp";
+        if (extension.endsWith(".jl")) return "julia";
+        if (extension.endsWith(".d")) return "d";
+        if (extension.endsWith(".cob")) return "cobol";
+        if (extension.endsWith(".ml")) return "ocaml";
+        if (extension.endsWith(".nim")) return "nim";
+        if (extension.endsWith(".pas")) return "pascal";
+        if (extension.endsWith(".raku")) return "raku";
+        if (extension.endsWith(".v")) return "v";
+        if (extension.endsWith(".sh")) return "bash";
+        if (extension.endsWith(".lua")) return "lua";
+        if (extension.endsWith(".exs") || extension.endsWith(".ex")) return "elixir";
+        if (extension.endsWith(".erl")) return "erlang";
+        if (extension.endsWith(".pl")) return "perl";
+        if (extension.endsWith(".hs")) return "haskell";
+        if (extension.endsWith(".scala")) return "scala";
         return "java";
     }
 

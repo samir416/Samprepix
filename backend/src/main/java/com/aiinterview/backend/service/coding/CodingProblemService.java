@@ -35,5 +35,13 @@ public interface CodingProblemService {
             Pageable pageable
     );
 
+    Page<CodingProblem> searchProblems(
+            String search,
+            String difficulty,
+            String tag,
+            String category,
+            Pageable pageable
+    );
+
     List<String> getAvailableTags();
 }

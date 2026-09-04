@@ -6,6 +6,13 @@ import com.aiinterview.backend.dto.coding.CodeExecutionResponse;
 public interface CodeExecutionService {
 
     CodeExecutionResponse execute(
-            CodeExecutionRequest request
+            CodeExecutionRequest request,
+            boolean isSubmit
     );
+
+    default CodeExecutionResponse execute(
+            CodeExecutionRequest request
+    ) {
+        return execute(request, false);
+    }
 }

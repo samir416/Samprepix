@@ -45,6 +45,7 @@ public class GitHubConnection {
     )
     private String repositoryUrl;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Lob
     @Column(
             name = "access_token",

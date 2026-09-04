@@ -21,6 +21,7 @@ public class CodingProblemResponse {
     private String description;
 
     private String difficulty;
+    private String category;
 
     private List<String> tags;
 

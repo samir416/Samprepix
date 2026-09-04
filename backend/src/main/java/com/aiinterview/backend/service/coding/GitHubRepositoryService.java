@@ -1,5 +1,8 @@
 package com.aiinterview.backend.service.coding;
 
+import com.aiinterview.backend.config.CentralLanguageRegistry;
+import com.aiinterview.backend.dto.coding.GitHubSyncResult;
+import com.aiinterview.backend.entity.CodingProblem;
 import com.aiinterview.backend.entity.GitHubConnection;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.repository.GitHubConnectionRepository;
@@ -436,6 +439,168 @@ public class GitHubRepositoryService {
         }
     }
 
+    public GitHubPushResult syncSolution(
+            User user,
+            String repositoryUrl,
+            CodingProblem problem,
+            String language,
+            String sourceCode
+    ) {
+        if (problem == null) {
+            throw new IllegalArgumentException("Coding problem is required.");
+        }
+        if (language == null || language.isBlank()) {
+            throw new IllegalArgumentException("Programming language is required.");
+        }
+        if (sourceCode == null || sourceCode.isBlank()) {
+            throw new IllegalArgumentException("Solution code cannot be empty.");
+        }
+
+        GitHubConnection connection = getConnection(user, true);
+        RepositoryReference repository = parseRepositoryUrl(repositoryUrl);
+
+        JsonNode repositoryData = sendRepositoryRequest(
+                connection.getAccessToken(),
+                repository
+        );
+
+        boolean pushPermission = repositoryData
+                .path("permissions")
+                .path("push")
+                .asBoolean(false);
+
+        if (!pushPermission) {
+            throw new IllegalStateException(
+                    "GitHub account does not have write access to this repository."
+            );
+        }
+
+        String branch = repositoryData
+                .path("default_branch")
+                .asText("main")
+                .trim();
+        if (branch.isBlank()) {
+            branch = "main";
+        }
+
+        String filePath = GitHubSolutionHelper.getSolutionPath(problem, language);
+        String normalizedPath = normalizeFilePath(filePath);
+
+        CentralLanguageRegistry.LanguageSpec spec = CentralLanguageRegistry.get(language);
+        String langDisplay = spec != null ? spec.displayName() : language;
+
+        int maxAttempts = 3;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            ExistingFile existingFile = getExistingFile(
+                    connection.getAccessToken(),
+                    repository,
+                    normalizedPath
+            );
+
+            String existingContent = existingFile != null ? existingFile.content() : "";
+            String existingSha = existingFile != null ? existingFile.sha() : null;
+
+            GitHubSolutionHelper.MergeResult mergeResult =
+                    GitHubSolutionHelper.prepareMergedContent(sourceCode, existingContent, language);
+
+            String repoNormalizedUrl = normalizeRepositoryUrl(repositoryUrl);
+            String fileUrl = repoNormalizedUrl + "/blob/" + branch + "/" + normalizedPath;
+
+            if (mergeResult.duplicate()) {
+                return GitHubPushResult.builder()
+                        .success(true)
+                        .alreadySynced(true)
+                        .solutionNumber(mergeResult.solutionNumber())
+                        .repositoryUrl(repoNormalizedUrl)
+                        .filePath(normalizedPath)
+                        .fileUrl(fileUrl)
+                        .message("Solution already synced to GitHub.")
+                        .build();
+            }
+
+            String commitMessage;
+            if (mergeResult.solutionNumber() == 1) {
+                commitMessage = "Add " + problem.getTitle() + " " + langDisplay + " solution";
+            } else {
+                commitMessage = "Add Solution " + mergeResult.solutionNumber() + " for " + problem.getTitle() + " in " + langDisplay;
+            }
+
+            String encodedContent = Base64.getEncoder().encodeToString(
+                    mergeResult.content().getBytes(StandardCharsets.UTF_8)
+            );
+
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("message", commitMessage.trim());
+            payload.put("content", encodedContent);
+            if (existingSha != null && !existingSha.isBlank()) {
+                payload.put("sha", existingSha);
+            }
+            payload.put("branch", branch);
+
+            String requestBody;
+            try {
+                requestBody = objectMapper.writeValueAsString(payload);
+            } catch (Exception e) {
+                throw new IllegalStateException("Unable to prepare GitHub solution payload.", e);
+            }
+
+            String endpoint = GITHUB_API + "/repos/" + repository.owner() + "/" + repository.repository() + "/contents/" + normalizedPath;
+            HttpRequest request = githubRequest(connection.getAccessToken(), endpoint)
+                    .PUT(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+
+            try {
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 409) {
+                    if (attempt < maxAttempts) {
+                        try {
+                            Thread.sleep(100L * attempt);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                        }
+                        continue;
+                    }
+                    throw githubApiException(response, "Conflict updating GitHub solution file.");
+                }
+
+                if (response.statusCode() != 200 && response.statusCode() != 201) {
+                    throw githubApiException(response, "Unable to push coding solution to GitHub.");
+                }
+
+                JsonNode root = objectMapper.readTree(response.body());
+                String commitSha = root.path("commit").path("sha").asText("");
+                String commitUrl = root.path("commit").path("html_url").asText("");
+                String respFileUrl = root.path("content").path("html_url").asText(fileUrl);
+
+                connection.setRepositoryUrl(repoNormalizedUrl);
+                gitHubConnectionRepository.save(connection);
+
+                String successMessage = mergeResult.solutionNumber() == 1
+                        ? "Solution pushed to GitHub successfully."
+                        : "Solution " + mergeResult.solutionNumber() + " synced to GitHub.";
+
+                return GitHubPushResult.builder()
+                        .success(true)
+                        .alreadySynced(false)
+                        .solutionNumber(mergeResult.solutionNumber())
+                        .repositoryUrl(repoNormalizedUrl)
+                        .filePath(normalizedPath)
+                        .commitSha(commitSha)
+                        .commitUrl(commitUrl)
+                        .fileUrl(respFileUrl)
+                        .message(successMessage)
+                        .build();
+            } catch (java.io.IOException | InterruptedException exception) {
+                if (exception instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+                throw new IllegalStateException("Unable to connect to GitHub.", exception);
+            }
+        }
+
+        throw new IllegalStateException("Unable to synchronize solution to GitHub after retries.");
+    }
+
     private GitHubConnection getConnection(User user, boolean requireToken) {
 
         if (
@@ -660,12 +825,11 @@ public class GitHubRepositoryService {
         }
     }
 
-    private String getExistingFileSha(
+    public ExistingFile getExistingFile(
             String accessToken,
             RepositoryReference repository,
             String filePath
     ) {
-
         String endpoint =
                 GITHUB_API +
                 "/repos/" +
@@ -684,7 +848,6 @@ public class GitHubRepositoryService {
                         .build();
 
         try {
-
             HttpResponse<String> response =
                     httpClient.send(
                             request,
@@ -692,28 +855,18 @@ public class GitHubRepositoryService {
                                     .ofString()
                     );
 
-            if (
-                    response.statusCode() == 404
-            ) {
-
+            if (response.statusCode() == 404) {
                 return null;
             }
 
-            if (
-                    response.statusCode() != 200
-            ) {
-
+            if (response.statusCode() != 200) {
                 throw githubApiException(
                         response,
                         "Unable to check existing GitHub solution file."
                 );
             }
 
-            if (
-                    response.body() == null ||
-                    response.body().isBlank()
-            ) {
-
+            if (response.body() == null || response.body().isBlank()) {
                 return null;
             }
 
@@ -727,21 +880,31 @@ public class GitHubRepositoryService {
                             "sha"
                     ).asText("");
 
-            return sha.isBlank()
-                    ? null
-                    : sha;
+            if (sha.isBlank()) {
+                return null;
+            }
+
+            String encodedContent = root.path("content").asText("");
+            String content = "";
+            if (!encodedContent.isBlank()) {
+                try {
+                    byte[] decoded = Base64.getDecoder().decode(
+                            encodedContent.replaceAll("\\s+", "")
+                    );
+                    content = new String(decoded, StandardCharsets.UTF_8);
+                } catch (Exception ignored) {
+                    content = "";
+                }
+            }
+
+            return new ExistingFile(sha, content);
 
         } catch (
                 java.io.IOException |
                 InterruptedException exception
         ) {
-
-            if (
-                    exception instanceof InterruptedException
-            ) {
-
-                Thread.currentThread()
-                        .interrupt();
+            if (exception instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
             }
 
             throw new IllegalStateException(
@@ -749,6 +912,15 @@ public class GitHubRepositoryService {
                     exception
             );
         }
+    }
+
+    private String getExistingFileSha(
+            String accessToken,
+            RepositoryReference repository,
+            String filePath
+    ) {
+        ExistingFile file = getExistingFile(accessToken, repository, filePath);
+        return file != null ? file.sha() : null;
     }
 
     private HttpRequest.Builder githubRequest(
@@ -915,6 +1087,12 @@ public class GitHubRepositoryService {
     ) {
     }
 
+    public record ExistingFile(
+            String sha,
+            String content
+    ) {
+    }
+
     public static class GitHubRepositoryResult {
 
         private String owner;
@@ -1004,6 +1182,10 @@ public class GitHubRepositoryService {
 
         private boolean success;
 
+        private boolean alreadySynced;
+
+        private Integer solutionNumber;
+
         private String repositoryUrl;
 
         private String filePath;
@@ -1022,6 +1204,14 @@ public class GitHubRepositoryService {
 
         public boolean isSuccess() {
             return success;
+        }
+
+        public boolean isAlreadySynced() {
+            return alreadySynced;
+        }
+
+        public Integer getSolutionNumber() {
+            return solutionNumber;
         }
 
         public String getRepositoryUrl() {
@@ -1048,6 +1238,21 @@ public class GitHubRepositoryService {
             return message;
         }
 
+        public GitHubSyncResult toSyncResult() {
+            return GitHubSyncResult.builder()
+                    .connected(true)
+                    .synced(success && !alreadySynced)
+                    .alreadySynced(alreadySynced)
+                    .solutionNumber(solutionNumber)
+                    .repositoryUrl(repositoryUrl)
+                    .filePath(filePath)
+                    .commitSha(commitSha)
+                    .commitUrl(commitUrl)
+                    .fileUrl(fileUrl)
+                    .message(message)
+                    .build();
+        }
+
         public static class Builder {
 
             private final GitHubPushResult result =
@@ -1057,6 +1262,20 @@ public class GitHubRepositoryService {
                     boolean success
             ) {
                 result.success = success;
+                return this;
+            }
+
+            public Builder alreadySynced(
+                    boolean alreadySynced
+            ) {
+                result.alreadySynced = alreadySynced;
+                return this;
+            }
+
+            public Builder solutionNumber(
+                    Integer solutionNumber
+            ) {
+                result.solutionNumber = solutionNumber;
                 return this;
             }
 

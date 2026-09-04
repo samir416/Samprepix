@@ -1,5 +1,6 @@
 package com.aiinterview.backend.service.coding;
 
+import com.aiinterview.backend.config.CentralLanguageRegistry;
 import com.aiinterview.backend.entity.CodingProblem;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,36 +24,39 @@ public class FunctionExecutionWrapperService {
             CodingProblem problem,
             String language
     ) {
-
-        return requiredValue(
-                getLanguageConfiguration(problem, language),
-                "runtimeLanguage",
-                language
-        );
+        Map<String, Object> config = getLanguageConfiguration(problem, language);
+        String runtimeLanguage = stringValue(config.get("runtimeLanguage"));
+        if (runtimeLanguage != null && !runtimeLanguage.isBlank()) {
+            return runtimeLanguage.trim();
+        }
+        CentralLanguageRegistry.LanguageSpec spec = CentralLanguageRegistry.get(language);
+        return spec != null ? spec.runtimeLanguage() : language;
     }
 
     public String getRuntimeVersion(
             CodingProblem problem,
             String language
     ) {
-
-        return requiredValue(
-                getLanguageConfiguration(problem, language),
-                "runtimeVersion",
-                language
-        );
+        Map<String, Object> config = getLanguageConfiguration(problem, language);
+        String version = stringValue(config.get("runtimeVersion"));
+        if (version != null && !version.isBlank()) {
+            return version.trim();
+        }
+        CentralLanguageRegistry.LanguageSpec spec = CentralLanguageRegistry.get(language);
+        return spec != null ? spec.runtimeVersion() : "*";
     }
 
     public String getFileName(
             CodingProblem problem,
             String language
     ) {
-
-        return requiredValue(
-                getLanguageConfiguration(problem, language),
-                "fileName",
-                language
-        );
+        Map<String, Object> config = getLanguageConfiguration(problem, language);
+        String fileName = stringValue(config.get("fileName"));
+        if (fileName != null && !fileName.isBlank()) {
+            return fileName.trim();
+        }
+        CentralLanguageRegistry.LanguageSpec spec = CentralLanguageRegistry.get(language);
+        return spec != null ? spec.fileName() : "main";
     }
 
     public String getStarterCode(
@@ -260,6 +264,13 @@ public class Main {
                             languageConfigurations,
                             language
                     );
+
+            if (configuration == null && !isLegacyFunction(problem.getFunctionName())) {
+                CentralLanguageRegistry.LanguageSpec spec = CentralLanguageRegistry.get(language);
+                if (spec != null) {
+                    configuration = CentralLanguageRegistry.toConfigurationMap(spec);
+                }
+            }
 
             if (configuration == null) {
                 throw new IllegalArgumentException(

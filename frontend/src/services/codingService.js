@@ -37,7 +37,8 @@ export const getCodingProblems = (
     size = 50,
     search = "",
     difficulty = "",
-    tag = ""
+    tag = "",
+    category = ""
 ) =>
     API.get("/problems", {
         params: {
@@ -45,7 +46,8 @@ export const getCodingProblems = (
             size,
             search: search || undefined,
             difficulty: difficulty || undefined,
-            tag: tag || undefined
+            tag: tag || undefined,
+            category: category || undefined
         }
     });
 
@@ -156,7 +158,8 @@ export const getCodingHint = (
     problemTitle,
     problemDescription,
     language,
-    code
+    code,
+    level = 1
 ) =>
     ROOT_API.post(
         "/ai/coding-hint",
@@ -164,11 +167,28 @@ export const getCodingHint = (
             problemTitle,
             problemDescription,
             language,
-            code
+            code,
+            level
         }
     );
 
+export const getCodingLanguages = () =>
+    API.get("/problems/languages");
+
 export const getCodingRuntimes = () =>
     API.get("/runtimes");
+export const retryGitHubSync = (
+    problemId,
+    language,
+    code
+) =>
+    API.post(
+        "/sync-github",
+        {
+            problemId,
+            language,
+            code
+        }
+    );
 
 export default API;

@@ -31,6 +31,7 @@ public class CodeExecutionServiceImpl
     private final CodingTestCaseRepository codingTestCaseRepository;
     private final FunctionExecutionWrapperService wrapperService;
     private final PistonRuntimeService pistonRuntimeService;
+    private final DatabaseExecutionService databaseExecutionService;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String pistonUrl;
@@ -40,6 +41,7 @@ public class CodeExecutionServiceImpl
             CodingTestCaseRepository codingTestCaseRepository,
             FunctionExecutionWrapperService wrapperService,
             PistonRuntimeService pistonRuntimeService,
+            DatabaseExecutionService databaseExecutionService,
             @Value("${app.piston.url:http://localhost:2000/api/v2/execute}")
             String pistonUrl
     ) {
@@ -55,6 +57,9 @@ public class CodeExecutionServiceImpl
 
         this.pistonRuntimeService =
                 pistonRuntimeService;
+
+        this.databaseExecutionService =
+                databaseExecutionService;
 
         this.pistonUrl =
                 pistonUrl;
@@ -75,6 +80,15 @@ public class CodeExecutionServiceImpl
     @Transactional(readOnly = true)
     public CodeExecutionResponse execute(
             CodeExecutionRequest request
+    ) {
+        return execute(request, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CodeExecutionResponse execute(
+            CodeExecutionRequest request,
+            boolean isSubmit
     ) {
 
         if (request == null) {
@@ -138,9 +152,13 @@ public class CodeExecutionServiceImpl
             );
         }
 
-        List<CodingTestCase> testCases =
-                codingTestCaseRepository
+        List<CodingTestCase> testCases = isSubmit
+                ? codingTestCaseRepository
                         .findByProblemAndActiveTrueOrderByTestCaseNumberAsc(
+                                problem
+                        )
+                : codingTestCaseRepository
+                        .findByProblemAndHiddenFalseAndActiveTrueOrderByTestCaseNumberAsc(
                                 problem
                         );
 
@@ -153,6 +171,10 @@ public class CodeExecutionServiceImpl
                     "No active test cases are available for this problem.",
                     "Missing test cases."
             );
+        }
+
+        if (databaseExecutionService.isDatabaseProblem(problem, request.getLanguage())) {
+            return databaseExecutionService.execute(problem, testCases, request.getCode(), isSubmit);
         }
 
         String runtimeLanguage;
@@ -259,6 +281,12 @@ public class CodeExecutionServiceImpl
 
             if (
                     "COMPILE_ERROR".equals(
+                            result.getStatus()
+                    ) ||
+                    "PROVIDER_ERROR".equals(
+                            result.getStatus()
+                    ) ||
+                    "MEMORY_LIMIT_EXCEEDED".equals(
                             result.getStatus()
                     ) ||
                     "EXECUTION_ERROR".equals(
@@ -569,14 +597,22 @@ public class CodeExecutionServiceImpl
                 runtime = requestRuntime;
             }
 
-            if (runCode != 0) {
+            String signal = runNode.path("signal").asText("");
+            String output = runNode.path("output").asText("");
 
-                String error =
-                        firstNonBlank(
-                                stderr,
-                                stdout,
-                                "Program execution failed."
-                        );
+            if (runCode != 0 || !signal.isBlank()) {
+                String error = firstNonBlank(stderr, stdout, output, "Program execution failed.");
+                String lower = error.toLowerCase();
+                String testStatus = "RUNTIME_ERROR";
+
+                if (lower.contains("outofmemory") || lower.contains("out of memory") || lower.contains("memory limit exceeded")) {
+                    testStatus = "MEMORY_LIMIT_EXCEEDED";
+                    error = "Memory limit exceeded.";
+                } else if ("SIGXCPU".equalsIgnoreCase(signal) || lower.contains("time limit exceeded")
+                        || ("SIGKILL".equalsIgnoreCase(signal) && !lower.contains("memory"))) {
+                    testStatus = "TIME_LIMIT_EXCEEDED";
+                    error = "Time limit exceeded.";
+                }
 
                 return CodeExecutionTestCaseResponse
                         .builder()
@@ -601,7 +637,7 @@ public class CodeExecutionServiceImpl
                         .actualOutput(null)
                         .error(error)
                         .runtime(runtime)
-                        .status("RUNTIME_ERROR")
+                        .status(testStatus)
                         .build();
             }
 
@@ -651,6 +687,19 @@ public class CodeExecutionServiceImpl
                                     : "FAILED"
                     )
                     .build();
+
+        } catch (
+                java.net.ConnectException |
+                java.net.http.HttpConnectTimeoutException exception
+        ) {
+
+            return failedTestCase(
+                    testCase,
+                    "PROVIDER_ERROR",
+                    "Code execution service is currently unreachable.",
+                    System.currentTimeMillis()
+                            - startTime
+            );
 
         } catch (
                 java.net.http.HttpTimeoutException exception
@@ -722,12 +771,42 @@ public class CodeExecutionServiceImpl
         ) {
 
             if (
+                    "PROVIDER_ERROR".equals(
+                            result.getStatus()
+                    )
+            ) {
+
+                return "PROVIDER_ERROR";
+            }
+        }
+
+        for (
+                CodeExecutionTestCaseResponse result :
+                results
+        ) {
+
+            if (
                     "TIME_LIMIT_EXCEEDED".equals(
                             result.getStatus()
                     )
             ) {
 
                 return "TIME_LIMIT_EXCEEDED";
+            }
+        }
+
+        for (
+                CodeExecutionTestCaseResponse result :
+                results
+        ) {
+
+            if (
+                    "MEMORY_LIMIT_EXCEEDED".equals(
+                            result.getStatus()
+                    )
+            ) {
+
+                return "MEMORY_LIMIT_EXCEEDED";
             }
         }
 
@@ -853,28 +932,18 @@ public class CodeExecutionServiceImpl
     }
 
     private String firstNonBlank(
-            String first,
-            String second,
-            String fallback
+            String... candidates
     ) {
 
-        if (
-                first != null &&
-                !first.isBlank()
-        ) {
-
-            return first;
+        if (candidates != null) {
+            for (String candidate : candidates) {
+                if (candidate != null && !candidate.isBlank()) {
+                    return candidate;
+                }
+            }
         }
 
-        if (
-                second != null &&
-                !second.isBlank()
-        ) {
-
-            return second;
-        }
-
-        return fallback;
+        return "";
     }
 
     private String compactExecutionServerError(String responseBody) {

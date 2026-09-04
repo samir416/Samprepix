@@ -1,5 +1,6 @@
 package com.aiinterview.backend.controller;
 
+import com.aiinterview.backend.config.CentralLanguageRegistry;
 import com.aiinterview.backend.dto.coding.CodingProblemResponse;
 import com.aiinterview.backend.dto.coding.CodingPublicTestCaseResponse;
 import com.aiinterview.backend.dto.coding.CodingProblemListResponse;
@@ -55,7 +56,8 @@ public class CodingProblemController {
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String difficulty,
-            @RequestParam(required = false) String tag
+            @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String category
     ) {
         int safePage = Math.max(0, page);
         int safeSize = Math.min(Math.max(1, size), 100);
@@ -67,9 +69,19 @@ public class CodingProblemController {
 
         return ResponseEntity.ok(
                 codingProblemService
-                        .searchProblems(search, difficulty, tag, pageable)
+                        .searchProblems(search, difficulty, tag, category, pageable)
                         .map(this::toListResponse)
         );
+    }
+
+    public ResponseEntity<Page<CodingProblemListResponse>> getProblems(
+            int page,
+            int size,
+            String search,
+            String difficulty,
+            String tag
+    ) {
+        return getProblems(page, size, search, difficulty, tag, null);
     }
 
     @GetMapping("/tags")
@@ -79,11 +91,23 @@ public class CodingProblemController {
         );
     }
 
+    @GetMapping("/languages")
+    public ResponseEntity<Map<String, Object>> getAvailableLanguages() {
+        return ResponseEntity.ok(Map.of(
+                "all", CentralLanguageRegistry.getAllLanguages(),
+                "popular", CentralLanguageRegistry.getPopularLanguages(),
+                "more", CentralLanguageRegistry.getMoreLanguages(),
+                "database", CentralLanguageRegistry.getDatabaseLanguages(),
+                "programming", CentralLanguageRegistry.getProgrammingLanguages()
+        ));
+    }
+
     private CodingProblemListResponse toListResponse(CodingProblem problem) {
         return CodingProblemListResponse.builder()
                 .id(problem.getId())
                 .title(problem.getTitle())
                 .difficulty(problem.getDifficulty())
+                .category(problem.getCategory() == null ? "DSA" : problem.getCategory())
                 .tags(problem.getTags() == null
                         ? List.of()
                         : List.copyOf(problem.getTags()))
@@ -183,6 +207,7 @@ public class CodingProblemController {
                 .title(problem.getTitle())
                 .description(problem.getDescription())
                 .difficulty(problem.getDifficulty())
+                .category(problem.getCategory() == null ? "DSA" : problem.getCategory())
                 .tags(
                         problem.getTags() == null
                                 ? List.of()
@@ -308,6 +333,14 @@ public class CodingProblemController {
                             configuration,
                             "runtimeVersion"
                     );
+
+            if ("mysql".equalsIgnoreCase(configurationKey) || "sql".equalsIgnoreCase(configurationKey)) {
+                configuration.put("runtimeLanguage", "mysql");
+                configuration.put("runtimeVersion", "8.0");
+                ensureDisplayMetadata(configuration, "mysql");
+                result.put(configurationKey, configuration);
+                continue;
+            }
 
             PistonRuntimeService.PistonRuntime runtime;
 
@@ -491,6 +524,9 @@ public class CodingProblemController {
             case "bash", "shell", "sh" ->
                     "Bash";
 
+            case "mysql", "sql" ->
+                    "MySQL";
+
             default ->
                     Character.toUpperCase(
                             language.charAt(0)
@@ -545,6 +581,9 @@ public class CodingProblemController {
 
             case "kt" ->
                     "kotlin";
+
+            case "mysql", "sql" ->
+                    "sql";
 
             default ->
                     normalized;

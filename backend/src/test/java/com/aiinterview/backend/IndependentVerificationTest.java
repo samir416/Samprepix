@@ -382,7 +382,8 @@ public class IndependentVerificationTest {
                         .problemId(problem.getId())
                         .language("java")
                         .code(javaCode)
-                        .build()
+                        .build(),
+                true
         );
 
         assertNotNull(submitResponse);

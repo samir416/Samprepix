@@ -34,4 +34,6 @@ public class CodeExecutionResponse {
     private String message;
 
     private List<CodeExecutionTestCaseResponse> testCases;
+
+    private GitHubSyncResult gitHubSync;
 }

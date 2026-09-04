@@ -27,6 +27,7 @@ import java.util.List;
                 @Index(name = "idx_coding_problem_active", columnList = "active"),
                 @Index(name = "idx_coding_problem_difficulty_active", columnList = "difficulty, active"),
                 @Index(name = "idx_coding_problem_title", columnList = "title"),
+                @Index(name = "idx_coding_problem_category", columnList = "category"),
                 @Index(name = "uk_coding_problem_slug", columnList = "slug", unique = true),
                 @Index(name = "uk_coding_problem_source_id", columnList = "source_id", unique = true)
         }
@@ -55,6 +56,10 @@ public class CodingProblem {
 
     @Column(nullable = false, length = 20)
     private String difficulty;
+
+    @Column(length = 50)
+    @Builder.Default
+    private String category = "DSA";
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(

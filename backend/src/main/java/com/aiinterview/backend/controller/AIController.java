@@ -48,11 +48,13 @@ public class AIController {
 
     @PostMapping("/coding-hint")
     public ResponseEntity<?> generateCodingHint(
-            @RequestBody(required = false) Map<String, String> payload,
+            @RequestBody(required = false) Map<String, Object> payload,
             @RequestParam(required = false) String problemTitle,
             @RequestParam(required = false) String problemDescription,
             @RequestParam(required = false) String language,
-            @RequestParam(required = false) String code
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false, defaultValue = "1") Integer level,
+            java.security.Principal principal
     ) {
 
         try {
@@ -62,13 +64,22 @@ public class AIController {
             language = valueFrom(payload, "language", language);
             code = valueFrom(payload, "code", code);
 
+            int hintLevel = 1;
+            if (payload != null && payload.get("level") != null) {
+                try {
+                    hintLevel = Integer.parseInt(payload.get("level").toString());
+                } catch (NumberFormatException ignored) {}
+            } else if (level != null) {
+                hintLevel = level;
+            }
+
             if (
                     problemTitle == null ||
                     problemTitle.isBlank()
             ) {
                 return ResponseEntity
                         .badRequest()
-                        .body("Problem title is required.");
+                        .body(Map.of("success", false, "message", "Problem title is required."));
             }
 
             if (
@@ -77,28 +88,30 @@ public class AIController {
             ) {
                 return ResponseEntity
                         .badRequest()
-                        .body("Problem description is required.");
+                        .body(Map.of("success", false, "message", "Problem description is required."));
             }
 
             if (
                     language == null ||
                     language.isBlank()
             ) {
-                return ResponseEntity
-                        .badRequest()
-                        .body("Programming language is required.");
+                language = "Java";
             }
 
             if (code == null) {
                 code = "";
             }
 
+            String userKey = principal != null ? principal.getName() : "anonymous";
+
             Map<String, Object> hint =
                     codingHintService.generateHint(
                             problemTitle,
                             problemDescription,
                             language,
-                            code
+                            code,
+                            hintLevel,
+                            userKey
                     );
             return ResponseEntity.ok(hint);
 
@@ -106,9 +119,19 @@ public class AIController {
 
             return ResponseEntity
                     .badRequest()
-                    .body(
-                            exception.getMessage()
-                    );
+                    .body(Map.of(
+                            "success", false,
+                            "message", exception.getMessage()
+                    ));
+
+        } catch (IllegalStateException exception) {
+
+            return ResponseEntity
+                    .status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of(
+                            "success", false,
+                            "message", exception.getMessage()
+                    ));
 
         } catch (Exception exception) {
 
@@ -118,7 +141,7 @@ public class AIController {
                     )
                     .body(Map.of(
                             "success", false,
-                            "message", "AI Hint is temporarily unavailable."
+                            "message", "AI Hint is temporarily unavailable. Please try again later."
                     ));
         }
     }
@@ -149,7 +172,7 @@ public class AIController {
     }
 
     private String valueFrom(
-            Map<String, String> payload,
+            Map<String, ?> payload,
             String key,
             String fallback
     ) {
@@ -158,6 +181,6 @@ public class AIController {
             return fallback;
         }
 
-        return payload.get(key);
+        return String.valueOf(payload.get(key));
     }
 }

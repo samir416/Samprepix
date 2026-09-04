@@ -116,17 +116,39 @@ public class CodingProblemServiceImpl
             String tag,
             Pageable pageable
     ) {
+        return searchProblems(search, difficulty, tag, null, pageable);
+    }
+
+    @Override
+    public Page<CodingProblem> searchProblems(
+            String search,
+            String difficulty,
+            String tag,
+            String category,
+            Pageable pageable
+    ) {
         String normalizedSearch = search == null ? "" : search.trim();
         String normalizedDifficulty = difficulty == null
                 ? ""
                 : difficulty.trim().toUpperCase();
         String normalizedTag = tag == null ? "" : tag.trim();
+        String normalizedCategory = category == null ? "" : category.trim().toUpperCase();
 
         if (!normalizedDifficulty.isBlank() &&
                 !normalizedDifficulty.equals("EASY") &&
                 !normalizedDifficulty.equals("MEDIUM") &&
                 !normalizedDifficulty.equals("HARD")) {
             return Page.empty(pageable);
+        }
+
+        if (!normalizedCategory.isBlank()) {
+            return codingProblemRepository.searchActiveProblemsFiltered(
+                    normalizedCategory,
+                    normalizedDifficulty.isBlank() ? null : normalizedDifficulty,
+                    normalizedTag.isBlank() ? null : normalizedTag,
+                    normalizedSearch.isBlank() ? null : normalizedSearch,
+                    pageable
+            );
         }
 
         if (normalizedTag.isBlank()) {
@@ -158,6 +180,7 @@ public class CodingProblemServiceImpl
         }
 
         return codingProblemRepository.searchActiveProblemsFiltered(
+                null,
                 normalizedDifficulty.isBlank() ? null : normalizedDifficulty,
                 normalizedTag,
                 normalizedSearch.isBlank() ? null : normalizedSearch,

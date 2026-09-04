@@ -72,10 +72,12 @@ public interface CodingProblemRepository
 
     @Query("select distinct p from CodingProblem p left join p.tags tag " +
             "where p.active = true " +
+            "and (:category is null or :category = '' or upper(p.category) = upper(:category)) " +
             "and (:difficulty is null or :difficulty = '' or p.difficulty = :difficulty) " +
             "and (:tag is null or :tag = '' or exists (select 1 from p.tags t where lower(t) = lower(:tag))) " +
             "and (:search is null or :search = '' or lower(p.title) like lower(concat('%', :search, '%')) or lower(tag) like lower(concat('%', :search, '%')))")
     Page<CodingProblem> searchActiveProblemsFiltered(
+            @Param("category") String category,
             @Param("difficulty") String difficulty,
             @Param("tag") String tag,
             @Param("search") String search,
