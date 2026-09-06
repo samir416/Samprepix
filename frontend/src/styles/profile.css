@@ -1982,3 +1982,344 @@ body.dark-theme .profile-page-date-input::-webkit-calendar-picker-indicator{
     filter:invert(1) brightness(2);
 
 }
+
+/* ============================================================
+   PHASE 25 — PROFILE SOCIAL LINKS RESPONSIVE SMART GRID SYSTEM
+   ============================================================ */
+.profile-social-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.profile-social-primary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    align-items: stretch;
+}
+
+.profile-social-secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.profile-social-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--profile-surface-2);
+    border: 1px solid var(--profile-border);
+    border-radius: 20px;
+    padding: 22px;
+    transition: all var(--profile-transition);
+    box-sizing: border-box;
+}
+
+.profile-social-card:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: var(--profile-shadow-sm);
+    transform: translateY(-2px);
+}
+
+.profile-social-github-card,
+.profile-social-linkedin-card {
+    min-height: 250px;
+}
+
+.profile-social-compact-card {
+    min-height: 160px;
+}
+
+.profile-social-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--profile-border);
+}
+
+.profile-social-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-social-brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.profile-social-brand-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.github-brand-icon {
+    background: rgba(36, 41, 47, 0.08);
+    color: var(--profile-text);
+}
+
+body.dark-theme .github-brand-icon {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f3f4f6;
+}
+
+.linkedin-brand-icon {
+    background: rgba(10, 102, 194, 0.12);
+    color: #0a66c2;
+}
+
+.globe-brand-icon {
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+}
+
+.link-brand-icon {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+}
+
+.profile-social-brand-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--profile-text);
+    letter-spacing: 0.2px;
+}
+
+.profile-social-status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.profile-social-status-badge.connected {
+    background: rgba(16, 185, 129, 0.14);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.profile-social-status-badge.unlinked {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.profile-social-status-badge.optional {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.profile-social-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    justify-content: space-between;
+}
+
+.profile-social-description {
+    font-size: 13px;
+    color: var(--profile-text-light);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.profile-social-description.compact {
+    font-size: 12.5px;
+    margin-bottom: 6px;
+}
+
+.profile-social-populated-state,
+.profile-social-empty-state {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    justify-content: space-between;
+}
+
+.profile-social-url-box {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--profile-border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+body.dark-theme .profile-social-url-box {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.profile-social-link-truncated {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    text-decoration: none;
+    color: var(--profile-primary);
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.profile-social-link-truncated:hover {
+    color: var(--profile-primary-dark);
+    text-decoration: underline;
+}
+
+.profile-social-link-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+}
+
+.profile-social-link-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.profile-social-link-icon.linkedin {
+    color: #0a66c2;
+}
+
+.profile-social-ext-icon {
+    font-size: 13px;
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+
+.profile-social-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: auto;
+}
+
+.profile-social-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--profile-primary);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all var(--profile-transition);
+}
+
+.profile-social-action-btn:hover {
+    background: var(--profile-primary-dark);
+    transform: translateY(-1px);
+}
+
+.profile-social-action-btn.compact {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.profile-social-sub-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--profile-text);
+    background: transparent;
+    border: 1px solid var(--profile-border);
+    cursor: pointer;
+    transition: all var(--profile-transition);
+}
+
+.profile-social-sub-btn:hover {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: var(--profile-primary);
+    color: var(--profile-primary);
+}
+
+.profile-social-edit-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.profile-social-input-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--profile-text-light);
+}
+
+.profile-social-input-btn-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.profile-social-input-btn-row .profile-page-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-social-input-btn-row .profile-social-action-btn,
+.profile-social-input-btn-row .profile-social-sub-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.profile-social-hint {
+    font-size: 12px;
+    color: var(--profile-text-light);
+}
+
+@media (max-width: 900px) {
+    .profile-social-primary-grid,
+    .profile-social-secondary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-social-github-card,
+    .profile-social-linkedin-card {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-social-input-btn-row {
+        flex-wrap: wrap;
+    }
+}

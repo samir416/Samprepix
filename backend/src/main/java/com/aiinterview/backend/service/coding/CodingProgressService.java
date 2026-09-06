@@ -1,5 +1,6 @@
 package com.aiinterview.backend.service.coding;
 
+import com.aiinterview.backend.dto.coding.CodingDashboardStatsDto;
 import com.aiinterview.backend.entity.CodingProblem;
 import com.aiinterview.backend.entity.CodingProgress;
 import com.aiinterview.backend.entity.User;
@@ -9,6 +10,8 @@ public interface CodingProgressService {
     CodingProgress getProgress(User user);
 
     CodingProgress getOrCreateProgress(User user);
+
+    CodingDashboardStatsDto getDashboardStats(User user);
 
     CodingProgress saveCurrentProblem(
             User user,

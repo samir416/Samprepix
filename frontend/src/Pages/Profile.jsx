@@ -18,8 +18,18 @@ import {
     GraduationCap,
     Link2,
     Camera,
-    Trash2
+    Trash2,
+    Globe,
+    ExternalLink
 } from "lucide-react";
+import {
+    FiGithub,
+    FiLinkedin,
+    FiExternalLink,
+    FiPlus,
+    FiCheckCircle,
+    FiAlertCircle
+} from "react-icons/fi";
 import { getCurrentUser } from "../services/authService";
 import "../styles/profile.css";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -39,7 +49,8 @@ export default function Profile() {
     });
 
     const [githubRepositoryInput, setGithubRepositoryInput] = useState("");
-    const [githubRepositorySearch, setGithubRepositorySearch] = useState("");
+    const [isEditingGithub, setIsEditingGithub] = useState(false);
+    const [isEditingLinkedin, setIsEditingLinkedin] = useState(false);
 
     const [mockInterviewCount, setMockInterviewCount] = useState(0);
 
@@ -571,6 +582,7 @@ export default function Profile() {
     }, []);
 
     const handleGitHubRepositorySave = async (repositoryUrl) => {
+        const targetUrl = (repositoryUrl !== undefined ? repositoryUrl : githubRepositoryInput).trim();
         setGithubRepository((previous) => ({
             ...previous,
             saving: true,
@@ -578,15 +590,20 @@ export default function Profile() {
         }));
 
         try {
-            const saved = await saveGitHubRepository(repositoryUrl);
+            const saved = await saveGitHubRepository(targetUrl);
             setGithubRepository((previous) => ({
                 ...previous,
                 connected: saved?.connected === true,
-                repositoryUrl: saved?.repositoryUrl || repositoryUrl,
+                repositoryUrl: saved?.repositoryUrl || targetUrl,
                 saving: false,
                 error: ""
             }));
-            setGithubRepositoryInput(saved?.repositoryUrl || repositoryUrl);
+            setGithubRepositoryInput(saved?.repositoryUrl || targetUrl);
+            setIsEditingGithub(false);
+            setMessage({
+                type: "success",
+                text: "GitHub repository saved successfully."
+            });
         } catch (requestError) {
             setGithubRepository((previous) => ({
                 ...previous,
@@ -597,12 +614,55 @@ export default function Profile() {
         }
     };
 
-    const filteredGitHubRepositories = githubRepository.repositories.filter(
-        (repository) =>
-            String(repository.fullName || repository.name || "")
-                .toLowerCase()
-                .includes(githubRepositorySearch.trim().toLowerCase())
-    );
+    const handleLinkedInSave = async (url) => {
+        const targetUrl = (url !== undefined ? url : formData.linkedinUrl || "").trim();
+        setIsSaving(true);
+        try {
+            await updateProfile({
+                name: formData.name,
+                journeyType: formData.journeyType,
+                targetRole: formData.targetRole,
+                experienceLevel: formData.experienceLevel,
+                yearsOfExperience:
+                    formData.yearsOfExperience === ""
+                        ? null
+                        : Number(formData.yearsOfExperience),
+                careerGoal: formData.careerGoal,
+                college: formData.collegeName,
+                course: formData.degree,
+                graduationYear: formData.graduationYear,
+                currentCompany: formData.currentCompany,
+                phone: formData.phone,
+                gender: formData.gender,
+                githubUrl: formData.githubUrl,
+                linkedinUrl: targetUrl,
+                portfolioUrl: formData.portfolioUrl,
+                personalWebsite: formData.personalWebsite,
+                university: formData.university,
+                designation: formData.designation,
+                employmentType: formData.employmentType,
+                skills: selectedSkills,
+                profileCompleted: true
+            });
+            setFormData((previous) => ({
+                ...previous,
+                linkedinUrl: targetUrl
+            }));
+            setIsEditingLinkedin(false);
+            setMessage({
+                type: "success",
+                text: "LinkedIn profile updated successfully."
+            });
+        } catch (requestError) {
+            setMessage({
+                type: "error",
+                text: requestError?.response?.data?.message ||
+                    "Unable to save LinkedIn profile."
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     useEffect(() => {
 
@@ -3003,277 +3063,345 @@ export default function Profile() {
 
                             </h3>
 
-                            <div className="profile-page-info-grid">
-
-                                <div className="profile-page-info-item">
-
-                                    <label>
-
-                                        GitHub Repository
-
-                                    </label>
-
-                                    <div className="profile-github-management">
-                                        <strong>
-                                            {githubRepository.connected
-                                                ? "GitHub Connected"
-                                                : "GitHub not connected"}
-                                        </strong>
-
-                                        {!githubRepository.connected && (
-                                            <p>
-                                                Connect GitHub to save successful Coding Arena solutions automatically.
-                                            </p>
-                                        )}
-
-                                        {githubRepository.connected &&
-                                            githubRepository.repositories.length > 0 && (
-                                                <>
-                                                    <input
-                                                        type="search"
-                                                        value={githubRepositorySearch}
-                                                        onChange={(event) =>
-                                                            setGithubRepositorySearch(event.target.value)}
-                                                        placeholder="Search repositories"
-                                                        className="profile-page-input"
-                                                    />
-                                                    <select
-                                                        value={githubRepository.repositoryUrl}
-                                                        onChange={(event) =>
-                                                            handleGitHubRepositorySave(event.target.value)}
-                                                        disabled={githubRepository.loading || githubRepository.saving}
-                                                        className="profile-page-input"
-                                                    >
-                                                        <option value="">Select repository</option>
-                                                        {filteredGitHubRepositories.map((repository) => (
-                                                            <option
-                                                                key={repository.id || repository.fullName}
-                                                                value={repository.htmlUrl}
-                                                            >
-                                                                {repository.fullName || repository.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </>
-                                            )}
-
-                                        {githubRepository.loading && (
-                                            <span>Loading repositories...</span>
-                                        )}
-
-                                        {githubRepository.connected &&
-                                            !githubRepository.loading &&
-                                            githubRepository.repositories.length === 0 && (
-                                                <span>No accessible repositories found.</span>
-                                            )}
-
-                                        {!githubRepository.connected && (
-                                            <a
-                                                href="http://localhost:8080/oauth2/login/github"
-                                                className="profile-github-action"
-                                            >
-                                                Connect GitHub
-                                            </a>
-                                        )}
-
-                                        {!githubRepository.connected && (
-                                            <div className="profile-github-manual">
-                                                <input
-                                                    type="url"
-                                                    value={githubRepositoryInput}
-                                                    onChange={(event) =>
-                                                        setGithubRepositoryInput(event.target.value)}
-                                                    placeholder="https://github.com/username/repository"
-                                                    className="profile-page-input"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleGitHubRepositorySave(githubRepositoryInput)}
-                                                    disabled={
-                                                        !githubRepositoryInput.trim() ||
-                                                        githubRepository.saving
-                                                    }
-                                                    className="profile-github-action"
-                                                >
-                                                    {githubRepository.saving ? "Saving..." : "Save Repository"}
-                                                </button>
+                            <div className="profile-social-container">
+                                {/* PRIMARY ROW: GitHub & LinkedIn (Balanced Height, Equal Weight, Structurally Identical) */}
+                                <div className="profile-social-primary-grid">
+                                    {/* GitHub Card */}
+                                    <div className="profile-social-card profile-social-github-card">
+                                        <div className="profile-social-card-header">
+                                            <div className="profile-social-brand">
+                                                <div className="profile-social-brand-icon github-brand-icon">
+                                                    <FiGithub />
+                                                </div>
+                                                <span className="profile-social-brand-title">GitHub Profile</span>
                                             </div>
-                                        )}
-
-                                        {githubRepository.repositoryUrl && (
-                                            <a
-                                                href={githubRepository.repositoryUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="profile-page-social-link"
-                                            >
-                                                {githubRepository.repositoryUrl}
-                                            </a>
-                                        )}
-
-                                        {!githubRepository.connected && githubRepository.repositoryUrl && (
-                                            <span>
-                                                Connect GitHub to enable automatic solution syncing.
+                                            <span className={`profile-social-status-badge ${githubRepository.repositoryUrl || githubRepository.connected ? "connected" : "unlinked"}`}>
+                                                {githubRepository.repositoryUrl || githubRepository.connected ? "Connected" : "Not Connected"}
                                             </span>
-                                        )}
+                                        </div>
 
-                                        {githubRepository.error && (
-                                            <span className="profile-github-error">
-                                                {githubRepository.error}
-                                            </span>
-                                        )}
+                                        <div className="profile-social-card-body">
+                                            {(isEditing || isEditingGithub || !githubRepository.repositoryUrl) ? (
+                                                <div className="profile-social-edit-group">
+                                                    <p className="profile-social-description">
+                                                        Link your GitHub repository or profile to automatically track and sync your solutions.
+                                                    </p>
+                                                    <label className="profile-social-input-label">GitHub Repository or Profile URL</label>
+                                                    <div className="profile-social-input-btn-row">
+                                                        <input
+                                                            type="url"
+                                                            value={githubRepositoryInput}
+                                                            onChange={(event) => setGithubRepositoryInput(event.target.value)}
+                                                            placeholder="https://github.com/username/repository"
+                                                            className="profile-page-input"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleGitHubRepositorySave(githubRepositoryInput)}
+                                                            disabled={!githubRepositoryInput.trim() || githubRepository.saving}
+                                                            className="profile-social-action-btn"
+                                                        >
+                                                            {githubRepository.saving ? "Saving..." : "Save"}
+                                                        </button>
+                                                        {isEditingGithub && githubRepository.repositoryUrl && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setIsEditingGithub(false);
+                                                                    setGithubRepositoryInput(githubRepository.repositoryUrl);
+                                                                }}
+                                                                className="profile-social-sub-btn"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {githubRepository.error && (
+                                                        <small className="profile-page-error">{githubRepository.error}</small>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="profile-social-populated-state">
+                                                    <p className="profile-social-description">
+                                                        Your GitHub repository is connected for automated solution syncing.
+                                                    </p>
+                                                    <div className="profile-social-url-box">
+                                                        <a
+                                                            href={githubRepository.repositoryUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="profile-social-link-truncated"
+                                                            title={githubRepository.repositoryUrl}
+                                                        >
+                                                            <FiGithub className="profile-social-link-icon" />
+                                                            <span className="profile-social-link-text">{githubRepository.repositoryUrl}</span>
+                                                            <FiExternalLink className="profile-social-ext-icon" />
+                                                        </a>
+                                                    </div>
+                                                    <div className="profile-social-card-actions">
+                                                        <a
+                                                            href={githubRepository.repositoryUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="profile-social-action-btn"
+                                                        >
+                                                            Open Repository <FiExternalLink />
+                                                        </a>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setIsEditingGithub(true);
+                                                                setGithubRepositoryInput(githubRepository.repositoryUrl);
+                                                            }}
+                                                            className="profile-social-sub-btn"
+                                                        >
+                                                            Change
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
-                                </div>
-
-                                <div className="profile-page-info-item">
-
-                                    <label>
-
-                                        LinkedIn
-
-                                    </label>
-
-                                    {
-
-                                        isEditing ?
-
-                                            <>
-
-                                                <input
-                                                    type="url"
-                                                    name="linkedinUrl"
-                                                    value={formData.linkedinUrl}
-                                                    onChange={handleChange}
-                                                    className="profile-page-input"
-                                                    placeholder="https://linkedin.com/in/username"
-                                                />
-
-                                                {
-
-                                                    errors.linkedinUrl &&
-
-                                                    <small className="profile-page-error">
-
-                                                        {errors.linkedinUrl}
-
-                                                    </small>
-
-                                                }
-
-                                            </>
-
-                                            :
-
-                                            <span>
-
-                                                {formData.linkedinUrl || "-"}
-
+                                    {/* LinkedIn Card */}
+                                    <div className="profile-social-card profile-social-linkedin-card">
+                                        <div className="profile-social-card-header">
+                                            <div className="profile-social-brand">
+                                                <div className="profile-social-brand-icon linkedin-brand-icon">
+                                                    <FiLinkedin />
+                                                </div>
+                                                <span className="profile-social-brand-title">LinkedIn Profile</span>
+                                            </div>
+                                            <span className={`profile-social-status-badge ${formData.linkedinUrl ? "connected" : "unlinked"}`}>
+                                                {formData.linkedinUrl ? "Linked" : "Not Linked"}
                                             </span>
+                                        </div>
 
-                                    }
-
+                                        <div className="profile-social-card-body">
+                                            {(isEditing || isEditingLinkedin || !formData.linkedinUrl) ? (
+                                                <div className="profile-social-edit-group">
+                                                    <p className="profile-social-description">
+                                                        Add your LinkedIn profile to showcase your experience, connections, and credentials to recruiters.
+                                                    </p>
+                                                    <label className="profile-social-input-label">Public LinkedIn Profile URL</label>
+                                                    <div className="profile-social-input-btn-row">
+                                                        <input
+                                                            type="url"
+                                                            name="linkedinUrl"
+                                                            value={formData.linkedinUrl}
+                                                            onChange={handleChange}
+                                                            className="profile-page-input"
+                                                            placeholder="https://linkedin.com/in/username"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleLinkedInSave(formData.linkedinUrl)}
+                                                            disabled={!formData.linkedinUrl?.trim() || isSaving}
+                                                            className="profile-social-action-btn"
+                                                        >
+                                                            {isSaving ? "Saving..." : "Save"}
+                                                        </button>
+                                                        {isEditingLinkedin && formData.linkedinUrl && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setIsEditingLinkedin(false)}
+                                                                className="profile-social-sub-btn"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {errors.linkedinUrl && (
+                                                        <small className="profile-page-error">{errors.linkedinUrl}</small>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="profile-social-populated-state">
+                                                    <p className="profile-social-description">
+                                                        Your verified professional LinkedIn profile is linked to your account.
+                                                    </p>
+                                                    <div className="profile-social-url-box">
+                                                        <a
+                                                            href={formData.linkedinUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="profile-social-link-truncated"
+                                                            title={formData.linkedinUrl}
+                                                        >
+                                                            <FiLinkedin className="profile-social-link-icon linkedin" />
+                                                            <span className="profile-social-link-text">{formData.linkedinUrl}</span>
+                                                            <FiExternalLink className="profile-social-ext-icon" />
+                                                        </a>
+                                                    </div>
+                                                    <div className="profile-social-card-actions">
+                                                        <a
+                                                            href={formData.linkedinUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="profile-social-action-btn"
+                                                        >
+                                                            Open Profile <FiExternalLink />
+                                                        </a>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setIsEditingLinkedin(true)}
+                                                            className="profile-social-sub-btn"
+                                                        >
+                                                            Change
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="profile-page-info-item">
-
-                                    <label>
-
-                                        Portfolio (Optional)
-
-                                    </label>
-
-                                    {
-
-                                        isEditing ?
-
-                                            <>
-
-                                                <input
-                                                    type="url"
-                                                    name="portfolioUrl"
-                                                    value={formData.portfolioUrl}
-                                                    onChange={handleChange}
-                                                    className="profile-page-input"
-                                                    placeholder="https://yourportfolio.com"
-                                                />
-
-                                                {
-
-                                                    errors.portfolioUrl &&
-
-                                                    <small className="profile-page-error">
-
-                                                        {errors.portfolioUrl}
-
-                                                    </small>
-
-                                                }
-
-                                            </>
-
-                                            :
-
-                                            <span>
-
-                                                {formData.portfolioUrl || "-"}
-
+                                {/* SECONDARY ROW: Portfolio & Personal Website */}
+                                <div className="profile-social-secondary-grid">
+                                    {/* Portfolio Card */}
+                                    <div className="profile-social-card profile-social-compact-card">
+                                        <div className="profile-social-card-header">
+                                            <div className="profile-social-brand">
+                                                <div className="profile-social-brand-icon globe-brand-icon">
+                                                    <Globe className="sub-icon" />
+                                                </div>
+                                                <span className="profile-social-brand-title">Portfolio (Optional)</span>
+                                            </div>
+                                            <span className={`profile-social-status-badge ${formData.portfolioUrl ? "connected" : "optional"}`}>
+                                                {formData.portfolioUrl ? "Linked" : "Optional"}
                                             </span>
+                                        </div>
 
-                                    }
+                                        <div className="profile-social-card-body">
+                                            {isEditing ? (
+                                                <div className="profile-social-edit-group">
+                                                    <input
+                                                        type="url"
+                                                        name="portfolioUrl"
+                                                        value={formData.portfolioUrl}
+                                                        onChange={handleChange}
+                                                        className="profile-page-input"
+                                                        placeholder="https://yourportfolio.com"
+                                                    />
+                                                    {errors.portfolioUrl && (
+                                                        <small className="profile-page-error">{errors.portfolioUrl}</small>
+                                                    )}
+                                                </div>
+                                            ) : formData.portfolioUrl ? (
+                                                <div className="profile-social-populated-state">
+                                                    <div className="profile-social-url-box">
+                                                        <a
+                                                            href={formData.portfolioUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="profile-social-link-truncated"
+                                                            title={formData.portfolioUrl}
+                                                        >
+                                                            <Globe className="profile-social-link-icon" />
+                                                            <span className="profile-social-link-text">{formData.portfolioUrl}</span>
+                                                            <FiExternalLink className="profile-social-ext-icon" />
+                                                        </a>
+                                                    </div>
+                                                    <div className="profile-social-card-actions">
+                                                        <a
+                                                            href={formData.portfolioUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="profile-social-action-btn compact"
+                                                        >
+                                                            Open Portfolio <FiExternalLink />
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="profile-social-empty-state compact">
+                                                    <p className="profile-social-description compact">
+                                                        Showcase your personal projects, live demos, and case studies.
+                                                    </p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsEditing(true)}
+                                                        className="profile-social-sub-btn"
+                                                    >
+                                                        <FiPlus /> Add Portfolio
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
 
-                                </div>
-
-                                <div className="profile-page-info-item">
-
-                                    <label>
-
-                                        Personal Website (Optional)
-
-                                    </label>
-
-                                    {
-
-                                        isEditing ?
-
-                                            <>
-
-                                                <input
-                                                    type="url"
-                                                    name="personalWebsite"
-                                                    value={formData.personalWebsite}
-                                                    onChange={handleChange}
-                                                    className="profile-page-input"
-                                                    placeholder="https://yourwebsite.com"
-                                                />
-
-                                                {
-
-                                                    errors.personalWebsite &&
-
-                                                    <small className="profile-page-error">
-
-                                                        {errors.personalWebsite}
-
-                                                    </small>
-
-                                                }
-
-                                            </>
-
-                                            :
-
-                                            <span>
-
-                                                {formData.personalWebsite || "-"}
-
+                                    {/* Personal Website Card */}
+                                    <div className="profile-social-card profile-social-compact-card">
+                                        <div className="profile-social-card-header">
+                                            <div className="profile-social-brand">
+                                                <div className="profile-social-brand-icon link-brand-icon">
+                                                    <Link2 className="sub-icon" />
+                                                </div>
+                                                <span className="profile-social-brand-title">Personal Website (Optional)</span>
+                                            </div>
+                                            <span className={`profile-social-status-badge ${formData.personalWebsite ? "connected" : "optional"}`}>
+                                                {formData.personalWebsite ? "Linked" : "Optional"}
                                             </span>
+                                        </div>
 
-                                    }
-
+                                        <div className="profile-social-card-body">
+                                            {isEditing ? (
+                                                <div className="profile-social-edit-group">
+                                                    <input
+                                                        type="url"
+                                                        name="personalWebsite"
+                                                        value={formData.personalWebsite}
+                                                        onChange={handleChange}
+                                                        className="profile-page-input"
+                                                        placeholder="https://yourwebsite.com"
+                                                    />
+                                                    {errors.personalWebsite && (
+                                                        <small className="profile-page-error">{errors.personalWebsite}</small>
+                                                    )}
+                                                </div>
+                                            ) : formData.personalWebsite ? (
+                                                <div className="profile-social-populated-state">
+                                                    <div className="profile-social-url-box">
+                                                        <a
+                                                            href={formData.personalWebsite}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="profile-social-link-truncated"
+                                                            title={formData.personalWebsite}
+                                                        >
+                                                            <Link2 className="profile-social-link-icon" />
+                                                            <span className="profile-social-link-text">{formData.personalWebsite}</span>
+                                                            <FiExternalLink className="profile-social-ext-icon" />
+                                                        </a>
+                                                    </div>
+                                                    <div className="profile-social-card-actions">
+                                                        <a
+                                                            href={formData.personalWebsite}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="profile-social-action-btn compact"
+                                                        >
+                                                            Open Website <FiExternalLink />
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="profile-social-empty-state compact">
+                                                    <p className="profile-social-description compact">
+                                                        Link your technical blog, writing, or personal homepage.
+                                                    </p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsEditing(true)}
+                                                        className="profile-social-sub-btn"
+                                                    >
+                                                        <FiPlus /> Add Website
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-
                             </div>
 
                         </div>

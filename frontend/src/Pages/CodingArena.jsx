@@ -101,6 +101,7 @@ export default function CodingArena() {
     const problemSearchTimerRef = useRef(null);
     const problemListRef = useRef(null);
     const hintCooldownTimerRef = useRef(null);
+    const activeExecutionIdRef = useRef(0);
 
     const selectedProblem =
         selectedProblemDetails ||
@@ -1757,25 +1758,47 @@ export default function CodingArena() {
     const buildExecutionError = (
         requestError,
         fallbackMessage
-    ) => ({
-        status: "ERROR",
-        passed: false,
-        totalTests: 0,
-        passedTests: 0,
-        failedTests: 0,
-        runtime: 0,
-        memory: 0,
-        output: "",
-        expectedOutput: "",
-        error:
-            requestError?.response?.data
-                ?.message ||
-            requestError?.response?.data
-                ?.error ||
-            fallbackMessage,
-        message: fallbackMessage,
-        testCases: []
-    });
+    ) => {
+        const responseData = requestError?.response?.data;
+        const statusCode = requestError?.response?.status;
+        const serverStatus = responseData?.status;
+        const serverMessage = responseData?.message || responseData?.error;
+
+        let status = serverStatus || "EXECUTION_PROVIDER_ERROR";
+        let message = serverMessage || fallbackMessage;
+
+        if (statusCode === 401) {
+            status = "UNAUTHORIZED";
+            message = "Your session has expired. Please log in again.";
+        } else if (statusCode === 429) {
+            status = "RATE_LIMITED";
+            message = serverMessage || "A code execution is already in progress for this problem. Please wait.";
+        } else if (statusCode === 400) {
+            status = serverStatus || "INVALID_REQUEST";
+            message = serverMessage || "Invalid execution request.";
+        } else if (statusCode === 503 || statusCode === 502 || statusCode === 504) {
+            status = "EXECUTION_PROVIDER_ERROR";
+            message = "Code execution service is temporarily unavailable. Please try again.";
+        } else if (requestError?.message?.includes("Network Error")) {
+            status = "EXECUTION_PROVIDER_ERROR";
+            message = "Unable to connect to the execution server. Please verify your connection.";
+        }
+
+        return {
+            status,
+            passed: false,
+            totalTests: 0,
+            passedTests: 0,
+            failedTests: 0,
+            runtime: null,
+            memory: null,
+            output: "",
+            expectedOutput: "",
+            error: serverMessage || message,
+            message: message,
+            testCases: []
+        };
+    };
 
     const getApiErrorMessage = (requestError) => {
         const data = requestError?.response?.data;
@@ -1819,6 +1842,7 @@ export default function CodingArena() {
             return;
         }
 
+        const runId = ++activeExecutionIdRef.current;
         try {
             setIsExecuting(true);
             setExecutionResult(null);
@@ -1831,15 +1855,21 @@ export default function CodingArena() {
                     code
                 );
 
+            if (activeExecutionIdRef.current !== runId) return;
+
             setExecutionResult(
                 response.data
             );
 
-            if (response.data?.passed === true) {
+            if (
+                response.data?.passed === true &&
+                (response.data?.totalTests || 0) > 0 &&
+                response.data?.passedTests === response.data?.totalTests
+            ) {
                 setLastSuccessfulRun({
                     problemId: selectedProblem.id,
-                    language,
-                    code,
+                    language: normalizeLanguageValue(language),
+                    code: code.trim(),
                     success: true,
                     allPublicTestsPassed: true,
                     timestamp: Date.now()
@@ -1848,6 +1878,8 @@ export default function CodingArena() {
                 setLastSuccessfulRun(null);
             }
         } catch (requestError) {
+            if (activeExecutionIdRef.current !== runId) return;
+
             console.error(
                 "Code execution failed",
                 requestError
@@ -1860,16 +1892,56 @@ export default function CodingArena() {
                 )
             );
         } finally {
-            setIsExecuting(false);
+            if (activeExecutionIdRef.current === runId) {
+                setIsExecuting(false);
+            }
         }
     };
+
+    const isCodeChangedSinceRun = useMemo(() => {
+        if (!lastSuccessfulRun) return true;
+        if (lastSuccessfulRun.problemId !== selectedProblem?.id) return true;
+        if (normalizeLanguageValue(lastSuccessfulRun.language) !== normalizeLanguageValue(language)) return true;
+        return getCurrentCode().trim() !== lastSuccessfulRun.code;
+    }, [lastSuccessfulRun, selectedProblem?.id, language, codeMap]);
+
+    const canSubmit = useMemo(() => {
+        if (!hasSelectedProblem || !language || isExecuting || isSubmitting) return false;
+        if (!lastSuccessfulRun) return false;
+        if (isCodeChangedSinceRun) return false;
+        return lastSuccessfulRun.allPublicTestsPassed === true;
+    }, [hasSelectedProblem, language, isExecuting, isSubmitting, lastSuccessfulRun, isCodeChangedSinceRun]);
+
+    const submitTooltip = useMemo(() => {
+        if (isSubmitting) return "Submitting your solution...";
+        if (isExecuting) return "Running test cases...";
+        if (!hasSelectedProblem) return "Select a problem first";
+        if (!getCurrentCode().trim()) return "Write some code first";
+        if (canSubmit) return "All public test cases passed! Click to submit your solution.";
+        if (isCodeChangedSinceRun) return "Run your code successfully on all public tests first.";
+        if (executionResult && !executionResult.passed) return "Fix failing tests and pass all public tests before submitting.";
+        return "Run your code successfully on all public tests first.";
+    }, [isSubmitting, isExecuting, hasSelectedProblem, codeMap, canSubmit, isCodeChangedSinceRun, executionResult]);
+
+    const runButtonLabel = useMemo(() => {
+        if (isExecuting) return "Running...";
+        if (lastSuccessfulRun?.allPublicTestsPassed && !isCodeChangedSinceRun) return "Run Again";
+        return "Run";
+    }, [isExecuting, lastSuccessfulRun, isCodeChangedSinceRun]);
+
+    const runButtonIcon = useMemo(() => {
+        if (isExecuting) return <FiRefreshCw className="spin" />;
+        if (lastSuccessfulRun?.allPublicTestsPassed && !isCodeChangedSinceRun) return <FiRefreshCw />;
+        return <FiPlay />;
+    }, [isExecuting, lastSuccessfulRun, isCodeChangedSinceRun]);
 
     const handleSubmit = async () => {
         if (
             !hasSelectedProblem ||
             !language ||
             isExecuting ||
-            isSubmitting
+            isSubmitting ||
+            !canSubmit
         ) {
             return;
         }
@@ -1896,6 +1968,7 @@ export default function CodingArena() {
             return;
         }
 
+        const submitId = ++activeExecutionIdRef.current;
         try {
             setIsSubmitting(true);
             setExecutionResult(null);
@@ -1906,6 +1979,8 @@ export default function CodingArena() {
                     language,
                     code
                 );
+
+            if (activeExecutionIdRef.current !== submitId) return;
 
             const result =
                 response.data;
@@ -1939,6 +2014,8 @@ export default function CodingArena() {
 
             setLastSuccessfulRun(null);
         } catch (requestError) {
+            if (activeExecutionIdRef.current !== submitId) return;
+
             console.error(
                 "Failed to submit coding problem",
                 requestError
@@ -1951,7 +2028,9 @@ export default function CodingArena() {
                 )
             );
         } finally {
-            setIsSubmitting(false);
+            if (activeExecutionIdRef.current === submitId) {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -2057,8 +2136,9 @@ export default function CodingArena() {
                     </div>
 
                     <div>
-                        {executionResult.runtime !==
-                        undefined
+                        {executionResult.runtime !== undefined &&
+                        executionResult.runtime !== null &&
+                        totalTests > 0
                             ? `${executionResult.runtime} ms`
                             : ""}
                     </div>
@@ -2076,21 +2156,58 @@ export default function CodingArena() {
                     </div>
                 )}
 
-                <div className="execution-summary">
-                    <span>
-                        Passed: {passedTests}
-                    </span>
+                {totalTests > 0 && (
+                    <div className="execution-summary">
+                        <span>
+                            Passed: {passedTests}
+                        </span>
 
-                    <span>
-                        Failed:{" "}
-                        {executionResult.failedTests ||
-                            0}
-                    </span>
+                        <span>
+                            Failed:{" "}
+                            {executionResult.failedTests ||
+                                (totalTests - passedTests)}
+                        </span>
 
-                    <span>
-                        Total: {totalTests}
-                    </span>
-                </div>
+                        <span>
+                            Total: {totalTests}
+                        </span>
+                    </div>
+                )}
+
+                {totalTests > 0 && !passed && (() => {
+                    const firstFailedCase = testCases.find((tc) => !tc.passed);
+                    const failedCount = executionResult.failedTests || (totalTests - passedTests);
+                    return (
+                        <div className="execution-failure-banner">
+                            <div className="failure-banner-top">
+                                <FiAlertCircle className="failure-banner-icon" />
+                                <span>
+                                    {failedCount === 1
+                                        ? "1 test case failed. Fix the failing case before submitting."
+                                        : `${failedCount} test cases failed. Fix the failing cases before submitting.`}
+                                </span>
+                            </div>
+                            {firstFailedCase && firstFailedCase.input !== null && firstFailedCase.input !== undefined && (
+                                <div className="failure-banner-details">
+                                    <span className="failure-banner-detail-badge">Failed Test #{firstFailedCase.testCaseNumber}</span>
+                                    {firstFailedCase.error ? (
+                                        <span className="failure-banner-detail-text"><strong>Error:</strong> {firstFailedCase.error}</span>
+                                    ) : (
+                                        <span className="failure-banner-detail-text">
+                                            <strong>Input:</strong> <code>{firstFailedCase.input}</code> | <strong>Expected:</strong> <code>{firstFailedCase.expectedOutput ?? "(empty)"}</code> | <strong>Got:</strong> <code>{firstFailedCase.actualOutput ?? "(empty)"}</code>
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            {firstFailedCase && (firstFailedCase.input === null || firstFailedCase.input === undefined) && (
+                                <div className="failure-banner-details">
+                                    <span className="failure-banner-detail-badge">Failed Test #{firstFailedCase.testCaseNumber}</span>
+                                    <span className="failure-banner-detail-text">Hidden test case failed. Details are masked for evaluation privacy. Check edge cases, boundary values, or time/memory limits.</span>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {executionResult.error && (
                     <div className="execution-error">
@@ -2811,28 +2928,25 @@ export default function CodingArena() {
                             !getCurrentCode().trim()
                         }
                         onClick={handleRun}
+                        title={isExecuting ? "Executing code..." : "Run code against public test cases"}
                     >
-                        <FiPlay />
-                        {isExecuting
-                            ? "Running..."
-                            : "Run"}
+                        {runButtonIcon}
+                        <span>{runButtonLabel}</span>
                     </button>
 
                     <button
-                        className="submit-btn"
+                        className={`submit-btn ${canSubmit ? "ready" : "locked"}`}
                         type="button"
-                        disabled={
-                            !hasSelectedProblem ||
-                            !language ||
-                            isExecuting ||
-                            isSubmitting ||
-                            !getCurrentCode().trim()
-                        }
+                        disabled={!canSubmit || isExecuting || isSubmitting}
+                        title={submitTooltip}
                         onClick={handleSubmit}
                     >
-                        {isSubmitting
-                            ? "Submitting..."
-                            : "Submit"}
+                        {isSubmitting ? (
+                            <FiRefreshCw className="spin" />
+                        ) : (
+                            <FiCheck />
+                        )}
+                        <span>{isSubmitting ? "Submitting..." : "Submit"}</span>
                     </button>
                 </div>
             </div>

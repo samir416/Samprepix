@@ -265,7 +265,7 @@ public class Main {
                             language
                     );
 
-            if (configuration == null && !isLegacyFunction(problem.getFunctionName())) {
+            if (configuration == null) {
                 CentralLanguageRegistry.LanguageSpec spec = CentralLanguageRegistry.get(language);
                 if (spec != null) {
                     configuration = CentralLanguageRegistry.toConfigurationMap(spec);
@@ -411,6 +411,10 @@ public class Main {
             String userCode,
             String input
     ) {
+
+        if (userCode.contains("class Main") || (userCode.contains("class ") && userCode.contains("static void main"))) {
+            return userCode;
+        }
 
         return """
 import java.util.*;

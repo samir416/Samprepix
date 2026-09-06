@@ -13,6 +13,7 @@ import com.aiinterview.backend.service.coding.CodingProblemCompletionService;
 import com.aiinterview.backend.service.coding.CodingProgressService;
 import com.aiinterview.backend.service.coding.FunctionExecutionWrapperService;
 import com.aiinterview.backend.service.coding.GitHubRepositoryService;
+import com.aiinterview.backend.dto.coding.CodingDashboardStatsDto;
 import com.aiinterview.backend.dto.coding.GitHubSyncResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,14 @@ public class CodeExecutionController {
     private final FunctionExecutionWrapperService wrapperService;
     private final GitHubRepositoryService gitHubRepositoryService;
     private final ConcurrentHashMap<String, Long> inFlightExecutions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ValidRunRecord> validRuns = new ConcurrentHashMap<>();
+
+    private record ValidRunRecord(Long problemId, String language, String codeHash, long timestamp) {}
+
+    private String hashExecutionCode(String code) {
+        if (code == null) return "";
+        return code.replaceAll("\\r\\n", "\n").replaceAll("\\r", "\n").trim();
+    }
 
     public CodeExecutionController(
             CodeExecutionService codeExecutionService,
@@ -85,7 +94,38 @@ public class CodeExecutionController {
             CodeExecutionResponse response =
                     codeExecutionService.execute(request, false);
 
+            if (response != null && response.isPassed() && response.getTotalTests() > 0 && response.getPassedTests() == response.getTotalTests()) {
+                validRuns.put(userKey, new ValidRunRecord(
+                        request.getProblemId(),
+                        request.getLanguage().toLowerCase().trim(),
+                        hashExecutionCode(request.getCode()),
+                        System.currentTimeMillis()
+                ));
+            }
+
             return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    CodeExecutionResponse.builder()
+                            .status("INVALID_REQUEST")
+                            .passed(false)
+                            .message(exception.getMessage() != null ? exception.getMessage() : "Invalid execution request.")
+                            .totalTests(0)
+                            .passedTests(0)
+                            .failedTests(0)
+                            .build()
+            );
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+                    CodeExecutionResponse.builder()
+                            .status("EXECUTION_PROVIDER_ERROR")
+                            .passed(false)
+                            .message("Code execution service is temporarily unavailable. Please try again.")
+                            .totalTests(0)
+                            .passedTests(0)
+                            .failedTests(0)
+                            .build()
+            );
         } finally {
             inFlightExecutions.remove(userKey);
         }
@@ -117,6 +157,27 @@ public class CodeExecutionController {
 
         inFlightExecutions.put(userKey, System.currentTimeMillis());
         try {
+            ValidRunRecord record = validRuns.get(userKey);
+            boolean hasValidRecordedRun = record != null &&
+                    record.problemId().equals(request.getProblemId()) &&
+                    record.language().equalsIgnoreCase(request.getLanguage().trim()) &&
+                    record.codeHash().equals(hashExecutionCode(request.getCode())) &&
+                    (System.currentTimeMillis() - record.timestamp() < 15 * 60 * 1000L);
+
+            if (!hasValidRecordedRun) {
+                CodeExecutionResponse publicCheck = codeExecutionService.execute(request, false);
+                if (!publicCheck.isPassed() || publicCheck.getTotalTests() == 0 || publicCheck.getPassedTests() != publicCheck.getTotalTests()) {
+                    publicCheck.setMessage("All public test cases must pass before submitting. Fix failing test cases first.");
+                    return ResponseEntity.ok(publicCheck);
+                }
+                validRuns.put(userKey, new ValidRunRecord(
+                        request.getProblemId(),
+                        request.getLanguage().toLowerCase().trim(),
+                        hashExecutionCode(request.getCode()),
+                        System.currentTimeMillis()
+                ));
+            }
+
             CodingProblem problem =
                     codingProblemRepository
                             .findById(request.getProblemId())
@@ -229,6 +290,28 @@ public class CodeExecutionController {
             }
 
             return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    CodeExecutionResponse.builder()
+                            .status("INVALID_REQUEST")
+                            .passed(false)
+                            .message(exception.getMessage() != null ? exception.getMessage() : "Invalid submission request.")
+                            .totalTests(0)
+                            .passedTests(0)
+                            .failedTests(0)
+                            .build()
+            );
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+                    CodeExecutionResponse.builder()
+                            .status("EXECUTION_PROVIDER_ERROR")
+                            .passed(false)
+                            .message("Code execution service is temporarily unavailable. Please try again.")
+                            .totalTests(0)
+                            .passedTests(0)
+                            .failedTests(0)
+                            .build()
+            );
         } finally {
             inFlightExecutions.remove(userKey);
         }
@@ -284,6 +367,14 @@ public class CodeExecutionController {
                             .build()
             );
         }
+    }
+
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<CodingDashboardStatsDto> getDashboardStats(
+            Authentication authentication
+    ) {
+        User user = getAuthenticatedUser(authentication);
+        return ResponseEntity.ok(codingProgressService.getDashboardStats(user));
     }
 
     private void validateRequest(

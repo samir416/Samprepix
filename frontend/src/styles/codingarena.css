@@ -573,9 +573,100 @@
 
 .run-btn:disabled,
 .submit-btn:disabled{
-    opacity:0.5;
+    opacity:0.65;
     cursor:not-allowed;
     transform:none;
+}
+
+.submit-btn.locked{
+    background:rgba(148,163,184,0.18);
+    color:#94a3b8;
+    border:1px solid rgba(148,163,184,0.28);
+    box-shadow:none;
+}
+
+.submit-btn.ready{
+    background:linear-gradient(135deg,#10b981,#06b6d4);
+    box-shadow:0 10px 26px rgba(16,185,129,0.35);
+    color:white;
+}
+
+.execution-failure-banner{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:12px 14px;
+    margin-top:10px;
+    background:rgba(239,68,68,0.08);
+    border:1px solid rgba(239,68,68,0.25);
+    border-radius:10px;
+    color:#ef4444;
+    font-size:13px;
+    font-weight:600;
+}
+
+.failure-banner-top{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.failure-banner-icon{
+    font-size:16px;
+    flex-shrink:0;
+}
+
+.failure-banner-details{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    font-weight:500;
+    color:#991b1b;
+    background:rgba(239,68,68,0.06);
+    padding:8px 12px;
+    border-radius:8px;
+    border-left:3px solid #ef4444;
+}
+
+.failure-banner-detail-badge{
+    font-weight:700;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    background:rgba(239,68,68,0.18);
+    color:#dc2626;
+    padding:2px 7px;
+    border-radius:4px;
+}
+
+.failure-banner-detail-text{
+    line-height:1.4;
+}
+
+.failure-banner-detail-text code{
+    background:rgba(0,0,0,0.06);
+    padding:2px 6px;
+    border-radius:4px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+    font-size:11px;
+    color:#991b1b;
+}
+
+body.dark-theme .failure-banner-details{
+    color:#fca5a5;
+    background:rgba(239,68,68,0.12);
+}
+
+body.dark-theme .failure-banner-detail-badge{
+    background:rgba(239,68,68,0.25);
+    color:#f87171;
+}
+
+body.dark-theme .failure-banner-detail-text code{
+    background:rgba(255,255,255,0.1);
+    color:#fecaca;
 }
 
 .coding-grid{

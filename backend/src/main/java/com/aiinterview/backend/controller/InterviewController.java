@@ -117,4 +117,14 @@ public ResponseEntity<InterviewProgressResponse> getInterviewProgress(
     );
 }
 
+    @GetMapping("/count")
+    public ResponseEntity<Long> getCompletedInterviewCount(
+            Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(
+                interviewService.getCompletedInterviewCount(user)
+        );
+    }
+
 }

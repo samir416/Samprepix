@@ -1,5 +1,6 @@
 package com.aiinterview.backend.controller;
 
+import com.aiinterview.backend.dto.coding.CodingDashboardStatsDto;
 import com.aiinterview.backend.entity.CodingProblem;
 import com.aiinterview.backend.entity.CodingProgress;
 import com.aiinterview.backend.entity.User;
@@ -37,6 +38,16 @@ public class CodingProgressController {
 
         return ResponseEntity.ok(
                 codingProgressService.getOrCreateProgress(user)
+        );
+    }
+
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<CodingDashboardStatsDto> getDashboardStats(
+            Authentication authentication
+    ) {
+        User user = getAuthenticatedUser(authentication);
+        return ResponseEntity.ok(
+                codingProgressService.getDashboardStats(user)
         );
     }
 

@@ -126,6 +126,9 @@ export const updateCodingSubmission = (
         }
     );
 
+export const getCodingDashboardStats = () =>
+    API.get("/progress/dashboard-stats");
+
 export const executeCodingCode = (
     problemId,
     language,
