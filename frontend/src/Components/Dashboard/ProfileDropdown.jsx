@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 export default function ProfileDropdown({
     user,
     onLogout,
-    onClose
-
+    onClose,
+    onOpenSettings
 }) {
 
     const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function ProfileDropdown({
         {
             icon: "⚙️",
             label: "Settings",
-            path: "/settings"
+            isSettings: true
         },
 
         {
@@ -33,7 +33,7 @@ export default function ProfileDropdown({
         {
             icon: "💳",
             label: "Billing",
-            path: "/billing"
+            path: "/pricing"
         }
 
     ];
@@ -95,15 +95,12 @@ export default function ProfileDropdown({
                             key={index}
                             className="profile-menu-btn"
                             onClick={() => {
-
-                                navigate(item.path);
-
-                                if (onClose) {
-
-                                    onClose();
-
+                                if (onClose) onClose();
+                                if (item.isSettings) {
+                                    if (onOpenSettings) onOpenSettings();
+                                } else if (item.path) {
+                                    navigate(item.path);
                                 }
-
                             }}
                         >
 

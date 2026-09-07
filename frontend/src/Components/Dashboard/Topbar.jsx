@@ -11,7 +11,8 @@ import {
     BarChart3,
     Bell,
     User,
-    ArrowLeft
+    ArrowLeft,
+    BookOpen
 } from "lucide-react";
 
 import {
@@ -22,7 +23,9 @@ import {
 
 import NotificationDropdown from "./NotificationDropdown";
 import ProfileDropdown from "./ProfileDropdown";
+import SettingsModal from "./SettingsModal";
 import { useNavigate } from "react-router-dom";
+import { getUnreadNotificationCount } from "../../services/notificationService";
 
 export default function Topbar() {
 
@@ -35,6 +38,11 @@ export default function Topbar() {
     const [openNotifications, setOpenNotifications] =
         useState(false);
 
+    const [openMobileNotifications, setOpenMobileNotifications] =
+        useState(false);
+
+    const [unreadCount, setUnreadCount] = useState(0);
+
     const [openMobileProfile, setOpenMobileProfile] =
         useState(false);
 
@@ -45,6 +53,9 @@ export default function Topbar() {
         useState(false);
 
     const [openSettings, setOpenSettings] =
+        useState(false);
+
+    const [openSettingsModal, setOpenSettingsModal] =
         useState(false);
 
     const [user, setUser] = useState(null);
@@ -110,6 +121,7 @@ export default function Topbar() {
             ) {
 
                 setOpenNotifications(false);
+                setOpenMobileNotifications(false);
             }
 
             if (
@@ -182,6 +194,22 @@ export default function Topbar() {
             );
 
         }
+
+        const fetchUnread = async () => {
+            const token = localStorage.getItem("token");
+            if (token) {
+                try {
+                    const res = await getUnreadNotificationCount();
+                    if (res && typeof res.unreadCount === "number") {
+                        setUnreadCount(res.unreadCount);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch initial unread notification count:", e);
+                }
+            }
+        };
+
+        fetchUnread();
 
     }, []);
 
@@ -276,6 +304,14 @@ export default function Topbar() {
 
                         </a>
 
+                        <a href="/aptitude">
+
+                            <BookOpen size={18} />
+
+                            Aptitude
+
+                        </a>
+
                         <a href="/performance">
 
                             <BarChart3 size={18} />
@@ -329,6 +365,19 @@ export default function Topbar() {
 
                         <div className="mobile-settings-dropdown">
 
+                            {/* SETTINGS MODAL */}
+
+                            <button
+                                className="mobile-setting-item"
+                                onClick={() => {
+                                    setOpenSettingsModal(true);
+                                    setOpenSettings(false);
+                                }}
+                            >
+                                <Settings size={18} />
+                                Settings
+                            </button>
+
                             {/* THEME */}
 
                             <button
@@ -352,7 +401,7 @@ export default function Topbar() {
                                 className="mobile-setting-item"
                                 onClick={() => {
 
-                                    setOpenNotifications(true);
+                                    setOpenMobileNotifications(true);
 
                                     setOpenMobileProfile(false);
                                     setOpenDesktopProfile(false);
@@ -374,7 +423,7 @@ export default function Topbar() {
                                 onClick={() => {
 
                                     setOpenMobileProfile(true);
-                                    setOpenNotifications(false);
+                                    setOpenMobileNotifications(false);
 
                                     setOpenSettings(false);
                                 }}
@@ -399,7 +448,7 @@ export default function Topbar() {
 
             {
 
-                openNotifications &&
+                openMobileNotifications &&
 
                 <div
                     className="mobile-popup-dropdown"
@@ -411,7 +460,7 @@ export default function Topbar() {
                         <button
                             className="mobile-back-btn"
                             onClick={() =>
-                                setOpenNotifications(false)
+                                setOpenMobileNotifications(false)
                             }
                         >
 
@@ -427,7 +476,10 @@ export default function Topbar() {
 
                     </div>
 
-                    <NotificationDropdown />
+                    <NotificationDropdown
+                        onCountChange={(count) => setUnreadCount(count)}
+                        onClose={() => setOpenNotifications(false)}
+                    />
 
                 </div>
             }
@@ -470,6 +522,10 @@ export default function Topbar() {
                         user={user}
                         onLogout={handleLogout}
                         onClose={() => setOpenMobileProfile(false)}
+                        onOpenSettings={() => {
+                            setOpenMobileProfile(false);
+                            setOpenSettingsModal(true);
+                        }}
                     />
                 </div>
             }
@@ -514,6 +570,7 @@ export default function Topbar() {
                     <button
                         className="dashboard-theme-toggle"
                         onClick={toggleTheme}
+                        aria-label="Toggle Theme"
                     >
 
                         {
@@ -522,6 +579,17 @@ export default function Topbar() {
                                 : <Moon size={18} />
                         }
 
+                    </button>
+
+                    {/* SETTINGS */}
+
+                    <button
+                        className="dashboard-settings-toggle"
+                        onClick={() => setOpenSettingsModal(true)}
+                        title="Platform Settings"
+                        aria-label="Platform Settings"
+                    >
+                        <Settings size={19} />
                     </button>
 
                     {/* NOTIFICATION */}
@@ -533,6 +601,7 @@ export default function Topbar() {
 
                         <button
                             className="notification-btn"
+                            aria-label="Notifications"
                             onClick={() =>
                                 setOpenNotifications(
                                     !openNotifications
@@ -540,13 +609,13 @@ export default function Topbar() {
                             }
                         >
 
-                            🔔
+                            <Bell size={20} />
 
-                            <span className="notification-badge">
-
-                                3
-
-                            </span>
+                            {unreadCount > 0 && (
+                                <span className="notification-badge">
+                                    {unreadCount > 9 ? "9+" : unreadCount}
+                                </span>
+                            )}
 
                         </button>
 
@@ -554,7 +623,10 @@ export default function Topbar() {
 
                             openNotifications &&
 
-                            <NotificationDropdown />
+                            <NotificationDropdown
+                                onCountChange={(count) => setUnreadCount(count)}
+                                onClose={() => setOpenNotifications(false)}
+                            />
                         }
 
                     </div>
@@ -621,6 +693,10 @@ export default function Topbar() {
                                 user={user}
                                 onLogout={handleLogout}
                                 onClose={() => setOpenDesktopProfile(false)}
+                                onOpenSettings={() => {
+                                    setOpenDesktopProfile(false);
+                                    setOpenSettingsModal(true);
+                                }}
                             />
                         }
 
@@ -629,6 +705,13 @@ export default function Topbar() {
                 </div>
 
             </div>
+
+            {/* SETTINGS MODAL */}
+            <SettingsModal
+                isOpen={openSettingsModal}
+                onClose={() => setOpenSettingsModal(false)}
+                user={user}
+            />
 
         </>
     );

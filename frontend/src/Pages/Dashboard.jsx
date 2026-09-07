@@ -1,13 +1,5 @@
-import Sidebar from "../Components/Dashboard/Sidebar";
-import Topbar from "../Components/Dashboard/Topbar";
-import { useLocation } from "react-router-dom";
-import ResumeAnalyzer from "./ResumeAnalyzer";
-import MockInterview from "./MockInterview";
-import CodingArena from "./CodingArena";
-import Performance from "./Performance";
-import Profile from "./Profile";
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser } from "../services/authService";
 
@@ -51,8 +43,6 @@ import "../styles/dashboard.css";
 export default function Dashboard() {
 
     const navigate = useNavigate();
-
-    const location = useLocation();
 
     const [resumeHistory, setResumeHistory] = useState([]);
 
@@ -155,147 +145,14 @@ export default function Dashboard() {
     }, [navigate]);
 
     return (
-
-        <section className="dashboard-layout">
-
-            {/* SIDEBAR */}
-
-            <Sidebar />
-
-            {/* MAIN */}
-
-            <div className="dashboard-main">
-
-                {/* TOPBAR */}
-
-                <Topbar />
-
-                {/* CONTENT */}
-
-                <div className="dashboard-content">
-                    <AnimatePresence
-
-                        mode="wait"
-
-                    >
-
-                        <motion.div
-
-                            key={location.pathname}
-
-                            initial={{
-
-                                opacity: 0,
-
-                                y: 14,
-
-                                scale: .985
-
-                            }}
-
-                            animate={{
-
-                                opacity: 1,
-
-                                y: 0,
-
-                                scale: 1
-
-                            }}
-
-                            exit={{
-
-                                opacity: 0,
-
-                                y: -8,
-
-                                scale: .992
-
-                            }}
-
-                            transition={{
-
-                                duration: .26,
-
-                                ease: [0.22, 1, 0.36, 1]
-
-                            }}
-
-                        >
-
-                            {
-
-                                /* =========================
-                                RESUME ANALYZER
-                                ========================= */
-
-                                location.pathname === "/resume-analyzer"
-
-                                    ? (
-
-                                        <ResumeAnalyzer />
-
-                                    )
-
-                                    /* =========================
-                                    MOCK INTERVIEW
-                                    ========================= */
-
-                                    : location.pathname === "/mock-interview"
-
-                                        ? (
-
-                                            <MockInterview />
-
-                                        )
-
-                                        /* =========================
-                                        CODING ARENA
-                                        ========================= */
-
-                                        : location.pathname === "/coding-arena"
-
-                                            ? (
-
-                                                <CodingArena />
-
-                                            )
-
-                                            /* =========================
-                                            PERFORMANCE
-                                            ========================= */
-
-                                            : location.pathname === "/performance"
-
-                                                ? (
-
-                                                    <Performance />
-
-                                                )
-
-                                                 /* =========================
-                                                    Profile
-                                                    ========================= */
-
-                                                : location.pathname === "/profile"
-
-                                                    ? (
-
-                                                        <Profile />
-
-                                                    )
-
-                                                    /* =========================
-                                                    DASHBOARD HOME
-                                                    ========================= */
-
-                                                    : (
-
-                                                        <>
-
-                                                            {/* HEADER */}
-
-                                                            <div className="dashboard-header">
+        <motion.div
+            className="dashboard-home"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+        >
+            {/* HEADER */}
+            <div className="dashboard-header">
 
                                                                 <h1>
                                                                     Welcome back, {user?.username || user?.name || "User"} 👋
@@ -949,23 +806,6 @@ export default function Dashboard() {
 
 
 
-                                                        </>
-
-                                                    )
-
-                            }
-
-                        </motion.div>
-
-                    </AnimatePresence>
-
-
-                </div>
-
-
-            </div>
-
-
-        </section>
+        </motion.div>
     );
 }

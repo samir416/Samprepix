@@ -10,13 +10,13 @@
 
     right:0;
 
-    width:360px;
+    width:380px;
 
     border-radius:24px;
 
     overflow:hidden;
 
-    z-index:999;
+    z-index:10000;
 
     backdrop-filter:blur(20px);
 
@@ -398,4 +398,263 @@ body.dark-theme .unread{
 
         opacity:0;
     }
+}
+
+/* =========================================================
+   DYNAMIC NOTIFICATION ENHANCEMENTS
+========================================================= */
+
+.notification-top-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notif-badge-pill {
+    background: linear-gradient(135deg, #6366f1, #06b6d4);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.notif-badge-pill-read {
+    background: rgba(148, 163, 184, 0.15);
+    color: #64748b;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.mark-all-read-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    color: #6366f1;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.mark-all-read-btn:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: #6366f1;
+}
+
+.mark-all-read-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.notification-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 24px;
+    text-align: center;
+    gap: 10px;
+    color: #64748b;
+}
+
+.notification-state h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.notification-state p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #64748b;
+}
+
+.notif-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(99, 102, 241, 0.2);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.notif-retry-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.notif-item-left {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+}
+
+.notif-icon-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(99, 102, 241, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6366f1;
+    font-size: 18px;
+}
+
+.notif-icon.coding { color: #8b5cf6; }
+.notif-icon.interview { color: #06b6d4; }
+.notif-icon.resume { color: #10b981; }
+.notif-icon.system { color: #f59e0b; }
+
+body.dark-theme .notif-badge-pill-read {
+    background: rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+}
+
+body.dark-theme .mark-all-read-btn {
+    border-color: rgba(99, 102, 241, 0.4);
+    color: #a5b4fc;
+}
+
+body.dark-theme .notification-state h4 {
+    color: #f1f5f9;
+}
+
+body.dark-theme .notification-state p {
+    color: #94a3b8;
+}
+
+body.dark-theme .notif-icon-circle {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* NOTIFICATION ITEM CONTENT HEADER & DELETE */
+.notif-content-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.notif-delete-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.notification-item:hover .notif-delete-btn {
+    opacity: 1;
+}
+
+.notif-delete-btn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.notif-delete-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* NOTIFICATION FOOTER */
+.notification-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(248, 250, 252, 0.8);
+}
+
+.notif-footer-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.notif-footer-btn:hover {
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.notif-footer-btn.clear-history-btn:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.notif-footer-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+body.dark-theme .notification-footer {
+    border-top-color: rgba(255, 255, 255, 0.08);
+    background: rgba(8, 14, 33, 0.8);
+}
+
+body.dark-theme .notif-footer-btn {
+    color: #94a3b8;
+}
+
+body.dark-theme .notif-footer-btn:hover {
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.15);
+}
+
+body.dark-theme .notif-footer-btn.clear-history-btn:hover {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+body.dark-theme .notif-delete-btn {
+    color: #64748b;
+}
+
+body.dark-theme .notif-delete-btn:hover {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.15);
 }

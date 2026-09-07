@@ -1,8 +1,11 @@
 package com.aiinterview.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "app_user")
@@ -48,6 +51,7 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile profile;
 
+    @JsonIgnore
     @OneToMany(
         mappedBy = "user",
         cascade = CascadeType.ALL,
@@ -56,6 +60,17 @@ public class User {
 private List<InterviewSession> interviewSessions;
 
     private LocalDateTime otpExpiry;
+
+    @Column
+    private LocalDateTime lastNotificationsReadAt;
+
+    @Column
+    private LocalDateTime dismissedAllNotificationsBefore;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_dismissed_notifications", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "notification_id")
+    private Set<String> dismissedNotificationIds = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -168,5 +183,32 @@ private List<InterviewSession> interviewSessions;
 public void setInterviewSessions(List<InterviewSession> interviewSessions) {
     this.interviewSessions = interviewSessions;
 }
+
+    public LocalDateTime getLastNotificationsReadAt() {
+        return lastNotificationsReadAt;
+    }
+
+    public void setLastNotificationsReadAt(LocalDateTime lastNotificationsReadAt) {
+        this.lastNotificationsReadAt = lastNotificationsReadAt;
+    }
+
+    public LocalDateTime getDismissedAllNotificationsBefore() {
+        return dismissedAllNotificationsBefore;
+    }
+
+    public void setDismissedAllNotificationsBefore(LocalDateTime dismissedAllNotificationsBefore) {
+        this.dismissedAllNotificationsBefore = dismissedAllNotificationsBefore;
+    }
+
+    public Set<String> getDismissedNotificationIds() {
+        if (dismissedNotificationIds == null) {
+            dismissedNotificationIds = new HashSet<>();
+        }
+        return dismissedNotificationIds;
+    }
+
+    public void setDismissedNotificationIds(Set<String> dismissedNotificationIds) {
+        this.dismissedNotificationIds = dismissedNotificationIds;
+    }
 
 }

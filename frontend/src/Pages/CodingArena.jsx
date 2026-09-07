@@ -1557,8 +1557,6 @@ export default function CodingArena() {
             [key]: nextCode
         }));
 
-        setLastSuccessfulRun(null);
-
         if (saveTimerRef.current) {
             clearTimeout(
                 saveTimerRef.current
@@ -1918,10 +1916,10 @@ export default function CodingArena() {
         if (!hasSelectedProblem) return "Select a problem first";
         if (!getCurrentCode().trim()) return "Write some code first";
         if (canSubmit) return "All public test cases passed! Click to submit your solution.";
-        if (isCodeChangedSinceRun) return "Run your code successfully on all public tests first.";
+        if (lastSuccessfulRun && isCodeChangedSinceRun) return "Code was modified since last run. Run your code successfully on all public tests first.";
         if (executionResult && !executionResult.passed) return "Fix failing tests and pass all public tests before submitting.";
         return "Run your code successfully on all public tests first.";
-    }, [isSubmitting, isExecuting, hasSelectedProblem, codeMap, canSubmit, isCodeChangedSinceRun, executionResult]);
+    }, [isSubmitting, isExecuting, hasSelectedProblem, codeMap, canSubmit, isCodeChangedSinceRun, executionResult, lastSuccessfulRun]);
 
     const runButtonLabel = useMemo(() => {
         if (isExecuting) return "Running...";

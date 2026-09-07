@@ -191,12 +191,26 @@
     }
 
     /* =====================================
-       DESKTOP SIDEBAR
+       DESKTOP SIDEBAR & MAIN RESET
     ===================================== */
+
+    .dashboard-layout {
+        display: block !important;
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow: visible !important;
+    }
 
     .dashboard-sidebar {
 
         display: none !important;
+    }
+
+    .dashboard-main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
     }
 
     /* =====================================
@@ -207,6 +221,8 @@
 
         padding: 14px !important;
         padding-top: 102px !important;
+        overflow: visible !important;
+        height: auto !important;
     }
 
 
@@ -1165,8 +1181,11 @@
 }
 
 /* =========================================
-   MOBILE POPUP DROPDOWN
-========================================= */
+@media (min-width: 769px) {
+    .mobile-popup-dropdown {
+        display: none !important;
+    }
+}
 
 .mobile-popup-dropdown{
 

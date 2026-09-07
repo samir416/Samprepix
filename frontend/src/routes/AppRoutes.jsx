@@ -9,6 +9,7 @@ import MockInterview from "../Pages/MockInterview";
 import Performance from "../Pages/Performance";
 import InterviewResult from "../Pages/InterviewResult";
 import CodingArena from "../Pages/CodingArena";
+import Profile from "../Pages/Profile";
 import Features from "../Pages/Features";
 import Pricing from "../Pages/Pricing";
 import AuthModal from "../Components/Auth/AuthModal";
@@ -16,6 +17,8 @@ import ProtectedRoute from "../Components/Auth/ProtectedRoute";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import Onboarding from "../Pages/Onboarding";
+import Aptitude from "../Pages/Aptitude";
+import AppLayout from "../Layout/AppLayout";
 
 
 export default function AppRoutes() {
@@ -88,75 +91,23 @@ export default function AppRoutes() {
                 }
             />
 
-            {/* DASHBOARD */}
-
+            {/* AUTHENTICATED GLOBAL APP SHELL (SIDEBAR + TOPBAR + CONTENT) */}
             <Route
-                path="/dashboard"
                 element={
                     <ProtectedRoute>
-                        <Dashboard />
+                        <AppLayout />
                     </ProtectedRoute>
                 }
-            />
-
-            {/* RESUME ANALYZER */}
-
-            <Route
-                path="/resume-analyzer"
-                element={<ProtectedRoute>
-                    <Dashboard />
-                </ProtectedRoute>
-                }
-            />
-
-            {/* MOCK INTERVIEW */}
-
-            <Route
-                path="/mock-interview"
-                element={<ProtectedRoute>
-                    <Dashboard />
-                </ProtectedRoute>
-                }
-            />
-
-            {/* PERFORMANCE */}
-
-            <Route
-                path="/performance"
-                element={
-                    <ProtectedRoute>
-                        <Dashboard />
-                    </ProtectedRoute>
-                }
-            />
-
-            <Route
-                path="/interview-result"
-                element={
-                    <ProtectedRoute>
-                        <InterviewResult />
-                    </ProtectedRoute>
-                }
-            />
-
-            {/* CODING ARENA */}
-
-            <Route
-                path="/coding-arena"
-                element={<ProtectedRoute>
-                    <Dashboard />
-                </ProtectedRoute>
-                }
-            />
-
-            <Route
-                path="/profile"
-                element={
-                    <ProtectedRoute>
-                        <Dashboard />
-                    </ProtectedRoute>
-                }
-            />
+            >
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
+                <Route path="/mock-interview" element={<MockInterview />} />
+                <Route path="/interview-result" element={<InterviewResult />} />
+                <Route path="/coding-arena" element={<CodingArena />} />
+                <Route path="/aptitude" element={<Aptitude />} />
+                <Route path="/performance" element={<Performance />} />
+                <Route path="/profile" element={<Profile />} />
+            </Route>
         </Routes>
     );
 }
