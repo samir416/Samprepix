@@ -129,47 +129,16 @@ export default function Pricing() {
           </div>
 
           <div className="history-table">
-
             <div className="history-row history-head">
-
               <span>Plan</span>
-
               <span>Status</span>
-
               <span>Amount</span>
-
               <span>Date</span>
-
             </div>
-
-            <div className="history-row">
-
-              <span>Pro Plan</span>
-
-              <span className="success">
-                Completed
-              </span>
-
-              <span>₹99</span>
-
-              <span>16 May 2026</span>
-
+            <div style={{ textAlign: "center", padding: "36px 20px", color: "var(--text-muted, #94a3b8)" }}>
+              <p style={{ fontSize: "1rem", marginBottom: "6px", fontWeight: "600", color: "var(--text-main, #f8fafc)" }}>No Prior Transactions Recorded</p>
+              <p style={{ fontSize: "0.88rem" }}>Your account is currently active on the <strong>Free Starter Plan</strong>. All future invoice receipts will appear here.</p>
             </div>
-
-            <div className="history-row">
-
-              <span>Elite Plan</span>
-
-              <span className="success">
-                Completed
-              </span>
-
-              <span>₹249</span>
-
-              <span>17 May 2026</span>
-
-            </div>
-
           </div>
 
         </div>
@@ -379,7 +348,7 @@ export default function Pricing() {
 
             <div>
               <FaCrown />
-              Google & Amazon packs
+              Tier-1 Placement packs
             </div>
 
             <div>

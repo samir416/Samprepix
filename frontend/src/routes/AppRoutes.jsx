@@ -106,6 +106,8 @@ export default function AppRoutes() {
                 <Route path="/coding-arena" element={<CodingArena />} />
                 <Route path="/aptitude" element={<Aptitude />} />
                 <Route path="/performance" element={<Performance />} />
+                <Route path="/analytics" element={<Performance />} />
+                <Route path="/billing" element={<Pricing />} />
                 <Route path="/profile" element={<Profile />} />
             </Route>
         </Routes>

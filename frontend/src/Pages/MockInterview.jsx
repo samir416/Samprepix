@@ -1394,9 +1394,35 @@ export default function MockInterview() {
 
                 <div className="current-question-card">
 
-                    <h4>
-                        Current Question
-                    </h4>
+                    <div className="current-question-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <h4 style={{ margin: 0 }}>
+                            Current Question
+                        </h4>
+                        {started && currentQuestion && (
+                            <button
+                                type="button"
+                                className="speak-question-btn"
+                                onClick={() => SpeechSynthesisService.speak(currentQuestion)}
+                                title="Listen to question"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '5px 12px',
+                                    borderRadius: '8px',
+                                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                                    background: 'rgba(99, 102, 241, 0.08)',
+                                    color: '#6366f1',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <FiVolume2 /> Listen
+                            </button>
+                        )}
+                    </div>
 
                     <p>
                         {

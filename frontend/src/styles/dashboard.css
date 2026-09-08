@@ -384,7 +384,6 @@ body {
 
 .sidebar-upgrade-btn:hover {
     opacity: 0.95;
-    transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
@@ -571,7 +570,8 @@ body.dark-theme .dashboard-settings-toggle:hover {
     gap: 10px;
 }
 
-.topbar-right button {
+.topbar-right > button,
+.topbar-right .notification-btn {
 
     width: 38px;
 
@@ -701,15 +701,28 @@ body.dark-theme .dashboard-settings-toggle:hover {
 /* STATS */
 
 .stats-grid {
-
     display: grid;
-
-    grid-template-columns:
-        repeat(4, 1fr);
-
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
-
     margin-bottom: 12px;
+}
+
+@media(max-width: 1400px) {
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media(max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .stat-card {
@@ -1422,6 +1435,11 @@ body.dark-theme .dashboard-settings-toggle:hover {
 .activity-badge.resume {
     background: rgba(6, 182, 212, 0.12);
     color: #0891b2;
+}
+
+.activity-badge.aptitude {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
 }
 
 

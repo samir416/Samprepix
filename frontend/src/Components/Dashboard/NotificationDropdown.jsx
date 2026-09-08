@@ -9,7 +9,8 @@ import {
     FiRefreshCw,
     FiAlertCircle,
     FiTrash2,
-    FiX
+    FiX,
+    FiPercent
 } from "react-icons/fi";
 import {
     getUserNotifications,
@@ -120,6 +121,8 @@ export default function NotificationDropdown({ onCountChange, onClose }) {
                 return <FiMic className="notif-icon interview" />;
             case "RESUME":
                 return <FiFileText className="notif-icon resume" />;
+            case "APTITUDE":
+                return <FiPercent className="notif-icon aptitude" />;
             default:
                 return <FiBell className="notif-icon system" />;
         }
@@ -184,8 +187,8 @@ export default function NotificationDropdown({ onCountChange, onClose }) {
                             <div className="notif-item-left">
                                 <div className="notif-icon-circle">
                                     {getIcon(item.type)}
+                                    {item.unread && <div className="notification-dot" />}
                                 </div>
-                                {item.unread && <div className="notification-dot" />}
                             </div>
 
                             <div className="notification-content">

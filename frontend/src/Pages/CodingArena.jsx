@@ -41,6 +41,7 @@ import {
 } from "../services/codingService";
 
 import { getGitHubRepository } from "../services/profileService";
+import audioService from "../services/audioService";
 
 export default function CodingArena() {
     const [language, setLanguage] = useState("");
@@ -62,6 +63,13 @@ export default function CodingArena() {
     const [problemListLoading, setProblemListLoading] = useState(false);
     const [progress, setProgress] = useState(null);
     const [selectedProblemIndex, setSelectedProblemIndex] = useState(null);
+
+    const [editorFontSize, setEditorFontSize] = useState(() => {
+        return parseInt(localStorage.getItem("setting_editor_font_size") || "14", 10);
+    });
+    const [editorAutocomplete, setEditorAutocomplete] = useState(() => {
+        return localStorage.getItem("setting_editor_autocomplete") !== "false";
+    });
 
     const [codeMap, setCodeMap] = useState({});
 
@@ -102,6 +110,8 @@ export default function CodingArena() {
     const problemListRef = useRef(null);
     const hintCooldownTimerRef = useRef(null);
     const activeExecutionIdRef = useRef(0);
+    const lastProblemIdRef = useRef(null);
+    const manualLanguageOverrideRef = useRef(false);
 
     const selectedProblem =
         selectedProblemDetails ||
@@ -471,7 +481,7 @@ export default function CodingArena() {
         );
     }, [selectedProblem]);
 
-    const getProblemLanguages = (problem) => {
+    const getProblemLanguages = (problem, customRegistered = registeredLanguages) => {
         if (!problem) return [];
         const isDb = Boolean(
             problem.category === "DATABASE" ||
@@ -480,8 +490,8 @@ export default function CodingArena() {
         );
 
         if (isDb) {
-            const dbList = registeredLanguages.database ||
-                registeredLanguages.all?.filter((spec) => spec.executionMode === "database" || spec.key === "mysql") || [];
+            const dbList = customRegistered?.database ||
+                customRegistered?.all?.filter((spec) => spec.executionMode === "database" || spec.key === "mysql") || [];
             if (dbList.length > 0) {
                 return dbList.map((spec) => ({
                     value: spec.key,
@@ -513,8 +523,8 @@ export default function CodingArena() {
             !problem.sourceId?.startsWith("dsa-") &&
             !problem.slug?.includes("-variant-")
         );
-        const progList = registeredLanguages.programming ||
-            registeredLanguages.all?.filter((spec) => spec.executionMode !== "database" && spec.key !== "mysql") || [];
+        const progList = customRegistered?.programming ||
+            customRegistered?.all?.filter((spec) => spec.executionMode !== "database" && spec.key !== "mysql") || [];
         if (!isLegacyProblem && progList.length > 0) {
             return progList.map((spec) => ({
                 value: spec.key,
@@ -535,9 +545,94 @@ export default function CodingArena() {
         }));
     };
 
+    const resolveActiveLanguage = (problem, problemLangs, checkManualOverride = false) => {
+        if (!problem) return "";
+        const isDb = Boolean(
+            problem.category === "DATABASE" ||
+            problem.category === "SQL" ||
+            problem.sourceId?.startsWith("sql-")
+        );
+        if (isDb) {
+            return "mysql";
+        }
+
+        const langs = Array.isArray(problemLangs) && problemLangs.length > 0
+            ? problemLangs
+            : getProblemLanguages(problem);
+        if (!langs || langs.length === 0) return "";
+
+        // 1. Session manual override for CURRENT problem only (if active and supported)
+        if (checkManualOverride && manualLanguageOverrideRef.current && language && language !== "mysql") {
+            const manualMatch = langs.find(
+                (item) => normalizeLanguageValue(item.value) === normalizeLanguageValue(language)
+            );
+            if (manualMatch) {
+                return manualMatch.value;
+            }
+        }
+
+        // 2. Saved user preference from Settings (setting_default_language)
+        // NON-NEGOTIABLE PRODUCT RULE: Saved preference ALWAYS beats backend history, lastLanguage, etc.
+        const savedPref = localStorage.getItem("setting_default_language");
+        if (savedPref && savedPref !== "mysql") {
+            const prefMatch = langs.find(
+                (item) => normalizeLanguageValue(item.value) === normalizeLanguageValue(savedPref)
+            );
+            if (prefMatch) {
+                return prefMatch.value;
+            }
+        }
+
+        // 3. Fallback only if no user preference was set or preference is unsupported:
+        // Check backend progress lastLanguage (if supported by this problem)
+        const progressLang = progress?.lastLanguage;
+        if (!savedPref && progressLang && progressLang !== "mysql") {
+            const progressMatch = langs.find(
+                (item) => normalizeLanguageValue(item.value) === normalizeLanguageValue(progressLang)
+            );
+            if (progressMatch) {
+                return progressMatch.value;
+            }
+        }
+
+        // 4. Platform default: python if available, otherwise first supported language
+        const pythonMatch = langs.find(
+            (item) => normalizeLanguageValue(item.value) === "python"
+        );
+        if (pythonMatch) return pythonMatch.value;
+
+        return langs[0]?.value || "";
+    };
+
     const availableLanguages = useMemo(() => {
         return getProblemLanguages(selectedProblem);
     }, [selectedProblem, registeredLanguages]);
+
+    useEffect(() => {
+        const handleSettingsUpdated = () => {
+            setEditorFontSize(parseInt(localStorage.getItem("setting_editor_font_size") || "14", 10));
+            setEditorAutocomplete(localStorage.getItem("setting_editor_autocomplete") !== "false");
+            const newDefaultLang = localStorage.getItem("setting_default_language");
+            if (newDefaultLang && !isDatabaseProblem) {
+                manualLanguageOverrideRef.current = false;
+                const langExists = availableLanguages.some(
+                    (item) => normalizeLanguageValue(item.value) === normalizeLanguageValue(newDefaultLang)
+                );
+                if (langExists) {
+                    setLanguage(newDefaultLang);
+                    const key = getCodeKey(selectedProblem?.id, newDefaultLang);
+                    if (selectedProblem && !Object.prototype.hasOwnProperty.call(codeMap, key)) {
+                        setCodeMap((prev) => ({
+                            ...prev,
+                            [key]: getStarterCode(selectedProblem, newDefaultLang)
+                        }));
+                    }
+                }
+            }
+        };
+        window.addEventListener("settingsUpdated", handleSettingsUpdated);
+        return () => window.removeEventListener("settingsUpdated", handleSettingsUpdated);
+    }, [availableLanguages, isDatabaseProblem, selectedProblem, codeMap]);
 
     const popularLanguages = useMemo(() => {
         return availableLanguages.filter((l) => l.popular && l.category !== "DATABASE");
@@ -991,8 +1086,10 @@ export default function CodingArena() {
                 setAvailableTopics(tagsResponse.data);
             }
 
+            let loadedLanguages = registeredLanguages;
             if (languagesResponse?.data && Array.isArray(languagesResponse.data.all)) {
-                setRegisteredLanguages(languagesResponse.data);
+                loadedLanguages = languagesResponse.data;
+                setRegisteredLanguages(loadedLanguages);
             }
 
             const backendProblems = Array.isArray(
@@ -1063,49 +1160,24 @@ export default function CodingArena() {
                 setSelectedProblemDetails(restoredProblemDetails);
             }
 
+            manualLanguageOverrideRef.current = false;
+
             const restoredLanguages =
                 getProblemLanguages(
-                    restoredProblemDetails
+                    restoredProblemDetails,
+                    loadedLanguages
                 );
 
-            const progressLanguage =
-                backendProgress?.lastLanguage;
+            const initialLanguage = resolveActiveLanguage(
+                restoredProblemDetails,
+                restoredLanguages,
+                false
+            );
 
-            const restoredLanguageExists =
-                progressLanguage &&
-                restoredLanguages.some(
-                    (item) =>
-                        normalizeLanguageValue(
-                            item.value
-                        ) ===
-                        normalizeLanguageValue(
-                            progressLanguage
-                        )
-                );
-
-            const initialLanguage =
-                restoredLanguageExists
-                    ? progressLanguage
-                    : restoredLanguages[0]
-                          ?.value || "";
-
-            const initialLanguageData =
-                restoredLanguages.find(
-                    (item) =>
-                        normalizeLanguageValue(
-                            item.value
-                        ) ===
-                        normalizeLanguageValue(
-                            initialLanguage
-                        )
-                );
+            lastProblemIdRef.current = restoredProblemDetails?.id || null;
 
             setLanguage(initialLanguage);
-
-            setSearchLanguage(
-                initialLanguageData?.label ||
-                    initialLanguage
-            );
+            setSearchLanguage("");
 
             if (
                 backendProgress?.lastCode &&
@@ -1181,78 +1253,42 @@ export default function CodingArena() {
 
         if (availableLanguages.length === 0) {
             setLanguage("");
-            setSearchLanguage("");
             return;
+        }
+
+        const isNewProblem = lastProblemIdRef.current !== selectedProblem.id;
+        if (isNewProblem) {
+            lastProblemIdRef.current = selectedProblem.id;
+            manualLanguageOverrideRef.current = false;
         }
 
         if (isDatabaseProblem) {
             if (language !== "mysql") {
                 setLanguage("mysql");
-                const mysqlData = availableLanguages.find((item) => item.value === "mysql") || availableLanguages[0];
-                setSearchLanguage(mysqlData?.label || "MySQL");
             }
             return;
         }
 
-        const currentExists =
-            language !== "mysql" &&
-            availableLanguages.some(
-                (item) =>
-                    normalizeLanguageValue(
-                        item.value
-                    ) ===
-                    normalizeLanguageValue(
-                        language
-                    )
+        // If user manually switched language for this problem, keep it if still available
+        if (manualLanguageOverrideRef.current && language && language !== "mysql") {
+            const currentExists = availableLanguages.some(
+                (item) => normalizeLanguageValue(item.value) === normalizeLanguageValue(language)
             );
+            if (currentExists) {
+                return;
+            }
+        }
 
-        if (!currentExists || language === "mysql") {
-            const progressLanguage =
-                progress?.lastLanguage;
+        // Deterministic resolution: saved preference has highest priority
+        const nextLanguage = resolveActiveLanguage(selectedProblem, availableLanguages, false);
 
-            const progressExists =
-                progressLanguage &&
-                progressLanguage !== "mysql" &&
-                availableLanguages.some(
-                    (item) =>
-                        normalizeLanguageValue(
-                            item.value
-                        ) ===
-                        normalizeLanguageValue(
-                            progressLanguage
-                        )
-                );
-
-            const nextLanguage =
-                progressExists
-                    ? progressLanguage
-                    : availableLanguages[0]
-                          .value;
-
-            const nextLanguageData =
-                availableLanguages.find(
-                    (item) =>
-                        normalizeLanguageValue(
-                            item.value
-                        ) ===
-                        normalizeLanguageValue(
-                            nextLanguage
-                        )
-                );
-
+        if (nextLanguage && language !== nextLanguage) {
             setLanguage(nextLanguage);
-
-            setSearchLanguage(
-                nextLanguageData?.label ||
-                    nextLanguage
-            );
         }
     }, [
         selectedProblem,
         isDatabaseProblem,
-        availableLanguages,
-        progress,
-        language
+        availableLanguages
     ]);
 
     useEffect(() => {
@@ -1348,56 +1384,20 @@ export default function CodingArena() {
         setAiHintError("");
         setShowAiHint(false);
 
+        manualLanguageOverrideRef.current = false;
+        lastProblemIdRef.current = problemDetails.id;
+
         const problemLanguages =
             getProblemLanguages(problemDetails);
 
-        const isDbProblem = Boolean(
-            problemDetails.category === "DATABASE" ||
-            problemDetails.category === "SQL" ||
-            problemDetails.sourceId?.startsWith("sql-")
+        const nextLanguage = resolveActiveLanguage(
+            problemDetails,
+            problemLanguages,
+            false
         );
-
-        let nextLanguage = "";
-        if (isDbProblem) {
-            nextLanguage = "mysql";
-        } else {
-            const currentLanguageExists =
-                language !== "mysql" &&
-                problemLanguages.some(
-                    (item) =>
-                        normalizeLanguageValue(
-                            item.value
-                        ) ===
-                        normalizeLanguageValue(
-                            language
-                        )
-                );
-
-            nextLanguage =
-                currentLanguageExists
-                    ? language
-                    : (progress?.lastLanguage && progress.lastLanguage !== "mysql")
-                        ? progress.lastLanguage
-                        : problemLanguages[0]?.value || "";
-        }
-
-        const nextLanguageData =
-            problemLanguages.find(
-                (item) =>
-                    normalizeLanguageValue(
-                        item.value
-                    ) ===
-                    normalizeLanguageValue(
-                        nextLanguage
-                    )
-            );
 
         setLanguage(nextLanguage);
-
-        setSearchLanguage(
-            nextLanguageData?.label ||
-                (isDbProblem ? "MySQL" : nextLanguage)
-        );
+        setSearchLanguage("");
 
         const key =
             getCodeKey(
@@ -1610,6 +1610,8 @@ export default function CodingArena() {
             return;
         }
 
+        manualLanguageOverrideRef.current = true;
+
         if (selectedProblem) {
             const key = getCodeKey(selectedProblem.id, selectedLanguage);
 
@@ -1623,15 +1625,8 @@ export default function CodingArena() {
 
         setLanguage(selectedLanguage);
 
-        const selected = availableLanguages.find(
-            (item) =>
-                normalizeLanguageValue(item.value) ===
-                normalizeLanguageValue(selectedLanguage)
-        );
-
-        setSearchLanguage(selected?.label || selectedLanguage);
-
         setShowLanguages(false);
+        setSearchLanguage("");
         setExecutionResult(null);
         setLastSuccessfulRun(null);
         setAiHint("");
@@ -1864,6 +1859,7 @@ export default function CodingArena() {
                 (response.data?.totalTests || 0) > 0 &&
                 response.data?.passedTests === response.data?.totalTests
             ) {
+                audioService.playSuccessChime();
                 setLastSuccessfulRun({
                     problemId: selectedProblem.id,
                     language: normalizeLanguageValue(language),
@@ -1873,6 +1869,7 @@ export default function CodingArena() {
                     timestamp: Date.now()
                 });
             } else {
+                audioService.playErrorChime();
                 setLastSuccessfulRun(null);
             }
         } catch (requestError) {
@@ -1986,6 +1983,7 @@ export default function CodingArena() {
             setExecutionResult(result);
 
             if (result?.passed === true) {
+                audioService.playCompletionChime();
                 try {
                     const progressResponse =
                         await getCodingProgress();
@@ -3078,7 +3076,13 @@ export default function CodingArena() {
                                     className="coding-lang-trigger"
                                     onClick={() => {
                                         if (availableLanguages.length > 0) {
-                                            setShowLanguages((prev) => !prev);
+                                            setShowLanguages((prev) => {
+                                                const next = !prev;
+                                                if (next) {
+                                                    setSearchLanguage("");
+                                                }
+                                                return next;
+                                            });
                                             setTimeout(() => langSearchInputRef.current?.focus(), 50);
                                         }
                                     }}
@@ -3291,7 +3295,13 @@ export default function CodingArena() {
                                     handleCodeChange
                                 }
                                 options={{
-                                    fontSize: 13,
+                                    fontSize: editorFontSize,
+                                    quickSuggestions: editorAutocomplete,
+                                    suggestOnTriggerCharacters: editorAutocomplete,
+                                    wordBasedSuggestions: editorAutocomplete,
+                                    parameterHints: {
+                                        enabled: editorAutocomplete
+                                    },
                                     minimap: {
                                         enabled: false
                                     },

@@ -220,15 +220,19 @@ body.dark-theme .getstarted-btn {
 body.dark-theme .plan-btn:hover,
 body.dark-theme .apply-btn:hover,
 body.dark-theme .history-open-btn:hover,
-body.dark-theme .sidebar-upgrade-btn:hover,
-body.dark-theme .getstarted-btn:hover {
-
+body.dark-theme .sidebar-upgrade-btn:hover {
     transform:
         translateY(-4px);
-
     filter:
         brightness(1.08);
+    box-shadow:
+        0 16px 35px rgba(79,70,229,0.42);
+}
 
+body.dark-theme .getstarted-btn:hover {
+    transform: none !important;
+    filter:
+        brightness(1.08);
     box-shadow:
         0 16px 35px rgba(79,70,229,0.42);
 }
@@ -482,7 +486,8 @@ body.dark-theme .dashboard-topbar input::placeholder {
 
 /* TOPBAR BUTTONS */
 
-body.dark-theme .topbar-right button {
+body.dark-theme .topbar-right > button,
+body.dark-theme .topbar-right .notification-btn {
 
     background: #172036;
 

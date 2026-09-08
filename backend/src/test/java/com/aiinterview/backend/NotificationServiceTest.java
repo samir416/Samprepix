@@ -32,6 +32,12 @@ class NotificationServiceTest {
 
         assertNotNull(user, "User must exist in database");
 
+        user.setDismissedAllNotificationsBefore(null);
+        if (user.getDismissedNotificationIds() != null) {
+            user.getDismissedNotificationIds().clear();
+        }
+        userRepository.save(user);
+
         List<NotificationDto> notifications = notificationService.getUserNotifications(user);
         assertNotNull(notifications, "Notifications list must not be null");
         assertFalse(notifications.isEmpty(), "User should receive at least one notification or welcome notification");

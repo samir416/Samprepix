@@ -99,7 +99,8 @@ public class SecurityConfig {
                                                                 "/uploads/**",
                                                                 "/api/feedback/public",
                                                                 "/api/feedback/approve",
-                                                                "/api/feedback/reject")
+                                                                "/api/feedback/reject",
+                                                                "/api/aptitude/**")
                                                 .permitAll()
                                                 .anyRequest()
                                                 .authenticated())

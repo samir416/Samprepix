@@ -76,3 +76,179 @@ samp {
 html::-webkit-scrollbar {
     display: none;
 }
+
+/* =========================================================
+   INTERFACE DENSITY: COMPACT (DISTINCT OBSERVABLE IMPACT)
+========================================================= */
+body.density-compact {
+    --density-factor: 0.8;
+}
+
+/* DASHBOARD CONTAINERS & GRIDS */
+body.density-compact .dashboard-main,
+body.density-compact .dashboard-container {
+    padding: 14px 20px !important;
+}
+
+body.density-compact .dashboard-top {
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+}
+
+body.density-compact .dashboard-content-grid {
+    gap: 14px !important;
+}
+
+/* CARDS & PADDING */
+body.density-compact .stat-card {
+    padding: 12px 16px !important;
+    min-height: auto !important;
+    border-radius: 12px !important;
+}
+
+body.density-compact .stat-card h3 {
+    font-size: 0.75rem !important;
+    margin-bottom: 4px !important;
+}
+
+body.density-compact .stat-number {
+    font-size: 1.35rem !important;
+}
+
+body.density-compact .stat-icon {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 16px !important;
+}
+
+body.density-compact .dashboard-card,
+body.density-compact .editor-card,
+body.density-compact .problem-card,
+body.density-compact .profile-card,
+body.density-compact .performance-card,
+body.density-compact .action-card,
+body.density-compact .breakdown-card,
+body.density-compact .question-review-section,
+body.density-compact .aptitude-hub-attempts-section {
+    padding: 14px 18px !important;
+    border-radius: 14px !important;
+}
+
+/* APTITUDE SPECIFICS */
+body.density-compact .aptitude-page {
+    padding: 16px 20px !important;
+}
+
+body.density-compact .aptitude-header {
+    padding: 20px 24px !important;
+    margin-bottom: 20px !important;
+}
+
+body.density-compact .aptitude-card {
+    padding: 14px 18px !important;
+    border-radius: 14px !important;
+}
+
+body.density-compact .aptitude-card-desc {
+    margin-bottom: 10px !important;
+    font-size: 0.775rem !important;
+}
+
+body.density-compact .aptitude-topics-list {
+    gap: 6px !important;
+}
+
+body.density-compact .aptitude-topic-item {
+    padding: 4px 8px !important;
+    font-size: 0.725rem !important;
+}
+
+body.density-compact .assessment-option-card,
+body.density-compact .option-card {
+    padding: 10px 14px !important;
+    gap: 10px !important;
+}
+
+body.density-compact .coding-problem-item,
+body.density-compact .coding-lang-option {
+    padding: 8px 12px !important;
+}
+
+body.density-compact .score-stat-box {
+    padding: 10px 14px !important;
+    min-width: 90px !important;
+}
+
+body.density-compact .review-question-card {
+    padding: 12px 16px !important;
+}
+
+body.density-compact .stats-grid,
+body.density-compact .aptitude-grid,
+body.density-compact .dashboard-grid,
+body.density-compact .syllabus-grid {
+    gap: 12px !important;
+}
+
+/* TABLES IN COMPACT MODE */
+body.density-compact .table td,
+body.density-compact .table th,
+body.density-compact tr td,
+body.density-compact tr th,
+body.density-compact .history-table td,
+body.density-compact .history-table th,
+body.density-compact .hub-attempts-table td,
+body.density-compact .hub-attempts-table th {
+    padding: 8px 12px !important;
+    font-size: 0.8125rem !important;
+}
+
+/* SETTINGS MODAL IN COMPACT MODE */
+body.density-compact .settings-content {
+    padding: 18px 24px !important;
+}
+
+body.density-compact .theme-option-card {
+    padding: 12px 14px !important;
+}
+
+body.density-compact .settings-toggle-row {
+    padding: 10px 14px !important;
+}
+
+body.density-compact .custom-track-card {
+    padding: 8px 10px !important;
+}
+
+/* =========================================================
+   ACCESSIBILITY: REDUCED MOTION
+========================================================= */
+body.reduce-motion *,
+body.reduce-motion *::before,
+body.reduce-motion *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+}
+
+body.reduce-motion *:hover:not(.custom-navbar),
+body.reduce-motion *:focus:not(.custom-navbar) {
+    transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    *:hover:not(.custom-navbar),
+    *:focus:not(.custom-navbar) {
+        transform: none !important;
+    }
+}

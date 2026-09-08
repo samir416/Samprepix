@@ -31,16 +31,18 @@
 }
 
 .settings-modal-card {
-    width: 100%;
-    max-width: 680px;
-    max-height: 88vh;
+    width: min(700, calc(100vw - 48px));
+    max-width: 1000px;
+    height: min(700px, calc(100vh - 64px));
+    max-height: calc(100vh - 64px);
     background: #ffffff;
     border-radius: 20px;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.06);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     color: #0f172a;
+    position: relative;
 }
 
 /* HEADER */
@@ -48,8 +50,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
+    padding: 18px 26px;
     border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    flex-shrink: 0;
 }
 
 .settings-header-left {
@@ -104,33 +107,33 @@
 .settings-body {
     display: flex;
     flex: 1;
-    min-height: 380px;
-    max-height: calc(88vh - 140px);
+    min-height: 0;
     overflow: hidden;
 }
 
 /* TABS */
 .settings-tabs {
-    width: 180px;
+    width: 220px;
     border-right: 1px solid rgba(15, 23, 42, 0.08);
     background: #f8fafc;
-    padding: 16px 10px;
+    padding: 18px 12px;
     display: flex;
     flex-direction: column;
     gap: 6px;
     flex-shrink: 0;
+    overflow-y: auto;
 }
 
 .settings-tab-btn {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
-    border-radius: 10px;
+    padding: 11px 16px;
+    border-radius: 12px;
     border: none;
     background: transparent;
     color: #64748b;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
     text-align: left;
@@ -153,8 +156,18 @@
 /* CONTENT */
 .settings-content {
     flex: 1;
-    padding: 22px 26px;
+    min-height: 0;
+    padding: 24px 32px;
     overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE / Edge */
+}
+
+.settings-content::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
 }
 
 .settings-section-title {
@@ -477,26 +490,112 @@ input:checked + .settings-slider:before {
     color: #ffffff;
 }
 
-.settings-select {
-    width: 100%;
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    background: #ffffff;
-    color: #0f172a;
-    font-size: 0.875rem;
-    outline: none;
-    cursor: pointer;
+.app-pref-hint {
+    font-size: 0.775rem;
+    color: #64748b;
+    margin: -4px 0 6px;
 }
 
-/* FOOTER */
+.custom-track-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.custom-track-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: #ffffff;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.custom-track-card:hover {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.03);
+}
+
+.custom-track-card.selected {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.07);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+}
+
+.track-card-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.track-icon-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.custom-track-card.selected .track-icon-badge {
+    background: #6366f1;
+    color: #ffffff;
+}
+
+.track-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.track-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-sub {
+    font-size: 0.7125rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-check-pill {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #6366f1;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 6px;
+}
+
+/* FOOTER - WITH GUARANTEED GENEROUS INTENTIONAL FLOATING BOTTOM & CORNER CLEARANCE */
 .settings-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 24px;
+    padding: 18px 36px 36px 36px;
     border-top: 1px solid rgba(15, 23, 42, 0.08);
     background: #f8fafc;
+    flex-shrink: 0;
 }
 
 .settings-saved-badge {
@@ -508,20 +607,117 @@ input:checked + .settings-slider:before {
     color: #10b981;
 }
 
+.settings-unsaved-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #d97706;
+}
+
+.settings-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.settings-cancel-btn {
+    padding: 11px 24px;
+    background: transparent;
+    color: #64748b;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 0;
+}
+
+.settings-cancel-btn:hover {
+    background: rgba(15, 23, 42, 0.05);
+    color: #0f172a;
+    border-color: rgba(15, 23, 42, 0.25);
+}
+
 .settings-done-btn {
-    padding: 9px 22px;
+    padding: 11px 32px;
     background: #0f172a;
     color: #ffffff;
     border: none;
-    border-radius: 10px;
-    font-size: 0.875rem;
+    border-radius: 12px;
+    font-size: 0.9375rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    margin-bottom: 0;
 }
 
 .settings-done-btn:hover {
     background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+}
+
+/* SOUND TEST ROW */
+.settings-sound-test-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    padding-left: 50px;
+}
+
+.test-sound-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: #ffffff;
+    color: #4338ca;
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(67, 56, 202, 0.08);
+    transition: all 0.2s ease;
+}
+
+.test-sound-btn:hover:not(:disabled) {
+    background: #eef2ff;
+    border-color: #a5b4fc;
+    color: #3730a3;
+    transform: translateY(-1px);
+}
+
+.test-sound-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    background: #f8fafc;
+    box-shadow: none;
+}
+
+.test-sound-hint {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* TRACK COUNT BADGE */
+.track-count-badge {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
 }
 
 /* =========================================================
@@ -621,10 +817,32 @@ body.dark-theme .font-size-btn {
     color: #cbd5e1;
 }
 
-body.dark-theme .settings-select {
+body.dark-theme .app-pref-hint {
+    color: #94a3b8;
+}
+
+body.dark-theme .custom-track-card {
     background: #0d1736;
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-theme .custom-track-card:hover {
+    border-color: #818cf8;
+    background: rgba(99, 102, 241, 0.12);
+}
+
+body.dark-theme .custom-track-card.selected {
+    border-color: #818cf8;
+    background: rgba(99, 102, 241, 0.2);
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.25);
+}
+
+body.dark-theme .custom-track-card .track-name {
+    color: #f8fafc;
+}
+
+body.dark-theme .custom-track-card .track-sub {
+    color: #94a3b8;
 }
 
 body.dark-theme .settings-footer {
@@ -632,33 +850,173 @@ body.dark-theme .settings-footer {
     border-top-color: rgba(255, 255, 255, 0.08);
 }
 
+body.dark-theme .settings-unsaved-badge {
+    color: #fbbf24;
+}
+
+body.dark-theme .settings-cancel-btn {
+    color: #94a3b8;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-theme .settings-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #f1f5f9;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
 body.dark-theme .settings-done-btn {
     background: #6366f1;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
 }
 
 body.dark-theme .settings-done-btn:hover {
     background: #4f46e5;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
 }
 
-@media (max-width: 600px) {
+body.dark-theme .test-sound-btn {
+    background: #1e1b4b;
+    border-color: #4338ca;
+    color: #c7d2fe;
+}
+
+body.dark-theme .test-sound-btn:hover:not(:disabled) {
+    background: #312e81;
+    border-color: #6366f1;
+    color: #ffffff;
+}
+
+body.dark-theme .test-sound-btn:disabled {
+    background: #0f172a;
+    border-color: #1e293b;
+    color: #475569;
+}
+
+body.dark-theme .test-sound-hint {
+    color: #94a3b8;
+}
+
+body.dark-theme .track-count-badge {
+    color: #a5b4fc;
+    background: rgba(99, 102, 241, 0.18);
+}
+
+/* =========================================================
+   RESPONSIVE SETTINGS BREAKPOINTS (1024, 768, 480, 360)
+========================================================= */
+
+@media (max-width: 1024px) {
+    .settings-modal-card {
+        width: min(920px, calc(100vw - 36px));
+        max-width: 920px;
+        border-radius: 20px;
+    }
+    .settings-tabs {
+        width: 200px;
+        padding: 16px 12px;
+    }
+    .settings-content {
+        padding: 24px 28px;
+    }
+    .settings-footer {
+        padding: 16px 28px 32px 28px;
+    }
+}
+
+@media (max-width: 768px) {
+    .settings-modal-card {
+        width: calc(100vw - 28px);
+        max-width: 100%;
+        height: min(700px, calc(100vh - 32px));
+        max-height: calc(100vh - 32px);
+        border-radius: 18px;
+    }
     .settings-body {
         flex-direction: column;
-        max-height: calc(88vh - 120px);
+        flex: 1;
+        min-height: 0;
     }
     .settings-tabs {
         width: 100%;
         flex-direction: row;
         border-right: none;
         border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-        padding: 8px;
+        padding: 10px 14px;
         overflow-x: auto;
+        gap: 6px;
     }
     .settings-tab-btn {
-        padding: 8px 10px;
-        font-size: 0.75rem;
+        padding: 9px 14px;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+        width: auto;
+    }
+    .settings-content {
+        padding: 20px 20px;
     }
     .theme-options-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    .custom-track-grid {
         grid-template-columns: 1fr;
+    }
+    .settings-footer {
+        padding: 14px 24px 30px 24px;
     }
 }
 
+@media (max-width: 480px) {
+    .settings-modal-overlay {
+        padding: 8px;
+    }
+    .settings-modal-card {
+        width: 100%;
+        border-radius: 16px;
+        height: calc(100vh - 16px);
+        max-height: calc(100vh - 16px);
+    }
+    .settings-header {
+        padding: 14px 16px;
+    }
+    .settings-header h2 {
+        font-size: 1.05rem;
+    }
+    .settings-tabs {
+        padding: 8px 10px;
+    }
+    .settings-tab-btn {
+        padding: 8px 12px;
+        font-size: 0.775rem;
+    }
+    .settings-content {
+        padding: 16px 14px;
+    }
+    .theme-options-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .settings-toggle-row {
+        padding: 12px 12px;
+    }
+    .settings-sound-test-row {
+        padding-left: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .settings-footer {
+        padding: 12px 18px 28px 18px;
+    }
+}
+
+@media (max-width: 360px) {
+    .settings-footer {
+        padding: 12px 16px 26px 16px;
+    }
+    .settings-done-btn {
+        padding: 10px 24px;
+        font-size: 0.85rem;
+    }
+}

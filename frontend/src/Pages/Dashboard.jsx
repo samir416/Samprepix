@@ -17,6 +17,10 @@ import {
 } from "../services/interviewService";
 
 import {
+    getAptitudeAttempts
+} from "../services/aptitudeService";
+
+import {
     FiTrendingUp,
     FiTarget,
     FiClock,
@@ -53,6 +57,8 @@ export default function Dashboard() {
     const [codingStats, setCodingStats] = useState(null);
 
     const [mockInterviewCount, setMockInterviewCount] = useState(0);
+
+    const [aptitudeAttempts, setAptitudeAttempts] = useState([]);
 
     const [loadingStats, setLoadingStats] = useState(true);
     useEffect(() => {
@@ -142,7 +148,57 @@ export default function Dashboard() {
 
         loadInterviews();
 
+        const loadAptitude = async () => {
+            try {
+                const attempts = await getAptitudeAttempts();
+                setAptitudeAttempts(Array.isArray(attempts) ? attempts : []);
+            } catch (error) {
+                console.error("Failed to load aptitude attempts", error);
+            }
+        };
+
+        loadAptitude();
+
     }, [navigate]);
+
+    const bestAptitudeScore = aptitudeAttempts.length > 0
+        ? Math.max(...aptitudeAttempts.map((a) => a.percentage || 0))
+        : null;
+
+    const combinedActivities = [
+        ...(codingStats?.recentSubmissions || []).map((s) => ({
+            id: `coding-${s.problemId}-${s.attemptedAt}`,
+            title: s.problemTitle || "Coding Problem",
+            subtitle: `${s.language ? s.language.toUpperCase() : "Code"} · ${s.difficulty || "Practice"}`,
+            badge: s.completed ? "✓ Solved" : "Attempted",
+            badgeClass: s.completed ? "solved" : "attempted",
+            dotColor: s.completed ? "#10b981" : "#6366f1",
+            timestamp: s.attemptedAt ? new Date(s.attemptedAt).getTime() : 0,
+            onClick: () => navigate("/coding-arena")
+        })),
+        ...(resumeHistory || []).map((r) => ({
+            id: `resume-${r.id}`,
+            title: "Resume Analysis",
+            subtitle: r.analyzedAt ? new Date(r.analyzedAt).toLocaleDateString() : "Recent",
+            badge: `ATS ${r.score}`,
+            badgeClass: "resume",
+            dotColor: "#06b6d4",
+            timestamp: r.analyzedAt ? new Date(r.analyzedAt).getTime() : 0,
+            onClick: () => navigate("/resume-analyzer")
+        })),
+        ...(aptitudeAttempts || []).map((a) => ({
+            id: `aptitude-${a.id}`,
+            title: `${a.trackTitle || "Aptitude"} Test`,
+            subtitle: `${a.correctCount}/${a.totalQuestions} correct (${a.percentage}%)`,
+            badge: `${a.percentage}%`,
+            badgeClass: "aptitude",
+            dotColor: "#f59e0b",
+            timestamp: a.completedAt ? new Date(a.completedAt).getTime() : 0,
+            onClick: () => navigate("/aptitude")
+        }))
+    ]
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 4);
 
     return (
         <motion.div
@@ -306,6 +362,82 @@ export default function Dashboard() {
 
                                                                         <span>
                                                                             {mockInterviewCount > 0 ? "Completed sessions" : "Practice now"}
+                                                                        </span>
+
+                                                                    </div>
+
+                                                                </div>
+
+                                                                {/* CARD 5: APTITUDE TESTS */}
+
+                                                                <div
+                                                                    className="stat-card interactive"
+                                                                    onClick={() => navigate("/aptitude")}
+                                                                    title="Open Aptitude Hub"
+                                                                >
+
+                                                                    <div className="stat-top">
+
+                                                                        <p>
+                                                                            Aptitude Tests
+                                                                        </p>
+
+                                                                        <div className="stat-icon">
+
+                                                                            <FiAward />
+
+                                                                        </div>
+
+                                                                    </div>
+
+                                                                    <div className="stat-bottom">
+
+                                                                        <h2>
+                                                                            {aptitudeAttempts.length}
+                                                                        </h2>
+
+                                                                        <span>
+                                                                            {aptitudeAttempts.length > 0
+                                                                                ? `Best: ${bestAptitudeScore}% score`
+                                                                                : "22,000+ Questions"}
+                                                                        </span>
+
+                                                                    </div>
+
+                                                                </div>
+
+                                                                {/* CARD 6: REAL TOTAL SUBMISSIONS */}
+
+                                                                <div
+                                                                    className="stat-card interactive"
+                                                                    onClick={() => navigate("/coding-arena")}
+                                                                    title="Open Coding Arena Submissions"
+                                                                >
+
+                                                                    <div className="stat-top">
+
+                                                                        <p>
+                                                                            Total Submissions
+                                                                        </p>
+
+                                                                        <div className="stat-icon">
+
+                                                                            <FiCheckCircle />
+
+                                                                        </div>
+
+                                                                    </div>
+
+                                                                    <div className="stat-bottom">
+
+                                                                        <h2>
+                                                                            {codingStats ? codingStats.totalSubmissions || codingStats.problemsAttempted || 0 : 0}
+                                                                        </h2>
+
+                                                                        <span>
+                                                                            {codingStats?.successfulSubmissions != null
+                                                                                ? `${codingStats.successfulSubmissions} passed`
+                                                                                : "Active practice"}
                                                                         </span>
 
                                                                     </div>
@@ -713,14 +845,14 @@ export default function Dashboard() {
                                                                         Recent activity
                                                                     </h3>
 
-                                                                    {codingStats?.recentSubmissions && codingStats.recentSubmissions.length > 0 ? (
+                                                                    {combinedActivities.length > 0 ? (
 
-                                                                        codingStats.recentSubmissions.slice(0, 4).map((item) => (
+                                                                        combinedActivities.map((item) => (
 
                                                                             <div
                                                                                 className="activity-item"
-                                                                                key={`${item.problemId}-${item.attemptedAt}`}
-                                                                                onClick={() => navigate("/coding-arena")}
+                                                                                key={item.id}
+                                                                                onClick={item.onClick}
                                                                                 style={{ cursor: "pointer" }}
                                                                             >
 
@@ -729,63 +861,26 @@ export default function Dashboard() {
                                                                                     <div
                                                                                         className="activity-dot"
                                                                                         style={{
-                                                                                            background: item.completed ? "#10b981" : "#6366f1"
+                                                                                            background: item.dotColor || "#6366f1"
                                                                                         }}
                                                                                     />
 
                                                                                     <div className="activity-text">
 
                                                                                         <h4>
-                                                                                            {item.problemTitle}
+                                                                                            {item.title}
                                                                                         </h4>
 
                                                                                         <p>
-                                                                                            {item.language ? item.language.toUpperCase() : "Code"} · {item.difficulty}
+                                                                                            {item.subtitle}
                                                                                         </p>
 
                                                                                     </div>
 
                                                                                 </div>
 
-                                                                                <span className={`activity-badge ${item.completed ? "solved" : "attempted"}`}>
-                                                                                    {item.completed ? "✓ Solved" : "Attempted"}
-                                                                                </span>
-
-                                                                            </div>
-
-                                                                        ))
-
-                                                                    ) : resumeHistory && resumeHistory.length > 0 ? (
-
-                                                                        resumeHistory.slice(0, 4).map((item) => (
-
-                                                                            <div
-                                                                                className="activity-item"
-                                                                                key={item.id}
-                                                                                onClick={() => navigate("/resume-analyzer")}
-                                                                                style={{ cursor: "pointer" }}
-                                                                            >
-
-                                                                                <div className="activity-left">
-
-                                                                                    <div className="activity-dot" />
-
-                                                                                    <div className="activity-text">
-
-                                                                                        <h4>
-                                                                                            Resume Analysis
-                                                                                        </h4>
-
-                                                                                        <p>
-                                                                                            {item.analyzedAt ? item.analyzedAt.split("T")[0] : "Recent"}
-                                                                                        </p>
-
-                                                                                    </div>
-
-                                                                                </div>
-
-                                                                                <span className="activity-badge resume">
-                                                                                    ATS {item.score}
+                                                                                <span className={`activity-badge ${item.badgeClass}`}>
+                                                                                    {item.badge}
                                                                                 </span>
 
                                                                             </div>
@@ -795,7 +890,7 @@ export default function Dashboard() {
                                                                     ) : (
 
                                                                         <div className="activity-item empty-activity">
-                                                                            No recent activity yet. Solve a problem in Coding Arena to get started!
+                                                                            No recent activity yet. Solve a problem in Coding Arena or take an Aptitude test to get started!
                                                                         </div>
 
                                                                     )}

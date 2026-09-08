@@ -16,6 +16,8 @@ export default function AuthModal() {
     const [error, setError] = useState("");
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [otp, setOtp] = useState("");
+    const [otpError, setOtpError] = useState("");
+    const [otpMessage, setOtpMessage] = useState("");
     const [registeredEmail, setRegisteredEmail] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -329,52 +331,50 @@ export default function AuthModal() {
 
                                         }
                                     } catch (err) {
-
-                                        alert(
+                                        setOtpError(
                                             err?.response?.data?.message ||
                                             err?.response?.data ||
-                                            "Invalid OTP"
+                                            "Invalid OTP. Please check and try again."
                                         );
-
+                                        setOtpMessage("");
                                     }
-
                                 }}
-
                             >
-
                                 Verify OTP
-
                             </button>
 
                             <button
-
                                 onClick={async () => {
-
                                     try {
-
+                                        setOtpError("");
                                         const response = await resendOtp(
                                             registeredEmail
                                         );
-
-                                        alert(response.message);
-
+                                        setOtpMessage(response?.message || "OTP resent successfully.");
                                     } catch (err) {
-
-                                        alert(
+                                        setOtpError(
                                             err?.response?.data?.message ||
-                                            err?.response?.data
+                                            err?.response?.data ||
+                                            "Failed to resend OTP."
                                         );
-
+                                        setOtpMessage("");
                                     }
-
                                 }}
-
                             >
-
                                 Resend OTP
-
                             </button>
 
+                            {otpError && (
+                                <p style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "10px", textAlign: "center" }}>
+                                    {otpError}
+                                </p>
+                            )}
+
+                            {otpMessage && (
+                                <p style={{ color: "#10b981", fontSize: "0.85rem", marginTop: "10px", textAlign: "center" }}>
+                                    {otpMessage}
+                                </p>
+                            )}
                         </div>
 
                     </div>

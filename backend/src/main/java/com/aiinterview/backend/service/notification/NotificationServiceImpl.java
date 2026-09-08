@@ -18,17 +18,20 @@ public class NotificationServiceImpl implements NotificationService {
     private final CodingProblemCompletionRepository completionRepository;
     private final InterviewSessionRepository interviewSessionRepository;
     private final ResumeAnalysisRepository resumeAnalysisRepository;
+    private final AptitudeAttemptRepository aptitudeAttemptRepository;
     private final UserRepository userRepository;
 
     public NotificationServiceImpl(
             CodingProblemCompletionRepository completionRepository,
             InterviewSessionRepository interviewSessionRepository,
             ResumeAnalysisRepository resumeAnalysisRepository,
+            AptitudeAttemptRepository aptitudeAttemptRepository,
             UserRepository userRepository
     ) {
         this.completionRepository = completionRepository;
         this.interviewSessionRepository = interviewSessionRepository;
         this.resumeAnalysisRepository = resumeAnalysisRepository;
+        this.aptitudeAttemptRepository = aptitudeAttemptRepository;
         this.userRepository = userRepository;
     }
 
@@ -56,7 +59,6 @@ public class NotificationServiceImpl implements NotificationService {
             boolean isCompleted = c.isCompleted();
             String id = (isCompleted ? "coding-comp-" : "coding-att-") + c.getId();
 
-            // Check if dismissed
             if ((dismissedAllBefore != null && !ts.isAfter(dismissedAllBefore)) || dismissedIds.contains(id)) {
                 continue;
             }
@@ -142,14 +144,41 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
 
-        // 4. Welcome notification if no events exist yet and user hasn't cleared notifications
+        // 4. Aptitude Assessment Attempts
+        if (aptitudeAttemptRepository != null) {
+            List<AptitudeAttempt> attempts = aptitudeAttemptRepository.findByUserOrderByCompletedAtDesc(user);
+            for (AptitudeAttempt a : attempts) {
+                LocalDateTime ts = a.getCompletedAt() != null ? a.getCompletedAt() : now;
+                String id = "aptitude-" + a.getId();
+
+                if ((dismissedAllBefore != null && !ts.isAfter(dismissedAllBefore)) || dismissedIds.contains(id)) {
+                    continue;
+                }
+
+                boolean unread = lastRead == null || ts.isAfter(lastRead);
+                String outcome = a.getPercentage() >= 60.0 ? "Passed" : "Completed";
+
+                list.add(NotificationDto.builder()
+                        .id(id)
+                        .type("APTITUDE")
+                        .title("Aptitude " + outcome + ": " + a.getTrackTitle())
+                        .message("Scored " + Math.round(a.getPercentage()) + "% (" + a.getCorrectCount() + "/" + a.getTotalQuestions() + " correct) in " + formatSeconds(a.getTimeSpentSeconds()) + ".")
+                        .timestamp(formatRelativeTime(ts, now))
+                        .createdAt(ts)
+                        .unread(unread)
+                        .targetUrl("/aptitude")
+                        .build());
+            }
+        }
+
+        // 5. Welcome notification if no events exist yet and user hasn't cleared notifications
         if (list.isEmpty() && !dismissedIds.contains("sys-welcome") && dismissedAllBefore == null) {
             boolean unread = lastRead == null;
             list.add(NotificationDto.builder()
                     .id("sys-welcome")
                     .type("SYSTEM")
                     .title("Welcome to Samprepix!")
-                    .message("Your placement workspace is ready. Solve 6,260+ coding challenges or try an AI mock interview.")
+                    .message("Your placement workspace is ready. Solve 6,260+ coding challenges, take aptitude assessments, or try an AI mock interview.")
                     .timestamp("Just now")
                     .createdAt(now)
                     .unread(unread)
@@ -219,6 +248,13 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
+    private String formatSeconds(int totalSecs) {
+        int mins = totalSecs / 60;
+        int secs = totalSecs % 60;
+        if (mins == 0) return secs + "s";
+        return mins + "m " + secs + "s";
+    }
+
     private String formatRelativeTime(LocalDateTime time, LocalDateTime now) {
         if (time == null) return "Recently";
         Duration d = Duration.between(time, now);
@@ -240,4 +276,3 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 }
-

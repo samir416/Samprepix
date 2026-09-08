@@ -1440,16 +1440,24 @@ export default function Profile() {
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
-
-            alert("Please select a valid image.");
-
+            setMessage({
+                type: "error",
+                text: "Please select a valid image file (JPEG, PNG, or WebP)."
+            });
+            setTimeout(() => {
+                setMessage({ type: "", text: "" });
+            }, 3500);
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
-
-            alert("Image size must be less than 5 MB.");
-
+            setMessage({
+                type: "error",
+                text: "Image size must be less than 5 MB."
+            });
+            setTimeout(() => {
+                setMessage({ type: "", text: "" });
+            }, 3500);
             return;
         }
 
