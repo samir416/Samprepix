@@ -2270,21 +2270,13 @@ body.dark-theme .execution-error{
     padding-right: 2px;
 }
 
+.coding-lang-scroll-area {
+    scrollbar-width: none !important;
+}
+
 .coding-lang-scroll-area::-webkit-scrollbar {
-    width: 5px;
-}
-
-.coding-lang-scroll-area::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.coding-lang-scroll-area::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-}
-
-.coding-lang-scroll-area::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.35);
+    display: none !important;
+    width: 0 !important;
 }
 
 .coding-lang-section {
@@ -2613,12 +2605,8 @@ body:not(.dark-theme) .coding-lang-option.selected {
     color: #4f46e5;
 }
 
-body:not(.dark-theme) .coding-lang-scroll-area::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
-}
-
-body:not(.dark-theme) .coding-lang-scroll-area::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.28);
+body:not(.dark-theme) .coding-lang-scroll-area {
+    scrollbar-width: none !important;
 }
 
 body:not(.dark-theme) .coding-problem-list-header {

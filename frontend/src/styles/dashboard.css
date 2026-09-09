@@ -1443,15 +1443,9 @@ body.dark-theme .dashboard-settings-toggle:hover {
 }
 
 
-/* SCROLLBAR */
-
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 20px;
+/* SCROLLBAR SUPPRESSION */
+* {
+    scrollbar-width: none !important;
 }
 
 /* RESPONSIVE */

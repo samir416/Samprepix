@@ -101,7 +101,7 @@ export default function Dashboard() {
 
                 } catch (error) {
 
-                    console.log(error);
+                    console.error(error);
                 }
             };
 
@@ -118,7 +118,7 @@ export default function Dashboard() {
 
             } catch (error) {
 
-                console.log(error);
+                console.error(error);
             }
         };
 

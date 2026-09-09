@@ -2,15 +2,25 @@ import brainImage from "../assets/brain.png";
 import "../styles/home.css";
 import Logo from "../assets/Logo.png";
 import AuthModal from "../Components/Auth/AuthModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../Components/Common/Navbar";
+import Footer from "../Components/Common/Footer";
+import { updatePageSEO } from "../utils/seo";
 import samImage from "../assets//users/Sam.jpeg";
 import adiImage from "../assets//users/Adi.jpeg";
 import vanshImage from "../assets//users/Vansh.jpeg";
 
 export default function Home() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    updatePageSEO({
+      title: "Samprepix | AI Placement Platform for Computer Science Students",
+      description: "Crack your dream software placement with AI-powered mock interviews, real-time coding arena, aptitude practice, and ATS resume analytics built for Computer Science students.",
+      canonicalPath: "/"
+    });
+  }, []);
   return (
     <>
       <Navbar />
@@ -35,7 +45,7 @@ export default function Home() {
           <p className="hero-description">
             Practice realistic mock interviews, get instant resume
             feedback, and master coding rounds — all in one beautifully
-            designed workspace.
+            designed workspace built for Computer Science students.
           </p>
 
           <div className="hero-buttons">
@@ -52,7 +62,7 @@ export default function Home() {
 
           <div className="hero-stats">
             <span>⭐⭐⭐⭐⭐</span>
-            <span>Built for students</span>
+            <span>Built for CS students</span>
             <span>Secure platform</span>
           </div>
 
@@ -288,11 +298,11 @@ export default function Home() {
             </div>
 
             <h3>
-              Company Packs
+              Placement Tracks
             </h3>
 
             <p>
-              Targeted prep kits for Google, Meta, Amazon and 100+ companies.
+              Targeted practice kits aligned with software engineering and campus placement assessment patterns.
             </p>
 
           </div>
@@ -439,7 +449,7 @@ export default function Home() {
           </h2>
 
           <p>
-            Join students preparing smarter — not harder.
+            Join Computer Science students preparing smarter — not harder.
           </p>
 
           <button onClick={() => navigate("/auth")}>
@@ -451,131 +461,7 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-
-      <footer className="footer-section">
-
-        <div className="footer-container">
-
-          {/* LEFT */}
-
-          <div className="footer-brand">
-
-            <div className="footer-logo">
-
-              <img
-                src={Logo}
-                alt="Samprepix Logo"
-                className="footer-logo-img"
-              />
-
-            </div>
-
-            <h2>
-              Samprepix
-            </h2>
-
-            <p>
-              AI-powered interview & placement
-              preparation for students and teams.
-            </p>
-
-          </div>
-
-          {/* LINKS */}
-
-          <div className="footer-links-wrapper">
-
-            {/* PRODUCT */}
-
-            <div className="footer-column">
-
-              <h4>
-                Product
-              </h4>
-
-              <a href="#">
-                Features
-              </a>
-
-              <a href="#">
-                Pricing
-              </a>
-
-              <a href="#">
-                Changelog
-              </a>
-
-              <a href="#">
-                Roadmap
-              </a>
-
-            </div>
-
-            {/* RESOURCES */}
-
-            <div className="footer-column">
-
-              <h4>
-                Resources
-              </h4>
-
-              <a href="#">
-                Docs
-              </a>
-
-              <a href="#">
-                Blog
-              </a>
-
-              <a href="#">
-                Guides
-              </a>
-
-              <a href="#">
-                Community
-              </a>
-
-            </div>
-
-            {/* COMPANY */}
-
-            <div className="footer-column">
-
-              <h4>
-                Company
-              </h4>
-
-              <a href="#">
-                About
-              </a>
-
-              <a href="#">
-                Careers
-              </a>
-
-              <a href="#">
-                Contact
-              </a>
-
-              <a href="#">
-                Legal
-              </a>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* BOTTOM */}
-
-        <div className="footer-bottom">
-
-          © 2026 Samprepix. Crafted for ambitious learners.
-
-        </div>
-
-      </footer>
+      <Footer />
 
 
 

@@ -324,7 +324,7 @@ public class AptitudeQuestionServiceImpl implements AptitudeQuestionService {
                     .isAnswered(isAnswered)
                     .explanation(q.getExplanation())
                     .formulaHint(q.getFormulaHint())
-                    .sourceAttribution(q.getSourceAttribution())
+                    .sourceAttribution(sanitizeAttribution(q.getSourceAttribution()))
                     .build());
         }
 
@@ -526,7 +526,7 @@ public class AptitudeQuestionServiceImpl implements AptitudeQuestionService {
                 .correctOption(q.getCorrectOption())
                 .explanation(q.getExplanation())
                 .formulaHint(q.getFormulaHint())
-                .sourceAttribution(q.getSourceAttribution())
+                .sourceAttribution(sanitizeAttribution(q.getSourceAttribution()))
                 .tags(q.getTags())
                 .build();
     }
@@ -547,7 +547,21 @@ public class AptitudeQuestionServiceImpl implements AptitudeQuestionService {
                         new AptitudeOptionDto("D", q.getOptionD())
                 ))
                 .formulaHint(q.getFormulaHint())
-                .sourceAttribution(q.getSourceAttribution())
+                .sourceAttribution(sanitizeAttribution(q.getSourceAttribution()))
                 .build();
+    }
+
+    private String sanitizeAttribution(String attr) {
+        if (attr == null || attr.isBlank()) {
+            return null;
+        }
+        String lower = attr.toLowerCase();
+        if (lower.contains("tcs") || lower.contains("infosys") || lower.contains("wipro")
+                || lower.contains("cognizant") || lower.contains("accenture")
+                || lower.contains("amazon") || lower.contains("google")
+                || lower.contains("microsoft") || lower.contains("capgemini")) {
+            return "Software Placement Assessment Pattern";
+        }
+        return attr;
     }
 }

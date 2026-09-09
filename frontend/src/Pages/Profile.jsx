@@ -32,7 +32,7 @@ import {
 } from "react-icons/fi";
 import { getCurrentUser } from "../services/authService";
 import "../styles/profile.css";
-import ConfirmationModal from "../components/ConfirmationModal";
+import ConfirmationModal from "../Components/ConfirmationModal";
 import ImageCropModal from "../components/common/ImageCropModal";
 
 export default function Profile() {
@@ -1630,6 +1630,19 @@ export default function Profile() {
 
             });
 
+            if (githubRepositoryInput && githubRepositoryInput.trim() !== (githubRepository.repositoryUrl || "").trim()) {
+                try {
+                    const savedRepo = await saveGitHubRepository(githubRepositoryInput.trim());
+                    setGithubRepository(prev => ({
+                        ...prev,
+                        connected: savedRepo?.connected === true,
+                        repositoryUrl: savedRepo?.repositoryUrl || githubRepositoryInput.trim()
+                    }));
+                } catch (repoErr) {
+                    console.warn("Could not sync GitHub repository during profile save:", repoErr);
+                }
+            }
+
             const basicUser = await getCurrentUser();
 
             const latestProfile = await getProfile();
@@ -2026,6 +2039,9 @@ export default function Profile() {
                                     });
 
                                     setSelectedSkills(currentUser.skills || []);
+                                    setGithubRepositoryInput(currentUser.githubUrl || githubRepository.repositoryUrl || "");
+                                    setIsEditingGithub(false);
+                                    setIsEditingLinkedin(false);
 
                                 } catch (error) {
 
@@ -3089,7 +3105,7 @@ export default function Profile() {
                                         </div>
 
                                         <div className="profile-social-card-body">
-                                            {(isEditing || isEditingGithub || !githubRepository.repositoryUrl) ? (
+                                            {isEditing ? (
                                                 <div className="profile-social-edit-group">
                                                     <p className="profile-social-description">
                                                         Link your GitHub repository or profile to automatically track and sync your solutions.
@@ -3099,36 +3115,34 @@ export default function Profile() {
                                                         <input
                                                             type="url"
                                                             value={githubRepositoryInput}
-                                                            onChange={(event) => setGithubRepositoryInput(event.target.value)}
+                                                            onChange={(event) => {
+                                                                const val = event.target.value;
+                                                                setGithubRepositoryInput(val);
+                                                                setFormData(prev => {
+                                                                    const updated = { ...prev, githubUrl: val };
+                                                                    checkForChanges(updated, selectedSkills);
+                                                                    return updated;
+                                                                });
+                                                            }}
                                                             placeholder="https://github.com/username/repository"
                                                             className="profile-page-input"
                                                         />
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleGitHubRepositorySave(githubRepositoryInput)}
-                                                            disabled={!githubRepositoryInput.trim() || githubRepository.saving}
-                                                            className="profile-social-action-btn"
+                                                            className="profile-social-sub-btn"
+                                                            onClick={() => {
+                                                                const el = document.querySelector('input[placeholder="https://github.com/username/repository"]');
+                                                                if (el) el.focus();
+                                                            }}
                                                         >
-                                                            {githubRepository.saving ? "Saving..." : "Save"}
+                                                            {githubRepositoryInput || githubRepository.repositoryUrl ? "Change" : "Connect GitHub"}
                                                         </button>
-                                                        {isEditingGithub && githubRepository.repositoryUrl && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setIsEditingGithub(false);
-                                                                    setGithubRepositoryInput(githubRepository.repositoryUrl);
-                                                                }}
-                                                                className="profile-social-sub-btn"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                        )}
                                                     </div>
                                                     {githubRepository.error && (
                                                         <small className="profile-page-error">{githubRepository.error}</small>
                                                     )}
                                                 </div>
-                                            ) : (
+                                            ) : (githubRepository.repositoryUrl || githubRepository.connected) ? (
                                                 <div className="profile-social-populated-state">
                                                     <p className="profile-social-description">
                                                         Your GitHub repository is connected for automated solution syncing.
@@ -3157,15 +3171,27 @@ export default function Profile() {
                                                         </a>
                                                         <button
                                                             type="button"
-                                                            onClick={() => {
-                                                                setIsEditingGithub(true);
-                                                                setGithubRepositoryInput(githubRepository.repositoryUrl);
-                                                            }}
-                                                            className="profile-social-sub-btn"
+                                                            disabled={true}
+                                                            className="profile-social-sub-btn disabled-btn"
+                                                            title="Click 'Edit Profile' to change repository"
                                                         >
                                                             Change
                                                         </button>
                                                     </div>
+                                                </div>
+                                            ) : (
+                                                <div className="profile-social-empty-state">
+                                                    <p className="profile-social-description">
+                                                        Link your GitHub repository or profile to automatically track and sync your solutions.
+                                                    </p>
+                                                    <button
+                                                        type="button"
+                                                        disabled={true}
+                                                        className="profile-social-sub-btn disabled-btn"
+                                                        title="Click 'Edit Profile' to link repository"
+                                                    >
+                                                        <FiPlus /> Connect GitHub
+                                                    </button>
                                                 </div>
                                             )}
                                         </div>
@@ -3186,7 +3212,7 @@ export default function Profile() {
                                         </div>
 
                                         <div className="profile-social-card-body">
-                                            {(isEditing || isEditingLinkedin || !formData.linkedinUrl) ? (
+                                            {isEditing ? (
                                                 <div className="profile-social-edit-group">
                                                     <p className="profile-social-description">
                                                         Add your LinkedIn profile to showcase your experience, connections, and credentials to recruiters.
@@ -3203,27 +3229,20 @@ export default function Profile() {
                                                         />
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleLinkedInSave(formData.linkedinUrl)}
-                                                            disabled={!formData.linkedinUrl?.trim() || isSaving}
-                                                            className="profile-social-action-btn"
+                                                            className="profile-social-sub-btn"
+                                                            onClick={() => {
+                                                                const el = document.querySelector('input[name="linkedinUrl"]');
+                                                                if (el) el.focus();
+                                                            }}
                                                         >
-                                                            {isSaving ? "Saving..." : "Save"}
+                                                            {formData.linkedinUrl ? "Change" : "Add LinkedIn"}
                                                         </button>
-                                                        {isEditingLinkedin && formData.linkedinUrl && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setIsEditingLinkedin(false)}
-                                                                className="profile-social-sub-btn"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                        )}
                                                     </div>
                                                     {errors.linkedinUrl && (
                                                         <small className="profile-page-error">{errors.linkedinUrl}</small>
                                                     )}
                                                 </div>
-                                            ) : (
+                                            ) : formData.linkedinUrl ? (
                                                 <div className="profile-social-populated-state">
                                                     <p className="profile-social-description">
                                                         Your verified professional LinkedIn profile is linked to your account.
@@ -3252,12 +3271,27 @@ export default function Profile() {
                                                         </a>
                                                         <button
                                                             type="button"
-                                                            onClick={() => setIsEditingLinkedin(true)}
-                                                            className="profile-social-sub-btn"
+                                                            disabled={true}
+                                                            className="profile-social-sub-btn disabled-btn"
+                                                            title="Click 'Edit Profile' to change LinkedIn"
                                                         >
                                                             Change
                                                         </button>
                                                     </div>
+                                                </div>
+                                            ) : (
+                                                <div className="profile-social-empty-state">
+                                                    <p className="profile-social-description">
+                                                        Add your LinkedIn profile to showcase your experience, connections, and credentials to recruiters.
+                                                    </p>
+                                                    <button
+                                                        type="button"
+                                                        disabled={true}
+                                                        className="profile-social-sub-btn disabled-btn"
+                                                        title="Click 'Edit Profile' to link LinkedIn"
+                                                    >
+                                                        <FiPlus /> Link LinkedIn
+                                                    </button>
                                                 </div>
                                             )}
                                         </div>
@@ -3283,14 +3317,31 @@ export default function Profile() {
                                         <div className="profile-social-card-body">
                                             {isEditing ? (
                                                 <div className="profile-social-edit-group">
-                                                    <input
-                                                        type="url"
-                                                        name="portfolioUrl"
-                                                        value={formData.portfolioUrl}
-                                                        onChange={handleChange}
-                                                        className="profile-page-input"
-                                                        placeholder="https://yourportfolio.com"
-                                                    />
+                                                    <p className="profile-social-description compact">
+                                                        Showcase your personal projects, live demos, and case studies.
+                                                    </p>
+                                                    <label className="profile-social-input-label">Portfolio URL</label>
+                                                    <div className="profile-social-input-btn-row">
+                                                        <input
+                                                            type="url"
+                                                            name="portfolioUrl"
+                                                            value={formData.portfolioUrl}
+                                                            onChange={handleChange}
+                                                            className="profile-page-input"
+                                                            placeholder="https://yourportfolio.com"
+                                                            aria-label="Portfolio URL"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            className="profile-social-sub-btn"
+                                                            onClick={() => {
+                                                                const el = document.querySelector('input[name="portfolioUrl"]');
+                                                                if (el) el.focus();
+                                                            }}
+                                                        >
+                                                            {formData.portfolioUrl ? "Change" : "Add Portfolio"}
+                                                        </button>
+                                                    </div>
                                                     {errors.portfolioUrl && (
                                                         <small className="profile-page-error">{errors.portfolioUrl}</small>
                                                     )}
@@ -3319,6 +3370,14 @@ export default function Profile() {
                                                         >
                                                             Open Portfolio <FiExternalLink />
                                                         </a>
+                                                        <button
+                                                            type="button"
+                                                            disabled={true}
+                                                            className="profile-social-sub-btn disabled-btn"
+                                                            title="Click 'Edit Profile' to change portfolio"
+                                                        >
+                                                            Change
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ) : (
@@ -3328,8 +3387,9 @@ export default function Profile() {
                                                     </p>
                                                     <button
                                                         type="button"
-                                                        onClick={() => setIsEditing(true)}
-                                                        className="profile-social-sub-btn"
+                                                        disabled={true}
+                                                        className="profile-social-sub-btn disabled-btn"
+                                                        title="Click 'Edit Profile' to add portfolio"
                                                     >
                                                         <FiPlus /> Add Portfolio
                                                     </button>
@@ -3355,14 +3415,31 @@ export default function Profile() {
                                         <div className="profile-social-card-body">
                                             {isEditing ? (
                                                 <div className="profile-social-edit-group">
-                                                    <input
-                                                        type="url"
-                                                        name="personalWebsite"
-                                                        value={formData.personalWebsite}
-                                                        onChange={handleChange}
-                                                        className="profile-page-input"
-                                                        placeholder="https://yourwebsite.com"
-                                                    />
+                                                    <p className="profile-social-description compact">
+                                                        Link your technical blog, writing, or personal homepage.
+                                                    </p>
+                                                    <label className="profile-social-input-label">Personal Website URL</label>
+                                                    <div className="profile-social-input-btn-row">
+                                                        <input
+                                                            type="url"
+                                                            name="personalWebsite"
+                                                            value={formData.personalWebsite}
+                                                            onChange={handleChange}
+                                                            className="profile-page-input"
+                                                            placeholder="https://yourwebsite.com"
+                                                            aria-label="Personal Website URL"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            className="profile-social-sub-btn"
+                                                            onClick={() => {
+                                                                const el = document.querySelector('input[name="personalWebsite"]');
+                                                                if (el) el.focus();
+                                                            }}
+                                                        >
+                                                            {formData.personalWebsite ? "Change" : "Add Website"}
+                                                        </button>
+                                                    </div>
                                                     {errors.personalWebsite && (
                                                         <small className="profile-page-error">{errors.personalWebsite}</small>
                                                     )}
@@ -3391,6 +3468,14 @@ export default function Profile() {
                                                         >
                                                             Open Website <FiExternalLink />
                                                         </a>
+                                                        <button
+                                                            type="button"
+                                                            disabled={true}
+                                                            className="profile-social-sub-btn disabled-btn"
+                                                            title="Click 'Edit Profile' to change website"
+                                                        >
+                                                            Change
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ) : (
@@ -3400,8 +3485,9 @@ export default function Profile() {
                                                     </p>
                                                     <button
                                                         type="button"
-                                                        onClick={() => setIsEditing(true)}
-                                                        className="profile-social-sub-btn"
+                                                        disabled={true}
+                                                        className="profile-social-sub-btn disabled-btn"
+                                                        title="Click 'Edit Profile' to add website"
                                                     >
                                                         <FiPlus /> Add Website
                                                     </button>
@@ -3738,6 +3824,7 @@ export default function Profile() {
 
 
             <ConfirmationModal
+                open={showDiscardModal}
                 isOpen={showDiscardModal}
                 title="Discard Changes?"
                 message="You have unsaved changes. Are you sure you want to discard them?"
@@ -3821,6 +3908,9 @@ export default function Profile() {
 
                         });
 
+                        setGithubRepositoryInput(currentUser.githubUrl || githubRepository.repositoryUrl || "");
+                        setIsEditingGithub(false);
+                        setIsEditingLinkedin(false);
                         setIsEditing(false);
 
                     } catch (error) {

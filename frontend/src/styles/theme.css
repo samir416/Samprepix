@@ -563,11 +563,10 @@ body.dark-theme .recharts-tooltip-label {
     color: white !important;
 }
 
-/* SCROLLBAR */
-
-body.dark-theme ::-webkit-scrollbar-thumb {
-
-    background: #334155;
+/* SCROLLBAR SUPPRESSION */
+body.dark-theme,
+body.dark-theme * {
+    scrollbar-width: none !important;
 }
 
 /* =========================================================

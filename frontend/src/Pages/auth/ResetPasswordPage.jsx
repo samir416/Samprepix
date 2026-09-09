@@ -119,10 +119,7 @@ export default function ResetPasswordPage() {
 
         } catch (err) {
 
-            console.log("Reset Password Error");
-            console.log(err);
-            console.log(err.response);
-            console.log(err.response?.data);
+            console.error("Reset password request failed:", err);
 
             setError(
                 err.response?.data?.message ||

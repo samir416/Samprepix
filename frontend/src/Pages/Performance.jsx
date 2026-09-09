@@ -274,7 +274,55 @@ export default function Performance() {
         {/* PLACEMENT READINESS CARD */}
         <div className="performance-right-panel">
           <div className="performance-score-card glass-card">
-            <div className="score-ring">
+            <div className="score-ring" aria-label={`Placement Readiness: ${placementReadinessScore}%`}>
+              <svg className="score-ring-svg" viewBox="0 0 160 160" width="160" height="160" aria-hidden="true">
+                <defs>
+                  <linearGradient id="scoreArcGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#4f46e5" />
+                    <stop offset="50%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
+                  </linearGradient>
+                  <linearGradient id="rotatorHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+                    <stop offset="50%" stopColor="#818cf8" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#4f46e5" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+
+                {/* Track circle */}
+                <circle cx="80" cy="80" r="66" className="score-ring-track" />
+
+                {/* Score percentage progress arc */}
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="66"
+                  className="score-ring-progress"
+                  strokeDasharray={414.69}
+                  strokeDashoffset={414.69 - (414.69 * Math.max(0, Math.min(100, placementReadinessScore || 75))) / 100}
+                />
+
+                {/* Continuously rotating highlight/glow that travels clockwise around the ring */}
+                <g className="score-ring-spinner">
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="66"
+                    className="score-ring-glow-arc"
+                    stroke="url(#rotatorHighlight)"
+                    strokeDasharray="95 320"
+                    strokeLinecap="round"
+                  />
+                  <circle
+                    cx="80"
+                    cy="14"
+                    r="4.5"
+                    className="score-ring-glow-dot"
+                  />
+                </g>
+              </svg>
+
+              {/* Stationary inner text - NEVER rotates */}
               <div className="score-ring-inner">
                 <h2>{placementReadinessScore}%</h2>
                 <span>Readiness</span>

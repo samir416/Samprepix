@@ -20,7 +20,7 @@ export default function Footer() {
                     </div>
                     <h2>Samprepix</h2>
                     <p>
-                        Comprehensive AI-powered interview practice, coding arena, aptitude assessments, and ATS resume analytics designed for ambitious candidates and competitive engineering teams.
+                        Comprehensive AI-powered interview practice, coding arena, aptitude assessments, and ATS resume analytics designed for Computer Science students preparing for software placements.
                     </p>
                 </div>
 
@@ -48,7 +48,7 @@ export default function Footer() {
                     <div className="footer-column">
                         <h4>Company</h4>
                         <Link to="/about">About</Link>
-                        <Link to="/careers">Careers</Link>
+                        <Link to="/security">Security & Trust</Link>
                         <Link to="/contact">Contact</Link>
                         <Link to="/legal">Legal</Link>
                     </div>

@@ -1,0 +1,366 @@
+/* ==========================================================================
+   Content Pages Styling (Changelog, Roadmap, About, Security, Accessibility, Contact, Legal, etc.)
+   Commercial SaaS Typography & Layout Architecture
+   ========================================================================== */
+
+.content-page {
+    width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
+    color: #0f172a;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+body.dark-theme .content-page {
+    background: #090d16;
+    color: #f8fafc;
+}
+
+.content-page-hero {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 72px 24px 36px;
+    text-align: center;
+}
+
+.content-page-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.08);
+    color: #4f46e5;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(99, 102, 241, 0.16);
+}
+
+body.dark-theme .content-page-badge {
+    background: rgba(99, 102, 241, 0.16);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.content-page-hero h1 {
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: #0f172a;
+    margin: 0 0 16px 0;
+}
+
+body.dark-theme .content-page-hero h1 {
+    color: #ffffff;
+}
+
+.content-page-hero p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #64748b;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+body.dark-theme .content-page-hero p {
+    color: #94a3b8;
+}
+
+.content-page-body {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 64px;
+    flex: 1;
+}
+
+/* Card Grids */
+.content-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-top: 32px;
+}
+
+.content-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 32px;
+}
+
+@media (max-width: 900px) {
+    .content-grid-2,
+    .content-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.content-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 28px;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.content-card:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+body.dark-theme .content-card {
+    background: #0f172a;
+    border-color: #1e293b;
+}
+
+body.dark-theme .content-card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+.content-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    color: #0f172a;
+}
+
+body.dark-theme .content-card h3 {
+    color: #f8fafc;
+}
+
+.content-card p {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: #64748b;
+    margin: 0;
+}
+
+body.dark-theme .content-card p {
+    color: #94a3b8;
+}
+
+/* Timeline for Changelog / Roadmap */
+.timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    margin-top: 36px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 28px;
+    border-left: 2px solid #e2e8f0;
+}
+
+body.dark-theme .timeline-item {
+    border-left-color: #334155;
+}
+
+.timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.timeline-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.timeline-version {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+body.dark-theme .timeline-version {
+    color: #ffffff;
+}
+
+.timeline-date {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+body.dark-theme .timeline-date {
+    color: #94a3b8;
+}
+
+.timeline-tag {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.timeline-tag.released {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.timeline-tag.planned {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.timeline-content {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-top: 10px;
+}
+
+body.dark-theme .timeline-content {
+    background: #111827;
+    border-color: #1e293b;
+}
+
+.timeline-content ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    color: #475569;
+    font-size: 0.92rem;
+    line-height: 1.7;
+}
+
+body.dark-theme .timeline-content ul {
+    color: #cbd5e1;
+}
+
+/* Legal / Terms typography */
+.legal-section-block {
+    margin-bottom: 36px;
+}
+
+.legal-section-block h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    color: #0f172a;
+}
+
+body.dark-theme .legal-section-block h2 {
+    color: #ffffff;
+}
+
+.legal-section-block p,
+.legal-section-block li {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #475569;
+}
+
+body.dark-theme .legal-section-block p,
+body.dark-theme .legal-section-block li {
+    color: #cbd5e1;
+}
+
+/* Contact Form Container */
+.contact-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    margin-top: 36px;
+}
+
+@media (max-width: 800px) {
+    .contact-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.contact-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 28px;
+}
+
+body.dark-theme .contact-card {
+    background: #0f172a;
+    border-color: #1e293b;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.contact-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.contact-field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+body.dark-theme .contact-field label {
+    color: #cbd5e1;
+}
+
+.contact-field input,
+.contact-field textarea {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.92rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.dark-theme .contact-field input,
+body.dark-theme .contact-field textarea {
+    background: #1e293b;
+    border-color: #334155;
+    color: #ffffff;
+}
+
+.contact-field input:focus,
+.contact-field textarea:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.contact-submit-btn {
+    padding: 12px 20px;
+    background: #4f46e5;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.contact-submit-btn:hover {
+    background: #4338ca;
+}

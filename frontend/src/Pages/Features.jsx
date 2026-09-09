@@ -8,11 +8,23 @@ import {
     FiUsers,
 } from "react-icons/fi";
 
+import { useEffect } from "react";
 import Navbar from "../Components/Common/Navbar";
+import Footer from "../Components/Common/Footer";
+import { updatePageSEO } from "../utils/seo";
+import { trackPageView } from "../utils/analytics";
 
 import styles from "../styles/features.module.css";
 
 export default function Features() {
+    useEffect(() => {
+        updatePageSEO({
+            title: "Features | Samprepix AI Placement Platform for CS Students",
+            description: "Explore the comprehensive features of Samprepix for Computer Science students: 5,050+ coding problems, AI voice mock interviews, 22,060 aptitude questions, and ATS resume analytics.",
+            canonicalPath: "/features"
+        });
+        trackPageView("/features", "Features | Samprepix");
+    }, []);
 
     const features = [
 
@@ -53,15 +65,15 @@ export default function Features() {
         },
 
         {
-            icon: <FiUsers />,
-            title: "Peer Practice",
-            desc: "Practice with peers, mentors and collaborative AI rooms.",
+            icon: <FiCode />,
+            title: "GitHub Sync",
+            desc: "Automatic synchronization of passing solutions to your personal repository.",
         },
 
         {
             icon: <FiZap />,
-            title: "Company Tracks",
-            desc: "Special preparation paths for product companies & startups.",
+            title: "Software Placement Tracks",
+            desc: "Specialized preparation paths for software engineering roles & campus placements.",
         },
 
     ];
@@ -80,13 +92,13 @@ export default function Features() {
 
                 <h1>
 
-                    Built To Transform Students Into Top Candidates
+                    Built To Transform Computer Science Students Into Top Candidates
 
                 </h1>
 
                 <p>
 
-                    All the tools you need to get hired —
+                    All the tools CS students need to get hired —
                     in one beautifully designed AI-powered workspace.
 
                 </p>
@@ -132,6 +144,7 @@ export default function Features() {
 
             </div>
 
+            <Footer />
         </section>
     );
 }

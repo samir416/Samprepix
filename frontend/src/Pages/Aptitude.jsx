@@ -36,6 +36,14 @@ import {
 import audioService from "../services/audioService";
 import "../styles/aptitude.css";
 
+function formatAttribution(attr) {
+    if (!attr) return "Software Placement Standard";
+    if (/(tcs|infosys|wipro|cognizant|accenture|amazon|google|microsoft|capgemini)/i.test(attr)) {
+        return "Software Placement Assessment Pattern";
+    }
+    return attr;
+}
+
 export default function Aptitude() {
     // Navigation / View Modes: "overview" | "track-detail" | "practice" | "assessment" | "result" | "history"
     const [viewMode, setViewMode] = useState("overview");
@@ -864,7 +872,7 @@ export default function Aptitude() {
                                 </span>
                                 {currentPracticeQuestion?.sourceAttribution ? (
                                     <span className="frequency-pill attribution-pill">
-                                        <FiAward size={13} /> {currentPracticeQuestion.sourceAttribution}
+                                        <FiAward size={13} /> {formatAttribution(currentPracticeQuestion.sourceAttribution)}
                                     </span>
                                 ) : (
                                     <span className="frequency-pill">Placement MCQ</span>
@@ -1075,7 +1083,7 @@ export default function Aptitude() {
                                     </span>
                                     {activeAssessmentQ?.sourceAttribution && (
                                         <span className="frequency-pill attribution-pill">
-                                            <FiAward size={13} /> {activeAssessmentQ.sourceAttribution}
+                                            <FiAward size={13} /> {formatAttribution(activeAssessmentQ.sourceAttribution)}
                                         </span>
                                     )}
                                     <button

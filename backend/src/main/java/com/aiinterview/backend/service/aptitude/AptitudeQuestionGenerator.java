@@ -14,14 +14,14 @@ public class AptitudeQuestionGenerator {
     private static final Logger log = LoggerFactory.getLogger(AptitudeQuestionGenerator.class);
 
     private static final String[] ATTRIBUTIONS = {
-            "TCS NQT Placement",
-            "Infosys InfyTQ Pattern",
-            "AMCAT Placement Test",
-            "Cognizant GenC Screening",
-            "Wipro Elite National Talent Hunt",
-            "eLitmus pH Test",
-            "GATE General Aptitude",
+            "Software Placement Assessment Pattern",
             "Campus Placement Standard",
+            "Technology Recruitment Benchmark",
+            "Placement Screening Pattern",
+            "Core Placement Aptitude Pattern",
+            "Software Recruitment Standard",
+            "Technical Placement Pattern",
+            "General Aptitude Benchmark",
             null,
             null
     };

@@ -1779,32 +1779,6 @@ font-weight:700;
 
 }
 
-.profile-page-skill-suggestions::-webkit-scrollbar{
-
-    width:8px;
-
-}
-
-.profile-page-skill-suggestions::-webkit-scrollbar-track{
-
-    background:transparent;
-
-}
-
-.profile-page-skill-suggestions::-webkit-scrollbar-thumb{
-
-    background:rgba(99,102,241,.45);
-
-    border-radius:999px;
-
-}
-
-.profile-page-skill-suggestions::-webkit-scrollbar-thumb:hover{
-
-    background:rgba(99,102,241,.70);
-
-}
-
 .profile-page-skills-preview{
 
     display:flex;
@@ -2264,10 +2238,27 @@ body.dark-theme .profile-social-url-box {
     transition: all var(--profile-transition);
 }
 
-.profile-social-sub-btn:hover {
+.profile-social-sub-btn:hover:not(:disabled):not(.disabled-btn) {
     background: rgba(99, 102, 241, 0.08);
     border-color: var(--profile-primary);
     color: var(--profile-primary);
+}
+
+.profile-social-sub-btn:disabled,
+.profile-social-sub-btn.disabled-btn {
+    opacity: 0.55;
+    cursor: not-allowed !important;
+    background: transparent !important;
+    border-color: var(--profile-border) !important;
+    color: var(--profile-text-light, #94a3b8) !important;
+    box-shadow: none !important;
+}
+
+.profile-social-sub-btn:disabled:hover,
+.profile-social-sub-btn.disabled-btn:hover {
+    background: transparent !important;
+    border-color: var(--profile-border) !important;
+    color: var(--profile-text-light, #94a3b8) !important;
 }
 
 .profile-social-edit-group {

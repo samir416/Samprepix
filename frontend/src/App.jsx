@@ -1,11 +1,59 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import AppLoader from "./Components/Common/AppLoader";
+import { initGA, trackPageView } from "./utils/analytics";
+import { updatePageSEO } from "./utils/seo";
 import "./styles/mobile.css";
 
 function App() {
+    const location = useLocation();
+    const [loading, setLoading] = useState(false);
 
-    const [loading, setLoading] = useState(true);
+    // Initialize Analytics
+    useEffect(() => {
+        initGA();
+    }, []);
+
+    // Track SPA route changes and manage private vs public indexing
+    useEffect(() => {
+        const fullPath = location.pathname + location.search;
+        trackPageView(fullPath, document.title);
+
+        const privateRoutes = [
+            "/dashboard",
+            "/coding-arena",
+            "/mock-interview",
+            "/interview-result",
+            "/aptitude",
+            "/performance",
+            "/analytics",
+            "/profile",
+            "/onboarding"
+        ];
+        const isPrivate = privateRoutes.some((pr) => location.pathname.startsWith(pr));
+        if (isPrivate) {
+            updatePageSEO({
+                title: "Candidate Workspace | Samprepix",
+                description: "Authenticated candidate dashboard and practice area.",
+                canonicalPath: location.pathname,
+                noIndex: true
+            });
+        }
+    }, [location]);
+
+    // Centralized route scroll restoration (always start new page navigation from top)
+    useEffect(() => {
+        if (!location.hash) {
+            window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        } else {
+            const id = location.hash.replace("#", "");
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: "smooth" });
+            }
+        }
+    }, [location.pathname, location.hash]);
 
     useEffect(() => {
         // Hydrate Theme Preference
@@ -40,18 +88,6 @@ function App() {
         } else {
             document.body.classList.remove("reduce-motion");
         }
-    }, []);
-
-    useEffect(() => {
-
-        const timer = setTimeout(() => {
-
-            setLoading(false);
-
-        }, 2500);
-
-        return () => clearTimeout(timer);
-
     }, []);
 
     return (

@@ -166,7 +166,7 @@ export default function MockInterview() {
 
         if (!SpeechRecognitionService.recognition) {
 
-            console.log(
+            console.warn(
                 "Speech Recognition is not supported in this browser."
             );
 

@@ -35,10 +35,7 @@ export default function ForgotPasswordPage() {
 
         } catch (err) {
 
-            console.log("Forgot Password Error");
-            console.log(err);
-            console.log(err.response);
-            console.log(err.response?.data);
+            console.error("Forgot password request failed:", err);
 
             setError(
                 err.response?.data?.message ||

@@ -3,6 +3,7 @@ import "../styles/confirmationModal.css";
 
 export default function ConfirmationModal({
     open,
+    isOpen,
     title,
     message,
     confirmText,
@@ -10,6 +11,7 @@ export default function ConfirmationModal({
     onConfirm,
     onCancel
 }) {
+    const isVisible = Boolean(open ?? isOpen);
 
     return (
 
@@ -17,7 +19,7 @@ export default function ConfirmationModal({
 
             {
 
-                open &&
+                isVisible &&
 
                 <motion.div
                     className="confirmation-overlay"

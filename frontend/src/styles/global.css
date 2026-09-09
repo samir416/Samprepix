@@ -38,7 +38,6 @@ html {
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    scrollbar-width: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -55,7 +54,7 @@ body,
     overflow-x: hidden;
 }
 
-/* Prevent accidental horizontal overflow across all zoom levels */
+/* Prevent accidental horizontal overflow across all zoom levels and viewports */
 .dashboard-layout,
 .app-layout,
 .dashboard-main,
@@ -73,8 +72,38 @@ samp {
     font-family: var(--font-mono);
 }
 
-html::-webkit-scrollbar {
-    display: none;
+/* Universal visual scrollbar suppression across all browsers and elements.
+   Page and nested container scrolling remains 100% functional via mouse wheel,
+   trackpad, touch swipe, and keyboard navigation. */
+html,
+body,
+*,
+*::before,
+*::after {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+::-webkit-scrollbar,
+*::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+    -webkit-appearance: none !important;
+}
+
+::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track,
+::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-corner,
+*::-webkit-scrollbar-corner {
+    display: none !important;
+    background: transparent !important;
+    border: none !important;
 }
 
 /* =========================================================
