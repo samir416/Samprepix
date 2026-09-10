@@ -508,7 +508,7 @@ body.dark-theme .dashboard-settings-toggle:hover {
 
     scroll-behavior: smooth;
 
-    padding: 16px;
+    padding: 16px 20px 48px 20px;
 
     min-width: 0;
 
@@ -671,6 +671,16 @@ body.dark-theme .dashboard-settings-toggle:hover {
 
     opacity:.7;
 
+}
+
+/* HOME SHELL */
+
+.dashboard-home {
+    width: 100%;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 /* HEADER */

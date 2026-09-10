@@ -92,6 +92,9 @@ public class UserProfileService {
 
                 );
 
+                response.setProfileCompletion(calculateProfileCompletionPercentage(user, profile));
+                response.setProfileCompleted(profile.isProfileCompleted());
+
                 return response;
         }
 
@@ -192,71 +195,44 @@ public class UserProfileService {
 
         }
 
-        private void updateProfileCompletion(User user, UserProfile profile) {
+        public int calculateProfileCompletionPercentage(User user, UserProfile profile) {
+                if (user == null || profile == null) return 0;
+                int completed = 0;
+                int total = 10;
 
-                boolean profileCompleted =
-
-                                profile.getJourneyType() != null &&
-
-                                                profile.getTargetRole() != null &&
-                                                !profile.getTargetRole().isBlank() &&
-
-                                                profile.getExperienceLevel() != null &&
-                                                !profile.getExperienceLevel().isBlank() &&
-
-                                                profile.getPhone() != null &&
-                                                !profile.getPhone().isBlank() &&
-
-                                                profile.getGithubUrl() != null &&
-                                                !profile.getGithubUrl().isBlank() &&
-
-                                                profile.getLinkedinUrl() != null &&
-                                                !profile.getLinkedinUrl().isBlank() &&
-
-                                                profile.getDob() != null &&
-
-                                                user.getProfilePicture() != null &&
-                                                !user.getProfilePicture().isBlank();
+                if (user.getName() != null && !user.getName().isBlank()) completed++;
+                if (profile.getJourneyType() != null) completed++;
+                if (profile.getTargetRole() != null && !profile.getTargetRole().isBlank()) completed++;
+                if (profile.getExperienceLevel() != null && !profile.getExperienceLevel().isBlank()) completed++;
+                if (profile.getPhone() != null && !profile.getPhone().isBlank()) completed++;
+                if (profile.getDob() != null) completed++;
+                if (user.getProfilePicture() != null && !user.getProfilePicture().isBlank()) completed++;
+                if (profile.getSkills() != null && !profile.getSkills().isEmpty()) completed++;
+                if (profile.getGithubUrl() != null && !profile.getGithubUrl().isBlank()) completed++;
+                if (profile.getLinkedinUrl() != null && !profile.getLinkedinUrl().isBlank()) completed++;
 
                 if (profile.getJourneyType() == JourneyType.STUDENT) {
-
-                        profileCompleted = profileCompleted &&
-
-                                        profile.getCollege() != null &&
-                                        !profile.getCollege().isBlank() &&
-
-                                        profile.getCourse() != null &&
-                                        !profile.getCourse().isBlank() &&
-
-                                        profile.getGraduationYear() != null &&
-                                        !profile.getGraduationYear().isBlank() &&
-
-                                        profile.getUniversity() != null &&
-                                        !profile.getUniversity().isBlank();
-
+                        total += 4;
+                        if (profile.getCollege() != null && !profile.getCollege().isBlank()) completed++;
+                        if (profile.getCourse() != null && !profile.getCourse().isBlank()) completed++;
+                        if (profile.getGraduationYear() != null && !profile.getGraduationYear().isBlank()) completed++;
+                        if (profile.getUniversity() != null && !profile.getUniversity().isBlank()) completed++;
+                } else if (profile.getJourneyType() == JourneyType.WORKING_PROFESSIONAL) {
+                        total += 4;
+                        if (profile.getCurrentCompany() != null && !profile.getCurrentCompany().isBlank()) completed++;
+                        if (profile.getDesignation() != null && !profile.getDesignation().isBlank()) completed++;
+                        if (profile.getEmploymentType() != null && !profile.getEmploymentType().isBlank()) completed++;
+                        if (profile.getYearsOfExperience() != null) completed++;
                 }
 
-                if (profile.getJourneyType() == JourneyType.WORKING_PROFESSIONAL) {
+                if (total == 0) return 0;
+                return (int) Math.round(((double) completed / (double) total) * 100.0);
+        }
 
-                        profileCompleted = profileCompleted &&
-
-                                        profile.getCurrentCompany() != null &&
-                                        !profile.getCurrentCompany().isBlank() &&
-
-                                        profile.getDesignation() != null &&
-                                        !profile.getDesignation().isBlank() &&
-
-                                        profile.getEmploymentType() != null &&
-                                        !profile.getEmploymentType().isBlank() &&
-
-                                        profile.getYearsOfExperience() != null;
-
-                }
-
-                profile.setProfileCompleted(profileCompleted);
-
+        private void updateProfileCompletion(User user, UserProfile profile) {
+                int percentage = calculateProfileCompletionPercentage(user, profile);
+                profile.setProfileCompleted(percentage >= 100);
                 userProfileRepository.save(profile);
-
         }
 
         public String uploadProfilePicture(String email, MultipartFile file) throws Exception {

@@ -1,5 +1,6 @@
 package com.aiinterview.backend.model;
 
+import com.aiinterview.backend.entity.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,5 +19,7 @@ public class UserResponse {
     private String email;
     private String profilePicture;
     private boolean profileCompleted;
+    private String role;
+    private String plan;
 
 }

@@ -6,6 +6,7 @@ import com.aiinterview.backend.security.oauth.OAuth2AuthenticationSuccessHandler
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -15,6 +16,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import java.util.List;
 
 @Configuration
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
         private final JwtFilter jwtFilter;
@@ -52,6 +54,7 @@ public class SecurityConfig {
                                                         "POST",
                                                         "PUT",
                                                         "DELETE",
+                                                        "PATCH",
                                                         "OPTIONS"));
 
                                         config.setAllowedHeaders(List.of("*"));
@@ -100,8 +103,11 @@ public class SecurityConfig {
                                                                 "/api/feedback/public",
                                                                 "/api/feedback/approve",
                                                                 "/api/feedback/reject",
-                                                                "/api/aptitude/**")
+                                                                "/api/aptitude/**",
+                                                                "/api/payment/webhook")
                                                 .permitAll()
+                                                // Admin endpoints require ADMIN role (enforced at method level too)
+                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                                 .anyRequest()
                                                 .authenticated())
 

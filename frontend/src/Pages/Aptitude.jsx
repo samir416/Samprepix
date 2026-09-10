@@ -75,6 +75,7 @@ export default function Aptitude() {
     const [isSubmittingAssessment, setIsSubmittingAssessment] = useState(false);
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [showExitConfirmModal, setShowExitConfirmModal] = useState(false);
+    const [assessmentSubmitError, setAssessmentSubmitError] = useState("");
     const isSubmittingRef = useRef(false);
 
     // Result & History States
@@ -175,6 +176,7 @@ export default function Aptitude() {
         };
 
         try {
+            setAssessmentSubmitError("");
             const result = await submitAssessment(payload);
             setLatestResult(result);
             setViewMode("result");
@@ -183,12 +185,10 @@ export default function Aptitude() {
             window.scrollTo({ top: 0, behavior: "smooth" });
         } catch (err) {
             console.error("Failed to submit assessment:", err);
-            // Non-blocking fallback evaluation
-            const simulated = fallbackEvaluate(payload, assessmentQuestions);
-            setLatestResult(simulated);
-            setViewMode("result");
-            audioService.playCompletionChime();
-            fetchAttempts();
+            setAssessmentSubmitError(
+                err?.response?.data?.message ||
+                "Failed to submit assessment to server. Your answers are preserved. Please verify backend connection and retry."
+            );
         } finally {
             setIsSubmittingAssessment(false);
             isSubmittingRef.current = false;
@@ -220,61 +220,6 @@ export default function Aptitude() {
             }
         };
     }, [viewMode, assessmentTimeLeft, handleFinalSubmit]);
-
-    const fallbackEvaluate = (payload, qList) => {
-        const total = qList.length;
-        let correct = 0;
-        let unanswered = 0;
-        let incorrect = 0;
-
-        const reviews = qList.map((q, idx) => {
-            const sel = payload.answers[idx]?.selectedOption;
-            const isAns = Boolean(sel);
-            const isCorr = isAns && (sel === "A" || sel === "B"); // client fallback
-            if (!isAns) unanswered++;
-            else if (isCorr) correct++;
-            else incorrect++;
-
-            return {
-                id: q.id,
-                questionCode: q.questionCode,
-                category: q.category,
-                topic: q.topic,
-                difficulty: q.difficulty,
-                questionText: q.questionText,
-                options: q.options,
-                selectedOption: sel,
-                correctOption: "A",
-                isCorrect: isCorr,
-                isAnswered: isAns,
-                explanation: "Detailed analytical explanation recorded in database.",
-                formulaHint: q.formulaHint,
-                sourceAttribution: q.sourceAttribution
-            };
-        });
-
-        const pct = total > 0 ? Math.round((correct / total) * 1000) / 10 : 0;
-        return {
-            id: Date.now(),
-            trackId: payload.trackId,
-            trackTitle: payload.trackTitle,
-            totalQuestions: total,
-            correctCount: correct,
-            incorrectCount: incorrect,
-            unansweredCount: unanswered,
-            score: correct,
-            percentage: pct,
-            accuracy: (correct + incorrect) > 0 ? Math.round((correct / (correct + incorrect)) * 1000) / 10 : 0,
-            timeSpentSeconds: payload.timeSpentSeconds,
-            timeLimitSeconds: payload.timeLimitSeconds,
-            completionReason: payload.completionReason,
-            completedAt: new Date().toISOString(),
-            passed: pct >= 60.0,
-            categoryBreakdown: {},
-            difficultyBreakdown: {},
-            questions: reviews
-        };
-    };
 
     // =========================================================
     // ASSESSMENT LAUNCHERS
@@ -1323,6 +1268,38 @@ export default function Aptitude() {
                                         }}
                                     >
                                         Discard & Exit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SUBMISSION ERROR MODAL */}
+                    {assessmentSubmitError && (
+                        <div className="submit-modal-overlay">
+                            <div className="submit-modal-card">
+                                <div className="submit-modal-icon" style={{ color: "#ef4444" }}>
+                                    <FiAlertTriangle size={36} />
+                                </div>
+                                <h3>Submission Failed</h3>
+                                <p>
+                                    {assessmentSubmitError}
+                                </p>
+                                <div className="submit-modal-actions">
+                                    <button
+                                        type="button"
+                                        className="submit-cancel-btn"
+                                        onClick={() => setAssessmentSubmitError("")}
+                                    >
+                                        Back to Test
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="submit-confirm-btn"
+                                        onClick={() => handleFinalSubmit("USER_SUBMITTED")}
+                                        disabled={isSubmittingAssessment}
+                                    >
+                                        {isSubmittingAssessment ? "Retrying..." : "Retry Submission"}
                                     </button>
                                 </div>
                             </div>

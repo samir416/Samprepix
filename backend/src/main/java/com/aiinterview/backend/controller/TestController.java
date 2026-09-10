@@ -4,6 +4,7 @@ import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.model.LoginRequest;
 import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.service.UserService;
+import com.aiinterview.backend.service.EntitlementService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,12 +30,15 @@ public class TestController {
 
         private final UserRepository userRepository;
         private final UserService userService;
+        private final EntitlementService entitlementService;
 
         public TestController(
                         UserRepository userRepository,
-                        UserService userService) {
+                        UserService userService,
+                        EntitlementService entitlementService) {
                 this.userRepository = userRepository;
                 this.userService = userService;
+                this.entitlementService = entitlementService;
         }
 
         @GetMapping("/")
@@ -255,6 +259,11 @@ user.setName(request.getName());
                 if (user == null) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found!");
                 }
+
+                // Populate the current plan via backend-authoritative EntitlementService
+                userRepository.findByEmail(authentication.getName()).ifPresent(u -> {
+                        user.setPlan(entitlementService.getEffectivePlan(u));
+                });
 
                 return ResponseEntity.ok(user);
         }

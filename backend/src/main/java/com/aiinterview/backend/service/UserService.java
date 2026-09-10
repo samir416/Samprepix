@@ -361,14 +361,20 @@ public class UserService {
                         return null;
                 }
 
-                return new UserResponse(
-                                user.getId(),
-                                user.getUsername(),
-                                user.getName(),
-                                user.getEmail(),
-                                user.getProfilePicture(),
-                                user.getProfile() != null &&
-                                                user.getProfile().isProfileCompleted());
+                String roleStr = user.getRole() != null ? user.getRole().name() : "USER";
+                // Note: plan lookup is done separately via EntitlementService to avoid circular dependency
+                // We return role here; plan will be populated by the controller if needed
+                UserResponse response = new UserResponse();
+                response.setId(user.getId());
+                response.setUsername(user.getUsername());
+                response.setName(user.getName());
+                response.setEmail(user.getEmail());
+                response.setProfilePicture(user.getProfilePicture());
+                response.setProfileCompleted(user.getProfile() != null &&
+                                user.getProfile().isProfileCompleted());
+                response.setRole(roleStr);
+                response.setPlan(null); // populated by controller via EntitlementService
+                return response;
         }
 
 }

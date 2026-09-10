@@ -45,6 +45,10 @@ public class User {
     @Column(nullable = false, length = 20)
     private AccountStatus accountStatus = AccountStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private Role role = Role.USER;
+
     @Column(length = 4)
     private String otp;
 
@@ -56,8 +60,12 @@ public class User {
         mappedBy = "user",
         cascade = CascadeType.ALL,
         orphanRemoval = true
-)
-private List<InterviewSession> interviewSessions;
+    )
+    private List<InterviewSession> interviewSessions;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Subscription> subscriptions;
 
     private LocalDateTime otpExpiry;
 
@@ -67,138 +75,87 @@ private List<InterviewSession> interviewSessions;
     @Column
     private LocalDateTime dismissedAllNotificationsBefore;
 
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_dismissed_notifications", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "notification_id")
     private Set<String> dismissedNotificationIds = new HashSet<>();
 
-    public Long getId() {
-        return id;
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
+        }
+        if (role == null) {
+            role = Role.USER;
+        }
     }
 
-    public String getUsername() {
-        return username;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public String getPassword() {
-        return password;
-    }
+    public AuthenticationProvider getProvider() { return provider; }
+    public void setProvider(AuthenticationProvider provider) { this.provider = provider; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public String getProfilePicture() { return profilePicture; }
+    public void setProfilePicture(String profilePicture) { this.profilePicture = profilePicture; }
 
-    public AuthenticationProvider getProvider() {
-        return provider;
-    }
+    public String getProfilePicturePublicId() { return profilePicturePublicId; }
+    public void setProfilePicturePublicId(String profilePicturePublicId) { this.profilePicturePublicId = profilePicturePublicId; }
 
-    public void setProvider(AuthenticationProvider provider) {
-        this.provider = provider;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getProfilePicture() {
-        return profilePicture;
-    }
+    public boolean isEmailVerified() { return emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
 
-    public void setProfilePicture(String profilePicture) {
-        this.profilePicture = profilePicture;
-    }
+    public AccountStatus getAccountStatus() { return accountStatus; }
+    public void setAccountStatus(AccountStatus accountStatus) { this.accountStatus = accountStatus; }
 
-    public String getProfilePicturePublicId() {
-        return profilePicturePublicId;
-    }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 
-    public void setProfilePicturePublicId(String profilePicturePublicId) {
-        this.profilePicturePublicId = profilePicturePublicId;
-    }
+    public String getOtp() { return otp; }
+    public void setOtp(String otp) { this.otp = otp; }
 
-    public String getName() {
-        return name;
-    }
+    public LocalDateTime getOtpExpiry() { return otpExpiry; }
+    public void setOtpExpiry(LocalDateTime otpExpiry) { this.otpExpiry = otpExpiry; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public UserProfile getProfile() { return profile; }
+    public void setProfile(UserProfile profile) { this.profile = profile; }
 
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
+    public List<InterviewSession> getInterviewSessions() { return interviewSessions; }
+    public void setInterviewSessions(List<InterviewSession> interviewSessions) { this.interviewSessions = interviewSessions; }
 
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
+    public List<Subscription> getSubscriptions() { return subscriptions; }
+    public void setSubscriptions(List<Subscription> subscriptions) { this.subscriptions = subscriptions; }
 
-    public AccountStatus getAccountStatus() {
-        return accountStatus;
-    }
+    public LocalDateTime getLastNotificationsReadAt() { return lastNotificationsReadAt; }
+    public void setLastNotificationsReadAt(LocalDateTime lastNotificationsReadAt) { this.lastNotificationsReadAt = lastNotificationsReadAt; }
 
-    public void setAccountStatus(AccountStatus accountStatus) {
-        this.accountStatus = accountStatus;
-    }
-
-    public String getOtp() {
-        return otp;
-    }
-
-    public void setOtp(String otp) {
-        this.otp = otp;
-    }
-
-    public LocalDateTime getOtpExpiry() {
-        return otpExpiry;
-    }
-
-    public void setOtpExpiry(LocalDateTime otpExpiry) {
-        this.otpExpiry = otpExpiry;
-    }
-
-    public UserProfile getProfile() {
-        return profile;
-    }
-
-    public void setProfile(UserProfile profile) {
-        this.profile = profile;
-    }
-
-    public List<InterviewSession> getInterviewSessions() {
-    return interviewSessions;
-}
-
-public void setInterviewSessions(List<InterviewSession> interviewSessions) {
-    this.interviewSessions = interviewSessions;
-}
-
-    public LocalDateTime getLastNotificationsReadAt() {
-        return lastNotificationsReadAt;
-    }
-
-    public void setLastNotificationsReadAt(LocalDateTime lastNotificationsReadAt) {
-        this.lastNotificationsReadAt = lastNotificationsReadAt;
-    }
-
-    public LocalDateTime getDismissedAllNotificationsBefore() {
-        return dismissedAllNotificationsBefore;
-    }
-
-    public void setDismissedAllNotificationsBefore(LocalDateTime dismissedAllNotificationsBefore) {
-        this.dismissedAllNotificationsBefore = dismissedAllNotificationsBefore;
-    }
+    public LocalDateTime getDismissedAllNotificationsBefore() { return dismissedAllNotificationsBefore; }
+    public void setDismissedAllNotificationsBefore(LocalDateTime dismissedAllNotificationsBefore) { this.dismissedAllNotificationsBefore = dismissedAllNotificationsBefore; }
 
     public Set<String> getDismissedNotificationIds() {
         if (dismissedNotificationIds == null) {
@@ -206,9 +163,11 @@ public void setInterviewSessions(List<InterviewSession> interviewSessions) {
         }
         return dismissedNotificationIds;
     }
+    public void setDismissedNotificationIds(Set<String> dismissedNotificationIds) { this.dismissedNotificationIds = dismissedNotificationIds; }
 
-    public void setDismissedNotificationIds(Set<String> dismissedNotificationIds) {
-        this.dismissedNotificationIds = dismissedNotificationIds;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

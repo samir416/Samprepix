@@ -52,7 +52,13 @@ export default function Dashboard() {
 
     const [latestResume, setLatestResume] = useState(null);
 
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem("user")) || null;
+        } catch {
+            return null;
+        }
+    });
 
     const [codingStats, setCodingStats] = useState(null);
 
@@ -76,12 +82,13 @@ export default function Dashboard() {
                     JSON.stringify(data)
                 );
 
-            } catch {
+            } catch (err) {
 
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-
-                navigate("/login");
+                if (err?.response?.status === 401) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    navigate("/login");
+                }
             }
 
         };

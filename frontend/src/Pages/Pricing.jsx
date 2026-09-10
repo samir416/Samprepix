@@ -38,7 +38,7 @@ export default function Pricing() {
       if (isIndiaLocale) {
         return "INR";
       }
-    } catch (_) {}
+    } catch (_) { }
     return "USD";
   });
 
@@ -88,7 +88,7 @@ export default function Pricing() {
     try {
       const text = await navigator.clipboard.readText();
       setReferralInput(text.trim());
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const handlePlanSelect = (planName) => {
@@ -299,6 +299,9 @@ export default function Pricing() {
               <FaCheck /> Standard AI mock interview sessions
             </div>
             <div>
+              <FaCheck /> 3 AI mock interview sessions per month
+            </div>
+            <div>
               <FaCheck /> Full access to 5,050+ DSA problems
             </div>
             <div>
@@ -363,8 +366,7 @@ export default function Pricing() {
           </h2>
 
           <p className="card-subtitle">
-            Comprehensive suite for engineering students actively interviewing with top product and IT firms.
-          </p>
+            Advanced placement preparation for students actively targeting software engineering and IT roles.          </p>
 
           <div className="plan-features">
             <div>
@@ -433,8 +435,7 @@ export default function Pricing() {
           </h2>
 
           <p className="card-subtitle">
-            Maximum acceleration with full company-specific question packs and priority AI evaluation.
-          </p>
+            Maximum placement acceleration with advanced company-focused preparation and priority AI evaluation.          </p>
 
           <div className="plan-features">
             <div>

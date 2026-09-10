@@ -7,7 +7,8 @@ import {
     FiMic,
     FiCode,
     FiBookOpen,
-    FiBarChart2
+    FiBarChart2,
+    FiShield
 } from "react-icons/fi";
 
 import {
@@ -20,27 +21,25 @@ export default function Sidebar() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const isAdmin = user?.role === "ADMIN";
+
+    const isAdminPage = location.pathname.startsWith("/admin");
+
     return (
         <aside className="dashboard-sidebar">
             <div className="sidebar-top">
                 {/* LOGO */}
                 <div className="dashboard-logo">
-                    <img
-                        src={Logo}
-                        alt="Logo"
-                    />
-                    <h2>
-                        Samprepix
-                    </h2>
+                    <img src={Logo} alt="Logo" />
+                    <h2>Samprepix</h2>
                 </div>
 
                 {/* MENU */}
                 <nav className="dashboard-menu">
+
                     {/* DASHBOARD */}
-                    <Link
-                        to="/dashboard"
-                        className="sidebar-link"
-                    >
+                    <Link to="/dashboard" className="sidebar-link">
                         <button
                             className={
                                 location.pathname === "/dashboard"
@@ -48,16 +47,12 @@ export default function Sidebar() {
                                     : ""
                             }
                         >
-                            <FiGrid />
-                            Dashboard
+                            <FiGrid /> Dashboard
                         </button>
                     </Link>
 
                     {/* RESUME ANALYZER */}
-                    <Link
-                        to="/resume-analyzer"
-                        className="sidebar-link"
-                    >
+                    <Link to="/resume-analyzer" className="sidebar-link">
                         <button
                             className={
                                 location.pathname === "/resume-analyzer"
@@ -65,16 +60,12 @@ export default function Sidebar() {
                                     : ""
                             }
                         >
-                            <FiFileText />
-                            Resume Analyzer
+                            <FiFileText /> Resume Analyzer
                         </button>
                     </Link>
 
                     {/* MOCK INTERVIEW */}
-                    <Link
-                        to="/mock-interview"
-                        className="sidebar-link"
-                    >
+                    <Link to="/mock-interview" className="sidebar-link">
                         <button
                             className={
                                 location.pathname === "/mock-interview"
@@ -82,16 +73,12 @@ export default function Sidebar() {
                                     : ""
                             }
                         >
-                            <FiMic />
-                            Mock Interview
+                            <FiMic /> Mock Interview
                         </button>
                     </Link>
 
                     {/* CODING ARENA */}
-                    <Link
-                        to="/coding-arena"
-                        className="sidebar-link"
-                    >
+                    <Link to="/coding-arena" className="sidebar-link">
                         <button
                             className={
                                 location.pathname === "/coding-arena"
@@ -99,16 +86,12 @@ export default function Sidebar() {
                                     : ""
                             }
                         >
-                            <FiCode />
-                            Coding Arena
+                            <FiCode /> Coding Arena
                         </button>
                     </Link>
 
                     {/* APTITUDE */}
-                    <Link
-                        to="/aptitude"
-                        className="sidebar-link"
-                    >
+                    <Link to="/aptitude" className="sidebar-link">
                         <button
                             className={
                                 location.pathname === "/aptitude"
@@ -116,16 +99,12 @@ export default function Sidebar() {
                                     : ""
                             }
                         >
-                            <FiBookOpen />
-                            Aptitude
+                            <FiBookOpen /> Aptitude
                         </button>
                     </Link>
 
                     {/* PERFORMANCE */}
-                    <Link
-                        to="/performance"
-                        className="sidebar-link"
-                    >
+                    <Link to="/performance" className="sidebar-link">
                         <button
                             className={
                                 location.pathname === "/performance"
@@ -133,21 +112,28 @@ export default function Sidebar() {
                                     : ""
                             }
                         >
-                            <FiBarChart2 />
-                            Performance
+                            <FiBarChart2 /> Performance
                         </button>
                     </Link>
+
+                    {/* ADMIN PANEL - ADMIN ONLY */}
+                    {isAdmin && (
+                        <Link to="/admin" className="sidebar-link">
+                            <button
+                                className={isAdminPage ? "active" : ""}
+                            >
+                                <FiShield /> Admin Panel
+                            </button>
+                        </Link>
+                    )}
                 </nav>
             </div>
 
             {/* UPGRADE CARD */}
             <div className="upgrade-card">
-                <h3>
-                    Upgrade to Pro
-                </h3>
-                <p>
-                    Unlimited mocks, all tracks.
-                </p>
+                <h3>Upgrade to Pro</h3>
+                <p>Unlimited mocks, all tracks.</p>
+
                 <button
                     className="sidebar-upgrade-btn"
                     onClick={() => navigate("/pricing")}

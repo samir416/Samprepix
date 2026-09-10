@@ -2,11 +2,15 @@
 
     width:100%;
 
-    min-height:calc(100vh - 64px);
+    min-height:100%;
 
-    padding:14px;
+    padding:16px 18px 56px 18px;
 
-    overflow:hidden;
+    box-sizing:border-box;
+
+    overflow-y:visible;
+
+    overflow-x:clip;
 }
 
 /* HEADER */
@@ -417,8 +421,10 @@
     border-radius:24px;
     padding:22px;
     box-shadow:0 10px 40px rgba(0,0,0,.05);
-    height:100%;
-    min-width: 76vw;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+    grid-column:1 / -1;
 }
 
 .skills-card h3{
@@ -484,55 +490,83 @@
 
 /* RESPONSIVE */
 
-@media(max-width:1100px){
+@media(max-width:1024px){
 
     .resume-grid{
+        grid-template-columns:1fr;
+        gap:20px;
+    }
 
-        grid-template-columns:
-        1fr;
+    .resume-page{
+        padding:14px 14px 48px 14px;
     }
 }
 
 @media(max-width:768px){
 
-    .resume-header h1{
+    .resume-page{
+        padding:12px 10px 56px 10px;
+        overflow-y:visible !important;
+        overflow-x:clip !important;
+    }
 
-        font-size:28px;
+    .resume-header h1{
+        font-size:clamp(22px, 5.5vw, 28px);
     }
 
     .upload-card{
-
-         min-height:220px;
+        min-height:200px;
         padding:20px 16px;
     }
 
-    
-
     .upload-card h2{
-
-        font-size:22px;
+        font-size:clamp(20px, 5vw, 24px);
+        margin-bottom:8px;
     }
 
     .success-icon,
     .error-icon,
     .upload-icon{
-
-        width:60px;
-        height:60px;
-        font-size:32px;
+        width:56px;
+        height:56px;
+        font-size:28px;
         margin-bottom:12px;
-
-    }
-
-     .upload-card h2{
-        font-size:30px;
-        margin-bottom:8px;
     }
 
     .uploaded-file{
         font-size:13px;
     }
-    
+
+    .skills-card{
+        padding:18px 14px;
+        border-radius:20px;
+    }
+}
+
+@media(max-width:360px){
+
+    .resume-page{
+        padding:8px 6px 48px 6px;
+    }
+
+    .upload-card{
+        padding:16px 12px;
+        border-radius:18px;
+    }
+
+    .ats-circle{
+        width:120px;
+        height:120px;
+    }
+
+    .ats-circle-inner{
+        width:96px;
+        height:96px;
+    }
+
+    .ats-circle-inner h2{
+        font-size:30px;
+    }
 }
 
 /* SUCCESS */

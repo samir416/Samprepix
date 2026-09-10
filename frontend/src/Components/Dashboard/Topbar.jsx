@@ -15,6 +15,8 @@ import {
     BookOpen
 } from "lucide-react";
 
+import { FiShield, FiCreditCard } from "react-icons/fi";
+
 import {
     useEffect,
     useRef,
@@ -273,51 +275,43 @@ export default function Topbar() {
                     >
 
                         <a href="/dashboard">
-
                             <LayoutDashboard size={18} />
-
                             Dashboard
-
                         </a>
 
                         <a href="/resume-analyzer">
-
                             <FileText size={18} />
-
                             Resume Analyzer
-
                         </a>
 
                         <a href="/mock-interview">
-
                             <Mic size={18} />
-
                             AI Interview
-
                         </a>
 
                         <a href="/coding-arena">
-
                             <Code2 size={18} />
-
                             Coding Arena
-
                         </a>
 
                         <a href="/aptitude">
-
                             <BookOpen size={18} />
-
                             Aptitude
-
                         </a>
 
                         <a href="/performance">
-
                             <BarChart3 size={18} />
-
                             Performance
+                        </a>
 
+                        <a href="/subscription">
+                            <FiCreditCard size={18} />
+                            Subscription
+                        </a>
+
+                        <a href="/admin">
+                            <FiShield size={18} />
+                            Admin
                         </a>
 
                     </div>

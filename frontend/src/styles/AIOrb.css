@@ -4,13 +4,13 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    padding: 34px 0 18px;
+    padding: 16px 0 10px;
     isolation: isolate;
     z-index: 2;
 }
 
 .ai-orb {
-    --orb-size: 245px;
+    --orb-size: clamp(140px, 18vw, 195px);
     --primary: #6d63ff;
     --secondary: #00c2ff;
     --accent: #8b7dff;
@@ -169,7 +169,7 @@ circle at 32% 26%,
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:54px;
+    font-size:clamp(32px, 4vw, 44px);
     font-weight:800;
     letter-spacing:3px;
     line-height:1;
@@ -739,4 +739,28 @@ body.dark-theme .ai-orb::after{
 
     }
 
+}
+
+@media (max-width: 1024px) {
+    .ai-orb {
+        --orb-size: 165px;
+    }
+}
+
+@media (max-width: 768px) {
+    .ai-orb-wrapper {
+        padding: 12px 0 8px;
+    }
+    .ai-orb {
+        --orb-size: 130px;
+    }
+}
+
+@media (max-width: 360px) {
+    .ai-orb-wrapper {
+        padding: 8px 0 6px;
+    }
+    .ai-orb {
+        --orb-size: 110px;
+    }
 }

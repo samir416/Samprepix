@@ -40,6 +40,25 @@ private String dateOfBirth;
 
 private java.util.List<String> skills;
 
+    private int profileCompletion;
+    private boolean profileCompleted;
+
+    public int getProfileCompletion() {
+        return profileCompletion;
+    }
+
+    public void setProfileCompletion(int profileCompletion) {
+        this.profileCompletion = profileCompletion;
+    }
+
+    public boolean isProfileCompleted() {
+        return profileCompleted;
+    }
+
+    public void setProfileCompleted(boolean profileCompleted) {
+        this.profileCompleted = profileCompleted;
+    }
+
     public String getName() {
         return name;
     }

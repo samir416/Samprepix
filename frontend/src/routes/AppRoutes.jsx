@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Home from "../Pages/Home";
 import Login from "../Pages/Login";
@@ -31,6 +31,16 @@ import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import Onboarding from "../Pages/Onboarding";
 import Aptitude from "../Pages/Aptitude";
 import AppLayout from "../Layout/AppLayout";
+import Admin from "../Pages/Admin";
+import SubscriptionPage from "../Pages/SubscriptionPage";
+
+function AdminRoute({ children }) {
+    const isAdmin = localStorage.getItem("user")
+        ? JSON.parse(localStorage.getItem("user")).role === "ADMIN"
+        : false;
+    if (!isAdmin) return <Navigate to="/dashboard" replace />;
+    return children;
+}
 
 export default function AppRoutes() {
     return (
@@ -87,6 +97,8 @@ export default function AppRoutes() {
                 <Route path="/analytics" element={<Performance />} />
                 <Route path="/billing" element={<Pricing />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/subscription" element={<SubscriptionPage />} />
+                <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             </Route>
 
             {/* 404 NOT FOUND CATCH-ALL */}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     getProfile,
     updateProfile,
@@ -11,6 +12,9 @@ import {
 } from "../services/profileService";
 
 import { getCompletedInterviewCount } from "../services/interviewService";
+import { getCodingDashboardStats } from "../services/codingService";
+import { getResumeHistory } from "../services/resumeService";
+import { getAptitudeAttempts } from "../services/aptitudeService";
 
 import {
     User,
@@ -28,7 +32,13 @@ import {
     FiExternalLink,
     FiPlus,
     FiCheckCircle,
-    FiAlertCircle
+    FiAlertCircle,
+    FiAward,
+    FiCode,
+    FiLock,
+    FiX,
+    FiStar,
+    FiZap
 } from "react-icons/fi";
 import { getCurrentUser } from "../services/authService";
 import "../styles/profile.css";
@@ -37,7 +47,12 @@ import ImageCropModal from "../components/common/ImageCropModal";
 
 export default function Profile() {
 
+    const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [codingStats, setCodingStats] = useState(null);
+    const [resumeHistory, setResumeHistory] = useState([]);
+    const [aptitudeAttempts, setAptitudeAttempts] = useState([]);
+    const [showAchievementsModal, setShowAchievementsModal] = useState(false);
 
     const [githubRepository, setGithubRepository] = useState({
         connected: false,
@@ -665,30 +680,61 @@ export default function Profile() {
     };
 
     useEffect(() => {
+        let isMounted = true;
 
         const loadInterviewCount = async () => {
-
             try {
-
-                const response =
-                    await getCompletedInterviewCount();
-
-                setMockInterviewCount(
-                    Number(response.data) || 0
-                );
-
+                const response = await getCompletedInterviewCount();
+                if (isMounted) {
+                    setMockInterviewCount(typeof response.data === "number" ? response.data : (Number(response.data) || 0));
+                }
             } catch (error) {
-
-                console.error(error);
-
-                setMockInterviewCount(0);
-
+                console.error("Failed to load interview count", error);
+                if (isMounted) setMockInterviewCount(0);
             }
+        };
 
+        const loadCodingStats = async () => {
+            try {
+                const response = await getCodingDashboardStats();
+                if (isMounted && response?.data) {
+                    setCodingStats(response.data);
+                }
+            } catch (error) {
+                console.error("Failed to load coding dashboard stats in profile", error);
+            }
+        };
+
+        const loadResume = async () => {
+            try {
+                const history = await getResumeHistory();
+                if (isMounted && Array.isArray(history)) {
+                    setResumeHistory(history);
+                }
+            } catch (error) {
+                console.error("Failed to load resume history in profile", error);
+            }
+        };
+
+        const loadAptitude = async () => {
+            try {
+                const attempts = await getAptitudeAttempts();
+                if (isMounted && Array.isArray(attempts)) {
+                    setAptitudeAttempts(attempts);
+                }
+            } catch (error) {
+                console.error("Failed to load aptitude attempts in profile", error);
+            }
         };
 
         loadInterviewCount();
+        loadCodingStats();
+        loadResume();
+        loadAptitude();
 
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     useEffect(() => {
@@ -821,75 +867,123 @@ export default function Profile() {
         ||
         "U";
 
-    const profileFields = [
+    const calculateClientProfileCompletion = (data, currentUser, skills) => {
+        const isFilled = (val) => val !== null && val !== undefined && String(val).trim() !== "";
+        let completed = 0;
+        let total = 10;
 
-        formData.name,
+        if (isFilled(data.name)) completed++;
+        if (isFilled(data.journeyType)) completed++;
+        if (isFilled(data.targetRole)) completed++;
+        if (isFilled(data.experienceLevel)) completed++;
+        if (isFilled(data.phone)) completed++;
+        if (isFilled(data.dateOfBirth)) completed++;
+        if (isFilled(currentUser?.profilePicture)) completed++;
+        if (Array.isArray(skills) && skills.length > 0) completed++;
+        if (isFilled(data.githubUrl)) completed++;
+        if (isFilled(data.linkedinUrl)) completed++;
 
-        formData.username,
-
-        formData.email,
-
-        formData.journeyType,
-
-        formData.targetRole,
-
-        formData.experienceLevel,
-
-        formData.phone,
-
-        formData.gender,
-
-        formData.careerGoal,
-
-        formData.githubUrl,
-
-        formData.linkedinUrl,
-
-        formData.portfolioUrl,
-
-        formData.personalWebsite,
-
-        formData.dateOfBirth,
-
-        user?.profilePicture,
-
-        formData.collegeName,
-
-        formData.degree,
-
-        formData.graduationYear,
-
-        formData.currentCompany,
-
-        formData.university,
-
-        formData.designation,
-
-        formData.employmentType,
-
-        formData.yearsOfExperience,
-
-        selectedSkills
-
-    ];
-
-    const completedFields = profileFields.filter(value => {
-
-        if (value === null || value === undefined) {
-
-            return false;
-
+        if (data.journeyType === "STUDENT") {
+            total += 4;
+            if (isFilled(data.collegeName)) completed++;
+            if (isFilled(data.degree)) completed++;
+            if (isFilled(data.graduationYear)) completed++;
+            if (isFilled(data.university)) completed++;
+        } else if (data.journeyType === "WORKING_PROFESSIONAL") {
+            total += 4;
+            if (isFilled(data.currentCompany)) completed++;
+            if (isFilled(data.designation)) completed++;
+            if (isFilled(data.employmentType)) completed++;
+            if (isFilled(data.yearsOfExperience)) completed++;
         }
 
-        return String(value).trim() !== "";
+        if (total === 0) return 0;
+        return Math.round((completed / total) * 100);
+    };
 
-    }).length;
+    const profileCompletion = calculateClientProfileCompletion(formData, user, selectedSkills);
 
-    const profileCompletion = Math.round(
+    const problemsSolved = codingStats?.problemsSolved || 0;
+    const currentStreak = codingStats?.currentStreak || 0;
+    const resumeCount = resumeHistory.length;
+    const aptitudeCount = aptitudeAttempts.length;
 
-        (completedFields / profileFields.length) * 100
+    const achievementsList = [
+        {
+            id: "first_code",
+            title: "Code Pioneer",
+            description: "Solve your first problem in Coding Arena",
+            category: "Coding",
+            current: Math.min(problemsSolved, 1),
+            target: 1,
+            unlocked: problemsSolved >= 1
+        },
+        {
+            id: "problem_solver",
+            title: "Problem Solver",
+            description: "Solve 5 coding problems across DSA or SQL",
+            category: "Coding",
+            current: Math.min(problemsSolved, 5),
+            target: 5,
+            unlocked: problemsSolved >= 5
+        },
+        {
+            id: "algorithm_master",
+            title: "Algorithm Master",
+            description: "Solve 25 coding challenges",
+            category: "Coding",
+            current: Math.min(problemsSolved, 25),
+            target: 25,
+            unlocked: problemsSolved >= 25
+        },
+        {
+            id: "first_mock",
+            title: "First Step",
+            description: "Complete your first AI mock interview",
+            category: "Interview",
+            current: Math.min(mockInterviewCount, 1),
+            target: 1,
+            unlocked: mockInterviewCount >= 1
+        },
+        {
+            id: "interview_veteran",
+            title: "Interview Veteran",
+            description: "Complete 5 mock interview sessions",
+            category: "Interview",
+            current: Math.min(mockInterviewCount, 5),
+            target: 5,
+            unlocked: mockInterviewCount >= 5
+        },
+        {
+            id: "resume_ready",
+            title: "Resume Ready",
+            description: "Upload and analyze your resume for ATS scoring",
+            category: "Resume",
+            current: Math.min(resumeCount, 1),
+            target: 1,
+            unlocked: resumeCount >= 1
+        },
+        {
+            id: "profile_champion",
+            title: "Profile Champion",
+            description: "Complete at least 80% of your candidate profile",
+            category: "Profile",
+            current: Math.min(profileCompletion, 80),
+            target: 80,
+            unlocked: profileCompletion >= 80
+        },
+        {
+            id: "streak_builder",
+            title: "Streak Builder",
+            description: "Maintain a 3-day active coding streak",
+            category: "Streak",
+            current: Math.min(currentStreak, 3),
+            target: 3,
+            unlocked: currentStreak >= 3
+        }
+    ];
 
-    );
+    const unlockedAchievements = achievementsList.filter((a) => a.unlocked);
 
 
     const showSkillMessage = (text) => {
@@ -2193,67 +2287,54 @@ export default function Profile() {
                 <div className="profile-page-stats">
 
                     <div className="profile-page-stat-card">
-
                         <h3>
-
                             {profileCompletion}%
-
                         </h3>
-
                         <span>
-
                             Profile Completion
-
                         </span>
-
                     </div>
 
-                    <div className="profile-page-stat-card">
-
+                    <div
+                        className="profile-page-stat-card"
+                        onClick={() => navigate("/mock-interview")}
+                        title="View Mock Interviews"
+                        style={{ cursor: "pointer" }}
+                    >
                         <h3>
-
                             {mockInterviewCount}
-
                         </h3>
-
                         <span>
-
                             Mock Interviews
-
                         </span>
-
                     </div>
 
-                    <div className="profile-page-stat-card">
-
+                    <div
+                        className="profile-page-stat-card"
+                        onClick={() => navigate("/coding-arena")}
+                        title="View Coding Arena"
+                        style={{ cursor: "pointer" }}
+                    >
                         <h3>
-
-                            0
-
+                            {problemsSolved}
                         </h3>
-
                         <span>
-
-                            Coding Tests
-
+                            Problems Solved
                         </span>
-
                     </div>
 
-                    <div className="profile-page-stat-card">
-
+                    <div
+                        className="profile-page-stat-card"
+                        onClick={() => setShowAchievementsModal(true)}
+                        title="View Achievements & Milestones"
+                        style={{ cursor: "pointer" }}
+                    >
                         <h3>
-
-                            0
-
+                            {unlockedAchievements.length}
                         </h3>
-
                         <span>
-
                             Achievements
-
                         </span>
-
                     </div>
 
                 </div>
@@ -3922,9 +4003,203 @@ export default function Profile() {
                 }}
             />
 
+            {showAchievementsModal && (
+                <div
+                    className="achievements-modal-backdrop"
+                    onClick={() => setShowAchievementsModal(false)}
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        backgroundColor: "rgba(10, 15, 29, 0.75)",
+                        backdropFilter: "blur(6px)",
+                        zIndex: 9999,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "1rem"
+                    }}
+                >
+                    <div
+                        className="achievements-modal-content"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            backgroundColor: "#111827",
+                            border: "1px solid rgba(255, 255, 255, 0.12)",
+                            borderRadius: "16px",
+                            maxWidth: "680px",
+                            width: "100%",
+                            maxHeight: "85vh",
+                            display: "flex",
+                            flexDirection: "column",
+                            overflow: "hidden",
+                            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+                        }}
+                    >
+                        {/* HEADER */}
+                        <div
+                            style={{
+                                padding: "1.25rem 1.5rem",
+                                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between"
+                            }}
+                        >
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                                <div
+                                    style={{
+                                        width: "36px",
+                                        height: "36px",
+                                        borderRadius: "10px",
+                                        backgroundColor: "rgba(245, 158, 11, 0.15)",
+                                        color: "#f59e0b",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: "1.2rem"
+                                    }}
+                                >
+                                    <FiAward />
+                                </div>
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: "1.15rem", color: "#f8fafc", fontWeight: 600 }}>
+                                        Achievements & Milestones
+                                    </h3>
+                                    <p style={{ margin: 0, fontSize: "0.85rem", color: "#94a3b8" }}>
+                                        {unlockedAchievements.length} of {achievementsList.length} Unlocked
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowAchievementsModal(false)}
+                                style={{
+                                    background: "transparent",
+                                    border: "none",
+                                    color: "#94a3b8",
+                                    cursor: "pointer",
+                                    padding: "6px",
+                                    borderRadius: "8px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
+                                }}
+                            >
+                                <FiX size={20} />
+                            </button>
+                        </div>
+
+                        {/* BODY */}
+                        <div
+                            style={{
+                                padding: "1.25rem 1.5rem",
+                                overflowY: "auto",
+                                flex: 1,
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "1rem"
+                            }}
+                        >
+                            {unlockedAchievements.length === 0 && (
+                                <div
+                                    style={{
+                                        padding: "1.5rem",
+                                        textAlign: "center",
+                                        backgroundColor: "rgba(255, 255, 255, 0.03)",
+                                        borderRadius: "12px",
+                                        border: "1px dashed rgba(255, 255, 255, 0.1)"
+                                    }}
+                                >
+                                    <p style={{ margin: "0 0 0.5rem 0", color: "#f8fafc", fontWeight: 500 }}>
+                                        No achievements earned yet
+                                    </p>
+                                    <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.85rem" }}>
+                                        Complete mock interviews, solve coding problems, analyze your resume, or maintain a daily streak to unlock badges!
+                                    </p>
+                                </div>
+                            )}
+
+                            <div
+                                className="achievements-badges-grid"
+                                style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                                    gap: "0.85rem"
+                                }}
+                            >
+                                {achievementsList.map((item) => {
+                                    const pct = Math.min(100, Math.round((item.current / item.target) * 100));
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className="achievement-badge-card"
+                                            style={{
+                                                padding: "1rem",
+                                                borderRadius: "12px",
+                                                backgroundColor: item.unlocked ? "rgba(245, 158, 11, 0.08)" : "rgba(255, 255, 255, 0.03)",
+                                                border: item.unlocked ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(255, 255, 255, 0.06)",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                gap: "0.6rem"
+                                            }}
+                                        >
+                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                                    <span style={{ color: item.unlocked ? "#f59e0b" : "#64748b" }}>
+                                                        {item.unlocked ? <FiCheckCircle size={18} /> : <FiLock size={16} />}
+                                                    </span>
+                                                    <span style={{ fontWeight: 600, color: item.unlocked ? "#f8fafc" : "#94a3b8", fontSize: "0.95rem" }}>
+                                                        {item.title}
+                                                    </span>
+                                                </div>
+                                                <span
+                                                    style={{
+                                                        fontSize: "0.7rem",
+                                                        fontWeight: 600,
+                                                        padding: "2px 8px",
+                                                        borderRadius: "999px",
+                                                        backgroundColor: item.unlocked ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.06)",
+                                                        color: item.unlocked ? "#34d399" : "#64748b"
+                                                    }}
+                                                >
+                                                    {item.unlocked ? "UNLOCKED" : `${item.current}/${item.target}`}
+                                                </span>
+                                            </div>
+
+                                            <p style={{ margin: 0, fontSize: "0.8rem", color: "#94a3b8" }}>
+                                                {item.description}
+                                            </p>
+
+                                            {/* Progress bar */}
+                                            <div
+                                                style={{
+                                                    width: "100%",
+                                                    height: "6px",
+                                                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                                                    borderRadius: "999px",
+                                                    overflow: "hidden"
+                                                }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        width: `${pct}%`,
+                                                        height: "100%",
+                                                        backgroundColor: item.unlocked ? "#f59e0b" : "#6366f1",
+                                                        transition: "width 0.3s ease"
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
 
     );
-
 
 }
