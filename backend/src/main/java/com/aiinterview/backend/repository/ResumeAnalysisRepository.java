@@ -11,4 +11,6 @@ public interface ResumeAnalysisRepository
     List<ResumeAnalysis> findByUserEmail(String userEmail);
 
     ResumeAnalysis findTopByUserEmailOrderByIdDesc(String userEmail);
+
+    long countByUserEmail(String userEmail);
 }

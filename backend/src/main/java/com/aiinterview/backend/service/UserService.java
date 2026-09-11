@@ -183,8 +183,13 @@ public class UserService {
 
     public String deleteUser(Long id) {
 
-        if (!userRepository.existsById(id)) {
+        Optional<User> userOpt = userRepository.findById(id);
+        if (userOpt.isEmpty()) {
             return "User not found!";
+        }
+
+        if ("samirprajapat5@gmail.com".equalsIgnoreCase(userOpt.get().getEmail())) {
+            throw new IllegalArgumentException("Owner account cannot be deleted!");
         }
 
         userRepository.deleteById(id);

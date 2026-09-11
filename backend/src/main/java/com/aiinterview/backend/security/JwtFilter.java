@@ -157,6 +157,8 @@ public class JwtFilter extends OncePerRequestFilter {
                             authentication
                     );
 
+            request.setAttribute("email", email);
+
         } catch (Exception exception) {
 
             SecurityContextHolder

@@ -24,6 +24,8 @@ import java.util.Map;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
+    public static final String OWNER_EMAIL = "samirprajapat5@gmail.com";
+
     private final UserRepository userRepository;
     private final UserService userService;
     private final AdminEntitlementService entitlementService;
@@ -239,6 +241,18 @@ public class AdminController {
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
 
+        if (OWNER_EMAIL.equalsIgnoreCase(user.getEmail())) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("message", "Owner account role cannot be modified")
+            );
+        }
+
+        if (request.getRole() == Role.ADMIN) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("message", "Assigning ADMIN role is prohibited. Only the single owner account has ADMIN privileges.")
+            );
+        }
+
         user.setRole(request.getRole());
 
         userRepository.save(user);
@@ -263,6 +277,12 @@ public class AdminController {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new RuntimeException("User not found"));
+
+        if (OWNER_EMAIL.equalsIgnoreCase(user.getEmail())) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("message", "Owner account status cannot be modified")
+            );
+        }
 
         final AccountStatus status;
 
@@ -303,6 +323,16 @@ public class AdminController {
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(
             @PathVariable Long id) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
+
+        if (OWNER_EMAIL.equalsIgnoreCase(user.getEmail())) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("message", "Owner account cannot be deleted")
+            );
+        }
 
         userService.deleteUser(id);
 

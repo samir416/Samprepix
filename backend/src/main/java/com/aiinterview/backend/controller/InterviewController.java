@@ -14,33 +14,53 @@ import org.springframework.security.core.Authentication;
 import com.aiinterview.backend.dto.interview.InterviewProgressResponse;
 import org.springframework.web.bind.annotation.*;
 
+import com.aiinterview.backend.repository.InterviewSessionRepository;
+import com.aiinterview.backend.service.EntitlementService;
+import org.springframework.http.HttpStatus;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/interview")
 public class InterviewController {
 
     private final InterviewService interviewService;
     private final UserRepository userRepository;
+    private final InterviewSessionRepository interviewSessionRepository;
+    private final EntitlementService entitlementService;
 
     public InterviewController(
             InterviewService interviewService,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            InterviewSessionRepository interviewSessionRepository,
+            EntitlementService entitlementService) {
 
         this.interviewService = interviewService;
         this.userRepository = userRepository;
+        this.interviewSessionRepository = interviewSessionRepository;
+        this.entitlementService = entitlementService;
     }
 
 
   @PostMapping("/start")
-public ResponseEntity<StartInterviewResponse> startInterview(
+public ResponseEntity<?> startInterview(
         Authentication authentication,
         @Valid @RequestBody StartInterviewRequest request) {
-
-    System.out.println("STEP 1");
 
     User user = userRepository.findByEmail(authentication.getName())
             .orElseThrow(() -> new RuntimeException("User not found"));
 
-    System.out.println("STEP 2");
+    int maxInterviews = entitlementService.getMaxMockInterviews(user);
+    long currentInterviews = interviewSessionRepository.countByUser(user);
+
+    if (currentInterviews >= maxInterviews) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                Map.of(
+                        "status", 403,
+                        "error", "PLAN_LIMIT_REACHED",
+                        "message", "You have reached the maximum allowed Mock Interviews (" + maxInterviews + ") for your plan. Please upgrade to continue."
+                )
+        );
+    }
 
     return ResponseEntity.ok(
             interviewService.startInterview(user, request)

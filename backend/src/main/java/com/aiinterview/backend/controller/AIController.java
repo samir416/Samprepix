@@ -8,19 +8,29 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.repository.UserRepository;
+import com.aiinterview.backend.service.EntitlementService;
+
 @RestController
 @RequestMapping("/api/ai")
 public class AIController {
 
     private final AIService aiService;
-        private final CodingHintService codingHintService;
+    private final CodingHintService codingHintService;
+    private final UserRepository userRepository;
+    private final EntitlementService entitlementService;
 
-        public AIController(
-                        AIService aiService,
-                        CodingHintService codingHintService
-        ) {
+    public AIController(
+            AIService aiService,
+            CodingHintService codingHintService,
+            UserRepository userRepository,
+            EntitlementService entitlementService
+    ) {
         this.aiService = aiService;
-                this.codingHintService = codingHintService;
+        this.codingHintService = codingHintService;
+        this.userRepository = userRepository;
+        this.entitlementService = entitlementService;
     }
 
     @GetMapping("/test")
@@ -103,6 +113,19 @@ public class AIController {
             }
 
             String userKey = principal != null ? principal.getName() : "anonymous";
+
+            if (principal != null) {
+                User user = userRepository.findByEmail(principal.getName()).orElse(null);
+                if (user != null && !entitlementService.hasAiHintsAccess(user)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                            Map.of(
+                                    "success", false,
+                                    "error", "PLAN_FEATURE_LOCKED",
+                                    "message", "AI Hints require a PRO or ELITE subscription. Please upgrade to access AI hints."
+                            )
+                    );
+                }
+            }
 
             Map<String, Object> hint =
                     codingHintService.generateHint(

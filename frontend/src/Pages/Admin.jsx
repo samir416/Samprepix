@@ -929,29 +929,22 @@ export default function Admin() {
                                                         </td>
 
                                                         <td>
-                                                            <select
-                                                                value={
-                                                                    user.role
-                                                                }
-                                                                onChange={(
-                                                                    e
-                                                                ) =>
-                                                                    handleUpdateUserRole(
-                                                                        user.id,
-                                                                        e.target
-                                                                            .value
-                                                                    )
-                                                                }
-                                                                className="admin-inline-select"
-                                                            >
-                                                                <option value="USER">
-                                                                    User
-                                                                </option>
-
-                                                                <option value="ADMIN">
-                                                                    Admin
-                                                                </option>
-                                                            </select>
+                                                            {user.email === "samirprajapat5@gmail.com" ? (
+                                                                <span className="badge bg-primary text-white">Owner (ADMIN)</span>
+                                                            ) : (
+                                                                <select
+                                                                    value={user.role}
+                                                                    onChange={(e) =>
+                                                                        handleUpdateUserRole(
+                                                                            user.id,
+                                                                            e.target.value
+                                                                        )
+                                                                    }
+                                                                    className="admin-inline-select"
+                                                                >
+                                                                    <option value="USER">User</option>
+                                                                </select>
+                                                            )}
                                                         </td>
 
                                                         <td>
@@ -982,42 +975,44 @@ export default function Admin() {
                                                         </td>
 
                                                         <td>
-                                                            <div className="admin-action-group">
+                                                            {user.email === "samirprajapat5@gmail.com" ? (
+                                                                <span className="text-muted" style={{ fontSize: "0.8rem" }}>Protected</span>
+                                                            ) : (
+                                                                <div className="admin-action-group">
+                                                                    <button
+                                                                        className="admin-btn-danger"
+                                                                        onClick={() =>
+                                                                            handleDeleteUser(
+                                                                                user.id
+                                                                            )
+                                                                        }
+                                                                        title="Delete User"
+                                                                    >
+                                                                        <FiTrash2 />
+                                                                    </button>
 
-                                                                <button
-                                                                    className="admin-btn-danger"
-                                                                    onClick={() =>
-                                                                        handleDeleteUser(
-                                                                            user.id
-                                                                        )
-                                                                    }
-                                                                    title="Delete User"
-                                                                >
-                                                                    <FiTrash2 />
-                                                                </button>
-
-                                                                <button
-                                                                    className="admin-btn-secondary"
-                                                                    onClick={() =>
-                                                                        handleUpdateUserStatus(
-                                                                            user.id,
-                                                                            user.accountStatus ===
-                                                                                "ACTIVE"
-                                                                                ? "PENDING"
-                                                                                : "ACTIVE"
-                                                                        )
-                                                                    }
-                                                                    title="Toggle Status"
-                                                                >
-                                                                    {user.accountStatus ===
-                                                                    "ACTIVE" ? (
-                                                                        <FiXCircle />
-                                                                    ) : (
-                                                                        <FiCheckCircle />
-                                                                    )}
-                                                                </button>
-
-                                                            </div>
+                                                                    <button
+                                                                        className="admin-btn-secondary"
+                                                                        onClick={() =>
+                                                                            handleUpdateUserStatus(
+                                                                                user.id,
+                                                                                user.accountStatus ===
+                                                                                    "ACTIVE"
+                                                                                    ? "PENDING"
+                                                                                    : "ACTIVE"
+                                                                            )
+                                                                        }
+                                                                        title="Toggle Status"
+                                                                    >
+                                                                        {user.accountStatus ===
+                                                                        "ACTIVE" ? (
+                                                                            <FiXCircle />
+                                                                        ) : (
+                                                                            <FiCheckCircle />
+                                                                        )}
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </td>
 
                                                     </tr>
