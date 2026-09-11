@@ -188,22 +188,18 @@ public class AdminController {
 
         String subscriptionStatus = "None";
 
-        if (user.getSubscriptions() != null) {
-
-            subscriptionStatus =
-                    user.getSubscriptions()
-                            .stream()
-                            .filter(subscription ->
-                                    subscription.getSubscriptionStatus() != null
-                                    && SubscriptionStatus.ACTIVE.equals(
-                                            subscription
-                                                    .getSubscriptionStatus()))
-                            .findFirst()
-                            .map(subscription ->
-                                    String.valueOf(
-                                            subscription
-                                                    .getSubscriptionStatus()))
-                            .orElse("None");
+        try {
+            List<Subscription> activeSubs = subscriptionRepository.findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE");
+            if (!activeSubs.isEmpty()) {
+                subscriptionStatus = "ACTIVE";
+            } else if (user.getSubscriptions() != null && !user.getSubscriptions().isEmpty()) {
+                subscriptionStatus = String.valueOf(user.getSubscriptions().get(user.getSubscriptions().size() - 1).getSubscriptionStatus());
+                if (subscriptionStatus == null || subscriptionStatus.isBlank() || "null".equalsIgnoreCase(subscriptionStatus)) {
+                    subscriptionStatus = "None";
+                }
+            }
+        } catch (Exception ex) {
+            subscriptionStatus = "None";
         }
 
         return UserAdminResponse.builder()

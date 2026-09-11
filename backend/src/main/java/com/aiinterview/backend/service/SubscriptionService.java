@@ -48,7 +48,9 @@ public class SubscriptionService {
         User user = getUser(userId);
 
         Subscription subscription = subscriptionRepository
-                .findByUserAndSubscriptionStatus(user, "ACTIVE")
+                .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE")
+                .stream()
+                .findFirst()
                 .orElse(null);
 
         if (subscription == null) {
@@ -114,9 +116,9 @@ public class SubscriptionService {
     public boolean hasActiveSubscription(Long userId) {
         User user = getUser(userId);
 
-        return subscriptionRepository
-                .findByUserAndSubscriptionStatus(user, "ACTIVE")
-                .isPresent();
+        return !subscriptionRepository
+                .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE")
+                .isEmpty();
     }
 
     /**
@@ -127,8 +129,10 @@ public class SubscriptionService {
         User user = getUser(userId);
 
         return subscriptionRepository
-                .findByUserAndSubscriptionStatus(user, "ACTIVE")
+                .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE")
+                .stream()
                 .map(Subscription::getPlan)
+                .findFirst()
                 .orElse(null);
     }
 

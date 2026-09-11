@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -54,24 +55,19 @@ public class EntitlementService {
             );
         }
 
-        Optional<Subscription> activeSubscription =
+        List<Subscription> activeSubscriptions =
                 subscriptionRepository
-                        .findByUserAndSubscriptionStatus(
+                        .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(
                                 user,
                                 "ACTIVE"
                         );
 
-        if (activeSubscription.isPresent()) {
-
-            Subscription subscription =
-                    activeSubscription.get();
-
+        for (Subscription subscription : activeSubscriptions) {
             if (subscription.getPlan() != null
                     && (
                     subscription.getExpiresAt() == null
                             || subscription.getExpiresAt().isAfter(now)
             )) {
-
                 return normalizePlan(
                         subscription.getPlan().getName()
                 );

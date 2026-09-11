@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -476,6 +477,15 @@ public class PaymentService {
 
             LocalDateTime now =
                     LocalDateTime.now();
+
+            // Expire / supersede any previous active subscriptions for this user
+            List<Subscription> oldActiveSubs = subscriptionRepository
+                    .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE");
+            for (Subscription oldSub : oldActiveSubs) {
+                oldSub.setSubscriptionStatus("EXPIRED");
+                oldSub.setAutoRenew(false);
+                subscriptionRepository.save(oldSub);
+            }
 
             subscription =
                     Subscription.builder()
