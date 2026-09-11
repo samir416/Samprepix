@@ -2,22 +2,24 @@ package com.aiinterview.backend.controller;
 
 import com.aiinterview.backend.dto.payment.PaymentRequest;
 import com.aiinterview.backend.dto.subscription.SubscriptionResponse;
+import com.aiinterview.backend.entity.Role;
 import com.aiinterview.backend.entity.Subscription;
 import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.repository.SubscriptionRepository;
+import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.service.EntitlementService;
 import com.aiinterview.backend.service.PaymentService;
 import com.aiinterview.backend.service.SubscriptionService;
-import com.aiinterview.backend.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/subscription")
@@ -25,9 +27,14 @@ import java.util.Optional;
 public class SubscriptionController {
 
     private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final EntitlementService entitlementService;
     private final PaymentService paymentService;
     private final SubscriptionService subscriptionService;
+
+    // =========================================================
+    // CURRENT USER SUBSCRIPTIONS
+    // =========================================================
 
     @GetMapping("/my")
     public ResponseEntity<?> getMySubscription(
@@ -41,11 +48,17 @@ public class SubscriptionController {
         String effectivePlan =
                 entitlementService.getEffectivePlan(user);
 
-        return ResponseEntity.ok(Map.of(
-                "subscriptions", subscriptions,
-                "effectivePlan", effectivePlan
-        ));
+        return ResponseEntity.ok(
+                Map.of(
+                        "subscriptions", subscriptions,
+                        "effectivePlan", effectivePlan
+                )
+        );
     }
+
+    // =========================================================
+    // CURRENT USER ACTIVE SUBSCRIPTION
+    // =========================================================
 
     @GetMapping("/my/active")
     public ResponseEntity<?> getActiveSubscription(
@@ -64,41 +77,72 @@ public class SubscriptionController {
                             effectivePlan
                     );
 
-            Map<String, Object> response = new LinkedHashMap<>();
+            Map<String, Object> response =
+                    new LinkedHashMap<>();
 
             response.put("active", true);
             response.put("plan", effectivePlan);
             response.put(
                     "source",
-                    entitlement ? "ENTITLEMENT" : "SUBSCRIPTION"
+                    entitlement
+                            ? "ENTITLEMENT"
+                            : "SUBSCRIPTION"
             );
 
             return ResponseEntity.ok(response);
         }
 
         SubscriptionResponse activeSubscription =
-                subscriptionService.getActiveSubscription(user.getId());
+                subscriptionService.getActiveSubscription(
+                        user.getId()
+                );
 
         if (activeSubscription != null) {
 
-            Map<String, Object> response = new LinkedHashMap<>();
+            Map<String, Object> response =
+                    new LinkedHashMap<>();
 
             response.put("active", true);
-            response.put("plan", activeSubscription.getPlanName());
+            response.put(
+                    "plan",
+                    activeSubscription.getPlanName()
+            );
             response.put(
                     "subscriptionId",
                     activeSubscription.getId()
             );
-            response.put("source", "SUBSCRIPTION");
+            response.put(
+                    "source",
+                    "SUBSCRIPTION"
+            );
 
             return ResponseEntity.ok(response);
         }
 
-        return ResponseEntity.ok(Map.of(
-                "active", false,
-                "plan", "STARTER"
-        ));
+        return ResponseEntity.ok(
+                Map.of(
+                        "active", false,
+                        "plan", "STARTER"
+                )
+        );
     }
+
+    // =========================================================
+    // ADMIN - ALL SUBSCRIPTIONS
+    // =========================================================
+
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Subscription>> getAllSubscriptions() {
+
+        return ResponseEntity.ok(
+                subscriptionRepository.findAll()
+        );
+    }
+
+    // =========================================================
+    // LEGACY CHECKOUT
+    // =========================================================
 
     /**
      * Legacy checkout endpoint.
@@ -117,17 +161,26 @@ public class SubscriptionController {
                 || request.getPlanId().isBlank()) {
 
             return ResponseEntity.badRequest().body(
-                    Map.of("message", "Plan ID is required")
+                    Map.of(
+                            "message",
+                            "Plan ID is required"
+                    )
             );
         }
 
-        return ResponseEntity.ok(Map.of(
-                "message",
-                "Use the payment checkout flow to create and complete the order.",
-                "planId",
-                request.getPlanId()
-        ));
+        return ResponseEntity.ok(
+                Map.of(
+                        "message",
+                        "Use the payment checkout flow to create and complete the order.",
+                        "planId",
+                        request.getPlanId()
+                )
+        );
     }
+
+    // =========================================================
+    // DIRECT SUBSCRIPTION ACTIVATION DISABLED
+    // =========================================================
 
     /**
      * Subscription activation must happen only after
@@ -150,14 +203,20 @@ public class SubscriptionController {
         );
     }
 
+    // =========================================================
+    // CANCEL SUBSCRIPTION
+    // =========================================================
+
     @PostMapping("/cancel/{subscriptionId}")
     public ResponseEntity<?> cancelSubscription(
             @PathVariable Long subscriptionId,
             Authentication authentication) {
 
-        User user = getAuthenticatedUser(authentication);
+        User user =
+                getAuthenticatedUser(authentication);
 
         try {
+
             SubscriptionResponse response =
                     subscriptionService.cancelSubscription(
                             user.getId(),
@@ -175,34 +234,51 @@ public class SubscriptionController {
 
         } catch (RuntimeException ex) {
 
-            if ("Subscription not found".equals(ex.getMessage())) {
-                return ResponseEntity.notFound().build();
+            if ("Subscription not found"
+                    .equals(ex.getMessage())) {
+
+                return ResponseEntity
+                        .notFound()
+                        .build();
             }
 
             if (ex.getMessage() != null
-                    && ex.getMessage().contains("not authorized")) {
+                    && ex.getMessage()
+                    .contains("not authorized")) {
 
-                return ResponseEntity.status(403).body(
-                        Map.of("message", ex.getMessage())
-                );
+                return ResponseEntity
+                        .status(403)
+                        .body(
+                                Map.of(
+                                        "message",
+                                        ex.getMessage()
+                                )
+                        );
             }
 
-            return ResponseEntity.badRequest().body(
-                    Map.of(
-                            "message",
-                            ex.getMessage() != null
-                                    ? ex.getMessage()
-                                    : "Unable to cancel subscription"
-                    )
-            );
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    ex.getMessage() != null
+                                            ? ex.getMessage()
+                                            : "Unable to cancel subscription"
+                            )
+                    );
         }
     }
+
+    // =========================================================
+    // CAPABILITIES
+    // =========================================================
 
     @GetMapping("/capabilities")
     public ResponseEntity<?> getCapabilities(
             Authentication authentication) {
 
-        User user = getAuthenticatedUser(authentication);
+        User user =
+                getAuthenticatedUser(authentication);
 
         String effectivePlan =
                 entitlementService.getEffectivePlan(user);
@@ -210,66 +286,84 @@ public class SubscriptionController {
         Map<String, Object> capabilities =
                 new LinkedHashMap<>();
 
-        capabilities.put("effectivePlan", effectivePlan);
+        capabilities.put(
+                "effectivePlan",
+                effectivePlan
+        );
 
         capabilities.put(
                 "maxMockInterviews",
-                entitlementService.getMaxMockInterviews(user)
+                entitlementService
+                        .getMaxMockInterviews(user)
         );
 
         capabilities.put(
                 "maxResumeScans",
-                entitlementService.getMaxResumeScans(user)
+                entitlementService
+                        .getMaxResumeScans(user)
         );
 
         capabilities.put(
                 "maxCodingProblems",
-                entitlementService.getMaxCodingProblems(user)
+                entitlementService
+                        .getMaxCodingProblems(user)
         );
 
         capabilities.put(
                 "maxAptitudeQuestions",
-                entitlementService.getMaxAptitudeQuestions(user)
+                entitlementService
+                        .getMaxAptitudeQuestions(user)
         );
 
         capabilities.put(
                 "includesAIHints",
-                entitlementService.hasAiHintsAccess(user)
+                entitlementService
+                        .hasAiHintsAccess(user)
         );
 
         capabilities.put(
                 "includesAnalytics",
-                entitlementService.hasAnalyticsAccess(user)
+                entitlementService
+                        .hasAnalyticsAccess(user)
         );
 
         capabilities.put(
                 "includesTier1Companies",
-                entitlementService.hasTier1CompaniesAccess(user)
+                entitlementService
+                        .hasTier1CompaniesAccess(user)
         );
 
         capabilities.put(
                 "includesPriorityCompute",
-                entitlementService.hasPriorityComputeAccess(user)
+                entitlementService
+                        .hasPriorityComputeAccess(user)
         );
 
         capabilities.put(
                 "hasPremiumAccess",
-                entitlementService.hasPremiumAccess(user)
+                entitlementService
+                        .hasPremiumAccess(user)
         );
 
         capabilities.put(
                 "hasEliteAccess",
-                entitlementService.hasEliteAccess(user)
+                entitlementService
+                        .hasEliteAccess(user)
         );
 
         capabilities.put(
                 "isAdmin",
-                user.getRole() ==
-                        com.aiinterview.backend.entity.Role.ADMIN
+                user.getRole() == Role.ADMIN
         );
 
-        return ResponseEntity.ok(capabilities);
+        return ResponseEntity.ok(
+                capabilities
+        );
     }
+
+    // =========================================================
+    // AUTHENTICATED USER
+    // =========================================================
 
     private User getAuthenticatedUser(
             Authentication authentication) {
@@ -278,12 +372,17 @@ public class SubscriptionController {
                 || authentication.getName() == null
                 || authentication.getName().isBlank()) {
 
-            throw new RuntimeException("Authentication required");
+            throw new RuntimeException(
+                    "Authentication required"
+            );
         }
 
-        return userRepository.findByEmail(authentication.getName())
+        return userRepository
+                .findByEmail(authentication.getName())
                 .orElseThrow(
-                        () -> new RuntimeException("User not found")
+                        () -> new RuntimeException(
+                                "User not found"
+                        )
                 );
     }
 }

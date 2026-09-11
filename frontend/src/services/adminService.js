@@ -4,47 +4,122 @@ const API = axios.create({
     baseURL: "http://localhost:8080/api/admin"
 });
 
+const ROOT_API = axios.create({
+    baseURL: "http://localhost:8080/api"
+});
+
 const getToken = () => localStorage.getItem("token");
 
 const addAuthToken = (config) => {
     const token = getToken();
+
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
 };
 
 API.interceptors.request.use(addAuthToken);
+ROOT_API.interceptors.request.use(addAuthToken);
 
-export const getAdminStats = () => API.get("/stats").then(res => res.data);
-export const getAllUsers = (page = 0, size = 20, role, accountStatus) =>
+// =========================================================
+// DASHBOARD
+// =========================================================
+
+export const getAdminStats = () =>
+    API.get("/stats")
+        .then((res) => res.data);
+
+// =========================================================
+// USERS
+// =========================================================
+
+export const getAllUsers = (
+    page = 0,
+    size = 20,
+    role,
+    accountStatus
+) =>
     API.get("/users", {
-        params: { page, size, role, accountStatus }
-    }).then(res => res.data);
-export const getUserById = (id) => API.get(`/users/${id}`).then(res => res.data);
+        params: {
+            page,
+            size,
+            ...(role ? { role } : {}),
+            ...(accountStatus ? { accountStatus } : {})
+        }
+    }).then((res) => res.data);
+
+export const getUserById = (id) =>
+    API.get(`/users/${id}`)
+        .then((res) => res.data);
+
 export const updateUserRole = (id, role) =>
-    API.put(`/users/${id}/role`, { role }).then(res => res.data);
+    API.put(`/users/${id}/role`, { role })
+        .then((res) => res.data);
+
 export const updateUserStatus = (id, accountStatus) =>
     API.put(`/users/${id}/status`, null, {
         params: { accountStatus }
-    }).then(res => res.data);
-export const deleteUser = (id) => API.delete(`/users/${id}`).then(res => res.data);
+    }).then((res) => res.data);
+
+export const deleteUser = (id) =>
+    API.delete(`/users/${id}`)
+        .then((res) => res.data);
+
+// =========================================================
+// USER SUBSCRIPTIONS
+// =========================================================
+
 export const getUserSubscriptions = (id) =>
-    API.get(`/users/${id}/subscriptions`).then(res => res.data);
+    API.get(`/users/${id}/subscriptions`)
+        .then((res) => res.data);
+
+// =========================================================
+// ALL SUBSCRIPTIONS
+// =========================================================
+
 export const getAllSubscriptions = () =>
-    API.get("/subscription/admin/all").then(res => res.data);
+    ROOT_API.get("/subscription/admin/all")
+        .then((res) => res.data);
+
+// =========================================================
+// ENTITLEMENTS
+// =========================================================
+
 export const getUserEntitlements = (id) =>
-    API.get(`/users/${id}/entitlements`).then(res => res.data);
+    API.get(`/users/${id}/entitlements`)
+        .then((res) => res.data);
+
 export const grantTemporaryEntitlement = (id, data) =>
-    API.post(`/users/${id}/entitlements/temporary`, data).then(res => res.data);
+    API.post(
+        `/users/${id}/entitlements/temporary`,
+        data
+    ).then((res) => res.data);
+
 export const grantLifetimeEntitlement = (id, data) =>
-    API.post(`/users/${id}/entitlements/lifetime`, data).then(res => res.data);
+    API.post(
+        `/users/${id}/entitlements/lifetime`,
+        data
+    ).then((res) => res.data);
+
 export const revokeEntitlement = (id, entitlementId) =>
-    API.delete(`/users/${id}/entitlements/${entitlementId}`).then(res => res.data);
+    API.delete(
+        `/users/${id}/entitlements/${entitlementId}`
+    ).then((res) => res.data);
+
 export const revokeAllEntitlements = (id) =>
-    API.delete(`/users/${id}/entitlements`).then(res => res.data);
+    API.delete(`/users/${id}/entitlements`)
+        .then((res) => res.data);
+
 export const getEntitlementHistory = (userId) =>
-    API.get(`/entitlements/history/${userId}`).then(res => res.data);
-export const getPricing = () => API.get("/plans/pricing").then(res => res.data);
+    API.get(`/entitlements/history/${userId}`)
+        .then((res) => res.data);
+
+// =========================================================
+// BILLING
+// =========================================================
+
 export const getBillingHistory = (userId) =>
-    API.get(`/billing/${userId}`).then(res => res.data);
+    API.get(`/billing/${userId}`)
+        .then((res) => res.data);

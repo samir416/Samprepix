@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getCurrentUser } from "../services/authService";
+
 import {
     getAdminStats,
     getAllUsers,
@@ -13,7 +14,7 @@ import {
     grantLifetimeEntitlement,
     revokeEntitlement,
     revokeAllEntitlements,
-    getPricing,
+    getAllSubscriptions,
 } from "../services/adminService";
 
 import {
@@ -22,8 +23,6 @@ import {
     createPlan,
     updatePlan,
 } from "../services/planService";
-
-import { getAllSubscriptions } from "../services/subscriptionService";
 
 import {
     FiUsers,
@@ -55,6 +54,7 @@ export default function Admin() {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [adminVerified, setAdminVerified] = useState(false);
 
     const [userRoleFilter, setUserRoleFilter] = useState("");
     const [userStatusFilter, setUserStatusFilter] = useState("");
@@ -65,12 +65,6 @@ export default function Admin() {
     const [entitlementType, setEntitlementType] = useState("temporary");
     const [entitlementDuration, setEntitlementDuration] = useState(30);
     const [entitlementReason, setEntitlementReason] = useState("");
-
-    const [testPricing, setTestPricing] = useState({
-        PRO: 1.0,
-        ELITE: 2.0,
-        STARTER: 0.0,
-    });
 
     const [showPlanForm, setShowPlanForm] = useState(false);
     const [editingPlan, setEditingPlan] = useState(null);
@@ -93,9 +87,9 @@ export default function Admin() {
         featured: false,
     });
 
-    /* =========================
-       ADMIN ACCESS
-    ========================= */
+    // =========================================================
+    // ADMIN ACCESS
+    // =========================================================
 
     useEffect(() => {
         const verifyAdmin = async () => {
@@ -109,15 +103,22 @@ export default function Admin() {
             try {
                 const currentUser = await getCurrentUser();
 
+                const storedUser = JSON.parse(
+                    localStorage.getItem("user") || "null"
+                );
+
                 const role =
                     currentUser?.role ||
-                    JSON.parse(localStorage.getItem("user") || "null")?.role;
+                    storedUser?.role;
 
                 if (role !== "ADMIN") {
                     navigate("/dashboard");
                     return;
                 }
-            } catch {
+
+                setAdminVerified(true);
+            } catch (err) {
+                console.error("Admin verification failed:", err);
                 navigate("/dashboard");
             }
         };
@@ -125,23 +126,45 @@ export default function Admin() {
         verifyAdmin();
     }, [navigate]);
 
-    /* =========================
-       LOAD DATA
-    ========================= */
+    // =========================================================
+    // LOAD DATA
+    // =========================================================
 
     useEffect(() => {
+        if (!adminVerified) {
+            return;
+        }
+
         loadData();
-    }, [activeTab, userRoleFilter, userStatusFilter]);
+    }, [
+        adminVerified,
+        activeTab,
+        userRoleFilter,
+        userStatusFilter,
+    ]);
 
     const loadData = async () => {
+        if (!adminVerified) {
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
         try {
+            // -------------------------
+            // Dashboard
+            // -------------------------
+
             if (activeTab === "dashboard") {
                 const statsData = await getAdminStats();
                 setStats(statsData);
             }
+
+            // -------------------------
+            // Users / Subscriptions /
+            // Entitlements need users
+            // -------------------------
 
             if (
                 activeTab === "users" ||
@@ -155,28 +178,40 @@ export default function Admin() {
                     userStatusFilter || undefined
                 );
 
-                setUsers(usersData?.content || usersData || []);
+                setUsers(
+                    usersData?.content ||
+                    usersData ||
+                    []
+                );
             }
+
+            // -------------------------
+            // Plans
+            // -------------------------
 
             if (activeTab === "plans") {
                 const plansData = await getAllPlans();
                 setPlans(plansData || []);
             }
 
+            // -------------------------
+            // Subscriptions
+            // -------------------------
+
             if (activeTab === "subscriptions") {
-                const subsData = await getAllSubscriptions();
-                setSubscriptions(subsData || []);
+                const subsData =
+                    await getAllSubscriptions();
+
+                setSubscriptions(
+                    subsData || []
+                );
             }
 
-            if (activeTab === "entitlements") {
-                const pricingData = await getPricing();
-
-                if (pricingData?.testMode) {
-                    setTestPricing(pricingData.testMode);
-                }
-            }
         } catch (err) {
-            console.error("Admin data loading error:", err);
+            console.error(
+                "Admin data loading error:",
+                err
+            );
 
             setError(
                 err?.response?.data?.message ||
@@ -188,12 +223,16 @@ export default function Admin() {
         }
     };
 
-    /* =========================
-       USER ACTIONS
-    ========================= */
+    // =========================================================
+    // USER ACTIONS
+    // =========================================================
 
     const handleDeleteUser = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this user?")) {
+        if (
+            !window.confirm(
+                "Are you sure you want to delete this user?"
+            )
+        ) {
             return;
         }
 
@@ -202,6 +241,7 @@ export default function Admin() {
             await loadData();
         } catch (err) {
             console.error(err);
+
             setError(
                 err?.response?.data?.message ||
                 "Failed to delete user"
@@ -209,12 +249,16 @@ export default function Admin() {
         }
     };
 
-    const handleUpdateUserRole = async (id, role) => {
+    const handleUpdateUserRole = async (
+        id,
+        role
+    ) => {
         try {
             await updateUserRole(id, role);
             await loadData();
         } catch (err) {
             console.error(err);
+
             setError(
                 err?.response?.data?.message ||
                 "Failed to update user role"
@@ -222,12 +266,16 @@ export default function Admin() {
         }
     };
 
-    const handleUpdateUserStatus = async (id, status) => {
+    const handleUpdateUserStatus = async (
+        id,
+        status
+    ) => {
         try {
             await updateUserStatus(id, status);
             await loadData();
         } catch (err) {
             console.error(err);
+
             setError(
                 err?.response?.data?.message ||
                 "Failed to update user status"
@@ -235,9 +283,9 @@ export default function Admin() {
         }
     };
 
-    /* =========================
-       PLAN ACTIONS
-    ========================= */
+    // =========================================================
+    // PLAN ACTIONS
+    // =========================================================
 
     const resetPlanForm = () => {
         setPlanForm({
@@ -264,7 +312,10 @@ export default function Admin() {
 
         try {
             if (editingPlan) {
-                await updatePlan(editingPlan.id, planForm);
+                await updatePlan(
+                    editingPlan.id,
+                    planForm
+                );
             } else {
                 await createPlan(planForm);
             }
@@ -304,17 +355,25 @@ export default function Admin() {
         setPlanForm({
             name: plan.name || "",
             description: plan.description || "",
-            priceInr: plan.priceInr || 0,
-            priceUsd: plan.priceUsd || 0,
+            priceInr: plan.priceInr ?? 0,
+            priceUsd: plan.priceUsd ?? 0,
             interval: plan.interval || "Month",
-            maxMockInterviews: plan.maxMockInterviews || 3,
-            maxResumeScans: plan.maxResumeScans || 5,
-            maxCodingProblems: plan.maxCodingProblems || 100,
-            maxAptitudeQuestions: plan.maxAptitudeQuestions || 100,
-            includesAIHints: !!plan.includesAIHints,
-            includesAnalytics: !!plan.includesAnalytics,
-            includesTier1Companies: !!plan.includesTier1Companies,
-            includesPriorityCompute: !!plan.includesPriorityCompute,
+            maxMockInterviews:
+                plan.maxMockInterviews ?? 3,
+            maxResumeScans:
+                plan.maxResumeScans ?? 5,
+            maxCodingProblems:
+                plan.maxCodingProblems ?? 100,
+            maxAptitudeQuestions:
+                plan.maxAptitudeQuestions ?? 100,
+            includesAIHints:
+                !!plan.includesAIHints,
+            includesAnalytics:
+                !!plan.includesAnalytics,
+            includesTier1Companies:
+                !!plan.includesTier1Companies,
+            includesPriorityCompute:
+                !!plan.includesPriorityCompute,
             active: !!plan.active,
             featured: !!plan.featured,
         });
@@ -322,11 +381,14 @@ export default function Admin() {
         setShowPlanForm(true);
     };
 
-    /* =========================
-       ENTITLEMENT ACTIONS
-    ========================= */
+    // =========================================================
+    // ENTITLEMENT ACTIONS
+    // =========================================================
 
-    const openEntitlementModal = (user, plan) => {
+    const openEntitlementModal = (
+        user,
+        plan
+    ) => {
         setEntitlementModalUser(user);
         setEntitlementPlan(plan);
         setEntitlementType("temporary");
@@ -334,7 +396,9 @@ export default function Admin() {
         setEntitlementReason("");
     };
 
-    const handleGrantEntitlement = async (userId) => {
+    const handleGrantEntitlement = async (
+        userId
+    ) => {
         try {
             const data = {
                 planName: entitlementPlan,
@@ -342,16 +406,28 @@ export default function Admin() {
                     entitlementType === "temporary"
                         ? entitlementDuration
                         : undefined,
-                reason: entitlementReason,
+                reason:
+                    entitlementReason.trim() ||
+                    "Admin granted entitlement",
             };
 
-            if (entitlementType === "temporary") {
-                await grantTemporaryEntitlement(userId, data);
+            if (
+                entitlementType ===
+                "temporary"
+            ) {
+                await grantTemporaryEntitlement(
+                    userId,
+                    data
+                );
             } else {
-                await grantLifetimeEntitlement(userId, data);
+                await grantLifetimeEntitlement(
+                    userId,
+                    data
+                );
             }
 
             setEntitlementModalUser(null);
+
             await loadData();
         } catch (err) {
             console.error(err);
@@ -363,9 +439,16 @@ export default function Admin() {
         }
     };
 
-    const handleRevokeEntitlement = async (userId, entitlementId) => {
+    const handleRevokeEntitlement = async (
+        userId,
+        entitlementId
+    ) => {
         try {
-            await revokeEntitlement(userId, entitlementId);
+            await revokeEntitlement(
+                userId,
+                entitlementId
+            );
+
             await loadData();
         } catch (err) {
             console.error(err);
@@ -377,7 +460,9 @@ export default function Admin() {
         }
     };
 
-    const handleRevokeAllEntitlements = async (userId) => {
+    const handleRevokeAllEntitlements = async (
+        userId
+    ) => {
         if (
             !window.confirm(
                 "Revoke all entitlements for this user?"
@@ -388,6 +473,7 @@ export default function Admin() {
 
         try {
             await revokeAllEntitlements(userId);
+
             await loadData();
         } catch (err) {
             console.error(err);
@@ -399,25 +485,35 @@ export default function Admin() {
         }
     };
 
-    /* =========================
-       FILTER USERS
-    ========================= */
+    // =========================================================
+    // FILTER USERS
+    // =========================================================
 
-    const visibleUsers = users.filter((user) => {
-        const search = userSearch.trim().toLowerCase();
+    const visibleUsers = users.filter(
+        (user) => {
+            const search =
+                userSearch.trim().toLowerCase();
 
-        if (!search) return true;
+            if (!search) {
+                return true;
+            }
 
-        return (
-            user.username?.toLowerCase().includes(search) ||
-            user.email?.toLowerCase().includes(search) ||
-            String(user.id).includes(search)
-        );
-    });
+            return (
+                user.username
+                    ?.toLowerCase()
+                    .includes(search) ||
+                user.email
+                    ?.toLowerCase()
+                    .includes(search) ||
+                String(user.id)
+                    .includes(search)
+            );
+        }
+    );
 
-    /* =========================
-       TAB CONFIG
-    ========================= */
+    // =========================================================
+    // TAB CONFIG
+    // =========================================================
 
     const tabs = [
         {
@@ -447,28 +543,38 @@ export default function Admin() {
         },
     ];
 
+    // =========================================================
+    // RENDER
+    // =========================================================
+
     return (
         <div className="admin-page">
             <main className="admin-content">
 
-                {/* =========================
+                {/* =================================================
                     HEADER
-                ========================= */}
+                ================================================= */}
 
                 <div className="admin-page-header">
                     <div>
                         <div className="admin-title-row">
+
                             <div className="admin-title-icon">
                                 <FiShield />
                             </div>
 
                             <div>
-                                <h1>Admin Panel</h1>
+                                <h1>
+                                    Admin Panel
+                                </h1>
+
                                 <p>
-                                    Manage users, plans, subscriptions and
+                                    Manage users, plans,
+                                    subscriptions and
                                     premium access.
                                 </p>
                             </div>
+
                         </div>
                     </div>
 
@@ -478,15 +584,20 @@ export default function Admin() {
                         disabled={loading}
                     >
                         <FiRefreshCw
-                            className={loading ? "spin" : ""}
+                            className={
+                                loading
+                                    ? "spin"
+                                    : ""
+                            }
                         />
+
                         Refresh
                     </button>
                 </div>
 
-                {/* =========================
+                {/* =================================================
                     ADMIN NAVIGATION
-                ========================= */}
+                ================================================= */}
 
                 <div className="admin-tabs">
                     {tabs.map((tab) => {
@@ -496,33 +607,43 @@ export default function Admin() {
                             <button
                                 key={tab.key}
                                 className={
-                                    activeTab === tab.key
+                                    activeTab ===
+                                    tab.key
                                         ? "admin-tab active"
                                         : "admin-tab"
                                 }
                                 onClick={() => {
                                     setError(null);
-                                    setActiveTab(tab.key);
+                                    setActiveTab(
+                                        tab.key
+                                    );
                                 }}
                             >
                                 <Icon />
-                                <span>{tab.label}</span>
+                                <span>
+                                    {tab.label}
+                                </span>
                             </button>
                         );
                     })}
                 </div>
 
-                {/* =========================
+                {/* =================================================
                     ERROR
-                ========================= */}
+                ================================================= */}
 
                 {error && (
                     <div className="admin-error">
                         <FiAlertCircle />
-                        <span>{error}</span>
+
+                        <span>
+                            {error}
+                        </span>
 
                         <button
-                            onClick={() => setError(null)}
+                            onClick={() =>
+                                setError(null)
+                            }
                             aria-label="Close error"
                         >
                             <FiX />
@@ -530,20 +651,23 @@ export default function Admin() {
                     </div>
                 )}
 
-                {/* =========================
+                {/* =================================================
                     LOADING
-                ========================= */}
+                ================================================= */}
 
                 {loading && (
                     <div className="admin-loading">
                         <FiRefreshCw className="spin" />
-                        <span>Loading admin data...</span>
+
+                        <span>
+                            Loading admin data...
+                        </span>
                     </div>
                 )}
 
-                {/* =========================
-                    DASHBOARD / OVERVIEW
-                ========================= */}
+                {/* =================================================
+                    DASHBOARD
+                ================================================= */}
 
                 {activeTab === "dashboard" &&
                     !loading &&
@@ -552,9 +676,13 @@ export default function Admin() {
 
                             <div className="admin-section-heading">
                                 <div>
-                                    <h2>Overview</h2>
+                                    <h2>
+                                        Overview
+                                    </h2>
+
                                     <p>
-                                        Current platform and subscription
+                                        Current platform
+                                        and subscription
                                         statistics.
                                     </p>
                                 </div>
@@ -568,7 +696,8 @@ export default function Admin() {
                                     </div>
 
                                     <div className="stat-value">
-                                        {stats.totalUsers ?? 0}
+                                        {stats.totalUsers ??
+                                            0}
                                     </div>
 
                                     <div className="stat-label">
@@ -582,7 +711,8 @@ export default function Admin() {
                                     </div>
 
                                     <div className="stat-value">
-                                        {stats.activeUsers ?? 0}
+                                        {stats.activeUsers ??
+                                            0}
                                     </div>
 
                                     <div className="stat-label">
@@ -596,7 +726,8 @@ export default function Admin() {
                                     </div>
 
                                     <div className="stat-value">
-                                        {stats.pendingUsers ?? 0}
+                                        {stats.pendingUsers ??
+                                            0}
                                     </div>
 
                                     <div className="stat-label">
@@ -610,7 +741,8 @@ export default function Admin() {
                                     </div>
 
                                     <div className="stat-value">
-                                        {stats.totalSubscriptions ?? 0}
+                                        {stats.totalSubscriptions ??
+                                            0}
                                     </div>
 
                                     <div className="stat-label">
@@ -624,7 +756,8 @@ export default function Admin() {
                                     </div>
 
                                     <div className="stat-value">
-                                        {stats.activeSubscriptions ?? 0}
+                                        {stats.activeSubscriptions ??
+                                            0}
                                     </div>
 
                                     <div className="stat-label">
@@ -640,7 +773,8 @@ export default function Admin() {
                                     <div className="stat-value">
                                         ₹
                                         {Number(
-                                            stats.totalRevenue || 0
+                                            stats.totalRevenue ||
+                                            0
                                         ).toFixed(0)}
                                     </div>
 
@@ -653,978 +787,1238 @@ export default function Admin() {
                         </div>
                     )}
 
-                {/* =========================
+                {/* =================================================
                     USERS
-                ========================= */}
+                ================================================= */}
 
-                {activeTab === "users" && !loading && (
-                    <div className="admin-section">
+                {activeTab === "users" &&
+                    !loading && (
+                        <div className="admin-section">
 
-                        <div className="admin-section-header">
-                            <div>
-                                <h2>User Management</h2>
-                                <p>
-                                    Manage user roles, account status and
-                                    access.
-                                </p>
-                            </div>
+                            <div className="admin-section-header">
+                                <div>
+                                    <h2>
+                                        User Management
+                                    </h2>
 
-                            <div className="admin-filters">
-
-                                <div className="admin-search">
-                                    <FiSearch />
-
-                                    <input
-                                        type="text"
-                                        placeholder="Search users..."
-                                        value={userSearch}
-                                        onChange={(e) =>
-                                            setUserSearch(e.target.value)
-                                        }
-                                    />
+                                    <p>
+                                        Manage user roles,
+                                        account status and
+                                        access.
+                                    </p>
                                 </div>
 
-                                <select
-                                    value={userRoleFilter}
-                                    onChange={(e) =>
-                                        setUserRoleFilter(e.target.value)
-                                    }
-                                >
-                                    <option value="">
-                                        All Roles
-                                    </option>
-                                    <option value="USER">
-                                        User
-                                    </option>
-                                    <option value="ADMIN">
-                                        Admin
-                                    </option>
-                                </select>
+                                <div className="admin-filters">
 
-                                <select
-                                    value={userStatusFilter}
-                                    onChange={(e) =>
-                                        setUserStatusFilter(e.target.value)
-                                    }
-                                >
-                                    <option value="">
-                                        All Status
-                                    </option>
-                                    <option value="ACTIVE">
-                                        Active
-                                    </option>
-                                    <option value="PENDING">
-                                        Pending
-                                    </option>
-                                </select>
+                                    <div className="admin-search">
+                                        <FiSearch />
 
-                            </div>
-                        </div>
-
-                        <div className="admin-table-wrapper">
-                            <table className="admin-table">
-
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>User</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Status</th>
-                                        <th>Plan</th>
-                                        <th>Created</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {visibleUsers.length === 0 ? (
-                                        <tr>
-                                            <td
-                                                colSpan="8"
-                                                className="admin-empty"
-                                            >
-                                                No users found.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        visibleUsers.map((user) => (
-                                            <tr key={user.id}>
-
-                                                <td>
-                                                    {user.id}
-                                                </td>
-
-                                                <td>
-                                                    <strong>
-                                                        {user.username ||
-                                                            "-"}
-                                                    </strong>
-                                                </td>
-
-                                                <td>
-                                                    {user.email || "-"}
-                                                </td>
-
-                                                <td>
-                                                    <select
-                                                        value={
-                                                            user.role
-                                                        }
-                                                        onChange={(e) =>
-                                                            handleUpdateUserRole(
-                                                                user.id,
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        className="admin-inline-select"
-                                                    >
-                                                        <option value="USER">
-                                                            User
-                                                        </option>
-                                                        <option value="ADMIN">
-                                                            Admin
-                                                        </option>
-                                                    </select>
-                                                </td>
-
-                                                <td>
-                                                    <span
-                                                        className={`status-badge ${
-                                                            user.accountStatus ===
-                                                            "ACTIVE"
-                                                                ? "active"
-                                                                : "pending"
-                                                        }`}
-                                                    >
-                                                        {user.accountStatus ||
-                                                            "-"}
-                                                    </span>
-                                                </td>
-
-                                                <td>
-                                                    {user.currentPlan ||
-                                                        "STARTER"}
-                                                </td>
-
-                                                <td>
-                                                    {user.createdAt
-                                                        ? new Date(
-                                                              user.createdAt
-                                                          ).toLocaleDateString()
-                                                        : "-"}
-                                                </td>
-
-                                                <td>
-                                                    <div className="admin-action-group">
-
-                                                        <button
-                                                            className="admin-btn-danger"
-                                                            onClick={() =>
-                                                                handleDeleteUser(
-                                                                    user.id
-                                                                )
-                                                            }
-                                                            title="Delete User"
-                                                        >
-                                                            <FiTrash2 />
-                                                        </button>
-
-                                                        <button
-                                                            className="admin-btn-secondary"
-                                                            onClick={() =>
-                                                                handleUpdateUserStatus(
-                                                                    user.id,
-                                                                    user.accountStatus ===
-                                                                        "ACTIVE"
-                                                                        ? "PENDING"
-                                                                        : "ACTIVE"
-                                                                )
-                                                            }
-                                                            title="Toggle Status"
-                                                        >
-                                                            {user.accountStatus ===
-                                                            "ACTIVE" ? (
-                                                                <FiXCircle />
-                                                            ) : (
-                                                                <FiCheckCircle />
-                                                            )}
-                                                        </button>
-
-                                                    </div>
-                                                </td>
-
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-
-                            </table>
-                        </div>
-                    </div>
-                )}
-
-                {/* =========================
-                    PLANS
-                ========================= */}
-
-                {activeTab === "plans" && !loading && (
-                    <div className="admin-section">
-
-                        <div className="admin-section-header">
-                            <div>
-                                <h2>Plan Management</h2>
-                                <p>
-                                    Manage Pro, Elite and other subscription
-                                    plans.
-                                </p>
-                            </div>
-
-                            <button
-                                className="admin-btn-primary"
-                                onClick={() => {
-                                    setEditingPlan(null);
-                                    resetPlanForm();
-                                    setShowPlanForm(true);
-                                }}
-                            >
-                                <FiPlus />
-                                Add Plan
-                            </button>
-                        </div>
-
-                        {showPlanForm && (
-                            <form
-                                className="admin-plan-form"
-                                onSubmit={handleSavePlan}
-                            >
-                                <div className="admin-form-header">
-                                    <div>
-                                        <h3>
-                                            {editingPlan
-                                                ? "Edit Plan"
-                                                : "Create Plan"}
-                                        </h3>
-                                        <p>
-                                            Configure plan pricing and
-                                            limits.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="plan-form-grid">
-
-                                    <div>
-                                        <label>Plan Name</label>
                                         <input
                                             type="text"
-                                            value={planForm.name}
+                                            placeholder="Search users..."
+                                            value={userSearch}
                                             onChange={(e) =>
-                                                setPlanForm({
-                                                    ...planForm,
-                                                    name: e.target.value,
-                                                })
-                                            }
-                                            required
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label>Description</label>
-                                        <textarea
-                                            value={
-                                                planForm.description
-                                            }
-                                            onChange={(e) =>
-                                                setPlanForm({
-                                                    ...planForm,
-                                                    description:
-                                                        e.target.value,
-                                                })
+                                                setUserSearch(
+                                                    e.target.value
+                                                )
                                             }
                                         />
                                     </div>
 
-                                    <div>
-                                        <label>Price (INR)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={planForm.priceInr}
-                                            onChange={(e) =>
-                                                setPlanForm({
-                                                    ...planForm,
-                                                    priceInr: Number(
-                                                        e.target.value
-                                                    ),
-                                                })
-                                            }
-                                        />
-                                    </div>
+                                    <select
+                                        value={
+                                            userRoleFilter
+                                        }
+                                        onChange={(e) =>
+                                            setUserRoleFilter(
+                                                e.target.value
+                                            )
+                                        }
+                                    >
+                                        <option value="">
+                                            All Roles
+                                        </option>
 
-                                    <div>
-                                        <label>Price (USD)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={planForm.priceUsd}
-                                            onChange={(e) =>
-                                                setPlanForm({
-                                                    ...planForm,
-                                                    priceUsd: Number(
-                                                        e.target.value
-                                                    ),
-                                                })
-                                            }
-                                        />
-                                    </div>
+                                        <option value="USER">
+                                            User
+                                        </option>
 
-                                    <div>
-                                        <label>Interval</label>
-                                        <select
-                                            value={planForm.interval}
-                                            onChange={(e) =>
-                                                setPlanForm({
-                                                    ...planForm,
-                                                    interval:
-                                                        e.target.value,
-                                                })
-                                            }
-                                        >
-                                            <option value="Month">
-                                                Month
-                                            </option>
-                                            <option value="Year">
-                                                Year
-                                            </option>
-                                        </select>
-                                    </div>
+                                        <option value="ADMIN">
+                                            Admin
+                                        </option>
+                                    </select>
 
-                                    <div>
-                                        <label>
-                                            Max Mock Interviews
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={
-                                                planForm.maxMockInterviews
-                                            }
-                                            onChange={(e) =>
-                                                setPlanForm({
-                                                    ...planForm,
-                                                    maxMockInterviews:
-                                                        Number(
-                                                            e.target.value
-                                                        ),
-                                                })
-                                            }
-                                        />
-                                    </div>
+                                    <select
+                                        value={
+                                            userStatusFilter
+                                        }
+                                        onChange={(e) =>
+                                            setUserStatusFilter(
+                                                e.target.value
+                                            )
+                                        }
+                                    >
+                                        <option value="">
+                                            All Status
+                                        </option>
 
-                                    <div>
-                                        <label>
-                                            Max Resume Scans
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={
-                                                planForm.maxResumeScans
-                                            }
-                                            onChange={(e) =>
-                                                setPlanForm({
-                                                    ...planForm,
-                                                    maxResumeScans:
-                                                        Number(
-                                                            e.target.value
-                                                        ),
-                                                })
-                                            }
-                                        />
-                                    </div>
+                                        <option value="ACTIVE">
+                                            Active
+                                        </option>
 
-                                    <div>
-                                        <label>
-                                            Max Coding Problems
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={
-                                                planForm.maxCodingProblems
-                                            }
-                                            onChange={(e) =>
-                                                setPlanForm({
-                                                    ...planForm,
-                                                    maxCodingProblems:
-                                                        Number(
-                                                            e.target.value
-                                                        ),
-                                                })
-                                            }
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label>
-                                            Max Aptitude Questions
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={
-                                                planForm.maxAptitudeQuestions
-                                            }
-                                            onChange={(e) =>
-                                                setPlanForm({
-                                                    ...planForm,
-                                                    maxAptitudeQuestions:
-                                                        Number(
-                                                            e.target.value
-                                                        ),
-                                                })
-                                            }
-                                        />
-                                    </div>
+                                        <option value="PENDING">
+                                            Pending
+                                        </option>
+                                    </select>
 
                                 </div>
-
-                                <div className="plan-form-actions">
-                                    <button
-                                        type="submit"
-                                        className="admin-btn-primary"
-                                    >
-                                        Save Plan
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        className="admin-btn-secondary"
-                                        onClick={() => {
-                                            setShowPlanForm(false);
-                                            setEditingPlan(null);
-                                            resetPlanForm();
-                                        }}
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </form>
-                        )}
-
-                        <div className="admin-table-wrapper">
-                            <table className="admin-table">
-
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Price</th>
-                                        <th>Mocks</th>
-                                        <th>Resumes</th>
-                                        <th>Problems</th>
-                                        <th>Active</th>
-                                        <th>Featured</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {plans.length === 0 ? (
-                                        <tr>
-                                            <td
-                                                colSpan="8"
-                                                className="admin-empty"
-                                            >
-                                                No plans found.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        plans.map((plan) => (
-                                            <tr key={plan.id}>
-
-                                                <td>
-                                                    <strong>
-                                                        {plan.name}
-                                                    </strong>
-                                                </td>
-
-                                                <td>
-                                                    ₹
-                                                    {plan.priceInr}/
-                                                    {String(
-                                                        plan.interval ||
-                                                            "Month"
-                                                    ).toLowerCase()}
-                                                </td>
-
-                                                <td>
-                                                    {
-                                                        plan.maxMockInterviews
-                                                    }
-                                                </td>
-
-                                                <td>
-                                                    {
-                                                        plan.maxResumeScans
-                                                    }
-                                                </td>
-
-                                                <td>
-                                                    {
-                                                        plan.maxCodingProblems
-                                                    }
-                                                </td>
-
-                                                <td>
-                                                    <span
-                                                        className={`status-badge ${
-                                                            plan.active
-                                                                ? "active"
-                                                                : "pending"
-                                                        }`}
-                                                    >
-                                                        {plan.active
-                                                            ? "Yes"
-                                                            : "No"}
-                                                    </span>
-                                                </td>
-
-                                                <td>
-                                                    {plan.featured
-                                                        ? "⭐"
-                                                        : "-"}
-                                                </td>
-
-                                                <td>
-                                                    <div className="admin-action-group">
-
-                                                        <button
-                                                            className="admin-btn-secondary"
-                                                            onClick={() =>
-                                                                handleEditPlan(
-                                                                    plan
-                                                                )
-                                                            }
-                                                        >
-                                                            Edit
-                                                        </button>
-
-                                                        <button
-                                                            className="admin-btn-danger"
-                                                            onClick={() => {
-                                                                if (
-                                                                    window.confirm(
-                                                                        "Delete this plan?"
-                                                                    )
-                                                                ) {
-                                                                    handleDeletePlan(
-                                                                        plan.id
-                                                                    );
-                                                                }
-                                                            }}
-                                                        >
-                                                            Delete
-                                                        </button>
-
-                                                    </div>
-                                                </td>
-
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-
-                            </table>
-                        </div>
-                    </div>
-                )}
-
-                {/* =========================
-                    SUBSCRIPTIONS
-                ========================= */}
-
-                {activeTab === "subscriptions" && !loading && (
-                    <div className="admin-section">
-
-                        <div className="admin-section-header">
-                            <div>
-                                <h2>Subscriptions</h2>
-                                <p>
-                                    View all active and historical
-                                    subscriptions.
-                                </p>
                             </div>
-                        </div>
 
-                        <div className="admin-table-wrapper">
-                            <table className="admin-table">
+                            <div className="admin-table-wrapper">
+                                <table className="admin-table">
 
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Plan</th>
-                                        <th>Status</th>
-                                        <th>Amount</th>
-                                        <th>Currency</th>
-                                        <th>Subscribed</th>
-                                        <th>Expires</th>
-                                        <th>Auto Renew</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {subscriptions.length === 0 ? (
+                                    <thead>
                                         <tr>
-                                            <td
-                                                colSpan="8"
-                                                className="admin-empty"
-                                            >
-                                                No subscriptions found.
-                                            </td>
+                                            <th>ID</th>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Plan</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
                                         </tr>
-                                    ) : (
-                                        subscriptions.map((sub) => (
-                                            <tr key={sub.id}>
+                                    </thead>
 
-                                                <td>{sub.id}</td>
-
-                                                <td>
-                                                    {sub.planName || "-"}
+                                    <tbody>
+                                        {visibleUsers.length ===
+                                        0 ? (
+                                            <tr>
+                                                <td
+                                                    colSpan="8"
+                                                    className="admin-empty"
+                                                >
+                                                    No users found.
                                                 </td>
-
-                                                <td>
-                                                    <span
-                                                        className={`status-badge ${
-                                                            sub.subscriptionStatus ===
-                                                            "ACTIVE"
-                                                                ? "active"
-                                                                : "pending"
-                                                        }`}
-                                                    >
-                                                        {
-                                                            sub.subscriptionStatus
+                                            </tr>
+                                        ) : (
+                                            visibleUsers.map(
+                                                (user) => (
+                                                    <tr
+                                                        key={
+                                                            user.id
                                                         }
-                                                    </span>
-                                                </td>
+                                                    >
 
-                                                <td>
-                                                    ₹
-                                                    {sub.amountPaid ??
-                                                        0}
-                                                </td>
+                                                        <td>
+                                                            {
+                                                                user.id
+                                                            }
+                                                        </td>
 
-                                                <td>
-                                                    {sub.currency || "INR"}
-                                                </td>
+                                                        <td>
+                                                            <strong>
+                                                                {user.username ||
+                                                                    "-"}
+                                                            </strong>
+                                                        </td>
 
-                                                <td>
-                                                    {sub.subscribedAt
-                                                        ? new Date(
-                                                              sub.subscribedAt
-                                                          ).toLocaleDateString()
-                                                        : "-"}
-                                                </td>
+                                                        <td>
+                                                            {user.email ||
+                                                                "-"}
+                                                        </td>
 
-                                                <td>
-                                                    {sub.expiresAt
-                                                        ? new Date(
-                                                              sub.expiresAt
-                                                          ).toLocaleDateString()
-                                                        : "-"}
-                                                </td>
+                                                        <td>
+                                                            <select
+                                                                value={
+                                                                    user.role
+                                                                }
+                                                                onChange={(
+                                                                    e
+                                                                ) =>
+                                                                    handleUpdateUserRole(
+                                                                        user.id,
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                className="admin-inline-select"
+                                                            >
+                                                                <option value="USER">
+                                                                    User
+                                                                </option>
 
-                                                <td>
-                                                    {sub.autoRenew
-                                                        ? "Yes"
-                                                        : "No"}
-                                                </td>
+                                                                <option value="ADMIN">
+                                                                    Admin
+                                                                </option>
+                                                            </select>
+                                                        </td>
 
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
+                                                        <td>
+                                                            <span
+                                                                className={`status-badge ${
+                                                                    user.accountStatus ===
+                                                                    "ACTIVE"
+                                                                        ? "active"
+                                                                        : "pending"
+                                                                }`}
+                                                            >
+                                                                {user.accountStatus ||
+                                                                    "-"}
+                                                            </span>
+                                                        </td>
 
-                            </table>
-                        </div>
-                    </div>
-                )}
+                                                        <td>
+                                                            {user.currentPlan ||
+                                                                "STARTER"}
+                                                        </td>
 
-                {/* =========================
-                    ENTITLEMENTS
-                ========================= */}
+                                                        <td>
+                                                            {user.createdAt
+                                                                ? new Date(
+                                                                      user.createdAt
+                                                                  ).toLocaleDateString()
+                                                                : "-"}
+                                                        </td>
 
-                {activeTab === "entitlements" && !loading && (
-                    <div className="admin-section">
+                                                        <td>
+                                                            <div className="admin-action-group">
 
-                        <div className="admin-section-header">
-                            <div>
-                                <h2>Manual Entitlements</h2>
-                                <p>
-                                    Grant or revoke Pro and Elite access
-                                    manually.
-                                </p>
+                                                                <button
+                                                                    className="admin-btn-danger"
+                                                                    onClick={() =>
+                                                                        handleDeleteUser(
+                                                                            user.id
+                                                                        )
+                                                                    }
+                                                                    title="Delete User"
+                                                                >
+                                                                    <FiTrash2 />
+                                                                </button>
+
+                                                                <button
+                                                                    className="admin-btn-secondary"
+                                                                    onClick={() =>
+                                                                        handleUpdateUserStatus(
+                                                                            user.id,
+                                                                            user.accountStatus ===
+                                                                                "ACTIVE"
+                                                                                ? "PENDING"
+                                                                                : "ACTIVE"
+                                                                        )
+                                                                    }
+                                                                    title="Toggle Status"
+                                                                >
+                                                                    {user.accountStatus ===
+                                                                    "ACTIVE" ? (
+                                                                        <FiXCircle />
+                                                                    ) : (
+                                                                        <FiCheckCircle />
+                                                                    )}
+                                                                </button>
+
+                                                            </div>
+                                                        </td>
+
+                                                    </tr>
+                                                )
+                                            )
+                                        )}
+                                    </tbody>
+
+                                </table>
                             </div>
                         </div>
+                    )}
 
-                        <div className="entitlement-info-bar">
-                            <div>
-                                <span>Test Mode Pricing</span>
+                {/* =================================================
+                    PLANS
+                ================================================= */}
 
-                                <strong>
-                                    Pro ₹{testPricing.PRO} · Elite ₹
-                                    {testPricing.ELITE} · Starter ₹
-                                    {testPricing.STARTER}
-                                </strong>
+                {activeTab === "plans" &&
+                    !loading && (
+                        <div className="admin-section">
+
+                            <div className="admin-section-header">
+                                <div>
+                                    <h2>
+                                        Plan Management
+                                    </h2>
+
+                                    <p>
+                                        Manage Pro, Elite and
+                                        other subscription
+                                        plans.
+                                    </p>
+                                </div>
+
+                                <button
+                                    className="admin-btn-primary"
+                                    onClick={() => {
+                                        setEditingPlan(null);
+                                        resetPlanForm();
+                                        setShowPlanForm(true);
+                                    }}
+                                >
+                                    <FiPlus />
+                                    Add Plan
+                                </button>
                             </div>
 
-                            <p>
-                                Production: Pro ₹399 · Elite ₹799
-                            </p>
-                        </div>
+                            {/* PLAN FORM */}
 
-                        <div className="admin-table-wrapper">
-                            <table className="admin-table">
-
-                                <thead>
-                                    <tr>
-                                        <th>User</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Effective Plan</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {users.length === 0 ? (
-                                        <tr>
-                                            <td
-                                                colSpan="5"
-                                                className="admin-empty"
-                                            >
-                                                No users found.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        users.map((user) => (
-                                            <tr key={user.id}>
-
-                                                <td>
-                                                    <strong>
-                                                        {user.username ||
-                                                            "-"}
-                                                    </strong>
-                                                </td>
-
-                                                <td>
-                                                    {user.email || "-"}
-                                                </td>
-
-                                                <td>
-                                                    {user.role || "USER"}
-                                                </td>
-
-                                                <td>
-                                                    <span className="plan-badge">
-                                                        {user.currentPlan ||
-                                                            "STARTER"}
-                                                    </span>
-                                                </td>
-
-                                                <td>
-                                                    <div className="admin-action-group entitlement-actions">
-
-                                                        <button
-                                                            className="admin-btn-primary"
-                                                            onClick={() =>
-                                                                openEntitlementModal(
-                                                                    user,
-                                                                    "PRO"
-                                                                )
-                                                            }
-                                                        >
-                                                            <FaCrown />
-                                                            Pro
-                                                        </button>
-
-                                                        <button
-                                                            className="admin-btn-primary"
-                                                            onClick={() =>
-                                                                openEntitlementModal(
-                                                                    user,
-                                                                    "ELITE"
-                                                                )
-                                                            }
-                                                        >
-                                                            <FaCrown />
-                                                            Elite
-                                                        </button>
-
-                                                        <button
-                                                            className="admin-btn-secondary"
-                                                            onClick={() =>
-                                                                handleRevokeAllEntitlements(
-                                                                    user.id
-                                                                )
-                                                            }
-                                                        >
-                                                            <FiX />
-                                                            Revoke
-                                                        </button>
-
-                                                    </div>
-                                                </td>
-
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-
-                            </table>
-                        </div>
-
-                        {/* ENTITLEMENT MODAL */}
-
-                        {entitlementModalUser && (
-                            <div className="entitlement-modal-overlay">
-
-                                <div className="entitlement-modal">
-
-                                    <div className="entitlement-modal-header">
+                            {showPlanForm && (
+                                <form
+                                    className="admin-plan-form"
+                                    onSubmit={
+                                        handleSavePlan
+                                    }
+                                >
+                                    <div className="admin-form-header">
                                         <div>
                                             <h3>
-                                                Grant{" "}
-                                                {entitlementPlan} Access
+                                                {editingPlan
+                                                    ? "Edit Plan"
+                                                    : "Create Plan"}
                                             </h3>
 
                                             <p>
-                                                {entitlementModalUser.username ||
-                                                    entitlementModalUser.email}
+                                                Configure plan
+                                                pricing and
+                                                limits.
                                             </p>
                                         </div>
-
-                                        <button
-                                            className="modal-close-btn"
-                                            onClick={() =>
-                                                setEntitlementModalUser(
-                                                    null
-                                                )
-                                            }
-                                        >
-                                            <FiX />
-                                        </button>
                                     </div>
 
-                                    <div className="entitlement-form">
+                                    <div className="plan-form-grid">
 
-                                        <label>Plan</label>
+                                        <div>
+                                            <label>
+                                                Plan Name
+                                            </label>
 
-                                        <select
-                                            value={entitlementPlan}
-                                            onChange={(e) =>
-                                                setEntitlementPlan(
-                                                    e.target.value
-                                                )
-                                            }
-                                        >
-                                            <option value="PRO">
-                                                PRO
-                                            </option>
+                                            <input
+                                                type="text"
+                                                value={
+                                                    planForm.name
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        name: e.target
+                                                            .value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                        </div>
 
-                                            <option value="ELITE">
-                                                ELITE
-                                            </option>
-                                        </select>
+                                        <div>
+                                            <label>
+                                                Description
+                                            </label>
 
-                                        <label>Access Type</label>
+                                            <textarea
+                                                value={
+                                                    planForm.description
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        description:
+                                                            e.target
+                                                                .value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                        </div>
 
-                                        <select
-                                            value={entitlementType}
-                                            onChange={(e) =>
-                                                setEntitlementType(
-                                                    e.target.value
-                                                )
-                                            }
-                                        >
-                                            <option value="temporary">
-                                                Temporary
-                                            </option>
+                                        <div>
+                                            <label>
+                                                Price (INR)
+                                            </label>
 
-                                            <option value="lifetime">
-                                                Lifetime
-                                            </option>
-                                        </select>
-
-                                        {entitlementType ===
-                                            "temporary" && (
-                                            <>
-                                                <label>
-                                                    Duration (days)
-                                                </label>
-
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={
-                                                        entitlementDuration
-                                                    }
-                                                    onChange={(e) =>
-                                                        setEntitlementDuration(
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={
+                                                    planForm.priceInr
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        priceInr:
                                                             Number(
                                                                 e.target
                                                                     .value
-                                                            )
-                                                        )
-                                                    }
-                                                />
-                                            </>
-                                        )}
+                                                            ),
+                                                    })
+                                                }
+                                            />
+                                        </div>
 
-                                        <label>Reason</label>
+                                        <div>
+                                            <label>
+                                                Price (USD)
+                                            </label>
 
-                                        <textarea
-                                            value={entitlementReason}
-                                            onChange={(e) =>
-                                                setEntitlementReason(
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Reason for granting access..."
-                                        />
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={
+                                                    planForm.priceUsd
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        priceUsd:
+                                                            Number(
+                                                                e.target
+                                                                    .value
+                                                            ),
+                                                    })
+                                                }
+                                            />
+                                        </div>
 
-                                        <div className="entitlement-form-actions">
+                                        <div>
+                                            <label>
+                                                Interval
+                                            </label>
 
-                                            <button
-                                                className="admin-btn-primary"
-                                                onClick={() =>
-                                                    handleGrantEntitlement(
-                                                        entitlementModalUser.id
-                                                    )
+                                            <select
+                                                value={
+                                                    planForm.interval
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        interval:
+                                                            e.target
+                                                                .value,
+                                                    })
                                                 }
                                             >
-                                                Grant Access
-                                            </button>
+                                                <option value="Month">
+                                                    Month
+                                                </option>
+
+                                                <option value="Year">
+                                                    Year
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label>
+                                                Max Mock Interviews
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={
+                                                    planForm.maxMockInterviews
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        maxMockInterviews:
+                                                            Number(
+                                                                e.target
+                                                                    .value
+                                                            ),
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label>
+                                                Max Resume Scans
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={
+                                                    planForm.maxResumeScans
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        maxResumeScans:
+                                                            Number(
+                                                                e.target
+                                                                    .value
+                                                            ),
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label>
+                                                Max Coding Problems
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={
+                                                    planForm.maxCodingProblems
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        maxCodingProblems:
+                                                            Number(
+                                                                e.target
+                                                                    .value
+                                                            ),
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label>
+                                                Max Aptitude Questions
+                                            </label>
+
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={
+                                                    planForm.maxAptitudeQuestions
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        maxAptitudeQuestions:
+                                                            Number(
+                                                                e.target
+                                                                    .value
+                                                            ),
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <label className="plan-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    planForm.includesAIHints
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        includesAIHints:
+                                                            e.target
+                                                                .checked,
+                                                    })
+                                                }
+                                            />
+                                            AI Hints
+                                        </label>
+
+                                        <label className="plan-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    planForm.includesAnalytics
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        includesAnalytics:
+                                                            e.target
+                                                                .checked,
+                                                    })
+                                                }
+                                            />
+                                            Analytics
+                                        </label>
+
+                                        <label className="plan-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    planForm.includesTier1Companies
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        includesTier1Companies:
+                                                            e.target
+                                                                .checked,
+                                                    })
+                                                }
+                                            />
+                                            Tier-1 Companies
+                                        </label>
+
+                                        <label className="plan-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    planForm.includesPriorityCompute
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        includesPriorityCompute:
+                                                            e.target
+                                                                .checked,
+                                                    })
+                                                }
+                                            />
+                                            Priority Compute
+                                        </label>
+
+                                        <label className="plan-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    planForm.active
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        active:
+                                                            e.target
+                                                                .checked,
+                                                    })
+                                                }
+                                            />
+                                            Active
+                                        </label>
+
+                                        <label className="plan-checkbox">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    planForm.featured
+                                                }
+                                                onChange={(e) =>
+                                                    setPlanForm({
+                                                        ...planForm,
+                                                        featured:
+                                                            e.target
+                                                                .checked,
+                                                    })
+                                                }
+                                            />
+                                            Featured
+                                        </label>
+
+                                    </div>
+
+                                    <div className="plan-form-actions">
+
+                                        <button
+                                            type="submit"
+                                            className="admin-btn-primary"
+                                        >
+                                            Save Plan
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="admin-btn-secondary"
+                                            onClick={() => {
+                                                setShowPlanForm(false);
+                                                setEditingPlan(null);
+                                                resetPlanForm();
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+
+                                    </div>
+                                </form>
+                            )}
+
+                            {/* PLANS TABLE */}
+
+                            <div className="admin-table-wrapper">
+                                <table className="admin-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Price</th>
+                                            <th>Mocks</th>
+                                            <th>Resumes</th>
+                                            <th>Problems</th>
+                                            <th>Active</th>
+                                            <th>Featured</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {plans.length === 0 ? (
+                                            <tr>
+                                                <td
+                                                    colSpan="8"
+                                                    className="admin-empty"
+                                                >
+                                                    No plans found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            plans.map(
+                                                (plan) => (
+                                                    <tr
+                                                        key={
+                                                            plan.id
+                                                        }
+                                                    >
+
+                                                        <td>
+                                                            <strong>
+                                                                {
+                                                                    plan.name
+                                                                }
+                                                            </strong>
+                                                        </td>
+
+                                                        <td>
+                                                            ₹
+                                                            {
+                                                                plan.priceInr
+                                                            }
+                                                            /
+                                                            {String(
+                                                                plan.interval ||
+                                                                    "Month"
+                                                            ).toLowerCase()}
+                                                        </td>
+
+                                                        <td>
+                                                            {
+                                                                plan.maxMockInterviews
+                                                            }
+                                                        </td>
+
+                                                        <td>
+                                                            {
+                                                                plan.maxResumeScans
+                                                            }
+                                                        </td>
+
+                                                        <td>
+                                                            {
+                                                                plan.maxCodingProblems
+                                                            }
+                                                        </td>
+
+                                                        <td>
+                                                            <span
+                                                                className={`status-badge ${
+                                                                    plan.active
+                                                                        ? "active"
+                                                                        : "pending"
+                                                                }`}
+                                                            >
+                                                                {plan.active
+                                                                    ? "Yes"
+                                                                    : "No"}
+                                                            </span>
+                                                        </td>
+
+                                                        <td>
+                                                            {plan.featured
+                                                                ? "⭐"
+                                                                : "-"}
+                                                        </td>
+
+                                                        <td>
+                                                            <div className="admin-action-group">
+
+                                                                <button
+                                                                    className="admin-btn-secondary"
+                                                                    onClick={() =>
+                                                                        handleEditPlan(
+                                                                            plan
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Edit
+                                                                </button>
+
+                                                                <button
+                                                                    className="admin-btn-danger"
+                                                                    onClick={() => {
+                                                                        if (
+                                                                            window.confirm(
+                                                                                "Delete this plan?"
+                                                                            )
+                                                                        ) {
+                                                                            handleDeletePlan(
+                                                                                plan.id
+                                                                            );
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </button>
+
+                                                            </div>
+                                                        </td>
+
+                                                    </tr>
+                                                )
+                                            )
+                                        )}
+                                    </tbody>
+
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                {/* =================================================
+                    SUBSCRIPTIONS
+                ================================================= */}
+
+                {activeTab ===
+                    "subscriptions" &&
+                    !loading && (
+                        <div className="admin-section">
+
+                            <div className="admin-section-header">
+                                <div>
+                                    <h2>
+                                        Subscriptions
+                                    </h2>
+
+                                    <p>
+                                        View all active and
+                                        historical
+                                        subscriptions.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="admin-table-wrapper">
+                                <table className="admin-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Plan</th>
+                                            <th>Status</th>
+                                            <th>Amount</th>
+                                            <th>Currency</th>
+                                            <th>Subscribed</th>
+                                            <th>Expires</th>
+                                            <th>Auto Renew</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {subscriptions.length ===
+                                        0 ? (
+                                            <tr>
+                                                <td
+                                                    colSpan="8"
+                                                    className="admin-empty"
+                                                >
+                                                    No subscriptions found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            subscriptions.map(
+                                                (sub) => (
+                                                    <tr
+                                                        key={
+                                                            sub.id
+                                                        }
+                                                    >
+
+                                                        <td>
+                                                            {
+                                                                sub.id
+                                                            }
+                                                        </td>
+
+                                                        <td>
+                                                            {sub.planName ||
+                                                                sub.plan?.name ||
+                                                                "-"}
+                                                        </td>
+
+                                                        <td>
+                                                            <span
+                                                                className={`status-badge ${
+                                                                    sub.subscriptionStatus ===
+                                                                    "ACTIVE"
+                                                                        ? "active"
+                                                                        : "pending"
+                                                                }`}
+                                                            >
+                                                                {sub.subscriptionStatus ||
+                                                                    sub.status ||
+                                                                    "-"}
+                                                            </span>
+                                                        </td>
+
+                                                        <td>
+                                                            ₹
+                                                            {sub.amountPaid ??
+                                                                sub.amount ??
+                                                                0}
+                                                        </td>
+
+                                                        <td>
+                                                            {sub.currency ||
+                                                                "INR"}
+                                                        </td>
+
+                                                        <td>
+                                                            {sub.subscribedAt
+                                                                ? new Date(
+                                                                      sub.subscribedAt
+                                                                  ).toLocaleDateString()
+                                                                : "-"}
+                                                        </td>
+
+                                                        <td>
+                                                            {sub.expiresAt
+                                                                ? new Date(
+                                                                      sub.expiresAt
+                                                                  ).toLocaleDateString()
+                                                                : "-"}
+                                                        </td>
+
+                                                        <td>
+                                                            {sub.autoRenew
+                                                                ? "Yes"
+                                                                : "No"}
+                                                        </td>
+
+                                                    </tr>
+                                                )
+                                            )
+                                        )}
+                                    </tbody>
+
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                {/* =================================================
+                    ENTITLEMENTS
+                ================================================= */}
+
+                {activeTab ===
+                    "entitlements" &&
+                    !loading && (
+                        <div className="admin-section">
+
+                            <div className="admin-section-header">
+                                <div>
+                                    <h2>
+                                        Manual Entitlements
+                                    </h2>
+
+                                    <p>
+                                        Grant or revoke Pro
+                                        and Elite access
+                                        manually.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="admin-table-wrapper">
+                                <table className="admin-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>
+                                                Effective Plan
+                                            </th>
+                                            <th>
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {users.length ===
+                                        0 ? (
+                                            <tr>
+                                                <td
+                                                    colSpan="5"
+                                                    className="admin-empty"
+                                                >
+                                                    No users found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            users.map(
+                                                (user) => (
+                                                    <tr
+                                                        key={
+                                                            user.id
+                                                        }
+                                                    >
+
+                                                        <td>
+                                                            <strong>
+                                                                {user.username ||
+                                                                    "-"}
+                                                            </strong>
+                                                        </td>
+
+                                                        <td>
+                                                            {user.email ||
+                                                                "-"}
+                                                        </td>
+
+                                                        <td>
+                                                            {user.role ||
+                                                                "USER"}
+                                                        </td>
+
+                                                        <td>
+                                                            <span className="plan-badge">
+                                                                {user.currentPlan ||
+                                                                    "STARTER"}
+                                                            </span>
+                                                        </td>
+
+                                                        <td>
+                                                            <div className="admin-action-group entitlement-actions">
+
+                                                                <button
+                                                                    className="admin-btn-primary"
+                                                                    onClick={() =>
+                                                                        openEntitlementModal(
+                                                                            user,
+                                                                            "PRO"
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <FaCrown />
+                                                                    Pro
+                                                                </button>
+
+                                                                <button
+                                                                    className="admin-btn-primary"
+                                                                    onClick={() =>
+                                                                        openEntitlementModal(
+                                                                            user,
+                                                                            "ELITE"
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <FaCrown />
+                                                                    Elite
+                                                                </button>
+
+                                                                <button
+                                                                    className="admin-btn-secondary"
+                                                                    onClick={() =>
+                                                                        handleRevokeAllEntitlements(
+                                                                            user.id
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <FiX />
+                                                                    Revoke
+                                                                </button>
+
+                                                            </div>
+                                                        </td>
+
+                                                    </tr>
+                                                )
+                                            )
+                                        )}
+                                    </tbody>
+
+                                </table>
+                            </div>
+
+                            {/* =================================================
+                                ENTITLEMENT MODAL
+                            ================================================= */}
+
+                            {entitlementModalUser && (
+                                <div className="entitlement-modal-overlay">
+
+                                    <div className="entitlement-modal">
+
+                                        <div className="entitlement-modal-header">
+
+                                            <div>
+                                                <h3>
+                                                    Grant{" "}
+                                                    {
+                                                        entitlementPlan
+                                                    }{" "}
+                                                    Access
+                                                </h3>
+
+                                                <p>
+                                                    {
+                                                        entitlementModalUser.username ||
+                                                        entitlementModalUser.email
+                                                    }
+                                                </p>
+                                            </div>
 
                                             <button
-                                                className="admin-btn-secondary"
+                                                className="modal-close-btn"
                                                 onClick={() =>
                                                     setEntitlementModalUser(
                                                         null
                                                     )
                                                 }
                                             >
-                                                Cancel
+                                                <FiX />
                                             </button>
 
                                         </div>
 
+                                        <div className="entitlement-form">
+
+                                            <label>
+                                                Plan
+                                            </label>
+
+                                            <select
+                                                value={
+                                                    entitlementPlan
+                                                }
+                                                onChange={(e) =>
+                                                    setEntitlementPlan(
+                                                        e.target
+                                                            .value
+                                                    )
+                                                }
+                                            >
+                                                <option value="PRO">
+                                                    PRO
+                                                </option>
+
+                                                <option value="ELITE">
+                                                    ELITE
+                                                </option>
+                                            </select>
+
+                                            <label>
+                                                Access Type
+                                            </label>
+
+                                            <select
+                                                value={
+                                                    entitlementType
+                                                }
+                                                onChange={(e) =>
+                                                    setEntitlementType(
+                                                        e.target
+                                                            .value
+                                                    )
+                                                }
+                                            >
+                                                <option value="temporary">
+                                                    Temporary
+                                                </option>
+
+                                                <option value="lifetime">
+                                                    Lifetime
+                                                </option>
+                                            </select>
+
+                                            {entitlementType ===
+                                                "temporary" && (
+                                                <>
+                                                    <label>
+                                                        Duration
+                                                        (days)
+                                                    </label>
+
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={
+                                                            entitlementDuration
+                                                        }
+                                                        onChange={(
+                                                            e
+                                                        ) =>
+                                                            setEntitlementDuration(
+                                                                Number(
+                                                                    e
+                                                                        .target
+                                                                        .value
+                                                                )
+                                                            )
+                                                        }
+                                                    />
+                                                </>
+                                            )}
+
+                                            <label>
+                                                Reason
+                                            </label>
+
+                                            <textarea
+                                                value={
+                                                    entitlementReason
+                                                }
+                                                onChange={(e) =>
+                                                    setEntitlementReason(
+                                                        e.target
+                                                            .value
+                                                    )
+                                                }
+                                                placeholder="Reason for granting access..."
+                                            />
+
+                                            <div className="entitlement-form-actions">
+
+                                                <button
+                                                    className="admin-btn-primary"
+                                                    onClick={() =>
+                                                        handleGrantEntitlement(
+                                                            entitlementModalUser.id
+                                                        )
+                                                    }
+                                                >
+                                                    Grant Access
+                                                </button>
+
+                                                <button
+                                                    className="admin-btn-secondary"
+                                                    onClick={() =>
+                                                        setEntitlementModalUser(
+                                                            null
+                                                        )
+                                                    }
+                                                >
+                                                    Cancel
+                                                </button>
+
+                                            </div>
+
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
+                            )}
+
+                        </div>
+                    )}
 
             </main>
         </div>

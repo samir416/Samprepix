@@ -1,276 +1,343 @@
 package com.aiinterview.backend.controller;
 
+import com.aiinterview.backend.entity.AuthenticationProvider;
 import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.model.ApiResponse;
+import com.aiinterview.backend.model.ForgotPasswordRequest;
 import com.aiinterview.backend.model.LoginRequest;
+import com.aiinterview.backend.model.LoginResponse;
+import com.aiinterview.backend.model.RegisterRequest;
+import com.aiinterview.backend.model.RegisterResponse;
+import com.aiinterview.backend.model.ResendOtpRequest;
+import com.aiinterview.backend.model.ResetPasswordRequest;
+import com.aiinterview.backend.model.UserResponse;
+import com.aiinterview.backend.model.VerifyOtpRequest;
 import com.aiinterview.backend.repository.UserRepository;
-import com.aiinterview.backend.service.UserService;
 import com.aiinterview.backend.service.EntitlementService;
+import com.aiinterview.backend.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-import com.aiinterview.backend.model.LoginResponse;
-import jakarta.validation.Valid;
-import com.aiinterview.backend.model.RegisterRequest;
-import com.aiinterview.backend.model.ApiResponse;
-import com.aiinterview.backend.model.ForgotPasswordRequest;
-import com.aiinterview.backend.entity.AuthenticationProvider;
-import com.aiinterview.backend.model.ResetPasswordRequest;
-import com.aiinterview.backend.model.VerifyOtpRequest;
-import com.aiinterview.backend.model.RegisterResponse;
-import org.springframework.security.core.Authentication;
-import com.aiinterview.backend.model.ResendOtpRequest;
-import com.aiinterview.backend.model.UserResponse;
-
 @RestController
+@RequiredArgsConstructor
 public class TestController {
 
-        private final UserRepository userRepository;
-        private final UserService userService;
-        private final EntitlementService entitlementService;
+    private final UserRepository userRepository;
+    private final UserService userService;
+    private final EntitlementService entitlementService;
 
-        public TestController(
-                        UserRepository userRepository,
-                        UserService userService,
-                        EntitlementService entitlementService) {
-                this.userRepository = userRepository;
-                this.userService = userService;
-                this.entitlementService = entitlementService;
+    // =========================================================
+    // BASIC HEALTH CHECK
+    // =========================================================
+
+    @GetMapping("/")
+    public String home() {
+        return "Backend is running successfully!";
+    }
+
+    @GetMapping("/test")
+    public String test() {
+        return "Test api is working!";
+    }
+
+    // =========================================================
+    // AUTHENTICATION
+    // =========================================================
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(
+            @RequestBody LoginRequest loginRequest) {
+
+        String response = userService.login(
+                loginRequest.getEmail(),
+                loginRequest.getPassword()
+        );
+
+        if (response.equals("Invalid password!")
+                || response.equals("User not found!")
+                || response.equals("Please verify your email first!")
+                || response.equals("Account is not active!")) {
+
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(response);
         }
 
-        @GetMapping("/")
-        public String home() {
-                return "Backend is running successfully!";
+        return ResponseEntity.ok(new LoginResponse(response));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(
+            @Valid @RequestBody RegisterRequest request) {
+
+        User user = new User();
+
+        user.setUsername(request.getUsername());
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(request.getPassword());
+        user.setProvider(AuthenticationProvider.EMAIL);
+
+        String response = userService.saveUser(user);
+
+        if (response.equals("Email already exists!")
+                || response.equals("Username already exists!")) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(new RegisterResponse(
+                            false,
+                            response,
+                            null
+                    ));
         }
 
-        @GetMapping("/test")
-        public String test() {
-                return "Test api is working!";
-        }
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new RegisterResponse(
+                        true,
+                        response,
+                        user.getEmail()
+                ));
+    }
 
-        @PostMapping("/login")
-        public ResponseEntity<?> login(
-                        @RequestBody LoginRequest loginRequest) {
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(
+            @Valid @RequestBody VerifyOtpRequest request) {
 
-                String response = userService.login(
-                                loginRequest.getEmail(),
-                                loginRequest.getPassword());
+        String response = userService.verifyOtp(
+                request.getEmail(),
+                request.getOtp()
+        );
 
-                if (response.equals("Invalid password!")
-                                || response.equals("User not found!")
-                                || response.equals("Please verify your email first!")
-                                || response.equals("Account is not active!")) {
-
-                        return ResponseEntity
-                                        .status(HttpStatus.UNAUTHORIZED)
-                                        .body(response);
-                }
-
-                return ResponseEntity.ok(
-                                new LoginResponse(response));
-        }
-
-        @PostMapping("/register")
-        public ResponseEntity<RegisterResponse> register(
-                        @Valid @RequestBody RegisterRequest request) {
-
-                User user = new User();
-
-               user.setUsername(request.getUsername());
-user.setName(request.getName());
-                user.setEmail(request.getEmail());
-                user.setPassword(request.getPassword());
-                user.setProvider(AuthenticationProvider.EMAIL);
-
-                String response = userService.saveUser(user);
-
-                if (response.equals("Email already exists!")
-                                || response.equals("Username already exists!")) {
-
-                        return ResponseEntity
-                                        .badRequest()
-                                        .body(new RegisterResponse(false, response, null));
-                }
+        switch (response) {
+            case "User not found!",
+            "OTP not found!",
+            "OTP has already been used!",
+            "OTP has expired!",
+            "Invalid OTP!" -> {
 
                 return ResponseEntity
-                                .status(HttpStatus.CREATED)
-                                .body(new RegisterResponse(true, response, user.getEmail()));
-        }
+                        .badRequest()
+                        .body(new ApiResponse(
+                                false,
+                                response
+                        ));
+            }
 
-        @PostMapping("/verify-otp")
-        public ResponseEntity<?> verifyOtp(
-                        @Valid @RequestBody VerifyOtpRequest request) {
-
-                String response = userService.verifyOtp(
-                                request.getEmail(),
-                                request.getOtp());
-
-                switch (response) {
-
-                        case "User not found!",
-                                        "OTP not found!",
-                                        "OTP has already been used!",
-                                        "OTP has expired!",
-                                        "Invalid OTP!" -> {
-
-                                return ResponseEntity
-                                                .badRequest()
-                                                .body(new ApiResponse(
-                                                                false,
-                                                                response));
-                        }
-
-                        default -> {
-
-                                return ResponseEntity.ok(
-                                                new LoginResponse(response));
-                        }
-                }
-
-        }
-
-        @PostMapping("/resend-otp")
-        public ResponseEntity<ApiResponse> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
-
-                String response = userService.resendOtp(request.getEmail());
-
-                if (response.equals("User not found!") || response.equals("Email is already verified!")) {
-                        return ResponseEntity.badRequest().body(new ApiResponse(false, response));
-                }
-
-                return ResponseEntity.ok(new ApiResponse(true, response));
-        }
-
-        @PostMapping("/forgot-password")
-        public ResponseEntity<ApiResponse> forgotPassword(
-                        @Valid @RequestBody ForgotPasswordRequest request) {
-
-                String response = userService.forgotPassword(
-                                request.getEmail());
-
-                if (response.equals("Email not found!")) {
-
-                        return ResponseEntity
-                                        .badRequest()
-                                        .body(new ApiResponse(
-                                                        false,
-                                                        response));
-                }
-
+            default -> {
                 return ResponseEntity.ok(
-                                new ApiResponse(
-                                                true,
-                                                response));
+                        new LoginResponse(response)
+                );
+            }
+        }
+    }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<ApiResponse> resendOtp(
+            @Valid @RequestBody ResendOtpRequest request) {
+
+        String response = userService.resendOtp(
+                request.getEmail()
+        );
+
+        if (response.equals("User not found!")
+                || response.equals("Email is already verified!")) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(new ApiResponse(false, response));
         }
 
-        @PostMapping("/reset-password")
-        public ResponseEntity<ApiResponse> resetPassword(
-                        @Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(
+                new ApiResponse(true, response)
+        );
+    }
 
-                String response = userService.resetPassword(
-                                request.getToken(),
-                                request.getPassword());
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
 
-                if (!response.equals("Password reset successfully!")) {
+        String response = userService.forgotPassword(
+                request.getEmail()
+        );
 
-                        return ResponseEntity
-                                        .badRequest()
-                                        .body(new ApiResponse(
-                                                        false,
-                                                        response));
-                }
+        if (response.equals("Email not found!")) {
 
-                return ResponseEntity.ok(
-                                new ApiResponse(
-                                                true,
-                                                response));
+            return ResponseEntity
+                    .badRequest()
+                    .body(new ApiResponse(false, response));
         }
 
-        @GetMapping("/users")
-        public List<User> getUsers() {
+        return ResponseEntity.ok(
+                new ApiResponse(true, response)
+        );
+    }
 
-                return userRepository.findAll();
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+
+        String response = userService.resetPassword(
+                request.getToken(),
+                request.getPassword()
+        );
+
+        if (!response.equals("Password reset successfully!")) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(new ApiResponse(false, response));
         }
 
-        @GetMapping("/users/{id}")
-        public User getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                new ApiResponse(true, response)
+        );
+    }
 
-                Optional<User> user = userRepository.findById(id);
+    // =========================================================
+    // CURRENT USER
+    // =========================================================
 
-                return user.orElse(null);
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(
+            Authentication authentication) {
+
+        if (authentication == null
+                || !authentication.isAuthenticated()) {
+
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Unauthorized");
         }
 
-        @PutMapping("/users/{id}")
-        public User updateUser(
-                        @PathVariable Long id,
-                        @RequestBody User updatedUser) {
+        UserResponse user = userService.getCurrentUser(
+                authentication.getName()
+        );
 
-                Optional<User> existingUser = userRepository.findById(id);
+        if (user == null) {
 
-                if (existingUser.isPresent()) {
-
-                        User user = existingUser.get();
-
-                        user.setUsername(updatedUser.getUsername());
-                        user.setEmail(updatedUser.getEmail());
-
-                        if (updatedUser.getPassword() != null
-                                        && !updatedUser.getPassword().isBlank()) {
-
-                                user.setPassword(updatedUser.getPassword());
-                        }
-
-                        return userRepository.save(user);
-                }
-
-                return null;
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("User not found!");
         }
 
-        @DeleteMapping("/users/{id}")
-        public String deleteUser(@PathVariable Long id) {
+        userRepository.findByEmail(authentication.getName())
+                .ifPresent(currentUser ->
+                        user.setPlan(
+                                entitlementService.getEffectivePlan(
+                                        currentUser
+                                )
+                        )
+                );
 
-                if (userRepository.existsById(id)) {
+        return ResponseEntity.ok(user);
+    }
 
-                        userRepository.deleteById(id);
+    // =========================================================
+    // LEGACY USER MANAGEMENT
+    // Keep restricted to ADMIN.
+    // Actual admin panel uses /api/admin/**.
+    // =========================================================
 
-                        return "User deleted successfully!";
-                }
+    @GetMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<User> getUsers() {
+        return userRepository.findAll();
+    }
 
-                return "User not found!";
+    @GetMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> getUserById(
+            @PathVariable Long id) {
+
+        return userRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() ->
+                        ResponseEntity.notFound().build()
+                );
+    }
+
+    @PutMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<User> updateUser(
+            @PathVariable Long id,
+            @RequestBody User updatedUser) {
+
+        Optional<User> existingUser =
+                userRepository.findById(id);
+
+        if (existingUser.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
 
-        @PostMapping("/login-test")
-        public String loginTest() {
-                return "working";
+        User user = existingUser.get();
+
+        if (updatedUser.getUsername() != null
+                && !updatedUser.getUsername().isBlank()) {
+
+            user.setUsername(updatedUser.getUsername());
         }
 
-        @GetMapping("/me")
-        public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        if (updatedUser.getEmail() != null
+                && !updatedUser.getEmail().isBlank()) {
 
-                if (authentication == null) {
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-                }
-
-                UserResponse user = userService.getCurrentUser(authentication.getName());
-
-                if (user == null) {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found!");
-                }
-
-                // Populate the current plan via backend-authoritative EntitlementService
-                userRepository.findByEmail(authentication.getName()).ifPresent(u -> {
-                        user.setPlan(entitlementService.getEffectivePlan(u));
-                });
-
-                return ResponseEntity.ok(user);
+            user.setEmail(updatedUser.getEmail());
         }
 
-        @GetMapping("/profile")
-        public String profile() {
+        if (updatedUser.getPassword() != null
+                && !updatedUser.getPassword().isBlank()) {
 
-                return "Profile Access Granted";
+            user.setPassword(updatedUser.getPassword());
         }
+
+        return ResponseEntity.ok(
+                userRepository.save(user)
+        );
+    }
+
+    @DeleteMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> deleteUser(
+            @PathVariable Long id) {
+
+        if (!userRepository.existsById(id)) {
+
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("User not found!");
+        }
+
+        userRepository.deleteById(id);
+
+        return ResponseEntity.ok(
+                "User deleted successfully!"
+        );
+    }
+
+    // =========================================================
+    // TEST ENDPOINT
+    // =========================================================
+
+    @PostMapping("/login-test")
+    public String loginTest() {
+        return "working";
+    }
+
+    // =========================================================
+    // PROFILE TEST
+    // =========================================================
+
+    @GetMapping("/profile")
+    public String profile() {
+        return "Profile Access Granted";
+    }
 }

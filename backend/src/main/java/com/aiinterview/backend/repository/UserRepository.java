@@ -23,11 +23,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Page<User> findByRole(Role role, Pageable pageable);
 
-    Page<User> findByAccountStatus(String accountStatus, Pageable pageable);
+    Page<User> findByAccountStatus(AccountStatus accountStatus, Pageable pageable);
 
-    Page<User> findByRoleAndAccountStatus(Role role, String accountStatus, Pageable pageable);
+    Page<User> findByRoleAndAccountStatus(
+            Role role,
+            AccountStatus accountStatus,
+            Pageable pageable
+    );
 
-    long countByAccountStatus(String accountStatus);
+    long countByAccountStatus(AccountStatus accountStatus);
 
     Page<User> findAll(Pageable pageable);
 }

@@ -19,7 +19,7 @@ import {
 } from "react-icons/fa";
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function Pricing() {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ export default function Pricing() {
   }, []);
 
   // Demonstration codes for referral discounts
-  const validReferralCodes = ["YOUR-REFERRAL-CODE", "SAMIR100", "SAMPREPIX100", "PROMO100"];
+  const validReferralCodes = ["SAMIR100"];
 
   const applyReferral = () => {
     const trimmed = referralInput.trim().toUpperCase();
@@ -105,7 +105,7 @@ export default function Pricing() {
     trackEvent("plan_intent_selected", { plan: planName, currency });
     setSelectedPlanNotice({
       plan: planName,
-      message: `You selected the ${planName} Plan (${currency === "INR" ? (planName === "Pro" ? (discountApplied ? "₹299" : "₹399") : (discountApplied ? "₹699" : "₹799")) : (planName === "Pro" ? (discountApplied ? "$8" : "$9") : (discountApplied ? "$18" : "$19"))} / Month). Online checkout integration is coming soon. Early-access pricing is reserved for your account.`
+      message: `You selected the ${planName} Plan (${currency === "INR" ? (planName === "Pro" ? (discountApplied ? "₹299" : "₹399") : (discountApplied ? "₹699" : "₹799")) : (planName === "Pro" ? (discountApplied ? "$8" : "$9") : (discountApplied ? "$18" : "$19"))} / Month). Online checkout is being finalized. The selected plan and referral discount are reserved for your account.`
     });
   };
 
@@ -297,9 +297,6 @@ export default function Pricing() {
           <div className="plan-features">
             <div>
               <FaCheck /> Standard AI mock interview sessions
-            </div>
-            <div>
-              <FaCheck /> 3 AI mock interview sessions per month
             </div>
             <div>
               <FaCheck /> Full access to 5,050+ DSA problems

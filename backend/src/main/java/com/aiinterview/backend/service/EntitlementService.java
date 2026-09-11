@@ -1,7 +1,12 @@
 package com.aiinterview.backend.service;
 
-import com.aiinterview.backend.entity.*;
-import com.aiinterview.backend.repository.*;
+import com.aiinterview.backend.entity.ManualEntitlement;
+import com.aiinterview.backend.entity.Plan;
+import com.aiinterview.backend.entity.Role;
+import com.aiinterview.backend.entity.Subscription;
+import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.repository.ManualEntitlementRepository;
+import com.aiinterview.backend.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,33 +22,59 @@ public class EntitlementService {
     private final SubscriptionRepository subscriptionRepository;
     private final PlanService planService;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public String getEffectivePlan(User user) {
+
+        if (user == null) {
+            return "STARTER";
+        }
+
         if (user.getRole() == Role.ADMIN) {
             return "ADMIN";
         }
 
-        Optional<ManualEntitlement> activeEntitlement = manualEntitlementRepository
-                .findByUserIdAndRevokedFalse(user.getId()).stream()
-                .filter(e -> e.getExpiresAt() == null
-                        || e.getExpiresAt().isAfter(LocalDateTime.now()))
-                .filter(e -> !e.isRevoked())
-                .findFirst();
+        LocalDateTime now = LocalDateTime.now();
+
+        Optional<ManualEntitlement> activeEntitlement =
+                manualEntitlementRepository
+                        .findByUserIdAndRevokedFalse(user.getId())
+                        .stream()
+                        .filter(entitlement ->
+                                !entitlement.isRevoked()
+                                        && (
+                                        entitlement.getExpiresAt() == null
+                                                || entitlement.getExpiresAt().isAfter(now)
+                                )
+                        )
+                        .findFirst();
 
         if (activeEntitlement.isPresent()) {
-            return activeEntitlement.get().getPlanName();
+            return normalizePlan(
+                    activeEntitlement.get().getPlanName()
+            );
         }
 
-        Optional<Subscription> activeSub =
-                subscriptionRepository.findByUserAndSubscriptionStatus(
-                        user, "ACTIVE");
+        Optional<Subscription> activeSubscription =
+                subscriptionRepository
+                        .findByUserAndSubscriptionStatus(
+                                user,
+                                "ACTIVE"
+                        );
 
-        if (activeSub.isPresent()) {
-            Subscription sub = activeSub.get();
+        if (activeSubscription.isPresent()) {
 
-            if (sub.getExpiresAt() != null
-                    && sub.getExpiresAt().isAfter(LocalDateTime.now())) {
-                return sub.getPlan().getName();
+            Subscription subscription =
+                    activeSubscription.get();
+
+            if (subscription.getPlan() != null
+                    && (
+                    subscription.getExpiresAt() == null
+                            || subscription.getExpiresAt().isAfter(now)
+            )) {
+
+                return normalizePlan(
+                        subscription.getPlan().getName()
+                );
             }
         }
 
@@ -51,11 +82,17 @@ public class EntitlementService {
     }
 
     /**
-     * Checks whether the user has an active manual entitlement
+     * Checks whether a user has an active manual entitlement
      * for the requested plan.
      */
-    public boolean hasActiveEntitlement(Long userId, String planName) {
-        if (userId == null || planName == null || planName.isBlank()) {
+    @Transactional(readOnly = true)
+    public boolean hasActiveEntitlement(
+            Long userId,
+            String planName) {
+
+        if (userId == null
+                || planName == null
+                || planName.isBlank()) {
             return false;
         }
 
@@ -65,14 +102,20 @@ public class EntitlementService {
                 .findByUserIdAndRevokedFalse(userId)
                 .stream()
                 .anyMatch(entitlement ->
-                        planName.equalsIgnoreCase(entitlement.getPlanName())
+                        planName.equalsIgnoreCase(
+                                entitlement.getPlanName()
+                        )
                                 && !entitlement.isRevoked()
-                                && (entitlement.getExpiresAt() == null
-                                || entitlement.getExpiresAt().isAfter(now))
+                                && (
+                                entitlement.getExpiresAt() == null
+                                        || entitlement.getExpiresAt()
+                                        .isAfter(now)
+                        )
                 );
     }
 
     public boolean hasPremiumAccess(User user) {
+
         String effectivePlan = getEffectivePlan(user);
 
         return "PRO".equals(effectivePlan)
@@ -81,6 +124,7 @@ public class EntitlementService {
     }
 
     public boolean hasEliteAccess(User user) {
+
         String effectivePlan = getEffectivePlan(user);
 
         return "ELITE".equals(effectivePlan)
@@ -88,62 +132,137 @@ public class EntitlementService {
     }
 
     public boolean hasAiHintsAccess(User user) {
+
         String effectivePlan = getEffectivePlan(user);
-        return !"STARTER".equals(effectivePlan);
+
+        if ("ADMIN".equals(effectivePlan)) {
+            return true;
+        }
+
+        if ("STARTER".equals(effectivePlan)) {
+            return false;
+        }
+
+        return getPlan(effectivePlan).isIncludesAIHints();
     }
 
     public boolean hasAnalyticsAccess(User user) {
+
         String effectivePlan = getEffectivePlan(user);
-        return !"STARTER".equals(effectivePlan);
+
+        if ("ADMIN".equals(effectivePlan)) {
+            return true;
+        }
+
+        if ("STARTER".equals(effectivePlan)) {
+            return false;
+        }
+
+        return getPlan(effectivePlan).isIncludesAnalytics();
     }
 
     public boolean hasTier1CompaniesAccess(User user) {
+
         String effectivePlan = getEffectivePlan(user);
-        return !"STARTER".equals(effectivePlan);
+
+        if ("ADMIN".equals(effectivePlan)) {
+            return true;
+        }
+
+        if ("STARTER".equals(effectivePlan)) {
+            return false;
+        }
+
+        return getPlan(effectivePlan).isIncludesTier1Companies();
     }
 
     public boolean hasPriorityComputeAccess(User user) {
+
         String effectivePlan = getEffectivePlan(user);
-        return !"STARTER".equals(effectivePlan);
+
+        if ("ADMIN".equals(effectivePlan)) {
+            return true;
+        }
+
+        if ("STARTER".equals(effectivePlan)) {
+            return false;
+        }
+
+        return getPlan(effectivePlan).isIncludesPriorityCompute();
     }
 
     public int getMaxMockInterviews(User user) {
+
         String effectivePlan = getEffectivePlan(user);
 
-        return switch (effectivePlan) {
-            case "PRO" -> 15;
-            case "ELITE" -> 30;
-            default -> 3;
-        };
+        if ("ADMIN".equals(effectivePlan)) {
+            return Integer.MAX_VALUE;
+        }
+
+        return getPlan(effectivePlan).getMaxMockInterviews();
     }
 
     public int getMaxResumeScans(User user) {
+
         String effectivePlan = getEffectivePlan(user);
 
-        return switch (effectivePlan) {
-            case "PRO" -> 20;
-            case "ELITE" -> 50;
-            default -> 5;
-        };
+        if ("ADMIN".equals(effectivePlan)) {
+            return Integer.MAX_VALUE;
+        }
+
+        return getPlan(effectivePlan).getMaxResumeScans();
     }
 
     public int getMaxCodingProblems(User user) {
+
         String effectivePlan = getEffectivePlan(user);
 
-        return switch (effectivePlan) {
-            case "PRO" -> 50;
-            case "ELITE" -> 100;
-            default -> 10;
-        };
+        if ("ADMIN".equals(effectivePlan)) {
+            return Integer.MAX_VALUE;
+        }
+
+        return getPlan(effectivePlan).getMaxCodingProblems();
     }
 
     public int getMaxAptitudeQuestions(User user) {
+
         String effectivePlan = getEffectivePlan(user);
 
-        return switch (effectivePlan) {
-            case "PRO" -> 50;
-            case "ELITE" -> 100;
-            default -> 20;
-        };
+        if ("ADMIN".equals(effectivePlan)) {
+            return Integer.MAX_VALUE;
+        }
+
+        return getPlan(effectivePlan).getMaxAptitudeQuestions();
+    }
+
+    private Plan getPlan(String planName) {
+
+        if (planName == null || planName.isBlank()) {
+            return planService.getActivePlan("STARTER");
+        }
+
+        try {
+            return planService.getActivePlan(planName);
+        } catch (RuntimeException ex) {
+            return planService.getActivePlan("STARTER");
+        }
+    }
+
+    private String normalizePlan(String planName) {
+
+        if (planName == null || planName.isBlank()) {
+            return "STARTER";
+        }
+
+        String normalized = planName.trim().toUpperCase();
+
+        if ("ADMIN".equals(normalized)
+                || "ELITE".equals(normalized)
+                || "PRO".equals(normalized)
+                || "STARTER".equals(normalized)) {
+            return normalized;
+        }
+
+        return "STARTER";
     }
 }

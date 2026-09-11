@@ -1,13 +1,18 @@
 package com.aiinterview.backend.service;
 
-import com.aiinterview.backend.entity.*;
-import com.aiinterview.backend.repository.*;
+import com.aiinterview.backend.entity.EntitlementHistory;
+import com.aiinterview.backend.entity.ManualEntitlement;
+import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.repository.EntitlementHistoryRepository;
+import com.aiinterview.backend.repository.ManualEntitlementRepository;
+import com.aiinterview.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -20,144 +25,312 @@ public class AdminEntitlementService {
     private final PlanService planService;
 
     @Transactional
-    public ManualEntitlement grantTemporaryAccess(Long userId, String planName, String grantedBy,
-                                                  int durationDays, String reason) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ManualEntitlement grantTemporaryAccess(
+            Long userId,
+            String planName,
+            String grantedBy,
+            int durationDays,
+            String reason) {
+
+        User user = getUser(userId);
+        String normalizedPlan = validatePlan(planName);
+
+        if (durationDays <= 0) {
+            throw new IllegalArgumentException(
+                    "Duration must be greater than 0 days"
+            );
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiresAt = now.plusDays(durationDays);
 
         ManualEntitlement entitlement = ManualEntitlement.builder()
                 .user(user)
-                .planName(planName)
+                .planName(normalizedPlan)
                 .type("TEMPORARY")
                 .grantedBy(grantedBy)
                 .reason(reason)
-                .grantedAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusDays(durationDays))
+                .grantedAt(now)
+                .expiresAt(expiresAt)
                 .revoked(false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(now)
+                .updatedAt(now)
                 .build();
 
-        ManualEntitlement saved = manualEntitlementRepository.save(entitlement);
+        ManualEntitlement saved =
+                manualEntitlementRepository.save(entitlement);
 
         EntitlementHistory history = EntitlementHistory.builder()
                 .user(user)
-                .planName(planName)
+                .planName(normalizedPlan)
                 .action("GRANT_TEMPORARY")
                 .grantedBy(grantedBy)
                 .reason(reason)
-                .effectiveAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusDays(durationDays))
-                .createdAt(LocalDateTime.now())
+                .effectiveAt(now)
+                .expiresAt(expiresAt)
+                .createdAt(now)
                 .build();
+
         entitlementHistoryRepository.save(history);
 
         return saved;
     }
 
     @Transactional
-    public ManualEntitlement grantLifetimeAccess(Long userId, String planName, String grantedBy, String reason) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ManualEntitlement grantLifetimeAccess(
+            Long userId,
+            String planName,
+            String grantedBy,
+            String reason) {
+
+        User user = getUser(userId);
+        String normalizedPlan = validatePlan(planName);
+
+        LocalDateTime now = LocalDateTime.now();
 
         ManualEntitlement entitlement = ManualEntitlement.builder()
                 .user(user)
-                .planName(planName)
+                .planName(normalizedPlan)
                 .type("LIFETIME")
                 .grantedBy(grantedBy)
                 .reason(reason)
-                .grantedAt(LocalDateTime.now())
+                .grantedAt(now)
                 .expiresAt(null)
                 .revoked(false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(now)
+                .updatedAt(now)
                 .build();
 
-        ManualEntitlement saved = manualEntitlementRepository.save(entitlement);
+        ManualEntitlement saved =
+                manualEntitlementRepository.save(entitlement);
 
         EntitlementHistory history = EntitlementHistory.builder()
                 .user(user)
-                .planName(planName)
+                .planName(normalizedPlan)
                 .action("GRANT_LIFETIME")
                 .grantedBy(grantedBy)
                 .reason(reason)
-                .effectiveAt(LocalDateTime.now())
-                .createdAt(LocalDateTime.now())
+                .effectiveAt(now)
+                .expiresAt(null)
+                .createdAt(now)
                 .build();
+
         entitlementHistoryRepository.save(history);
 
         return saved;
     }
 
     @Transactional
-    public void revokeEntitlement(Long entitlementId, String revokedBy) {
-        ManualEntitlement entitlement = manualEntitlementRepository.findById(entitlementId)
-                .orElseThrow(() -> new RuntimeException("Entitlement not found"));
+    public void revokeEntitlement(
+            Long entitlementId,
+            String revokedBy) {
+
+        ManualEntitlement entitlement =
+                manualEntitlementRepository.findById(entitlementId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Entitlement not found"
+                                ));
 
         if (entitlement.isRevoked()) {
-            throw new RuntimeException("Entitlement already revoked");
+            throw new RuntimeException(
+                    "Entitlement already revoked"
+            );
         }
 
+        LocalDateTime now = LocalDateTime.now();
+
         entitlement.setRevoked(true);
-        entitlement.setRevokedAt(LocalDateTime.now());
-        entitlement.setUpdatedAt(LocalDateTime.now());
+        entitlement.setRevokedAt(now);
+        entitlement.setUpdatedAt(now);
+
         manualEntitlementRepository.save(entitlement);
 
         EntitlementHistory history = EntitlementHistory.builder()
                 .user(entitlement.getUser())
                 .planName(entitlement.getPlanName())
                 .action("REVOKE")
-                .grantedBy(revokedBy)
-                .effectiveAt(LocalDateTime.now())
-                .createdAt(LocalDateTime.now())
+                .grantedBy(
+                        revokedBy != null
+                                ? revokedBy
+                                : "SYSTEM"
+                )
+                .reason("Entitlement revoked")
+                .effectiveAt(now)
+                .createdAt(now)
                 .build();
+
         entitlementHistoryRepository.save(history);
     }
 
     @Transactional
     public void revokeAllEntitlementsForUser(Long userId) {
-        List<ManualEntitlement> active = manualEntitlementRepository.findByUserIdAndRevokedFalse(userId);
-        for (ManualEntitlement e : active) {
-            e.setRevoked(true);
-            e.setRevokedAt(LocalDateTime.now());
-            e.setUpdatedAt(LocalDateTime.now());
-            manualEntitlementRepository.save(e);
 
-            EntitlementHistory history = EntitlementHistory.builder()
-                    .user(e.getUser())
-                    .planName(e.getPlanName())
-                    .action("REVOKE_ALL")
-                    .grantedBy("SYSTEM")
-                    .effectiveAt(LocalDateTime.now())
-                    .createdAt(LocalDateTime.now())
-                    .build();
+        User user = getUser(userId);
+
+        List<ManualEntitlement> active =
+                manualEntitlementRepository
+                        .findByUserIdAndRevokedFalse(userId);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        for (ManualEntitlement entitlement : active) {
+
+            entitlement.setRevoked(true);
+            entitlement.setRevokedAt(now);
+            entitlement.setUpdatedAt(now);
+
+            manualEntitlementRepository.save(entitlement);
+
+            EntitlementHistory history =
+                    EntitlementHistory.builder()
+                            .user(user)
+                            .planName(entitlement.getPlanName())
+                            .action("REVOKE_ALL")
+                            .grantedBy("SYSTEM")
+                            .reason("All manual entitlements revoked")
+                            .effectiveAt(now)
+                            .createdAt(now)
+                            .build();
+
             entitlementHistoryRepository.save(history);
         }
     }
 
-    public List<EntitlementHistory> getEntitlementHistory(Long userId) {
-        return entitlementHistoryRepository.findByUserId(userId);
+    @Transactional(readOnly = true)
+    public List<EntitlementHistory> getEntitlementHistory(
+            Long userId) {
+
+        getUser(userId);
+
+        return entitlementHistoryRepository
+                .findByUserId(userId);
     }
 
-    public List<ManualEntitlement> getActiveEntitlements(Long userId) {
-        return manualEntitlementRepository.findByUserIdAndRevokedFalse(userId);
+    @Transactional(readOnly = true)
+    public List<ManualEntitlement> getActiveEntitlements(
+            Long userId) {
+
+        getUser(userId);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return manualEntitlementRepository
+                .findByUserIdAndRevokedFalse(userId)
+                .stream()
+                .filter(entitlement ->
+                        !entitlement.isRevoked()
+                                && (
+                                entitlement.getExpiresAt() == null
+                                        || entitlement.getExpiresAt()
+                                        .isAfter(now)
+                        )
+                )
+                .toList();
     }
 
-    public boolean hasActiveEntitlement(Long userId, String planName) {
-        List<ManualEntitlement> entitlements = manualEntitlementRepository.findByUserIdAndRevokedFalse(userId);
-        return entitlements.stream().anyMatch(e -> {
-            if (!e.getPlanName().equals(planName)) return false;
-            if (e.isRevoked()) return false;
-            if (e.getExpiresAt() != null && e.getExpiresAt().isBefore(LocalDateTime.now())) return false;
-            return true;
-        });
+    @Transactional(readOnly = true)
+    public boolean hasActiveEntitlement(
+            Long userId,
+            String planName) {
+
+        if (userId == null
+                || planName == null
+                || planName.isBlank()) {
+            return false;
+        }
+
+        String normalizedPlan =
+                planName.trim().toUpperCase(Locale.ROOT);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return manualEntitlementRepository
+                .findByUserIdAndRevokedFalse(userId)
+                .stream()
+                .anyMatch(entitlement ->
+                        normalizedPlan.equals(
+                                entitlement.getPlanName()
+                        )
+                                && !entitlement.isRevoked()
+                                && (
+                                entitlement.getExpiresAt() == null
+                                        || entitlement.getExpiresAt()
+                                        .isAfter(now)
+                        )
+                );
     }
 
-    public Optional<ManualEntitlement> getActiveEntitlement(Long userId, String planName) {
-        return manualEntitlementRepository.findByUserIdAndRevokedFalse(userId).stream()
-                .filter(e -> e.getPlanName().equals(planName))
-                .filter(e -> !e.isRevoked())
-                .filter(e -> e.getExpiresAt() == null || e.getExpiresAt().isAfter(LocalDateTime.now()))
+    @Transactional(readOnly = true)
+    public Optional<ManualEntitlement> getActiveEntitlement(
+            Long userId,
+            String planName) {
+
+        if (userId == null
+                || planName == null
+                || planName.isBlank()) {
+            return Optional.empty();
+        }
+
+        String normalizedPlan =
+                planName.trim().toUpperCase(Locale.ROOT);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return manualEntitlementRepository
+                .findByUserIdAndRevokedFalse(userId)
+                .stream()
+                .filter(entitlement ->
+                        normalizedPlan.equals(
+                                entitlement.getPlanName()
+                        )
+                )
+                .filter(entitlement ->
+                        !entitlement.isRevoked()
+                )
+                .filter(entitlement ->
+                        entitlement.getExpiresAt() == null
+                                || entitlement.getExpiresAt()
+                                .isAfter(now)
+                )
                 .findFirst();
+    }
+
+    private User getUser(Long userId) {
+
+        if (userId == null) {
+            throw new IllegalArgumentException(
+                    "User ID is required"
+            );
+        }
+
+        return userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "User not found"
+                        ));
+    }
+
+    private String validatePlan(String planName) {
+
+        if (planName == null || planName.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Plan name is required"
+            );
+        }
+
+        String normalized =
+                planName.trim().toUpperCase(Locale.ROOT);
+
+        if (!"PRO".equals(normalized)
+                && !"ELITE".equals(normalized)) {
+            throw new IllegalArgumentException(
+                    "Only PRO and ELITE entitlements can be granted"
+            );
+        }
+
+        planService.getActivePlan(normalized);
+
+        return normalized;
     }
 }

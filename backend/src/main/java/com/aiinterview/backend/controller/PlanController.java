@@ -1,6 +1,7 @@
 package com.aiinterview.backend.controller;
 
-import com.aiinterview.backend.dto.admin.*;
+import com.aiinterview.backend.dto.admin.PlanRequest;
+import com.aiinterview.backend.dto.admin.PlanResponse;
 import com.aiinterview.backend.entity.Plan;
 import com.aiinterview.backend.repository.PlanRepository;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -20,79 +22,355 @@ public class PlanController {
 
     private final PlanRepository planRepository;
 
-    @GetMapping
+    // =========================================================
+    // GET ALL PLANS
+    // =========================================================
+
+    @GetMapping({"", "/"})
     public ResponseEntity<List<PlanResponse>> getAllPlans() {
+
         List<Plan> plans = planRepository.findAll();
-        return ResponseEntity.ok(plans.stream().map(PlanResponse::fromEntity).toList());
+
+        return ResponseEntity.ok(
+                plans.stream()
+                        .map(PlanResponse::fromEntity)
+                        .toList()
+        );
     }
 
-    @GetMapping("/active")
+    // =========================================================
+    // GET ACTIVE PLANS
+    // =========================================================
+
+    @GetMapping({"/active", "/active/"})
     public ResponseEntity<List<PlanResponse>> getActivePlans() {
-        List<Plan> plans = planRepository.findByActiveTrue();
-        return ResponseEntity.ok(plans.stream().map(PlanResponse::fromEntity).toList());
+
+        List<Plan> plans =
+                planRepository.findByActiveTrue();
+
+        return ResponseEntity.ok(
+                plans.stream()
+                        .map(PlanResponse::fromEntity)
+                        .toList()
+        );
     }
+
+    // =========================================================
+    // GET PLAN BY ID
+    // =========================================================
 
     @GetMapping("/{id}")
-    public ResponseEntity<PlanResponse> getPlanById(@PathVariable Long id) {
+    public ResponseEntity<PlanResponse> getPlanById(
+            @PathVariable Long id) {
+
         Plan plan = planRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Plan not found"));
-        return ResponseEntity.ok(PlanResponse.fromEntity(plan));
+                .orElseThrow(() ->
+                        new RuntimeException("Plan not found")
+                );
+
+        return ResponseEntity.ok(
+                PlanResponse.fromEntity(plan)
+        );
     }
 
-    @PostMapping
-    public ResponseEntity<PlanResponse> createPlan(@Valid @RequestBody PlanRequest request) {
-        if (planRepository.existsByName(request.getName())) {
-            throw new RuntimeException("Plan already exists");
+    // =========================================================
+    // CREATE PLAN
+    // =========================================================
+
+    @PostMapping({"", "/"})
+    public ResponseEntity<PlanResponse> createPlan(
+            @Valid @RequestBody PlanRequest request) {
+
+        validatePlanRequest(request);
+
+        String name =
+                normalizePlanName(request.getName());
+
+        String interval =
+                normalizeInterval(request.getInterval());
+
+        if (planRepository.existsByName(name)) {
+
+            throw new RuntimeException(
+                    "Plan already exists: " + name
+            );
         }
+
         Plan plan = Plan.builder()
-                .name(request.getName())
-                .description(request.getDescription())
+                .name(name)
+                .description(
+                        request.getDescription().trim()
+                )
                 .priceInr(request.getPriceInr())
                 .priceUsd(request.getPriceUsd())
-                .interval(request.getInterval())
-                .maxMockInterviews(request.getMaxMockInterviews())
-                .maxResumeScans(request.getMaxResumeScans())
-                .maxCodingProblems(request.getMaxCodingProblems())
-                .maxAptitudeQuestions(request.getMaxAptitudeQuestions())
-                .includesAIHints(request.isIncludesAIHints())
-                .includesAnalytics(request.isIncludesAnalytics())
-                .includesTier1Companies(request.isIncludesTier1Companies())
-                .includesPriorityCompute(request.isIncludesPriorityCompute())
+                .interval(interval)
+                .maxMockInterviews(
+                        request.getMaxMockInterviews()
+                )
+                .maxResumeScans(
+                        request.getMaxResumeScans()
+                )
+                .maxCodingProblems(
+                        request.getMaxCodingProblems()
+                )
+                .maxAptitudeQuestions(
+                        request.getMaxAptitudeQuestions()
+                )
+                .includesAIHints(
+                        request.isIncludesAIHints()
+                )
+                .includesAnalytics(
+                        request.isIncludesAnalytics()
+                )
+                .includesTier1Companies(
+                        request.isIncludesTier1Companies()
+                )
+                .includesPriorityCompute(
+                        request.isIncludesPriorityCompute()
+                )
                 .active(request.isActive())
                 .featured(request.isFeatured())
                 .build();
-        planRepository.save(plan);
-        return ResponseEntity.ok(PlanResponse.fromEntity(plan));
+
+        Plan saved =
+                planRepository.save(plan);
+
+        return ResponseEntity.ok(
+                PlanResponse.fromEntity(saved)
+        );
     }
+
+    // =========================================================
+    // UPDATE PLAN
+    // =========================================================
 
     @PutMapping("/{id}")
     public ResponseEntity<PlanResponse> updatePlan(
             @PathVariable Long id,
             @Valid @RequestBody PlanRequest request) {
-        Plan plan = planRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Plan not found"));
-        plan.setName(request.getName());
-        plan.setDescription(request.getDescription());
-        plan.setPriceInr(request.getPriceInr());
-        plan.setPriceUsd(request.getPriceUsd());
-        plan.setInterval(request.getInterval());
-        plan.setMaxMockInterviews(request.getMaxMockInterviews());
-        plan.setMaxResumeScans(request.getMaxResumeScans());
-        plan.setMaxCodingProblems(request.getMaxCodingProblems());
-        plan.setMaxAptitudeQuestions(request.getMaxAptitudeQuestions());
-        plan.setIncludesAIHints(request.isIncludesAIHints());
-        plan.setIncludesAnalytics(request.isIncludesAnalytics());
-        plan.setIncludesTier1Companies(request.isIncludesTier1Companies());
-        plan.setIncludesPriorityCompute(request.isIncludesPriorityCompute());
-        plan.setActive(request.isActive());
-        plan.setFeatured(request.isFeatured());
-        planRepository.save(plan);
-        return ResponseEntity.ok(PlanResponse.fromEntity(plan));
+
+        validatePlanRequest(request);
+
+        Plan plan =
+                planRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Plan not found"
+                                )
+                        );
+
+        String name =
+                normalizePlanName(request.getName());
+
+        String interval =
+                normalizeInterval(request.getInterval());
+
+        planRepository.findByName(name)
+                .filter(existing ->
+                        !existing.getId().equals(id)
+                )
+                .ifPresent(existing -> {
+                    throw new RuntimeException(
+                            "Another plan already exists with name: "
+                                    + name
+                    );
+                });
+
+        plan.setName(name);
+        plan.setDescription(
+                request.getDescription().trim()
+        );
+        plan.setPriceInr(
+                request.getPriceInr()
+        );
+        plan.setPriceUsd(
+                request.getPriceUsd()
+        );
+        plan.setInterval(interval);
+
+        plan.setMaxMockInterviews(
+                request.getMaxMockInterviews()
+        );
+        plan.setMaxResumeScans(
+                request.getMaxResumeScans()
+        );
+        plan.setMaxCodingProblems(
+                request.getMaxCodingProblems()
+        );
+        plan.setMaxAptitudeQuestions(
+                request.getMaxAptitudeQuestions()
+        );
+
+        plan.setIncludesAIHints(
+                request.isIncludesAIHints()
+        );
+        plan.setIncludesAnalytics(
+                request.isIncludesAnalytics()
+        );
+        plan.setIncludesTier1Companies(
+                request.isIncludesTier1Companies()
+        );
+        plan.setIncludesPriorityCompute(
+                request.isIncludesPriorityCompute()
+        );
+
+        plan.setActive(
+                request.isActive()
+        );
+        plan.setFeatured(
+                request.isFeatured()
+        );
+
+        Plan saved =
+                planRepository.save(plan);
+
+        return ResponseEntity.ok(
+                PlanResponse.fromEntity(saved)
+        );
     }
 
+    // =========================================================
+    // DELETE PLAN
+    // =========================================================
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePlan(@PathVariable Long id) {
-        planRepository.deleteById(id);
-        return ResponseEntity.ok(Map.of("message", "Plan deleted successfully"));
+    public ResponseEntity<?> deletePlan(
+            @PathVariable Long id) {
+
+        Plan plan =
+                planRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Plan not found"
+                                )
+                        );
+
+        String planName =
+                plan.getName() == null
+                        ? ""
+                        : plan.getName().trim();
+
+        /*
+         * Core plans must never be physically deleted because
+         * subscriptions, payments and invoices may reference them.
+         */
+        if ("STARTER".equalsIgnoreCase(planName)
+                || "PRO".equalsIgnoreCase(planName)
+                || "ELITE".equalsIgnoreCase(planName)) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Core plans cannot be deleted. Deactivate the plan instead."
+                            )
+                    );
+        }
+
+        planRepository.delete(plan);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message",
+                        "Plan deleted successfully"
+                )
+        );
+    }
+
+    // =========================================================
+    // VALIDATION
+    // =========================================================
+
+    private void validatePlanRequest(
+            PlanRequest request) {
+
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Plan request is required"
+            );
+        }
+
+        if (request.getName() == null
+                || request.getName().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Plan name is required"
+            );
+        }
+
+        if (request.getDescription() == null
+                || request.getDescription().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Plan description is required"
+            );
+        }
+
+        if (request.getPriceInr() < 0) {
+
+            throw new IllegalArgumentException(
+                    "INR price cannot be negative"
+            );
+        }
+
+        if (request.getPriceUsd() < 0) {
+
+            throw new IllegalArgumentException(
+                    "USD price cannot be negative"
+            );
+        }
+
+        if (request.getMaxMockInterviews() < 0
+                || request.getMaxResumeScans() < 0
+                || request.getMaxCodingProblems() < 0
+                || request.getMaxAptitudeQuestions() < 0) {
+
+            throw new IllegalArgumentException(
+                    "Plan limits cannot be negative"
+            );
+        }
+
+        if (request.getInterval() == null
+                || request.getInterval().isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Plan interval is required"
+            );
+        }
+    }
+
+    // =========================================================
+    // NORMALIZATION
+    // =========================================================
+
+    private String normalizePlanName(
+            String name) {
+
+        if (name == null
+                || name.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Plan name is required"
+            );
+        }
+
+        return name.trim()
+                .toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeInterval(
+            String interval) {
+
+        if (interval == null
+                || interval.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Plan interval is required"
+            );
+        }
+
+        return interval.trim()
+                .toUpperCase(Locale.ROOT);
     }
 }
