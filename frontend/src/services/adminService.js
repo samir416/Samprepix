@@ -23,6 +23,20 @@ const addAuthToken = (config) => {
 API.interceptors.request.use(addAuthToken);
 ROOT_API.interceptors.request.use(addAuthToken);
 
+const handleUnauthorized = (error) => {
+    if (error.response && error.response.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        if (window.location.pathname.startsWith("/admin")) {
+            window.location.href = "/login";
+        }
+    }
+    return Promise.reject(error);
+};
+
+API.interceptors.response.use((res) => res, handleUnauthorized);
+ROOT_API.interceptors.response.use((res) => res, handleUnauthorized);
+
 // =========================================================
 // DASHBOARD
 // =========================================================

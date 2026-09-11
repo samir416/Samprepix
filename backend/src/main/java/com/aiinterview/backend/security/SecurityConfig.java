@@ -19,6 +19,9 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+        @org.springframework.beans.factory.annotation.Value("${app.frontend.url:http://localhost:5173}")
+        private String frontendUrl;
+
         private final JwtFilter jwtFilter;
         private final CustomOAuth2UserService customOAuth2UserService;
         private final OAuth2AuthenticationSuccessHandler successHandler;
@@ -46,8 +49,13 @@ public class SecurityConfig {
                                 .cors(cors -> cors.configurationSource(request -> {
                                         CorsConfiguration config = new CorsConfiguration();
 
-                                        config.setAllowedOrigins(List.of(
-                                                        "http://localhost:5173"));
+                                        java.util.Set<String> allowedOrigins = new java.util.LinkedHashSet<>();
+                                        allowedOrigins.add("http://localhost:5173");
+                                        if (frontendUrl != null && !frontendUrl.isBlank()) {
+                                                allowedOrigins.add(frontendUrl.trim());
+                                        }
+
+                                        config.setAllowedOrigins(new java.util.ArrayList<>(allowedOrigins));
 
                                         config.setAllowedMethods(List.of(
                                                         "GET",
@@ -83,13 +91,19 @@ public class SecurityConfig {
                                                 .exceptionHandling(exception -> exception
                                                                 .defaultAuthenticationEntryPointFor(
                                                                                 new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                                                                                request -> request.getRequestURI().startsWith("/api/")))
+                                                                                request -> request.getRequestURI().startsWith("/api/"))
+                                                                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                                                                        response.setStatus(HttpStatus.FORBIDDEN.value());
+                                                                        response.setContentType("application/json;charset=UTF-8");
+                                                                        response.getWriter().write("{\"status\":403,\"error\":\"Forbidden\",\"message\":\"Access Denied: ADMIN role required.\"}");
+                                                                }))
 
                                 .authorizeHttpRequests(auth -> auth
 
                                                 .requestMatchers(
                                                                 "/",
                                                                 "/test",
+                                                                "/error",
                                                                 "/login",
                                                                 "/register",
                                                                 "/verify-otp",
@@ -106,8 +120,9 @@ public class SecurityConfig {
                                                                 "/api/aptitude/**",
                                                                 "/api/payment/webhook")
                                                 .permitAll()
-                                                // Admin endpoints require ADMIN role (enforced at method level too)
+                                                // Admin endpoints require ADMIN role (enforced at both URL and method level)
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .requestMatchers("/api/subscription/admin/**").hasRole("ADMIN")
                                                 .anyRequest()
                                                 .authenticated())
 

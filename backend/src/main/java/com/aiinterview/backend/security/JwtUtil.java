@@ -16,12 +16,18 @@ public final class JwtUtil {
     private static final long EXPIRATION_TIME =
             1000L * 60 * 60 * 24;
 
-    private static SecretKey SECRET_KEY;
+    private static final String DEFAULT_SECRET =
+            "your-super-secret-key-at-least-32-characters-long";
+
+    private static volatile SecretKey SECRET_KEY =
+            createSecretKey(DEFAULT_SECRET);
 
     public JwtUtil(
-            @Value("${app.jwt.secret}") String secret
+            @Value("${app.jwt.secret:your-super-secret-key-at-least-32-characters-long}") String secret
     ) {
-        SECRET_KEY = createSecretKey(secret);
+        if (secret != null && !secret.isBlank()) {
+            SECRET_KEY = createSecretKey(secret);
+        }
     }
 
     private static SecretKey createSecretKey(

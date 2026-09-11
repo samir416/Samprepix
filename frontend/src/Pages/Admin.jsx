@@ -103,23 +103,23 @@ export default function Admin() {
             try {
                 const currentUser = await getCurrentUser();
 
-                const storedUser = JSON.parse(
-                    localStorage.getItem("user") || "null"
-                );
-
-                const role =
-                    currentUser?.role ||
-                    storedUser?.role;
-
-                if (role !== "ADMIN") {
+                if (!currentUser || currentUser.role !== "ADMIN") {
                     navigate("/dashboard");
                     return;
                 }
 
+                // Update stored user with authoritative server data
+                localStorage.setItem("user", JSON.stringify(currentUser));
                 setAdminVerified(true);
             } catch (err) {
                 console.error("Admin verification failed:", err);
-                navigate("/dashboard");
+                if (err?.response?.status === 401) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    navigate("/login");
+                } else {
+                    navigate("/dashboard");
+                }
             }
         };
 
