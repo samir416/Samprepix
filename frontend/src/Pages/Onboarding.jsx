@@ -119,8 +119,7 @@ export default function Onboarding() {
             : rawToken.replace(/^"|"$/g, "").trim();
 
         if (!token) {
-            setIsSessionExpired(true);
-            setError("Your session has expired. Please sign in again.");
+            navigate("/login", { replace: true });
             return;
         }
 
@@ -166,16 +165,24 @@ export default function Onboarding() {
 
         } catch (err) {
             console.error("Profile update failed:", err);
-            if (err?.response?.status === 401) {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                localStorage.removeItem("onboardingCompleted");
-                setIsSessionExpired(true);
-                setError("Your session has expired. Please sign in again.");
-            } else {
+            // Verify if JWT itself is genuinely invalid/expired before destroying session
+            try {
+                await getCurrentUser();
+                // JWT is valid - transient or request-level error, do not destroy session
                 setIsSessionExpired(false);
                 const serverMsg = err?.response?.data?.message || (typeof err?.response?.data === "string" ? err?.response?.data : null) || err?.message;
                 setError(serverMsg || "Unable to save your profile. Please check your details and try again.");
+            } catch (verifyErr) {
+                if (verifyErr?.response?.status === 401) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("onboardingCompleted");
+                    setIsSessionExpired(true);
+                    setError("Your session has expired. Please sign in again.");
+                } else {
+                    setIsSessionExpired(false);
+                    setError("Unable to save your profile. Please check your connection and try again.");
+                }
             }
         } finally {
             setLoading(false);
