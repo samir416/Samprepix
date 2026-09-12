@@ -233,7 +233,11 @@ public class UserProfileService {
 
         private void updateProfileCompletion(User user, UserProfile profile) {
                 int percentage = calculateProfileCompletionPercentage(user, profile);
-                profile.setProfileCompleted(percentage >= 100);
+                boolean isCompleted = percentage >= 100
+                                || (profile.getJourneyType() != null
+                                                && profile.getTargetRole() != null && !profile.getTargetRole().isBlank()
+                                                && profile.getCareerGoal() != null);
+                profile.setProfileCompleted(isCompleted);
                 userProfileRepository.save(profile);
         }
 

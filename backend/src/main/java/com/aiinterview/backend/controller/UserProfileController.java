@@ -31,27 +31,45 @@ public class UserProfileController {
         this.userProfileService = userProfileService;
     }
 
-   @GetMapping
-public UserProfileResponse getProfile(
-        @RequestHeader("Authorization") String token) {
-                
-        token = token.replace("Bearer ", "");
+    @GetMapping
+    public ResponseEntity<UserProfileResponse> getProfile(
+            Authentication authentication,
+            @RequestHeader(value = "Authorization", required = false) String tokenHeader) {
 
-        String email = JwtUtil.extractEmail(token);
+        String email = resolveEmail(authentication, tokenHeader);
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
+        }
 
-        return userProfileService.getProfile(email);
+        return ResponseEntity.ok(userProfileService.getProfile(email));
     }
 
-
     @PutMapping
-    public UserProfileResponse updateProfile(
-            @RequestHeader("Authorization") String token,
+    public ResponseEntity<UserProfileResponse> updateProfile(
+            Authentication authentication,
+            @RequestHeader(value = "Authorization", required = false) String tokenHeader,
             @RequestBody UserProfileRequest request) {
 
-        token = token.replace("Bearer ", "");
-        String email = JwtUtil.extractEmail(token);
+        String email = resolveEmail(authentication, tokenHeader);
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
+        }
+
         userProfileService.saveProfile(email, request);
-        return userProfileService.getProfile(email);
+        return ResponseEntity.ok(userProfileService.getProfile(email));
+    }
+
+    private String resolveEmail(Authentication authentication, String tokenHeader) {
+        if (authentication != null && authentication.isAuthenticated() && authentication.getName() != null && !authentication.getName().isBlank()) {
+            return authentication.getName();
+        }
+        if (tokenHeader != null && tokenHeader.toLowerCase().startsWith("bearer ")) {
+            String token = tokenHeader.substring(7).trim();
+            if (JwtUtil.validateToken(token)) {
+                return JwtUtil.extractEmail(token);
+            }
+        }
+        return null;
     }
 
 @PostMapping("/upload-photo")

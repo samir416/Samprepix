@@ -6,15 +6,20 @@ const API =
 const GITHUB_API =
     "http://localhost:8080/api/github";
 
-const getToken = () =>
-    localStorage.getItem("token");
-
-const getAuthConfig = () => ({
-    headers: {
-        Authorization:
-            `Bearer ${getToken()}`
+const getToken = () => {
+    const token = localStorage.getItem("token");
+    if (!token || token === "null" || token === "undefined" || !token.trim()) {
+        return null;
     }
-});
+    return token.trim();
+};
+
+const getAuthConfig = () => {
+    const token = getToken();
+    return {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    };
+};
 
 export async function getProfile() {
 

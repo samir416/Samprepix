@@ -40,6 +40,7 @@ export default function Onboarding() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [isSessionExpired, setIsSessionExpired] = useState(false);
 
     const [formData, setFormData] = useState({
         journeyType: "",
@@ -52,6 +53,7 @@ export default function Onboarding() {
 
     const handleChange = (field, value) => {
         if (error) setError("");
+        if (isSessionExpired) setIsSessionExpired(false);
         setFormData(prev => ({
             ...prev,
             [field]: value
@@ -60,17 +62,27 @@ export default function Onboarding() {
 
     const nextStep = () => {
         if (error) setError("");
+        if (isSessionExpired) setIsSessionExpired(false);
         setStep(prev => prev + 1);
     };
 
     const previousStep = () => {
         if (error) setError("");
+        if (isSessionExpired) setIsSessionExpired(false);
         setStep(prev => prev - 1);
     };
 
     const handleSubmit = async () => {
         if (loading) return;
         setError("");
+        setIsSessionExpired(false);
+
+        const token = localStorage.getItem("token");
+        if (!token || token === "null" || token === "undefined" || !token.trim()) {
+            setIsSessionExpired(true);
+            setError("Your session has expired. Please sign in again.");
+            return;
+        }
 
         try {
             setLoading(true);
@@ -114,8 +126,14 @@ export default function Onboarding() {
 
         } catch (err) {
             console.error("Profile update failed:", err);
-            const serverMsg = err?.response?.data?.message || err?.message;
-            setError(serverMsg || "Unable to save your profile. Please check your details and try again.");
+            if (err?.response?.status === 401) {
+                setIsSessionExpired(true);
+                setError("Your session has expired. Please sign in again.");
+            } else {
+                setIsSessionExpired(false);
+                const serverMsg = err?.response?.data?.message || (typeof err?.response?.data === "string" ? err?.response?.data : null) || err?.message;
+                setError(serverMsg || "Unable to save your profile. Please check your details and try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -185,17 +203,27 @@ export default function Onboarding() {
                                 <AlertCircle size={18} />
                             </div>
                             <div className="onboarding-error-content">
-                                <h6>Unable to Save Profile</h6>
+                                <h6>{isSessionExpired ? "Session Expired" : "Unable to Save Profile"}</h6>
                                 <p>{error}</p>
                             </div>
-                            <button
-                                type="button"
-                                className="onboarding-error-retry-btn"
-                                onClick={handleSubmit}
-                                disabled={loading}
-                            >
-                                Try Again
-                            </button>
+                            {isSessionExpired ? (
+                                <button
+                                    type="button"
+                                    className="onboarding-error-retry-btn"
+                                    onClick={() => navigate("/login")}
+                                >
+                                    Sign In Again
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="onboarding-error-retry-btn"
+                                    onClick={handleSubmit}
+                                    disabled={loading}
+                                >
+                                    Try Again
+                                </button>
+                            )}
                         </div>
                     )}
 

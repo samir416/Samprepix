@@ -326,6 +326,7 @@ export default function AuthModal() {
                                             localStorage.setItem("onboardingCompleted", "true");
                                             navigate("/dashboard");
                                         } else {
+                                            localStorage.removeItem("onboardingCompleted");
                                             navigate("/onboarding");
                                         }
                                     } catch (err) {

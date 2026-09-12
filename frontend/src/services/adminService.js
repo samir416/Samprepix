@@ -25,9 +25,9 @@ ROOT_API.interceptors.request.use(addAuthToken);
 
 const handleUnauthorized = (error) => {
     if (error.response && error.response.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        if (window.location.pathname.startsWith("/admin")) {
+        if (typeof window !== "undefined" && window.location && window.location.pathname.startsWith("/admin")) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
             window.location.href = "/login";
         }
     }

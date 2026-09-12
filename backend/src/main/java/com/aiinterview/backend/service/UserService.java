@@ -471,7 +471,10 @@ public class UserService {
                 "ADMIN".equalsIgnoreCase(roleStr)
                         || (user.getProfile() != null
                                 && (user.getProfile().isProfileCompleted()
-                                        || user.getProfile().getJourneyType() != null))
+                                        || (user.getProfile().getJourneyType() != null
+                                                && user.getProfile().getTargetRole() != null
+                                                && !user.getProfile().getTargetRole().isBlank()
+                                                && user.getProfile().getCareerGoal() != null)))
         );
 
         response.setRole(roleStr);
