@@ -59,7 +59,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (
                 authHeader == null ||
-                !authHeader.startsWith("Bearer ")
+                !authHeader.toLowerCase().startsWith("bearer ")
         ) {
 
             filterChain.doFilter(
@@ -73,6 +73,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String token =
                 authHeader
                         .substring(7)
+                        .replace("\"", "")
                         .trim();
 
         if (

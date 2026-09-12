@@ -42,6 +42,42 @@ export default function Onboarding() {
     const [error, setError] = useState("");
     const [isSessionExpired, setIsSessionExpired] = useState(false);
 
+    useEffect(() => {
+        let isMounted = true;
+        const checkSession = async () => {
+            const rawToken = localStorage.getItem("token");
+            const token = (!rawToken || rawToken === "null" || rawToken === "undefined" || !rawToken.trim())
+                ? null
+                : rawToken.replace(/^"|"$/g, "").trim();
+
+            if (!token) {
+                navigate("/login", { replace: true });
+                return;
+            }
+
+            try {
+                const user = await getCurrentUser();
+                if (!isMounted) return;
+                if (user?.role === "ADMIN" || user?.profileCompleted) {
+                    localStorage.setItem("onboardingCompleted", "true");
+                    localStorage.setItem("user", JSON.stringify(user));
+                    navigate("/dashboard", { replace: true });
+                }
+            } catch (authErr) {
+                if (!isMounted) return;
+                console.warn("Session check on onboarding mount failed:", authErr);
+                if (authErr?.response?.status === 401) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("onboardingCompleted");
+                    navigate("/login", { replace: true });
+                }
+            }
+        };
+        checkSession();
+        return () => { isMounted = false; };
+    }, [navigate]);
+
     const [formData, setFormData] = useState({
         journeyType: "",
         targetRole: "",
@@ -77,8 +113,12 @@ export default function Onboarding() {
         setError("");
         setIsSessionExpired(false);
 
-        const token = localStorage.getItem("token");
-        if (!token || token === "null" || token === "undefined" || !token.trim()) {
+        const rawToken = localStorage.getItem("token");
+        const token = (!rawToken || rawToken === "null" || rawToken === "undefined" || !rawToken.trim())
+            ? null
+            : rawToken.replace(/^"|"$/g, "").trim();
+
+        if (!token) {
             setIsSessionExpired(true);
             setError("Your session has expired. Please sign in again.");
             return;
@@ -127,6 +167,9 @@ export default function Onboarding() {
         } catch (err) {
             console.error("Profile update failed:", err);
             if (err?.response?.status === 401) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                localStorage.removeItem("onboardingCompleted");
                 setIsSessionExpired(true);
                 setError("Your session has expired. Please sign in again.");
             } else {

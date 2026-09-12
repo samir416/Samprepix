@@ -90,9 +90,20 @@ export const resendOtp = async (email) => {
     return response.data;
 };
 
+export const getCleanToken = () => {
+    const raw = localStorage.getItem("token");
+    if (!raw || raw === "null" || raw === "undefined" || !raw.trim()) {
+        return null;
+    }
+    return raw.replace(/^"|"$/g, "").trim();
+};
+
 export const getCurrentUser = async () => {
 
-    const token = localStorage.getItem("token");
+    const token = getCleanToken();
+    if (!token) {
+        throw new Error("No authentication token found");
+    }
 
     const response = await axios.get(
         `${API_URL}/me`,

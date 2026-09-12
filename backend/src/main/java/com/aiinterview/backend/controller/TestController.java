@@ -13,6 +13,7 @@ import com.aiinterview.backend.model.ResetPasswordRequest;
 import com.aiinterview.backend.model.UserResponse;
 import com.aiinterview.backend.model.VerifyOtpRequest;
 import com.aiinterview.backend.repository.UserRepository;
+import com.aiinterview.backend.security.JwtUtil;
 import com.aiinterview.backend.service.EntitlementService;
 import com.aiinterview.backend.service.UserService;
 import jakarta.validation.Valid;
@@ -209,19 +210,26 @@ public class TestController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(
-            Authentication authentication) {
+            Authentication authentication,
+            @RequestHeader(value = "Authorization", required = false) String tokenHeader) {
 
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
+        String email = null;
+        if (authentication != null && authentication.isAuthenticated() && authentication.getName() != null && !authentication.getName().isBlank()) {
+            email = authentication.getName();
+        } else if (tokenHeader != null && tokenHeader.toLowerCase().startsWith("bearer ")) {
+            String token = tokenHeader.substring(7).replace("\"", "").trim();
+            if (JwtUtil.validateToken(token)) {
+                email = JwtUtil.extractEmail(token);
+            }
+        }
 
+        if (email == null || email.isBlank()) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body("Unauthorized");
         }
 
-        UserResponse user = userService.getCurrentUser(
-                authentication.getName()
-        );
+        UserResponse user = userService.getCurrentUser(email);
 
         if (user == null) {
 
@@ -230,7 +238,7 @@ public class TestController {
                     .body("User not found!");
         }
 
-        userRepository.findByEmail(authentication.getName())
+        userRepository.findByEmail(email)
                 .ifPresent(currentUser ->
                         user.setPlan(
                                 entitlementService.getEffectivePlan(

@@ -64,7 +64,7 @@ public class UserProfileController {
             return authentication.getName();
         }
         if (tokenHeader != null && tokenHeader.toLowerCase().startsWith("bearer ")) {
-            String token = tokenHeader.substring(7).trim();
+            String token = tokenHeader.substring(7).replace("\"", "").trim();
             if (JwtUtil.validateToken(token)) {
                 return JwtUtil.extractEmail(token);
             }

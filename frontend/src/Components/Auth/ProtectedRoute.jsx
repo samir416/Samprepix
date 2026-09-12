@@ -2,7 +2,10 @@ import { Navigate, useLocation, Outlet } from "react-router-dom";
 
 export default function ProtectedRoute({ children }) {
 
-    const token = localStorage.getItem("token");
+    const rawToken = localStorage.getItem("token");
+    const token = (!rawToken || rawToken === "null" || rawToken === "undefined" || !rawToken.trim())
+        ? null
+        : rawToken.replace(/^"|"$/g, "").trim();
 
     let user = null;
     try {

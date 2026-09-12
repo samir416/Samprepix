@@ -11,7 +11,7 @@ const getToken = () => {
     if (!token || token === "null" || token === "undefined" || !token.trim()) {
         return null;
     }
-    return token.trim();
+    return token.replace(/^"|"$/g, "").trim();
 };
 
 const getAuthConfig = () => {
