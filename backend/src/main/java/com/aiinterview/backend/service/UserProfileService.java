@@ -105,7 +105,9 @@ public class UserProfileService {
                 User user = userRepository
                                 .findByEmail(email)
                                 .orElseThrow();
-                user.setName(request.getName());
+                if (request.getName() != null && !request.getName().isBlank()) {
+                        user.setName(request.getName());
+                }
 
                 UserProfile profile = userProfileRepository
                                 .findByUser(user)

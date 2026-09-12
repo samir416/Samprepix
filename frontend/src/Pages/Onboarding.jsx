@@ -74,7 +74,29 @@ export default function Onboarding() {
 
         try {
             setLoading(true);
-            await updateProfile(formData);
+
+            let storedUser = null;
+            try {
+                const userJson = localStorage.getItem("user");
+                if (userJson) storedUser = JSON.parse(userJson);
+            } catch (_) {}
+
+            const parsedYears = formData.yearsOfExperience !== "" && !isNaN(Number(formData.yearsOfExperience))
+                ? Number(formData.yearsOfExperience)
+                : null;
+
+            const payload = {
+                journeyType: formData.journeyType || null,
+                targetRole: formData.targetRole || null,
+                experienceLevel: formData.experienceLevel || null,
+                careerGoal: formData.careerGoal || null,
+                designation: formData.currentRole || null,
+                currentRole: formData.currentRole || null,
+                yearsOfExperience: parsedYears,
+                name: storedUser?.name || storedUser?.username || null
+            };
+
+            await updateProfile(payload);
 
             let refreshedUser = null;
             try {
@@ -92,7 +114,8 @@ export default function Onboarding() {
 
         } catch (err) {
             console.error("Profile update failed:", err);
-            setError("Unable to save your profile. Please check your details and try again.");
+            const serverMsg = err?.response?.data?.message || err?.message;
+            setError(serverMsg || "Unable to save your profile. Please check your details and try again.");
         } finally {
             setLoading(false);
         }
