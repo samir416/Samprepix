@@ -11,9 +11,9 @@ export default function ProtectedRoute({ children }) {
     } catch (_) {}
 
     const onboardingCompleted =
-        localStorage.getItem("onboardingCompleted") === "true" ||
         user?.profileCompleted === true ||
-        user?.role === "ADMIN";
+        user?.role === "ADMIN" ||
+        (localStorage.getItem("onboardingCompleted") === "true" && user?.id);
 
     const location = useLocation();
 

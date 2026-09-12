@@ -1,6 +1,7 @@
 package com.aiinterview.backend.security;
 
 import com.aiinterview.backend.security.oauth.CustomOAuth2UserService;
+import com.aiinterview.backend.security.oauth.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.aiinterview.backend.security.oauth.OAuth2AuthenticationFailureHandler;
 import com.aiinterview.backend.security.oauth.OAuth2AuthenticationSuccessHandler;
 import org.springframework.context.annotation.Bean;
@@ -26,17 +27,20 @@ public class SecurityConfig {
         private final CustomOAuth2UserService customOAuth2UserService;
         private final OAuth2AuthenticationSuccessHandler successHandler;
         private final OAuth2AuthenticationFailureHandler failureHandler;
+        private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
         public SecurityConfig(
                         JwtFilter jwtFilter,
                         CustomOAuth2UserService customOAuth2UserService,
                         OAuth2AuthenticationSuccessHandler successHandler,
-                        OAuth2AuthenticationFailureHandler failureHandler) {
+                        OAuth2AuthenticationFailureHandler failureHandler,
+                        HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository) {
 
                 this.jwtFilter = jwtFilter;
                 this.customOAuth2UserService = customOAuth2UserService;
                 this.successHandler = successHandler;
                 this.failureHandler = failureHandler;
+                this.cookieAuthorizationRequestRepository = cookieAuthorizationRequestRepository;
         }
 
         @Bean
@@ -79,7 +83,8 @@ public class SecurityConfig {
                                 .oauth2Login(oauth -> oauth
 
                                                 .authorizationEndpoint(
-                                                                endpoint -> endpoint.baseUri("/oauth2/authorize"))
+                                                                endpoint -> endpoint.baseUri("/oauth2/authorize")
+                                                                                .authorizationRequestRepository(cookieAuthorizationRequestRepository))
 
                                                 .redirectionEndpoint(
                                                                 endpoint -> endpoint.baseUri("/login/oauth2/code/*"))

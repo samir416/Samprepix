@@ -41,10 +41,11 @@ export default function Login() {
                     JSON.stringify(user)
                 );
 
-                if (user?.role === "ADMIN" || user?.profileCompleted || localStorage.getItem("onboardingCompleted") === "true") {
+                if (user?.role === "ADMIN" || user?.profileCompleted) {
                     localStorage.setItem("onboardingCompleted", "true");
                     navigate("/dashboard");
                 } else {
+                    localStorage.removeItem("onboardingCompleted");
                     navigate("/onboarding");
                 }
 
@@ -52,7 +53,7 @@ export default function Login() {
 
                 localStorage.removeItem("token");
 
-                setError("Unable to fetch user details.");
+                setError("Unable to fetch your account details. Please try signing in again.");
 
             }
 
@@ -66,8 +67,18 @@ export default function Login() {
         }
 
         if (oauthError) {
-
-            setError(decodeURIComponent(oauthError));
+            const raw = decodeURIComponent(oauthError);
+            let friendly = "Sign-in was interrupted or could not be completed. Please try again.";
+            if (raw === "session_expired" || raw.includes("authorization_request_not_found")) {
+                friendly = "Your sign-in session expired or was interrupted. Please try again.";
+            } else if (raw === "access_denied" || raw.includes("access_denied")) {
+                friendly = "Authentication was cancelled. You can try again whenever you are ready.";
+            } else if (raw === "security_verification_failed") {
+                friendly = "Authentication security check failed. Please try signing in again.";
+            } else if (raw && !raw.startsWith("[")) {
+                friendly = raw;
+            }
+            setError(friendly);
 
             window.history.replaceState({}, "", "/login");
 
@@ -178,10 +189,11 @@ export default function Login() {
                                     JSON.stringify(user)
                                 );
 
-                                if (user?.role === "ADMIN" || user?.profileCompleted || localStorage.getItem("onboardingCompleted") === "true") {
+                                if (user?.role === "ADMIN" || user?.profileCompleted) {
                                     localStorage.setItem("onboardingCompleted", "true");
                                     navigate("/dashboard");
                                 } else {
+                                    localStorage.removeItem("onboardingCompleted");
                                     navigate("/onboarding");
                                 }
 
