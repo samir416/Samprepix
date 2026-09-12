@@ -57,22 +57,29 @@ function App() {
     }, [location.pathname, location.hash]);
 
     useEffect(() => {
-        // Hydrate Theme Preference
-        const themePref = localStorage.getItem("themePreference") || localStorage.getItem("theme") || "system";
-        let isDark = false;
-        if (themePref === "dark") {
-            isDark = true;
-        } else if (themePref === "light") {
-            isDark = false;
-        } else {
-            isDark = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-        }
+        const applyTheme = () => {
+            const themePref = localStorage.getItem("themePreference") || localStorage.getItem("theme") || "system";
+            let isDark = false;
+            if (themePref === "dark") {
+                isDark = true;
+            } else if (themePref === "light") {
+                isDark = false;
+            } else {
+                isDark = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+            }
 
-        if (isDark) {
-            document.body.classList.add("dark-theme");
-        } else {
-            document.body.classList.remove("dark-theme");
-        }
+            if (isDark) {
+                document.body.classList.add("dark-theme");
+                document.body.classList.remove("light-theme");
+            } else {
+                document.body.classList.remove("dark-theme");
+                document.body.classList.add("light-theme");
+            }
+        };
+
+        applyTheme();
+        window.addEventListener("storage", applyTheme);
+        window.addEventListener("themeChanged", applyTheme);
 
         // Hydrate Interface Density
         const density = localStorage.getItem("setting_interface_density") || "comfortable";
@@ -89,6 +96,11 @@ function App() {
         } else {
             document.body.classList.remove("reduce-motion");
         }
+
+        return () => {
+            window.removeEventListener("storage", applyTheme);
+            window.removeEventListener("themeChanged", applyTheme);
+        };
     }, []);
 
     return (
