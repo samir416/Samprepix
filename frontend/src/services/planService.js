@@ -23,8 +23,12 @@ API.interceptors.request.use(addAuthToken);
 export const getAllPlans = () =>
     API.get("/").then((res) => res.data);
 
-export const getActivePlans = () =>
-    API.get("/active").then((res) => res.data);
+export const getActivePlans = () => {
+    const token = getToken();
+    return axios.get("http://localhost:8080/api/plans/active", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    }).then((res) => res.data);
+};
 
 export const getPlanById = (id) =>
     API.get(`/${id}`).then((res) => res.data);

@@ -45,7 +45,9 @@ body {
     left: 0;
     z-index: 100;
 
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 
     padding: 14px 10px;
 
@@ -62,6 +64,29 @@ body {
     flex-direction: column;
 
     justify-content: space-between;
+}
+
+.dashboard-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dashboard-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dashboard-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.2);
+    border-radius: 4px;
+}
+
+.dashboard-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.4);
+}
+
+.sidebar-top {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
 }
 
 
@@ -344,6 +369,8 @@ body {
     display: flex;
     flex-direction: column;
     text-align: left;
+    flex-shrink: 0;
+    margin-top: 14px;
 }
 
 .upgrade-card h3 {

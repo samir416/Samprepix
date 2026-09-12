@@ -468,9 +468,10 @@ public class UserService {
         );
 
         response.setProfileCompleted(
-                user.getProfile() != null
-                        && user.getProfile()
-                        .isProfileCompleted()
+                "ADMIN".equalsIgnoreCase(roleStr)
+                        || (user.getProfile() != null
+                                && (user.getProfile().isProfileCompleted()
+                                        || user.getProfile().getJourneyType() != null))
         );
 
         response.setRole(roleStr);

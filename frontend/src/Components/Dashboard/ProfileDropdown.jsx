@@ -14,10 +14,6 @@ export default function ProfileDropdown({ user, onLogout, onClose, onOpenSetting
         { icon: "💳", label: "Billing", path: "/billing" }
     ];
 
-    if (isAdmin) {
-        menuItems.push({ icon: "🛡️", label: "Admin Panel", path: "/admin" });
-    }
-
     return (
         <div className="profile-dropdown">
             <div className="profile-dropdown-top">

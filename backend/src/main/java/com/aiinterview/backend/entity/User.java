@@ -21,6 +21,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @JsonIgnore
     @Column
     private String password;
 
@@ -52,6 +53,7 @@ public class User {
     @Column(length = 4)
     private String otp;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile profile;
 

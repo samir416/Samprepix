@@ -43,7 +43,7 @@ import {
 import { getCurrentUser } from "../services/authService";
 import "../styles/profile.css";
 import ConfirmationModal from "../Components/ConfirmationModal";
-import ImageCropModal from "../components/common/ImageCropModal";
+import ImageCropModal from "../Components/Common/ImageCropModal";
 
 export default function Profile() {
 

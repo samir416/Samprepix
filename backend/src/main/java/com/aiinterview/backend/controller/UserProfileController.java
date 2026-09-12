@@ -44,22 +44,15 @@ public UserProfileResponse getProfile(
 
 
     @PutMapping
-public UserProfile updateProfile(
-        @RequestHeader("Authorization") String token,
-        @RequestBody UserProfileRequest request) {
+    public UserProfileResponse updateProfile(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UserProfileRequest request) {
 
-    token = token.replace(
-            "Bearer ",
-            "");
-
-    String email =
-            JwtUtil.extractEmail(token);
-
-    return userProfileService.saveProfile(
-            email,
-            request);
-
-}
+        token = token.replace("Bearer ", "");
+        String email = JwtUtil.extractEmail(token);
+        userProfileService.saveProfile(email, request);
+        return userProfileService.getProfile(email);
+    }
 
 @PostMapping("/upload-photo")
 public ResponseEntity<String> uploadProfilePicture(

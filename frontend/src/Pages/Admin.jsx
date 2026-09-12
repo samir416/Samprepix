@@ -930,20 +930,9 @@ export default function Admin() {
 
                                                         <td>
                                                             {user.email === "samirprajapat5@gmail.com" ? (
-                                                                <span className="badge bg-primary text-white">Owner (ADMIN)</span>
+                                                                <span className="role-badge owner-role-badge">Owner (ADMIN)</span>
                                                             ) : (
-                                                                <select
-                                                                    value={user.role}
-                                                                    onChange={(e) =>
-                                                                        handleUpdateUserRole(
-                                                                            user.id,
-                                                                            e.target.value
-                                                                        )
-                                                                    }
-                                                                    className="admin-inline-select"
-                                                                >
-                                                                    <option value="USER">User</option>
-                                                                </select>
+                                                                <span className="role-badge user-role-badge">USER</span>
                                                             )}
                                                         </td>
 

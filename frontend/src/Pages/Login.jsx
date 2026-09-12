@@ -41,14 +41,11 @@ export default function Login() {
                     JSON.stringify(user)
                 );
 
-                if (user.profileCompleted) {
-
+                if (user?.role === "ADMIN" || user?.profileCompleted || localStorage.getItem("onboardingCompleted") === "true") {
+                    localStorage.setItem("onboardingCompleted", "true");
                     navigate("/dashboard");
-
                 } else {
-
                     navigate("/onboarding");
-
                 }
 
             } catch {
@@ -181,14 +178,11 @@ export default function Login() {
                                     JSON.stringify(user)
                                 );
 
-                                if (user.profileCompleted) {
-
+                                if (user?.role === "ADMIN" || user?.profileCompleted || localStorage.getItem("onboardingCompleted") === "true") {
+                                    localStorage.setItem("onboardingCompleted", "true");
                                     navigate("/dashboard");
-
                                 } else {
-
                                     navigate("/onboarding");
-
                                 }
 
                             } catch (err) {

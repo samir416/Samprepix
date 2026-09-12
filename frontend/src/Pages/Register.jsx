@@ -1,7 +1,5 @@
-import React from 'react'
+import AuthModal from "../Components/Auth/AuthModal";
 
 export default function Register() {
-  return (
-    <div>Register</div>
-  )
+    return <AuthModal />;
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { updateProfile } from "../services/profileService";
+import { getCurrentUser } from "../services/authService";
 import "../styles/onboarding.css";
 
 export default function Onboarding() {
@@ -72,16 +73,15 @@ export default function Onboarding() {
     const handleSubmit = async () => {
 
         try {
-
             setLoading(true);
+            await updateProfile(formData);
 
-            const updatedUser =
-                await updateProfile(formData);
-
-            localStorage.setItem(
-                "user",
-                JSON.stringify(updatedUser)
-            );
+            try {
+                const fullUser = await getCurrentUser();
+                localStorage.setItem("user", JSON.stringify(fullUser));
+            } catch (e) {
+                console.warn("Could not refresh user after onboarding:", e);
+            }
 
             localStorage.setItem(
                 "onboardingCompleted",

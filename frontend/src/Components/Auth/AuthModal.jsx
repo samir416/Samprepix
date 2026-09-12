@@ -117,6 +117,7 @@ export default function AuthModal() {
                                 setLoading(true);
 
                                 const response = await registerUser(
+                                    name,
                                     username,
                                     email,
                                     password
@@ -321,14 +322,11 @@ export default function AuthModal() {
                                             JSON.stringify(user)
                                         );
 
-                                        if (user.profileCompleted) {
-
+                                        if (user?.role === "ADMIN" || user?.profileCompleted) {
+                                            localStorage.setItem("onboardingCompleted", "true");
                                             navigate("/dashboard");
-
                                         } else {
-
                                             navigate("/onboarding");
-
                                         }
                                     } catch (err) {
                                         setOtpError(

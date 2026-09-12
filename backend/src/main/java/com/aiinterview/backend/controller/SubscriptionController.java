@@ -60,7 +60,7 @@ public class SubscriptionController {
     // CURRENT USER ACTIVE SUBSCRIPTION
     // =========================================================
 
-    @GetMapping("/my/active")
+    @GetMapping({"/my/active", "/current"})
     public ResponseEntity<?> getActiveSubscription(
             Authentication authentication) {
 

@@ -309,10 +309,12 @@ export default function Topbar() {
                             Subscription
                         </a>
 
-                        <a href="/admin">
-                            <FiShield size={18} />
-                            Admin
-                        </a>
+                        {user?.role === "ADMIN" && (
+                            <a href="/admin">
+                                <FiShield size={18} />
+                                Admin
+                            </a>
+                        )}
 
                     </div>
 

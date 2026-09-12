@@ -2,6 +2,7 @@ import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../Components/Dashboard/Sidebar";
 import Topbar from "../Components/Dashboard/Topbar";
+import ErrorBoundary from "../Components/Common/ErrorBoundary";
 import "../styles/dashboard.css";
 
 export default function AppLayout() {
@@ -20,7 +21,9 @@ export default function AppLayout() {
 
                 {/* MAIN CONTENT AREA */}
                 <main className={`dashboard-content ${isCodingArena ? "coding-arena-shell" : ""}`}>
-                    <Outlet />
+                    <ErrorBoundary>
+                        <Outlet />
+                    </ErrorBoundary>
                 </main>
             </div>
         </div>

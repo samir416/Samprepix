@@ -51,6 +51,8 @@ public class SecurityConfig {
 
                                         java.util.Set<String> allowedOrigins = new java.util.LinkedHashSet<>();
                                         allowedOrigins.add("http://localhost:5173");
+                                        allowedOrigins.add("http://127.0.0.1:5173");
+                                        allowedOrigins.add("http://[::1]:5173");
                                         if (frontendUrl != null && !frontendUrl.isBlank()) {
                                                 allowedOrigins.add(frontendUrl.trim());
                                         }
@@ -118,6 +120,7 @@ public class SecurityConfig {
                                                                 "/api/feedback/approve",
                                                                 "/api/feedback/reject",
                                                                 "/api/aptitude/**",
+                                                                "/api/plans/**",
                                                                 "/api/payment/webhook")
                                                 .permitAll()
                                                 // Admin endpoints require ADMIN role (enforced at both URL and method level)

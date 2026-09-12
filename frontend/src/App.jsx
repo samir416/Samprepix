@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import AppLoader from "./Components/Common/AppLoader";
+import ErrorBoundary from "./Components/Common/ErrorBoundary";
 import { initGA, trackPageView } from "./utils/analytics";
 import { updatePageSEO } from "./utils/seo";
 import "./styles/mobile.css";
@@ -98,7 +99,9 @@ function App() {
                 visible={loading}
             />
 
-            <AppRoutes />
+            <ErrorBoundary>
+                <AppRoutes />
+            </ErrorBoundary>
 
         </>
 
