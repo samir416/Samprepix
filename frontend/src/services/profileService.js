@@ -6,18 +6,27 @@ const API =
 const GITHUB_API =
     "http://localhost:8080/api/github";
 
-const getToken = () => {
-    const token = localStorage.getItem("token");
-    if (!token || token === "null" || token === "undefined" || !token.trim()) {
+export const getCleanToken = () => {
+    const raw = localStorage.getItem("token");
+    if (!raw || raw === "null" || raw === "undefined" || !raw.trim()) {
         return null;
     }
-    return token.replace(/^"|"$/g, "").trim();
+    let cleaned = raw.replace(/^"|"$/g, "").trim();
+    if (cleaned.toLowerCase().startsWith("bearer ")) {
+        cleaned = cleaned.substring(7).trim();
+    }
+    return cleaned || null;
 };
 
-const getAuthConfig = () => {
-    const token = getToken();
+export const getAuthConfig = () => {
+    const token = getCleanToken();
+    if (!token) {
+        throw new Error("No authentication token found. Please sign in.");
+    }
     return {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
     };
 };
 
@@ -34,11 +43,18 @@ export async function getProfile() {
 
 export async function updateProfile(data) {
 
+    const config = getAuthConfig();
     const response =
         await axios.put(
             API,
             data,
-            getAuthConfig()
+            {
+                ...config,
+                headers: {
+                    ...config.headers,
+                    "Content-Type": "application/json"
+                }
+            }
         );
 
     return response.data;

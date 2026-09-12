@@ -52,6 +52,10 @@ public class UserProfileController {
 
         String email = resolveEmail(authentication, tokenHeader);
         if (email == null || email.isBlank()) {
+            org.slf4j.LoggerFactory.getLogger(UserProfileController.class)
+                    .warn("PUT /api/profile rejected with 401: unable to resolve email from auth [{}] or header [{}]",
+                            authentication != null ? authentication.getName() : "null",
+                            tokenHeader != null ? "present" : "missing");
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -61,12 +65,19 @@ public class UserProfileController {
 
     private String resolveEmail(Authentication authentication, String tokenHeader) {
         if (authentication != null && authentication.isAuthenticated() && authentication.getName() != null && !authentication.getName().isBlank()) {
-            return authentication.getName();
+            return authentication.getName().trim();
         }
         if (tokenHeader != null && tokenHeader.toLowerCase().startsWith("bearer ")) {
-            String token = tokenHeader.substring(7).replace("\"", "").trim();
+            String rawToken = tokenHeader.substring(7).trim();
+            while (rawToken.toLowerCase().startsWith("bearer ")) {
+                rawToken = rawToken.substring(7).trim();
+            }
+            String token = rawToken.replace("\"", "").trim();
             if (JwtUtil.validateToken(token)) {
-                return JwtUtil.extractEmail(token);
+                String extracted = JwtUtil.extractEmail(token);
+                if (extracted != null && !extracted.isBlank()) {
+                    return extracted.trim();
+                }
             }
         }
         return null;

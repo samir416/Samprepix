@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, AlertCircle } from "lucide-react";
-import { updateProfile } from "../services/profileService";
+import { updateProfile, getCleanToken } from "../services/profileService";
 import { getCurrentUser } from "../services/authService";
 import "../styles/onboarding.css";
 
@@ -40,15 +40,11 @@ export default function Onboarding() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [isSessionExpired, setIsSessionExpired] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
         const checkSession = async () => {
-            const rawToken = localStorage.getItem("token");
-            const token = (!rawToken || rawToken === "null" || rawToken === "undefined" || !rawToken.trim())
-                ? null
-                : rawToken.replace(/^"|"$/g, "").trim();
+            const token = getCleanToken();
 
             if (!token) {
                 navigate("/login", { replace: true });
@@ -66,12 +62,6 @@ export default function Onboarding() {
             } catch (authErr) {
                 if (!isMounted) return;
                 console.warn("Session check on onboarding mount failed:", authErr);
-                if (authErr?.response?.status === 401) {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("user");
-                    localStorage.removeItem("onboardingCompleted");
-                    navigate("/login", { replace: true });
-                }
             }
         };
         checkSession();
@@ -89,7 +79,6 @@ export default function Onboarding() {
 
     const handleChange = (field, value) => {
         if (error) setError("");
-        if (isSessionExpired) setIsSessionExpired(false);
         setFormData(prev => ({
             ...prev,
             [field]: value
@@ -98,26 +87,19 @@ export default function Onboarding() {
 
     const nextStep = () => {
         if (error) setError("");
-        if (isSessionExpired) setIsSessionExpired(false);
         setStep(prev => prev + 1);
     };
 
     const previousStep = () => {
         if (error) setError("");
-        if (isSessionExpired) setIsSessionExpired(false);
         setStep(prev => prev - 1);
     };
 
     const handleSubmit = async () => {
         if (loading) return;
         setError("");
-        setIsSessionExpired(false);
 
-        const rawToken = localStorage.getItem("token");
-        const token = (!rawToken || rawToken === "null" || rawToken === "undefined" || !rawToken.trim())
-            ? null
-            : rawToken.replace(/^"|"$/g, "").trim();
-
+        const token = getCleanToken();
         if (!token) {
             navigate("/login", { replace: true });
             return;
@@ -152,38 +134,27 @@ export default function Onboarding() {
             let refreshedUser = null;
             try {
                 refreshedUser = await getCurrentUser();
-                if (refreshedUser) {
-                    localStorage.setItem("user", JSON.stringify(refreshedUser));
-                }
             } catch (fetchErr) {
                 console.warn("Could not refresh user after onboarding:", fetchErr);
             }
 
+            const finalUser = refreshedUser || {
+                ...storedUser,
+                profileCompleted: true
+            };
+            finalUser.profileCompleted = true;
+
+            localStorage.setItem("user", JSON.stringify(finalUser));
             localStorage.setItem("onboardingCompleted", "true");
 
             navigate("/dashboard", { replace: true });
 
         } catch (err) {
             console.error("Profile update failed:", err);
-            // Verify if JWT itself is genuinely invalid/expired before destroying session
-            try {
-                await getCurrentUser();
-                // JWT is valid - transient or request-level error, do not destroy session
-                setIsSessionExpired(false);
-                const serverMsg = err?.response?.data?.message || (typeof err?.response?.data === "string" ? err?.response?.data : null) || err?.message;
-                setError(serverMsg || "Unable to save your profile. Please check your details and try again.");
-            } catch (verifyErr) {
-                if (verifyErr?.response?.status === 401) {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("user");
-                    localStorage.removeItem("onboardingCompleted");
-                    setIsSessionExpired(true);
-                    setError("Your session has expired. Please sign in again.");
-                } else {
-                    setIsSessionExpired(false);
-                    setError("Unable to save your profile. Please check your connection and try again.");
-                }
-            }
+            const serverMsg = err?.response?.data?.message
+                || (typeof err?.response?.data === "string" ? err?.response?.data : null)
+                || err?.message;
+            setError(serverMsg || "Unable to save your profile. Please check your details and try again.");
         } finally {
             setLoading(false);
         }
@@ -253,27 +224,17 @@ export default function Onboarding() {
                                 <AlertCircle size={18} />
                             </div>
                             <div className="onboarding-error-content">
-                                <h6>{isSessionExpired ? "Session Expired" : "Unable to Save Profile"}</h6>
+                                <h6>Unable to Save Profile</h6>
                                 <p>{error}</p>
                             </div>
-                            {isSessionExpired ? (
-                                <button
-                                    type="button"
-                                    className="onboarding-error-retry-btn"
-                                    onClick={() => navigate("/login")}
-                                >
-                                    Sign In Again
-                                </button>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className="onboarding-error-retry-btn"
-                                    onClick={handleSubmit}
-                                    disabled={loading}
-                                >
-                                    Try Again
-                                </button>
-                            )}
+                            <button
+                                type="button"
+                                className="onboarding-error-retry-btn"
+                                onClick={handleSubmit}
+                                disabled={loading}
+                            >
+                                Try Again
+                            </button>
                         </div>
                     )}
 

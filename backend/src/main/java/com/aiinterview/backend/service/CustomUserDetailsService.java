@@ -24,10 +24,12 @@ public class CustomUserDetailsService
             String email)
             throws UsernameNotFoundException {
 
+        String trimmedEmail = email != null ? email.trim() : "";
         User user = userRepository
-                .findByEmail(email)
+                .findByEmail(trimmedEmail)
+                .or(() -> userRepository.findByEmail(trimmedEmail.toLowerCase()))
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found"));
+                        new UsernameNotFoundException("User not found with email: " + email));
 
         // Load actual role from database — never hardcoded
         String authority = (user.getRole() != null && user.getRole() == Role.ADMIN)

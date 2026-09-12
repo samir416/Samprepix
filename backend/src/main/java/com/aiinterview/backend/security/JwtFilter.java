@@ -70,16 +70,18 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token =
-                authHeader
-                        .substring(7)
-                        .replace("\"", "")
-                        .trim();
+        String rawToken = authHeader.substring(7).trim();
+        while (rawToken.toLowerCase().startsWith("bearer ")) {
+            rawToken = rawToken.substring(7).trim();
+        }
+        String token = rawToken.replace("\"", "").trim();
 
         if (
                 token.isBlank() ||
                 !JwtUtil.validateToken(token)
         ) {
+            org.slf4j.LoggerFactory.getLogger(JwtFilter.class)
+                    .warn("JwtFilter invalid or unparseable token for URI [{}]", request.getRequestURI());
 
             SecurityContextHolder
                     .clearContext();
@@ -161,6 +163,8 @@ public class JwtFilter extends OncePerRequestFilter {
             request.setAttribute("email", email);
 
         } catch (Exception exception) {
+            org.slf4j.LoggerFactory.getLogger(JwtFilter.class)
+                    .error("JwtFilter authentication error for URI [{}]: {}", request.getRequestURI(), exception.getMessage(), exception);
 
             SecurityContextHolder
                     .clearContext();

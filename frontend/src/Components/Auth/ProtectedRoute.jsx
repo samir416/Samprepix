@@ -1,11 +1,9 @@
 import { Navigate, useLocation, Outlet } from "react-router-dom";
+import { getCleanToken } from "../../services/authService";
 
 export default function ProtectedRoute({ children }) {
 
-    const rawToken = localStorage.getItem("token");
-    const token = (!rawToken || rawToken === "null" || rawToken === "undefined" || !rawToken.trim())
-        ? null
-        : rawToken.replace(/^"|"$/g, "").trim();
+    const token = getCleanToken();
 
     let user = null;
     try {

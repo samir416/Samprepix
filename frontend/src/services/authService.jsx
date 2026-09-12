@@ -95,7 +95,11 @@ export const getCleanToken = () => {
     if (!raw || raw === "null" || raw === "undefined" || !raw.trim()) {
         return null;
     }
-    return raw.replace(/^"|"$/g, "").trim();
+    let cleaned = raw.replace(/^"|"$/g, "").trim();
+    if (cleaned.toLowerCase().startsWith("bearer ")) {
+        cleaned = cleaned.substring(7).trim();
+    }
+    return cleaned || null;
 };
 
 export const getCurrentUser = async () => {
