@@ -14,7 +14,7 @@ import java.util.Date;
 public final class JwtUtil {
 
     private static final long EXPIRATION_TIME =
-            1000L * 60 * 60 * 24;
+            1000L * 60 * 60 * 24 * 7; // 7 days
 
     private static final String DEFAULT_SECRET =
             "your-super-secret-key-at-least-32-characters-long";
@@ -117,6 +117,20 @@ public final class JwtUtil {
                         .getPayload();
 
         return claims.getSubject();
+    }
+
+    public static Claims parseClaims(
+            String token
+    ) {
+        if (token == null || token.isBlank()) {
+            throw new IllegalArgumentException("JWT token is required.");
+        }
+
+        return Jwts.parser()
+                .verifyWith(SECRET_KEY)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public static boolean validateToken(

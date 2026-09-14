@@ -71,6 +71,11 @@ export const uploadProfilePicture =
             file
         );
 
+        const token = getCleanToken();
+        if (!token) {
+            throw new Error("No authentication token found. Please sign in.");
+        }
+
         const response =
             await fetch(
                 `${API}/upload-photo`,
@@ -78,7 +83,7 @@ export const uploadProfilePicture =
                     method: "POST",
                     headers: {
                         Authorization:
-                            `Bearer ${getToken()}`
+                            `Bearer ${token}`
                     },
                     body: formData
                 }
@@ -110,6 +115,7 @@ export const getSkillSuggestions =
         signal
     ) => {
 
+        const config = getAuthConfig();
         const response =
             await axios.get(
                 `${API}/skills/suggestions`,
@@ -120,8 +126,7 @@ export const getSkillSuggestions =
                     },
                     signal,
                     headers: {
-                        Authorization:
-                            `Bearer ${getToken()}`
+                        ...config.headers
                     }
                 }
             );

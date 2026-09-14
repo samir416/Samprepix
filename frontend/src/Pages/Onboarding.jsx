@@ -62,6 +62,12 @@ export default function Onboarding() {
             } catch (authErr) {
                 if (!isMounted) return;
                 console.warn("Session check on onboarding mount failed:", authErr);
+                if (authErr?.response?.status === 401) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("onboardingCompleted");
+                    navigate("/login", { replace: true });
+                }
             }
         };
         checkSession();
@@ -151,10 +157,21 @@ export default function Onboarding() {
 
         } catch (err) {
             console.error("Profile update failed:", err);
-            const serverMsg = err?.response?.data?.message
-                || (typeof err?.response?.data === "string" ? err?.response?.data : null)
-                || err?.message;
-            setError(serverMsg || "Unable to save your profile. Please check your details and try again.");
+            const status = err?.response?.status;
+            if (status === 401) {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                localStorage.removeItem("onboardingCompleted");
+                setError("Your session has expired or is invalid. Please sign in again to complete onboarding.");
+                setTimeout(() => {
+                    navigate("/login", { replace: true });
+                }, 1500);
+            } else {
+                const serverMsg = err?.response?.data?.message
+                    || (typeof err?.response?.data === "string" ? err?.response?.data : null)
+                    || err?.message;
+                setError(serverMsg || "Unable to save your profile. Please check your details and try again.");
+            }
         } finally {
             setLoading(false);
         }

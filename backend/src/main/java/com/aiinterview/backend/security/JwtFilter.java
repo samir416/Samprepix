@@ -76,46 +76,55 @@ public class JwtFilter extends OncePerRequestFilter {
         }
         String token = rawToken.replace("\"", "").trim();
 
-        if (
-                token.isBlank() ||
-                !JwtUtil.validateToken(token)
-        ) {
+        if (token.isBlank()) {
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String email = null;
+        try {
+            io.jsonwebtoken.Claims claims = JwtUtil.parseClaims(token);
+            email = claims.getSubject();
+        } catch (io.jsonwebtoken.ExpiredJwtException eje) {
+            int len = token.length();
+            String prefix = len >= 10 ? token.substring(0, 10) : token;
+            String suffix = len >= 10 ? token.substring(len - 10) : token;
             org.slf4j.LoggerFactory.getLogger(JwtFilter.class)
-                    .warn("JwtFilter invalid or unparseable token for URI [{}]", request.getRequestURI());
+                    .warn("JwtFilter expired token for URI [{}] (tokenLen={}, prefix='{}...', suffix='...{}', expiredAt={})",
+                            request.getRequestURI(), len, prefix, suffix, eje.getClaims().getExpiration());
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
+            return;
+        } catch (io.jsonwebtoken.security.SignatureException | io.jsonwebtoken.MalformedJwtException mje) {
+            int len = token.length();
+            String prefix = len >= 10 ? token.substring(0, 10) : token;
+            String suffix = len >= 10 ? token.substring(len - 10) : token;
+            org.slf4j.LoggerFactory.getLogger(JwtFilter.class)
+                    .warn("JwtFilter invalid signature/malformed token for URI [{}] (tokenLen={}, prefix='{}...', suffix='...{}'): {}",
+                            request.getRequestURI(), len, prefix, suffix, mje.getMessage());
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
+            return;
+        } catch (Exception ex) {
+            int len = token.length();
+            String prefix = len >= 10 ? token.substring(0, 10) : token;
+            String suffix = len >= 10 ? token.substring(len - 10) : token;
+            org.slf4j.LoggerFactory.getLogger(JwtFilter.class)
+                    .warn("JwtFilter token parse failed for URI [{}] (tokenLen={}, prefix='{}...', suffix='...{}'): {}",
+                            request.getRequestURI(), len, prefix, suffix, ex.getMessage());
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-            SecurityContextHolder
-                    .clearContext();
-
-            filterChain.doFilter(
-                    request,
-                    response
-            );
-
+        if (email == null || email.isBlank()) {
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
             return;
         }
 
         try {
-
-            String email =
-                    JwtUtil.extractEmail(
-                            token
-                    );
-
-            if (
-                    email == null ||
-                    email.isBlank()
-            ) {
-
-                SecurityContextHolder
-                        .clearContext();
-
-                filterChain.doFilter(
-                        request,
-                        response
-                );
-
-                return;
-            }
 
             UserDetails userDetails =
                     customUserDetailsService

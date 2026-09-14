@@ -97,7 +97,11 @@ public class SecurityConfig {
 
                                                 .exceptionHandling(exception -> exception
                                                                 .defaultAuthenticationEntryPointFor(
-                                                                                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                                                                                (request, response, authException) -> {
+                                                                                        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                                                                                        response.setContentType("application/json;charset=UTF-8");
+                                                                                        response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Authentication required. Please provide a valid Bearer token.\"}");
+                                                                                },
                                                                                 request -> request.getRequestURI().startsWith("/api/"))
                                                                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                                                                         response.setStatus(HttpStatus.FORBIDDEN.value());
