@@ -14,7 +14,7 @@ export default function ProtectedRoute({ children }) {
     const onboardingCompleted =
         user?.profileCompleted === true ||
         user?.role === "ADMIN" ||
-        (localStorage.getItem("onboardingCompleted") === "true" && user?.id);
+        localStorage.getItem("onboardingCompleted") === "true";
 
     const location = useLocation();
 
