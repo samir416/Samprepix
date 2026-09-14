@@ -189,6 +189,7 @@ public class UserProfileService {
 
                 }
 
+                user.setProfile(profile);
                 userRepository.save(user);
 
                 updateProfileCompletion(user, profile);

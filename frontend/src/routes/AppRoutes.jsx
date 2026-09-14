@@ -65,6 +65,7 @@ export default function AppRoutes() {
 
             {/* AUTHENTICATION ROUTES */}
             <Route path="/login" element={<Login />} />
+            <Route path="/signin" element={<Navigate to="/login" replace />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />

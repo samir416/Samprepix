@@ -51,10 +51,21 @@ export default function Onboarding() {
                 return;
             }
 
+            const obFlag = localStorage.getItem("onboardingCompleted") === "true";
+            let cachedUser = null;
+            try {
+                cachedUser = JSON.parse(localStorage.getItem("user"));
+            } catch (_) {}
+
+            if (obFlag || cachedUser?.profileCompleted) {
+                navigate("/dashboard", { replace: true });
+                return;
+            }
+
             try {
                 const user = await getCurrentUser();
                 if (!isMounted) return;
-                if (user?.role === "ADMIN" || user?.profileCompleted) {
+                if (user?.profileCompleted) {
                     localStorage.setItem("onboardingCompleted", "true");
                     localStorage.setItem("user", JSON.stringify(user));
                     navigate("/dashboard", { replace: true });

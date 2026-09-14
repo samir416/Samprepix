@@ -75,6 +75,13 @@ export default function Dashboard() {
 
                 const data = await getCurrentUser();
 
+                if (data && data.profileCompleted === false) {
+                    localStorage.setItem("user", JSON.stringify(data));
+                    localStorage.removeItem("onboardingCompleted");
+                    navigate("/onboarding", { replace: true });
+                    return;
+                }
+
                 setUser(data);
 
                 localStorage.setItem(
@@ -87,7 +94,8 @@ export default function Dashboard() {
                 if (err?.response?.status === 401) {
                     localStorage.removeItem("token");
                     localStorage.removeItem("user");
-                    navigate("/login");
+                    localStorage.removeItem("onboardingCompleted");
+                    navigate("/login", { replace: true });
                 }
             }
 

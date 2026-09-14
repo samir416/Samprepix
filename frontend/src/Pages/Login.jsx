@@ -4,7 +4,7 @@ import Logo from "../assets/Logo.png";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { loginUser, getCurrentUser } from "../services/authService";
+import { loginUser, getCurrentUser, getCleanToken } from "../services/authService";
 import { useSearchParams } from "react-router-dom";
 
 export default function Login() {
@@ -21,7 +21,27 @@ export default function Login() {
         setEmail("");
         setPassword("");
 
-    }, []);
+        const token = searchParams.get("token");
+        if (!token) {
+            const existingToken = getCleanToken();
+            if (existingToken) {
+                try {
+                    const rawUser = localStorage.getItem("user");
+                    if (rawUser) {
+                        const parsed = JSON.parse(rawUser);
+                        if (parsed?.profileCompleted === true) {
+                            navigate("/dashboard", { replace: true });
+                            return;
+                        } else if (parsed?.profileCompleted === false) {
+                            navigate("/onboarding", { replace: true });
+                            return;
+                        }
+                    }
+                } catch (_) {}
+            }
+        }
+
+    }, [navigate, searchParams]);
 
     useEffect(() => {
 
@@ -41,12 +61,12 @@ export default function Login() {
                     JSON.stringify(user)
                 );
 
-                if (user?.role === "ADMIN" || user?.profileCompleted) {
+                if (user?.profileCompleted) {
                     localStorage.setItem("onboardingCompleted", "true");
-                    navigate("/dashboard");
+                    navigate("/dashboard", { replace: true });
                 } else {
                     localStorage.removeItem("onboardingCompleted");
-                    navigate("/onboarding");
+                    navigate("/onboarding", { replace: true });
                 }
 
             } catch {
@@ -189,12 +209,12 @@ export default function Login() {
                                     JSON.stringify(user)
                                 );
 
-                                if (user?.role === "ADMIN" || user?.profileCompleted) {
+                                if (user?.profileCompleted) {
                                     localStorage.setItem("onboardingCompleted", "true");
-                                    navigate("/dashboard");
+                                    navigate("/dashboard", { replace: true });
                                 } else {
                                     localStorage.removeItem("onboardingCompleted");
-                                    navigate("/onboarding");
+                                    navigate("/onboarding", { replace: true });
                                 }
 
                             } catch (err) {

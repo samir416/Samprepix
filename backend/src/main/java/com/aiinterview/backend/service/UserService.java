@@ -467,15 +467,19 @@ public class UserService {
                 user.getProfilePicture()
         );
 
-        response.setProfileCompleted(
-                "ADMIN".equalsIgnoreCase(roleStr)
-                        || (user.getProfile() != null
-                                && (user.getProfile().isProfileCompleted()
-                                        || (user.getProfile().getJourneyType() != null
-                                                && user.getProfile().getTargetRole() != null
-                                                && !user.getProfile().getTargetRole().isBlank()
-                                                && user.getProfile().getCareerGoal() != null)))
-        );
+        UserProfile profile = user.getProfile();
+        if (profile == null) {
+            profile = userProfileRepository.findByUser(user).orElse(null);
+        }
+
+        boolean isCompleted = profile != null
+                && (profile.isProfileCompleted()
+                        || (profile.getJourneyType() != null
+                                && profile.getTargetRole() != null
+                                && !profile.getTargetRole().isBlank()
+                                && profile.getCareerGoal() != null));
+
+        response.setProfileCompleted(isCompleted);
 
         response.setRole(roleStr);
 

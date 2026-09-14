@@ -322,12 +322,12 @@ export default function AuthModal() {
                                             JSON.stringify(user)
                                         );
 
-                                        if (user?.role === "ADMIN" || user?.profileCompleted) {
+                                        if (user?.profileCompleted) {
                                             localStorage.setItem("onboardingCompleted", "true");
-                                            navigate("/dashboard");
+                                            navigate("/dashboard", { replace: true });
                                         } else {
                                             localStorage.removeItem("onboardingCompleted");
-                                            navigate("/onboarding");
+                                            navigate("/onboarding", { replace: true });
                                         }
                                     } catch (err) {
                                         setOtpError(
