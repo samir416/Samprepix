@@ -87,27 +87,17 @@ public class TestController {
         user.setPassword(request.getPassword());
         user.setProvider(AuthenticationProvider.EMAIL);
 
-        String response = userService.saveUser(user);
+        RegisterResponse response = userService.saveUser(user);
 
-        if (response.equals("Email already exists!")
-                || response.equals("Username already exists!")) {
-
+        if (!response.isSuccess()) {
             return ResponseEntity
                     .badRequest()
-                    .body(new RegisterResponse(
-                            false,
-                            response,
-                            null
-                    ));
+                    .body(response);
         }
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(new RegisterResponse(
-                        true,
-                        response,
-                        user.getEmail()
-                ));
+                .body(response);
     }
 
     @PostMapping("/verify-otp")

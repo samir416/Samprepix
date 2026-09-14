@@ -4,7 +4,7 @@ import Logo from "../../assets/Logo.png";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { registerUser, verifyOtp, resendOtp, getCurrentUser } from "../../services/authService";
+import { registerUser, getCurrentUser } from "../../services/authService";
 export default function AuthModal() {
 
     const navigate = useNavigate();
@@ -14,11 +14,6 @@ export default function AuthModal() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const [showOtpModal, setShowOtpModal] = useState(false);
-    const [otp, setOtp] = useState("");
-    const [otpError, setOtpError] = useState("");
-    const [otpMessage, setOtpMessage] = useState("");
-    const [registeredEmail, setRegisteredEmail] = useState("");
     const [loading, setLoading] = useState(false);
 
     return (
@@ -123,9 +118,21 @@ export default function AuthModal() {
                                     password
                                 );
 
-                                setRegisteredEmail(response.email);
-                                setShowOtpModal(true);
-                                setError("");
+                                if (response?.token) {
+                                    localStorage.setItem("token", response.token);
+                                    const user = await getCurrentUser();
+                                    localStorage.setItem("user", JSON.stringify(user));
+                                    if (user?.profileCompleted) {
+                                        localStorage.setItem("onboardingCompleted", "true");
+                                        navigate("/dashboard", { replace: true });
+                                    } else {
+                                        localStorage.removeItem("onboardingCompleted");
+                                        navigate("/onboarding", { replace: true });
+                                    }
+                                } else {
+                                    setError("Account created, but authentication token was missing. Please log in.");
+                                    navigate("/login", { replace: true });
+                                }
 
                             } catch (err) {
 
@@ -271,116 +278,6 @@ export default function AuthModal() {
                 </div>
 
             </section>
-
-            {
-                showOtpModal && (
-
-                    <div className="otp-modal-overlay">
-
-                        <div className="otp-modal">
-
-                            <h3>Verify Email</h3>
-
-                            <p>
-
-                                Enter the OTP sent to
-
-                                <br />
-
-                                <strong>{registeredEmail}</strong>
-
-                            </p>
-
-                            <input
-                                type="text"
-                                maxLength={4}
-                                value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                placeholder="Enter OTP"
-                            />
-
-                            <button
-
-                                onClick={async () => {
-
-                                    try {
-
-                                        const response = await verifyOtp(
-                                            registeredEmail,
-                                            otp
-                                        );
-
-                                        localStorage.setItem(
-                                            "token",
-                                            response.token
-                                        );
-
-                                        const user = await getCurrentUser();
-
-                                        localStorage.setItem(
-                                            "user",
-                                            JSON.stringify(user)
-                                        );
-
-                                        if (user?.profileCompleted) {
-                                            localStorage.setItem("onboardingCompleted", "true");
-                                            navigate("/dashboard", { replace: true });
-                                        } else {
-                                            localStorage.removeItem("onboardingCompleted");
-                                            navigate("/onboarding", { replace: true });
-                                        }
-                                    } catch (err) {
-                                        setOtpError(
-                                            err?.response?.data?.message ||
-                                            err?.response?.data ||
-                                            "Invalid OTP. Please check and try again."
-                                        );
-                                        setOtpMessage("");
-                                    }
-                                }}
-                            >
-                                Verify OTP
-                            </button>
-
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        setOtpError("");
-                                        const response = await resendOtp(
-                                            registeredEmail
-                                        );
-                                        setOtpMessage(response?.message || "OTP resent successfully.");
-                                    } catch (err) {
-                                        setOtpError(
-                                            err?.response?.data?.message ||
-                                            err?.response?.data ||
-                                            "Failed to resend OTP."
-                                        );
-                                        setOtpMessage("");
-                                    }
-                                }}
-                            >
-                                Resend OTP
-                            </button>
-
-                            {otpError && (
-                                <p style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "10px", textAlign: "center" }}>
-                                    {otpError}
-                                </p>
-                            )}
-
-                            {otpMessage && (
-                                <p style={{ color: "#10b981", fontSize: "0.85rem", marginTop: "10px", textAlign: "center" }}>
-                                    {otpMessage}
-                                </p>
-                            )}
-                        </div>
-
-                    </div>
-
-                )
-            }
-
         </>
     );
 }

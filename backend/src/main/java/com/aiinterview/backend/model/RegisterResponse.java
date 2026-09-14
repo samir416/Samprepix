@@ -5,6 +5,7 @@ public class RegisterResponse {
     private boolean success;
     private String message;
     private String email;
+    private String token;
 
     public RegisterResponse() {
     }
@@ -17,6 +18,26 @@ public class RegisterResponse {
         this.success = success;
         this.message = message;
         this.email = email;
+    }
+
+    public RegisterResponse(
+            boolean success,
+            String message,
+            String email,
+            String token) {
+
+        this.success = success;
+        this.message = message;
+        this.email = email;
+        this.token = token;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public boolean isSuccess() {

@@ -5,6 +5,7 @@ import com.aiinterview.backend.entity.AccountStatus;
 import com.aiinterview.backend.entity.EmailVerificationToken;
 import com.aiinterview.backend.entity.PasswordResetToken;
 import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.model.RegisterResponse;
 import com.aiinterview.backend.model.UserResponse;
 import com.aiinterview.backend.repository.EmailVerificationTokenRepository;
 import com.aiinterview.backend.repository.PasswordResetTokenRepository;
@@ -42,8 +43,8 @@ public class UserService {
             UserRepository userRepository,
             UserProfileRepository userProfileRepository,
             PasswordResetTokenRepository tokenRepository,
-            EmailService emailService,
-            EmailVerificationTokenRepository emailVerificationTokenRepository) {
+            EmailVerificationTokenRepository emailVerificationTokenRepository,
+            EmailService emailService) {
 
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
@@ -54,59 +55,43 @@ public class UserService {
     }
 
     // =========================================================
-    // REGISTER
+    // REGISTER (DIRECT ACCOUNT CREATION — NO REGISTRATION OTP)
     // =========================================================
 
-    public String saveUser(User user) {
+    public RegisterResponse saveUser(User user) {
 
         if (userRepository.existsByEmail(user.getEmail())) {
-            return "Email already exists!";
+            return new RegisterResponse(false, "Email already exists!", null, null);
         }
 
         if (userRepository.existsByUsername(user.getUsername())) {
-            return "Username already exists!";
+            return new RegisterResponse(false, "Username already exists!", null, null);
         }
 
         user.setPassword(
                 passwordEncoder.encode(user.getPassword())
         );
 
-        user.setEmailVerified(false);
-        user.setAccountStatus(AccountStatus.PENDING);
+        user.setEmailVerified(true);
+        user.setAccountStatus(AccountStatus.ACTIVE);
 
         userRepository.save(user);
 
         UserProfile profile = new UserProfile();
         profile.setUser(user);
+        profile.setProfileCompleted(false);
 
         user.setProfile(profile);
         userProfileRepository.save(profile);
 
-        emailVerificationTokenRepository
-                .findByUser(user)
-                .ifPresent(emailVerificationTokenRepository::delete);
+        String token = JwtUtil.generateToken(user.getEmail());
 
-        EmailVerificationToken verificationToken =
-                new EmailVerificationToken();
-
-        verificationToken.setUser(user);
-        verificationToken.setOtp(generateOtp());
-        verificationToken.setExpiryTime(
-                LocalDateTime.now().plusMinutes(10)
-        );
-        verificationToken.setUsed(false);
-
-        emailVerificationTokenRepository.save(
-                verificationToken
-        );
-
-        emailService.sendOtpEmail(
+        return new RegisterResponse(
+                true,
+                "Account created successfully!",
                 user.getEmail(),
-                user.getUsername(),
-                verificationToken.getOtp()
+                token
         );
-
-        return "OTP sent successfully!";
     }
 
     // =========================================================
