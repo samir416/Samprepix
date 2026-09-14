@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 public class CustomOAuth2UserService
         extends DefaultOAuth2UserService {
@@ -56,6 +58,7 @@ public class CustomOAuth2UserService
                 gitHubConnectionRepository;
     }
 
+    @Transactional
     @Override
     public OAuth2User loadUser(
             OAuth2UserRequest userRequest
@@ -316,7 +319,7 @@ public class CustomOAuth2UserService
         );
 
         User savedUser =
-                userRepository.save(
+                userRepository.saveAndFlush(
                         newUser
                 );
 
@@ -331,7 +334,7 @@ public class CustomOAuth2UserService
                 profile
         );
 
-        userProfileRepository.save(
+        userProfileRepository.saveAndFlush(
                 profile
         );
 

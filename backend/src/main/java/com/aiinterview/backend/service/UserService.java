@@ -15,6 +15,7 @@ import com.aiinterview.backend.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -58,6 +59,7 @@ public class UserService {
     // REGISTER (DIRECT ACCOUNT CREATION — NO REGISTRATION OTP)
     // =========================================================
 
+    @Transactional
     public RegisterResponse saveUser(User user) {
 
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -75,14 +77,14 @@ public class UserService {
         user.setEmailVerified(true);
         user.setAccountStatus(AccountStatus.ACTIVE);
 
-        userRepository.save(user);
+        userRepository.saveAndFlush(user);
 
         UserProfile profile = new UserProfile();
         profile.setUser(user);
         profile.setProfileCompleted(false);
 
         user.setProfile(profile);
-        userProfileRepository.save(profile);
+        userProfileRepository.saveAndFlush(profile);
 
         String token = JwtUtil.generateToken(user.getEmail());
 

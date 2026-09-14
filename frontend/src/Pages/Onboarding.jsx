@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronDown, AlertCircle } from "lucide-react";
 import { updateProfile, getCleanToken } from "../services/profileService";
 import { getCurrentUser } from "../services/authService";
+import AppLoader from "../Components/Common/AppLoader";
 import "../styles/onboarding.css";
 
 export default function Onboarding() {
@@ -39,6 +40,7 @@ export default function Onboarding() {
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [showSplash, setShowSplash] = useState(false);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -164,7 +166,10 @@ export default function Onboarding() {
             localStorage.setItem("user", JSON.stringify(finalUser));
             localStorage.setItem("onboardingCompleted", "true");
 
-            navigate("/dashboard", { replace: true });
+            setShowSplash(true);
+            setTimeout(() => {
+                navigate("/dashboard", { replace: true });
+            }, 2000);
 
         } catch (err) {
             console.error("Profile update failed:", err);
@@ -191,6 +196,7 @@ export default function Onboarding() {
     return (
 
         <div className="onboarding-page">
+            <AppLoader visible={showSplash} />
 
             <section className="onboarding-wrapper">
 

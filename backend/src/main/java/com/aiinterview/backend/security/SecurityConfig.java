@@ -25,6 +25,7 @@ public class SecurityConfig {
 
         private final JwtFilter jwtFilter;
         private final CustomOAuth2UserService customOAuth2UserService;
+        private final com.aiinterview.backend.security.oauth.CustomOidcUserService customOidcUserService;
         private final OAuth2AuthenticationSuccessHandler successHandler;
         private final OAuth2AuthenticationFailureHandler failureHandler;
         private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
@@ -32,12 +33,14 @@ public class SecurityConfig {
         public SecurityConfig(
                         JwtFilter jwtFilter,
                         CustomOAuth2UserService customOAuth2UserService,
+                        com.aiinterview.backend.security.oauth.CustomOidcUserService customOidcUserService,
                         OAuth2AuthenticationSuccessHandler successHandler,
                         OAuth2AuthenticationFailureHandler failureHandler,
                         HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository) {
 
                 this.jwtFilter = jwtFilter;
                 this.customOAuth2UserService = customOAuth2UserService;
+                this.customOidcUserService = customOidcUserService;
                 this.successHandler = successHandler;
                 this.failureHandler = failureHandler;
                 this.cookieAuthorizationRequestRepository = cookieAuthorizationRequestRepository;
@@ -89,7 +92,9 @@ public class SecurityConfig {
                                                 .redirectionEndpoint(
                                                                 endpoint -> endpoint.baseUri("/login/oauth2/code/*"))
 
-                                                .userInfoEndpoint(user -> user.userService(customOAuth2UserService))
+                                                .userInfoEndpoint(user -> user
+                                                                .userService(customOAuth2UserService)
+                                                                .oidcUserService(customOidcUserService))
 
                                                 .successHandler(successHandler)
 

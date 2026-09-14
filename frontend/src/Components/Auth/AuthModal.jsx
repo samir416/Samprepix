@@ -1,4 +1,5 @@
 import Navbar from "../Common/Navbar";
+import AppLoader from "../Common/AppLoader";
 import "../../styles/authmodal.css";
 import Logo from "../../assets/Logo.png";
 import { Link } from "react-router-dom";
@@ -15,10 +16,12 @@ export default function AuthModal() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showSplash, setShowSplash] = useState(false);
 
     return (
 
         <>
+            <AppLoader visible={showSplash} />
 
             <Navbar />
 
@@ -55,22 +58,18 @@ export default function AuthModal() {
                             type="button"
                             onClick={() => {
                                 window.location.href =
-                                    "http://localhost:8080/oauth2/register/github";
-                            }}>
-
-                            <span>
-                                ⌘
-                            </span>
-
+                                    "http://localhost:8080/oauth2/authorize/github";
+                            }}
+                        >
+                            <span>⌘</span>
                             GitHub
-
                         </button>
 
                         <button
                             type="button"
                             onClick={() => {
                                 window.location.href =
-                                    "http://localhost:8080/oauth2/register/google";
+                                    "http://localhost:8080/oauth2/authorize/google";
                             }}
 
                         >
@@ -124,7 +123,10 @@ export default function AuthModal() {
                                     localStorage.setItem("user", JSON.stringify(user));
                                     if (user?.profileCompleted) {
                                         localStorage.setItem("onboardingCompleted", "true");
-                                        navigate("/dashboard", { replace: true });
+                                        setShowSplash(true);
+                                        setTimeout(() => {
+                                            navigate("/dashboard", { replace: true });
+                                        }, 2000);
                                     } else {
                                         localStorage.removeItem("onboardingCompleted");
                                         navigate("/onboarding", { replace: true });
