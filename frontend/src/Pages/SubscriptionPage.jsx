@@ -31,6 +31,7 @@ import {
     FaUnlock,
     FaChartLine
 } from "react-icons/fa";
+import ConfirmModal from "../Components/Common/ConfirmModal";
 
 export default function SubscriptionPage() {
 
@@ -48,6 +49,7 @@ export default function SubscriptionPage() {
 
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+    const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: "", onConfirm: null });
 
     const [currency, setCurrency] = useState("INR");
 
@@ -478,16 +480,12 @@ export default function SubscriptionPage() {
             return;
         }
 
-        const confirmed =
-            window.confirm(
-                "Cancel your subscription?"
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
+        setConfirmModal({
+            isOpen: true,
+            message: "Cancel your subscription?",
+            onConfirm: async () => {
+                setConfirmModal({ isOpen: false, message: "", onConfirm: null });
+                try {
 
             setError(null);
             setProcessing(true);
@@ -524,6 +522,8 @@ export default function SubscriptionPage() {
 
             setProcessing(false);
         }
+            }
+        });
     };
 
     // =========================================================
@@ -1018,6 +1018,13 @@ export default function SubscriptionPage() {
                 </div>
 
             </div>
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal({ isOpen: false, message: "", onConfirm: null })}
+            />
 
         </div>
     );

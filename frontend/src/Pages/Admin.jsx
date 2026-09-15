@@ -41,6 +41,7 @@ import {
 } from "react-icons/fi";
 
 import { FaCrown } from "react-icons/fa";
+import ConfirmModal from "../Components/Common/ConfirmModal";
 
 export default function Admin() {
     const navigate = useNavigate();
@@ -55,6 +56,7 @@ export default function Admin() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [adminVerified, setAdminVerified] = useState(false);
+    const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: "", onConfirm: null });
 
     const [userRoleFilter, setUserRoleFilter] = useState("");
     const [userStatusFilter, setUserStatusFilter] = useState("");
@@ -228,25 +230,23 @@ export default function Admin() {
     // =========================================================
 
     const handleDeleteUser = async (id) => {
-        if (
-            !window.confirm(
-                "Are you sure you want to delete this user?"
-            )
-        ) {
-            return;
-        }
-
-        try {
-            await deleteUser(id);
-            await loadData();
-        } catch (err) {
-            console.error(err);
-
-            setError(
-                err?.response?.data?.message ||
-                "Failed to delete user"
-            );
-        }
+        setConfirmModal({
+            isOpen: true,
+            message: "Are you sure you want to delete this user?",
+            onConfirm: async () => {
+                setConfirmModal({ isOpen: false, message: "", onConfirm: null });
+                try {
+                    await deleteUser(id);
+                    await loadData();
+                } catch (err) {
+                    console.error(err);
+                    setError(
+                        err?.response?.data?.message ||
+                        "Failed to delete user"
+                    );
+                }
+            }
+        });
     };
 
     const handleUpdateUserRole = async (
@@ -463,26 +463,23 @@ export default function Admin() {
     const handleRevokeAllEntitlements = async (
         userId
     ) => {
-        if (
-            !window.confirm(
-                "Revoke all entitlements for this user?"
-            )
-        ) {
-            return;
-        }
-
-        try {
-            await revokeAllEntitlements(userId);
-
-            await loadData();
-        } catch (err) {
-            console.error(err);
-
-            setError(
-                err?.response?.data?.message ||
-                "Failed to revoke entitlements"
-            );
-        }
+        setConfirmModal({
+            isOpen: true,
+            message: "Revoke all entitlements for this user?",
+            onConfirm: async () => {
+                setConfirmModal({ isOpen: false, message: "", onConfirm: null });
+                try {
+                    await revokeAllEntitlements(userId);
+                    await loadData();
+                } catch (err) {
+                    console.error(err);
+                    setError(
+                        err?.response?.data?.message ||
+                        "Failed to revoke entitlements"
+                    );
+                }
+            }
+        });
     };
 
     // =========================================================
@@ -1537,15 +1534,14 @@ export default function Admin() {
                                                                 <button
                                                                     className="admin-btn-danger"
                                                                     onClick={() => {
-                                                                        if (
-                                                                            window.confirm(
-                                                                                "Delete this plan?"
-                                                                            )
-                                                                        ) {
-                                                                            handleDeletePlan(
-                                                                                plan.id
-                                                                            );
-                                                                        }
+                                                                        setConfirmModal({
+                                                                            isOpen: true,
+                                                                            message: "Delete this plan?",
+                                                                            onConfirm: () => {
+                                                                                setConfirmModal({ isOpen: false, message: "", onConfirm: null });
+                                                                                handleDeletePlan(plan.id);
+                                                                            }
+                                                                        });
                                                                     }}
                                                                 >
                                                                     Delete
@@ -2000,9 +1996,15 @@ export default function Admin() {
                                     </div>
                                 </div>
                             )}
-
                         </div>
                     )}
+
+                <ConfirmModal
+                    isOpen={confirmModal.isOpen}
+                    message={confirmModal.message}
+                    onConfirm={confirmModal.onConfirm}
+                    onCancel={() => setConfirmModal({ isOpen: false, message: "", onConfirm: null })}
+                />
 
             </main>
         </div>

@@ -35,19 +35,7 @@ public class TestController {
     private final UserService userService;
     private final EntitlementService entitlementService;
 
-    // =========================================================
-    // BASIC HEALTH CHECK
-    // =========================================================
 
-    @GetMapping("/")
-    public String home() {
-        return "Backend is running successfully!";
-    }
-
-    @GetMapping("/test")
-    public String test() {
-        return "Test api is working!";
-    }
 
     // =========================================================
     // AUTHENTICATION
@@ -319,23 +307,5 @@ public class TestController {
         return ResponseEntity.ok(
                 "User deleted successfully!"
         );
-    }
-
-    // =========================================================
-    // TEST ENDPOINT
-    // =========================================================
-
-    @PostMapping("/login-test")
-    public String loginTest() {
-        return "working";
-    }
-
-    // =========================================================
-    // PROFILE TEST
-    // =========================================================
-
-    @GetMapping("/profile")
-    public String profile() {
-        return "Profile Access Granted";
     }
 }

@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 
 import {
     Moon,
@@ -10,10 +11,6 @@ import logo from "../../assets/Logo.png";
 import "../../styles/home.css";
 
 import {
-    useLocation
-} from "react-router-dom";
-
-import {
     useEffect,
     useState
 } from "react";
@@ -23,6 +20,9 @@ function Navbar() {
     const location = useLocation();
 
     const [darkMode, setDarkMode] = useState(false);
+
+    const isLogin = location.pathname === "/login";
+    const isSignup = location.pathname === "/auth" || location.pathname === "/register";
 
     /* LOAD SAVED THEME */
 
@@ -155,21 +155,59 @@ function Navbar() {
                     </button>
 
                     <Link
-                        className="signin-btn"
+                        className={isLogin ? "getstarted-btn" : "signin-btn"}
                         to="/login"
+                        style={{
+                            position: "relative",
+                            overflow: "hidden",
+                            background: isLogin ? "transparent" : "",
+                            padding: "8px 16px",
+                            fontWeight: 400,
+                            color: isLogin ? "#fff" : (darkMode ? "#ffffff" : "#0f172a"),
+                        }}
                     >
-
-                        Sign in
-
+                        {isLogin && (
+                            <motion.div
+                                layoutId="nav-auth-bg"
+                                style={{
+                                    position: "absolute",
+                                    top: 0, left: 0, right: 0, bottom: 0,
+                                    background: "linear-gradient(90deg, #6366f1, #06b6d4)",
+                                    borderRadius: "14px",
+                                    zIndex: 0
+                                }}
+                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                            />
+                        )}
+                        <span style={{ position: "relative", zIndex: 1 }}>Sign in</span>
                     </Link>
 
                     <Link
-                        className="getstarted-btn"
+                        className={isSignup ? "getstarted-btn" : "signin-btn"}
                         to="/auth"
+                        style={{
+                            position: "relative",
+                            overflow: "hidden",
+                            background: isSignup ? "transparent" : "",
+                            padding: "7px 19px",
+                            fontWeight: 500,
+                            color: isSignup ? "#fff" : (darkMode ? "#ffffff" : "#0f172a"),
+                        }}
                     >
-
-                        Get started
-
+                        {isSignup && (
+                            <motion.div
+                                layoutId="nav-auth-bg"
+                                style={{
+                                    position: "absolute",
+                                    top: 0, left: 0, right: 0, bottom: 0,
+                                    background: "linear-gradient(90deg, #6366f1, #06b6d4)",
+                                    borderRadius: "14px",
+                                    zIndex: 0
+                                }}
+                                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                            />
+                        )}
+                        <span style={{ position: "relative", zIndex: 1 }}>Get started</span>
                     </Link>
 
                 </div>
