@@ -1975,3 +1975,55 @@ body.dark-theme {
     scrollbar-width: none !important;
 }
 
+
+/* =========================================================
+   NAVBAR AUTH BUTTONS (NEW)
+   ========================================================= */
+
+.nav-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 18px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+/* Light mode defaults */
+body:not(.dark-theme) .nav-auth-btn {
+    color: #0f172a;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+body:not(.dark-theme) .nav-auth-btn:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #2563eb;
+}
+
+/* Dark mode defaults */
+body.dark-theme .nav-auth-btn {
+    color: #f1f5f9;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+body.dark-theme .nav-auth-btn:hover {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.25);
+    color: #a5b4fc;
+}
+
+/* Active State (gradient shows through transparent bg) */
+.nav-auth-btn.active-auth-btn {
+    color: #ffffff !important;
+    background: transparent !important;
+    border-color: transparent !important;
+}
+

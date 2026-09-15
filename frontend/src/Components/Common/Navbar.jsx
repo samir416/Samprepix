@@ -155,16 +155,8 @@ function Navbar() {
                     </button>
 
                     <Link
-                        className={isLogin ? "getstarted-btn" : "signin-btn"}
+                        className={`nav-auth-btn ${isLogin ? "active-auth-btn" : ""}`}
                         to="/login"
-                        style={{
-                            position: "relative",
-                            overflow: "hidden",
-                            background: isLogin ? "transparent" : "",
-                            padding: "8px 16px",
-                            fontWeight: 400,
-                            color: isLogin ? "#fff" : (darkMode ? "#ffffff" : "#0f172a"),
-                        }}
                     >
                         {isLogin && (
                             <motion.div
@@ -183,16 +175,8 @@ function Navbar() {
                     </Link>
 
                     <Link
-                        className={isSignup ? "getstarted-btn" : "signin-btn"}
+                        className={`nav-auth-btn ${isSignup ? "active-auth-btn" : ""}`}
                         to="/auth"
-                        style={{
-                            position: "relative",
-                            overflow: "hidden",
-                            background: isSignup ? "transparent" : "",
-                            padding: "7px 19px",
-                            fontWeight: 500,
-                            color: isSignup ? "#fff" : (darkMode ? "#ffffff" : "#0f172a"),
-                        }}
                     >
                         {isSignup && (
                             <motion.div

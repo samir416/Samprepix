@@ -43,6 +43,8 @@ export default function Topbar() {
     const [openMobileNotifications, setOpenMobileNotifications] =
         useState(false);
 
+    const [globalSearch, setGlobalSearch] = useState("");
+
     const [unreadCount, setUnreadCount] = useState(0);
 
     const [openMobileProfile, setOpenMobileProfile] =
@@ -93,6 +95,13 @@ export default function Topbar() {
         }
 
     }, []);
+
+    const handleGlobalSearch = (e) => {
+        if (e.key === "Enter" && globalSearch.trim()) {
+            navigate(`/coding-arena?search=${encodeURIComponent(globalSearch.trim())}`);
+            setGlobalSearch(""); // clear after search
+        }
+    };
 
 
 
@@ -325,6 +334,9 @@ export default function Topbar() {
                     <input
                         type="text"
                         placeholder="Search problems, topics..."
+                        value={globalSearch}
+                        onChange={(e) => setGlobalSearch(e.target.value)}
+                        onKeyDown={handleGlobalSearch}
                     />
 
                 </div>
@@ -551,6 +563,9 @@ export default function Topbar() {
                     <input
                         type="text"
                         placeholder="Search problems, topics..."
+                        value={globalSearch}
+                        onChange={(e) => setGlobalSearch(e.target.value)}
+                        onKeyDown={handleGlobalSearch}
                     />
 
                 </div>

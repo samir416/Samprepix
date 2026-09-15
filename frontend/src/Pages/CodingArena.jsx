@@ -1074,9 +1074,16 @@ export default function CodingArena() {
             setLoading(true);
             setError("");
 
+            const params = new URLSearchParams(window.location.search);
+            const initialSearch = params.get("search") || "";
+
+            if (initialSearch) {
+                setProblemSearch(initialSearch);
+            }
+
             const [problemsResponse, progressResponse, tagsResponse, languagesResponse] =
                 await Promise.all([
-                    getCodingProblems(0, 50, "", "", ""),
+                    getCodingProblems(0, 50, initialSearch, "", ""),
                     getCodingProgress(),
                     getCodingProblemTags().catch(() => ({ data: [] })),
                     getCodingLanguages().catch(() => ({ data: { all: [], popular: [] } }))
