@@ -15,4 +15,5 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     List<Subscription> findByUserId(Long userId);
     Optional<Subscription> findByRazorpaySubscriptionId(String razorpaySubscriptionId);
     Optional<Subscription> findByRazorpayOrderId(String razorpayOrderId);
+    Optional<Subscription> findByCashfreeOrderId(String cashfreeOrderId);
 }

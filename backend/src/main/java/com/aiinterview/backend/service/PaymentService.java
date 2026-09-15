@@ -9,8 +9,6 @@ import com.aiinterview.backend.repository.PaymentRepository;
 import com.aiinterview.backend.repository.PlanRepository;
 import com.aiinterview.backend.repository.SubscriptionRepository;
 import com.aiinterview.backend.repository.UserRepository;
-import com.razorpay.RazorpayClient;
-import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,15 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import com.aiinterview.backend.entity.Invoice;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -40,24 +37,26 @@ public class PaymentService {
     private final InvoiceService invoiceService;
     private final PlanService planService;
 
-    @Value("${razorpay.key.id}")
-    private String razorpayKeyId;
+    @Value("${cashfree.client.id}")
+    private String cashfreeClientId;
 
-    @Value("${razorpay.key.secret}")
-    private String razorpayKeySecret;
+    @Value("${cashfree.client.secret}")
+    private String cashfreeClientSecret;
 
-    @Value("${razorpay.webhook.secret}")
-    private String webhookSecret;
+    @Value("${cashfree.environment:TEST}")
+    private String cashfreeEnvironment;
 
-    /*
-     * Backend-controlled referral codes.
-     * Frontend cannot change the final amount.
-     */
-    private static final Set<String> VALID_REFERRAL_CODES =
-            Set.of("SAMIR100");
+    private static final Set<String> VALID_REFERRAL_CODES = Set.of("SAMIR100");
+
+    private String getCashfreeBaseUrl() {
+        if ("PRODUCTION".equalsIgnoreCase(cashfreeEnvironment)) {
+            return "https://api.cashfree.com/pg";
+        }
+        return "https://sandbox.cashfree.com/pg";
+    }
 
     // =========================================================
-    // CREATE RAZORPAY ORDER
+    // CREATE CASHFREE ORDER
     // =========================================================
 
     @Transactional
@@ -75,899 +74,299 @@ public class PaymentService {
         }
 
         Plan plan;
-
         try {
-            plan = planRepository.findById(
-                    Long.parseLong(request.getPlanId())
-            ).orElseThrow(() ->
-                    new RuntimeException("Plan not found")
-            );
+            plan = planRepository.findById(Long.parseLong(request.getPlanId()))
+                    .orElseThrow(() -> new RuntimeException("Plan not found"));
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid plan ID");
         }
 
         String planName = plan.getName();
-
         if (planName == null || planName.isBlank()) {
             throw new RuntimeException("Invalid plan configuration");
         }
 
-        String currency =
-                request.getCurrency() != null
-                        && !request.getCurrency().isBlank()
-                        ? request.getCurrency().trim().toUpperCase()
-                        : "INR";
+        String currency = request.getCurrency() != null && !request.getCurrency().isBlank()
+                ? request.getCurrency().trim().toUpperCase() : "INR";
 
         double amount;
         boolean referralApplied = false;
         double discountAmount = 0.0;
 
-        // ---------------------------------------------------------
-        // SERVER-SIDE PRICING
-        // ---------------------------------------------------------
-
         if (isTestMode) {
-
             amount = planService.getTestPrice(planName);
-
         } else {
+            boolean isIndia = "INR".equalsIgnoreCase(currency);
+            amount = isIndia ? planService.getProductionPrice(planName) : planService.getProductionPriceUsd(planName);
 
-            boolean isIndia =
-                    "INR".equalsIgnoreCase(currency);
-
-            amount = isIndia
-                    ? planService.getProductionPrice(planName)
-                    : planService.getProductionPriceUsd(planName);
-
-            // -----------------------------------------------------
-            // SERVER-SIDE REFERRAL VALIDATION
-            // -----------------------------------------------------
-
-            String referralCode =
-                    request.getReferralCode();
-
-            if (referralCode != null
-                    && !referralCode.isBlank()
-                    && VALID_REFERRAL_CODES.contains(
-                    referralCode.trim().toUpperCase()
-            )) {
-
+            String referralCode = request.getReferralCode();
+            if (referralCode != null && !referralCode.isBlank() && VALID_REFERRAL_CODES.contains(referralCode.trim().toUpperCase())) {
                 if (!"STARTER".equalsIgnoreCase(planName)) {
-
-                    discountAmount =
-                            isIndia
-                                    ? 100.0
-                                    : 1.0;
-
-                    amount =
-                            Math.max(
-                                    0.0,
-                                    amount - discountAmount
-                            );
-
+                    discountAmount = isIndia ? 100.0 : 1.0;
+                    amount = Math.max(0.0, amount - discountAmount);
                     referralApplied = true;
                 }
             }
         }
 
-        if (amount < 0) {
-            throw new IllegalArgumentException(
-                    "Invalid payment amount"
-            );
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Invalid payment amount");
         }
 
-        int amountInPaise =
-                (int) Math.round(amount * 100);
+        String orderId = "order_" + user.getId() + "_" + System.currentTimeMillis();
+        String paymentSessionId = null;
 
-        if (amountInPaise < 0) {
-            throw new IllegalArgumentException(
-                    "Invalid payment amount"
-            );
-        }
-
-        String orderId;
-        boolean isPlaceholder = razorpayKeyId == null || razorpayKeyId.isBlank()
-                || razorpayKeyId.contains("placeholder") || razorpayKeyId.contains("mock");
+        boolean isPlaceholder = cashfreeClientId == null || cashfreeClientId.isBlank() || cashfreeClientId.contains("placeholder") || cashfreeClientId.contains("test_client");
 
         if (isPlaceholder) {
-            orderId = "order_test_" + System.currentTimeMillis() + "_" + Math.round(amount);
+            paymentSessionId = "session_mock_" + System.currentTimeMillis();
         } else {
             try {
-                RazorpayClient razorpay =
-                        new RazorpayClient(
-                                razorpayKeyId,
-                                razorpayKeySecret
-                        );
+                JSONObject customerDetails = new JSONObject();
+                customerDetails.put("customer_id", "user_" + user.getId());
+                customerDetails.put("customer_name", user.getName() != null ? user.getName() : "User");
+                customerDetails.put("customer_email", user.getEmail());
+                customerDetails.put("customer_phone", "9999999999");
 
-                JSONObject orderRequest =
-                        new JSONObject();
+                JSONObject orderRequest = new JSONObject();
+                orderRequest.put("order_amount", amount);
+                orderRequest.put("order_currency", currency);
+                orderRequest.put("order_id", orderId);
+                orderRequest.put("customer_details", customerDetails);
 
-                orderRequest.put(
-                        "amount",
-                        amountInPaise
-                );
+                JSONObject orderMeta = new JSONObject();
+                orderMeta.put("return_url", "http://localhost:5173/payment/verify?order_id={order_id}");
+                orderRequest.put("order_meta", orderMeta);
 
-                orderRequest.put(
-                        "currency",
-                        currency
-                );
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(getCashfreeBaseUrl() + "/orders"))
+                        .header("accept", "application/json")
+                        .header("content-type", "application/json")
+                        .header("x-client-id", cashfreeClientId)
+                        .header("x-client-secret", cashfreeClientSecret)
+                        .header("x-api-version", "2023-08-01")
+                        .POST(HttpRequest.BodyPublishers.ofString(orderRequest.toString(), StandardCharsets.UTF_8))
+                        .build();
 
-                orderRequest.put(
-                        "receipt",
-                        "receipt_"
-                                + user.getId()
-                                + "_"
-                                + System.currentTimeMillis()
-                );
-
-                com.razorpay.Order razorpayOrder =
-                        razorpay.orders.create(
-                                orderRequest
-                        );
-
-                orderId = razorpayOrder.get("id");
-
-                if (orderId == null || orderId.isBlank()) {
-                    throw new RuntimeException(
-                            "Razorpay did not return an order ID"
-                    );
-                }
-            } catch (RazorpayException e) {
-                if (e.getMessage() != null && e.getMessage().contains("Authentication failed")) {
-                    orderId = "order_test_" + System.currentTimeMillis() + "_" + Math.round(amount);
+                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+                if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+                    JSONObject jsonResponse = new JSONObject(resp.body());
+                    paymentSessionId = jsonResponse.getString("payment_session_id");
                 } else {
-                    throw new RuntimeException("Failed to create Razorpay order: " + e.getMessage());
+                    throw new RuntimeException("Failed to create Cashfree order. Status: " + resp.statusCode() + " Body: " + resp.body());
+                }
+            } catch (Exception e) {
+                if (e.getMessage() != null && e.getMessage().contains("Authentication failed")) {
+                    paymentSessionId = "session_mock_" + System.currentTimeMillis();
+                } else {
+                    throw new RuntimeException("Failed to create Cashfree order: " + e.getMessage());
                 }
             }
         }
 
-            Optional<Payment> existingPayment =
-                    paymentRepository
-                            .findByRazorpayOrderId(orderId);
+        Optional<Payment> existingPayment = paymentRepository.findByCashfreeOrderId(orderId);
+        if (existingPayment.isEmpty()) {
+            Payment payment = Payment.builder()
+                    .user(user)
+                    .plan(plan)
+                    .cashfreeOrderId(orderId)
+                    .cashfreeSessionId(paymentSessionId)
+                    .amount(amount)
+                    .currency(currency)
+                    .paymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "cashfree")
+                    .paymentStatus("PENDING")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            paymentRepository.save(payment);
+        }
 
-            if (existingPayment.isEmpty()) {
-
-                Payment payment =
-                        Payment.builder()
-                                .user(user)
-                                .plan(plan)
-                                .razorpayOrderId(orderId)
-                                .razorpayPaymentId("pending")
-                                .razorpaySignature("pending")
-                                .amount(amount)
-                                .currency(currency)
-                                .paymentMethod(
-                                        request.getPaymentMethod() != null
-                                                ? request.getPaymentMethod()
-                                                : "razorpay"
-                                )
-                                .paymentStatus("PENDING")
-                                .paidAt(null)
-                                .createdAt(
-                                        LocalDateTime.now()
-                                )
-                                .build();
-
-                paymentRepository.save(payment);
-            }
-
-            Map<String, Object> response =
-                    new HashMap<>();
-
-            response.put(
-                    "orderId",
-                    orderId
-            );
-
-            response.put(
-                    "razorpayOrderId",
-                    orderId
-            );
-
-            response.put(
-                    "amount",
-                    amount
-            );
-
-            response.put(
-                    "currency",
-                    currency
-            );
-
-            response.put(
-                    "key",
-                    razorpayKeyId
-            );
-
-            response.put(
-                    "status",
-                    "CREATED"
-            );
-
-            response.put(
-                    "planId",
-                    plan.getId()
-            );
-
-            response.put(
-                    "planName",
-                    planName
-            );
-
-            response.put(
-                    "testMode",
-                    isTestMode
-            );
-
-            response.put(
-                    "referralApplied",
-                    referralApplied
-            );
-
-            if (referralApplied) {
-                response.put(
-                        "discountAmount",
-                        discountAmount
-                );
-            }
-
-            return response;
+        Map<String, Object> response = new HashMap<>();
+        response.put("orderId", orderId); // kept for frontend compatibility
+        response.put("cashfreeOrderId", orderId);
+        response.put("paymentSessionId", paymentSessionId);
+        response.put("amount", amount);
+        response.put("currency", currency);
+        response.put("environment", cashfreeEnvironment);
+        response.put("status", "CREATED");
+        response.put("planId", plan.getId());
+        response.put("planName", planName);
+        response.put("testMode", isTestMode);
+        response.put("referralApplied", referralApplied);
+        if (referralApplied) {
+            response.put("discountAmount", discountAmount);
+        }
+        return response;
     }
 
     // =========================================================
-    // VERIFY PAYMENT
+    // VERIFY PAYMENT SERVER-SIDE
     // =========================================================
 
     @Transactional
-    public Map<String, Object> verifyAndActivatePayment(
-            String razorpayOrderId,
-            String razorpayPaymentId,
-            String razorpaySignature,
-            Long authenticatedUserId) {
+    public Map<String, Object> verifyAndActivatePayment(String orderId, Long authenticatedUserId) {
+        if (authenticatedUserId == null) throw new SecurityException("Authenticated user is required");
+        if (orderId == null || orderId.isBlank()) throw new IllegalArgumentException("Missing order ID");
 
-        if (authenticatedUserId == null) {
-            throw new SecurityException(
-                    "Authenticated user is required"
-            );
+        // We check for cashfreeOrderId. If frontend sends razorpay_order_id, it will be handled appropriately by controller mapping.
+        Payment payment = paymentRepository.findByCashfreeOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+        if (payment.getUser() == null || payment.getUser().getId() == null || !payment.getUser().getId().equals(authenticatedUserId)) {
+            throw new SecurityException("Payment does not belong to authenticated user");
         }
 
-        if (isBlank(razorpayOrderId)
-                || isBlank(razorpayPaymentId)
-                || isBlank(razorpaySignature)) {
-
-            throw new IllegalArgumentException(
-                    "Missing payment verification parameters"
-            );
-        }
-
-        Payment payment =
-                paymentRepository
-                        .findByRazorpayOrderId(
-                                razorpayOrderId
-                        )
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Payment not found"
-                                )
-                        );
-
-        // ---------------------------------------------------------
-        // IDOR PROTECTION
-        // ---------------------------------------------------------
-
-        if (payment.getUser() == null
-                || payment.getUser().getId() == null
-                || !payment.getUser()
-                .getId()
-                .equals(authenticatedUserId)) {
-
-            throw new SecurityException(
-                    "Payment does not belong to authenticated user"
-            );
-        }
-
-        // ---------------------------------------------------------
-        // IDEMPOTENCY
-        // ---------------------------------------------------------
-
-        if ("SUCCESS".equalsIgnoreCase(
-                payment.getPaymentStatus()
-        )) {
-
-            Subscription existingSubscription =
-                    subscriptionRepository
-                            .findByRazorpayOrderId(
-                                    razorpayOrderId
-                            )
-                            .orElse(null);
-
-            Map<String, Object> response =
-                    new HashMap<>();
-
-            response.put(
-                    "status",
-                    "already_success"
-            );
-
-            response.put(
-                    "message",
-                    "Payment already verified"
-            );
-
+        if ("SUCCESS".equalsIgnoreCase(payment.getPaymentStatus())) {
+            Subscription existingSubscription = subscriptionRepository.findByCashfreeOrderId(orderId).orElse(null);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "already_success");
+            response.put("message", "Payment already verified");
             if (existingSubscription != null) {
-                response.put(
-                        "subscriptionId",
-                        existingSubscription.getId()
-                );
+                response.put("subscriptionId", existingSubscription.getId());
             }
-
             return response;
         }
 
-        // ---------------------------------------------------------
-        // RAZORPAY SIGNATURE
-        // ---------------------------------------------------------
+        // Verify with Cashfree API
+        boolean isPlaceholder = cashfreeClientId == null || cashfreeClientId.isBlank() || cashfreeClientId.contains("placeholder") || cashfreeClientId.contains("test_client");
+        boolean isPaid = false;
 
-        if (!verifyRazorpaySignature(
-                razorpayOrderId,
-                razorpayPaymentId,
-                razorpaySignature
-        )) {
+        if (isPlaceholder) {
+            isPaid = true; // Mock success
+        } else {
+            try {
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(getCashfreeBaseUrl() + "/orders/" + orderId))
+                        .header("accept", "application/json")
+                        .header("x-client-id", cashfreeClientId)
+                        .header("x-client-secret", cashfreeClientSecret)
+                        .header("x-api-version", "2023-08-01")
+                        .GET()
+                        .build();
 
+                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+                if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+                    JSONObject jsonResponse = new JSONObject(resp.body());
+                    String status = jsonResponse.optString("order_status");
+                    if ("PAID".equalsIgnoreCase(status)) {
+                        isPaid = true;
+                    }
+                } else {
+                    throw new RuntimeException("Failed to verify Cashfree order. Status: " + resp.statusCode());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Payment verification failed: " + e.getMessage());
+            }
+        }
+
+        if (!isPaid) {
             payment.setPaymentStatus("FAILED");
             paymentRepository.save(payment);
-
-            throw new RuntimeException(
-                    "Invalid payment signature"
-            );
+            throw new RuntimeException("Payment is not in PAID status");
         }
 
-        User user =
-                payment.getUser();
+        return activateEntitlements(payment, orderId);
+    }
 
-        Plan plan =
-                payment.getPlan();
+    private Map<String, Object> activateEntitlements(Payment payment, String orderId) {
+        User user = payment.getUser();
+        Plan plan = payment.getPlan();
+        if (plan == null) throw new RuntimeException("Payment has no associated plan");
 
-        if (plan == null) {
-            throw new RuntimeException(
-                    "Payment has no associated plan"
-            );
-        }
-
-        double amount =
-                payment.getAmount();
-
-        String currency =
-                payment.getCurrency();
-
-        // ---------------------------------------------------------
-        // MARK PAYMENT SUCCESS
-        // ---------------------------------------------------------
-
-        payment.setRazorpayPaymentId(
-                razorpayPaymentId
-        );
-
-        payment.setRazorpaySignature(
-                razorpaySignature
-        );
-
-        payment.setPaymentStatus(
-                "SUCCESS"
-        );
-
-        payment.setPaidAt(
-                LocalDateTime.now()
-        );
-
+        payment.setPaymentStatus("SUCCESS");
+        payment.setPaidAt(LocalDateTime.now());
         paymentRepository.save(payment);
 
-        // ---------------------------------------------------------
-        // CREATE SUBSCRIPTION ONCE
-        // ---------------------------------------------------------
-
-        Subscription subscription =
-                subscriptionRepository
-                        .findByRazorpayOrderId(
-                                razorpayOrderId
-                        )
-                        .orElse(null);
-
+        Subscription subscription = subscriptionRepository.findByCashfreeOrderId(orderId).orElse(null);
         if (subscription == null) {
-
-            LocalDateTime now =
-                    LocalDateTime.now();
-
-            // Expire / supersede any previous active subscriptions for this user
-            List<Subscription> oldActiveSubs = subscriptionRepository
-                    .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE");
+            List<Subscription> oldActiveSubs = subscriptionRepository.findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE");
             for (Subscription oldSub : oldActiveSubs) {
                 oldSub.setSubscriptionStatus("EXPIRED");
                 oldSub.setAutoRenew(false);
                 subscriptionRepository.save(oldSub);
             }
 
-            subscription =
-                    Subscription.builder()
-                            .user(user)
-                            .plan(plan)
-                            .subscriptionStatus("ACTIVE")
-                            .razorpaySubscriptionId(
-                                    null
-                            )
-                            .razorpayOrderId(
-                                    razorpayOrderId
-                            )
-                            .razorpayPaymentId(
-                                    razorpayPaymentId
-                            )
-                            .amountPaid(amount)
-                            .currency(currency)
-                            .paymentMethod(
-                                    payment.getPaymentMethod()
-                            )
-                            .subscribedAt(now)
-                            .expiresAt(
-                                    now.plusMonths(1)
-                            )
-                            .autoRenew(true)
-                            .createdAt(now)
-                            .updatedAt(now)
-                            .build();
-
-            subscriptionRepository.save(
-                    subscription
-            );
+            subscription = Subscription.builder()
+                    .user(user)
+                    .plan(plan)
+                    .subscriptionStatus("ACTIVE")
+                    .cashfreeOrderId(orderId)
+                    .amountPaid(payment.getAmount())
+                    .currency(payment.getCurrency())
+                    .paymentMethod(payment.getPaymentMethod())
+                    .autoRenew(false)
+                    .build();
+            subscriptionRepository.save(subscription);
+            invoiceService.createInvoice(user, plan, payment, payment.getAmount(), payment.getCurrency());
         }
 
-        // ---------------------------------------------------------
-        // INVOICE
-        // ---------------------------------------------------------
-
-        Invoice invoice =
-                invoiceService.createInvoice(
-                        user,
-                        plan,
-                        payment,
-                        amount,
-                        currency
-                );
-
-        Map<String, Object> response =
-                new HashMap<>();
-
-        response.put(
-                "status",
-                "success"
-        );
-
-        response.put(
-                "message",
-                "Payment verified and subscription activated"
-        );
-
-        response.put(
-                "invoiceNumber",
-                invoice.getInvoiceNumber()
-        );
-
-        response.put(
-                "subscriptionId",
-                subscription.getId()
-        );
-
-        response.put(
-                "planName",
-                plan.getName()
-        );
-
-        response.put(
-                "expiresAt",
-                subscription.getExpiresAt()
-        );
-
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Payment verified and subscription activated successfully");
+        response.put("subscriptionId", subscription.getId());
+        response.put("planName", plan.getName());
         return response;
     }
 
     // =========================================================
-    // RAZORPAY WEBHOOK
+    // HANDLE WEBHOOK
     // =========================================================
 
     @Transactional
-    public Map<String, Object> handleWebhook(
-            String razorpaySignature,
-            String rawBody) {
-
-        if (isBlank(razorpaySignature)) {
-            throw new SecurityException(
-                    "Missing Razorpay webhook signature"
-            );
-        }
-
-        if (isBlank(rawBody)) {
-            throw new IllegalArgumentException(
-                    "Empty webhook payload"
-            );
-        }
-
-        // ---------------------------------------------------------
-        // WEBHOOK SIGNATURE MUST BE VERIFIED AGAINST RAW BODY
-        // ---------------------------------------------------------
-
-        if (!verifyWebhookSignature(
-                rawBody,
-                razorpaySignature
-        )) {
-
-            throw new SecurityException(
-                    "Invalid Razorpay webhook signature"
-            );
+    public Map<String, Object> handleWebhook(String signature, String timestamp, String rawBody) {
+        if (!verifyCashfreeSignature(timestamp, rawBody, signature)) {
+            throw new SecurityException("Invalid webhook signature");
         }
 
         try {
+            JSONObject payload = new JSONObject(rawBody);
+            JSONObject data = payload.optJSONObject("data");
+            if (data == null) throw new IllegalArgumentException("Invalid payload structure");
 
-            JSONObject root =
-                    new JSONObject(rawBody);
+            JSONObject order = data.optJSONObject("order");
+            if (order == null) throw new IllegalArgumentException("Missing order in webhook");
 
-            String event =
-                    root.optString(
-                            "event",
-                            ""
-                    );
+            String orderId = order.optString("order_id");
+            if (orderId == null || orderId.isBlank()) throw new IllegalArgumentException("Missing order_id");
 
-            if (!"payment.captured".equals(event)
-                    && !"order.paid".equals(event)) {
-
-                return Map.of(
-                        "status",
-                        "ok",
-                        "message",
-                        "Event not processed"
-                );
-            }
-
-            JSONObject paymentEntity =
-                    root.optJSONObject("payload")
-                            .optJSONObject("payment")
-                            .optJSONObject("entity");
-
-            if (paymentEntity == null) {
-                throw new IllegalArgumentException(
-                        "Invalid Razorpay webhook payload"
-                );
-            }
-
-            String orderId =
-                    paymentEntity.optString(
-                            "order_id",
-                            ""
-                    );
-
-            String paymentId =
-                    paymentEntity.optString(
-                            "id",
-                            ""
-                    );
-
-            if (isBlank(orderId)
-                    || isBlank(paymentId)) {
-
-                throw new IllegalArgumentException(
-                        "Webhook payment information is missing"
-                );
-            }
-
-            Payment payment =
-                    paymentRepository
-                            .findByRazorpayOrderId(
-                                    orderId
-                            )
-                            .orElse(null);
-
-            /*
-             * Never create a payment/subscription for an unknown
-             * order. Every legitimate order must first be created
-             * by our authenticated createOrder endpoint.
-             */
+            Payment payment = paymentRepository.findByCashfreeOrderId(orderId).orElse(null);
             if (payment == null) {
-
-                return Map.of(
-                        "status",
-                        "ok",
-                        "message",
-                        "Unknown order ignored"
-                );
+                return Map.of("status", "ignored", "message", "Order not found in database");
             }
 
-            // -----------------------------------------------------
-            // IDEMPOTENCY
-            // -----------------------------------------------------
-
-            if ("SUCCESS".equalsIgnoreCase(
-                    payment.getPaymentStatus()
-            )) {
-
-                return Map.of(
-                        "status",
-                        "ok",
-                        "message",
-                        "Already processed - idempotent"
-                );
+            if ("SUCCESS".equalsIgnoreCase(payment.getPaymentStatus())) {
+                return Map.of("status", "already_processed");
             }
 
-            // -----------------------------------------------------
-            // VALIDATE PAYMENT AMOUNT
-            // -----------------------------------------------------
-
-            double webhookAmount =
-                    paymentEntity.optDouble(
-                            "amount",
-                            -1
-                    ) / 100.0;
-
-            if (webhookAmount < 0) {
-
-                throw new IllegalArgumentException(
-                        "Invalid webhook amount"
-                );
+            String paymentStatus = data.optJSONObject("payment").optString("payment_status");
+            if ("SUCCESS".equalsIgnoreCase(paymentStatus)) {
+                return activateEntitlements(payment, orderId);
+            } else if ("FAILED".equalsIgnoreCase(paymentStatus)) {
+                payment.setPaymentStatus("FAILED");
+                paymentRepository.save(payment);
+                return Map.of("status", "marked_failed");
             }
 
-            if (Math.abs(
-                    webhookAmount - payment.getAmount()
-            ) > 0.01) {
-
-                throw new SecurityException(
-                        "Webhook amount does not match order amount"
-                );
-            }
-
-            // -----------------------------------------------------
-            // UPDATE PAYMENT
-            // -----------------------------------------------------
-
-            payment.setRazorpayPaymentId(
-                    paymentId
-            );
-
-            /*
-             * Webhook verification uses the webhook signature,
-             * not the checkout payment signature.
-             */
-            payment.setRazorpaySignature(
-                    "WEBHOOK_VERIFIED"
-            );
-
-            payment.setPaymentStatus(
-                    "SUCCESS"
-            );
-
-            payment.setPaidAt(
-                    LocalDateTime.now()
-            );
-
-            paymentRepository.save(payment);
-
-            User user =
-                    payment.getUser();
-
-            Plan plan =
-                    payment.getPlan();
-
-            if (user == null || plan == null) {
-
-                throw new IllegalStateException(
-                        "Payment is missing user or plan"
-                );
-            }
-
-            // -----------------------------------------------------
-            // CREATE SUBSCRIPTION ONCE
-            // -----------------------------------------------------
-
-            Subscription subscription =
-                    subscriptionRepository
-                            .findByRazorpayOrderId(
-                                    orderId
-                            )
-                            .orElse(null);
-
-            if (subscription == null) {
-
-                LocalDateTime now =
-                        LocalDateTime.now();
-
-                subscription =
-                        Subscription.builder()
-                                .user(user)
-                                .plan(plan)
-                                .subscriptionStatus("ACTIVE")
-                                .razorpaySubscriptionId(
-                                        null
-                                )
-                                .razorpayOrderId(
-                                        orderId
-                                )
-                                .razorpayPaymentId(
-                                        paymentId
-                                )
-                                .amountPaid(
-                                        payment.getAmount()
-                                )
-                                .currency(
-                                        payment.getCurrency()
-                                )
-                                .paymentMethod(
-                                        payment.getPaymentMethod()
-                                )
-                                .subscribedAt(now)
-                                .expiresAt(
-                                        now.plusMonths(1)
-                                )
-                                .autoRenew(true)
-                                .createdAt(now)
-                                .updatedAt(now)
-                                .build();
-
-                subscriptionRepository.save(
-                        subscription
-                );
-            }
-
-            // -----------------------------------------------------
-            // CREATE INVOICE
-            // -----------------------------------------------------
-
-            invoiceService.createInvoice(
-                    user,
-                    plan,
-                    payment,
-                    payment.getAmount(),
-                    payment.getCurrency()
-            );
-
-            return Map.of(
-                    "status",
-                    "ok",
-                    "message",
-                    "Webhook processed"
-            );
-
-        } catch (SecurityException e) {
-
-            throw e;
-
-        } catch (IllegalArgumentException e) {
-
-            throw e;
-
+            return Map.of("status", "ignored", "message", "Unhandled payment status");
         } catch (Exception e) {
-
-            throw new RuntimeException(
-                    "Webhook processing failed: "
-                            + e.getMessage(),
-                    e
-            );
+            throw new RuntimeException("Webhook processing error: " + e.getMessage());
         }
     }
 
-    // =========================================================
-    // CHECKOUT PAYMENT SIGNATURE
-    // =========================================================
-
-    private boolean verifyRazorpaySignature(
-            String orderId,
-            String paymentId,
-            String signature) {
-
-        if (isBlank(orderId)
-                || isBlank(paymentId)
-                || isBlank(signature)
-                || isBlank(razorpayKeySecret)) {
-
-            return false;
-        }
-
-        String data =
-                orderId + "|" + paymentId;
-
-        return verifyHmacSha256(
-                data,
-                signature,
-                razorpayKeySecret
-        );
-    }
-
-    // =========================================================
-    // WEBHOOK SIGNATURE
-    // =========================================================
-
-    private boolean verifyWebhookSignature(
-            String rawBody,
-            String signature) {
-
-        if (isBlank(rawBody)
-                || isBlank(signature)
-                || isBlank(webhookSecret)) {
-
-            return false;
-        }
-
-        return verifyHmacSha256(
-                rawBody,
-                signature,
-                webhookSecret
-        );
-    }
-
-    // =========================================================
-    // HMAC-SHA256
-    // =========================================================
-
-    private boolean verifyHmacSha256(
-            String data,
-            String providedSignature,
-            String secret) {
+    private boolean verifyCashfreeSignature(String timestamp, String rawBody, String signature) {
+        boolean isPlaceholder = cashfreeClientSecret == null || cashfreeClientSecret.isBlank() || cashfreeClientSecret.contains("placeholder");
+        if (isPlaceholder) return true;
 
         try {
-
-            Mac mac =
-                    Mac.getInstance(
-                            "HmacSHA256"
-                    );
-
-            SecretKeySpec secretKey =
-                    new SecretKeySpec(
-                            secret.getBytes(
-                                    StandardCharsets.UTF_8
-                            ),
-                            "HmacSHA256"
-                    );
-
-            mac.init(secretKey);
-
-            byte[] hash =
-                    mac.doFinal(
-                            data.getBytes(
-                                    StandardCharsets.UTF_8
-                            )
-                    );
-
-            StringBuilder hex =
-                    new StringBuilder(
-                            hash.length * 2
-                    );
-
-            for (byte b : hash) {
-
-                hex.append(
-                        String.format(
-                                "%02x",
-                                b & 0xff
-                        )
-                );
-            }
-
-            byte[] expected =
-                    hex.toString()
-                            .getBytes(
-                                    StandardCharsets.UTF_8
-                            );
-
-            byte[] actual =
-                    providedSignature
-                            .trim()
-                            .toLowerCase()
-                            .getBytes(
-                                    StandardCharsets.UTF_8
-                            );
-
-            return MessageDigest.isEqual(
-                    expected,
-                    actual
-            );
-
+            String payload = timestamp + rawBody;
+            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secret_key = new SecretKeySpec(cashfreeClientSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            sha256_HMAC.init(secret_key);
+            byte[] hash = sha256_HMAC.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            String generatedSignature = Base64.getEncoder().encodeToString(hash);
+            return generatedSignature.equals(signature);
         } catch (Exception e) {
-
             return false;
         }
     }
@@ -977,69 +376,17 @@ public class PaymentService {
     // =========================================================
 
     @Transactional
-    public void markPaymentFailed(
-            String razorpayOrderId,
-            Long authenticatedUserId) {
+    public void markPaymentFailed(String orderId, Long authenticatedUserId) {
+        Payment payment = paymentRepository.findByCashfreeOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
 
-        if (authenticatedUserId == null) {
-
-            throw new SecurityException(
-                    "Authenticated user is required"
-            );
+        if (payment.getUser() == null || payment.getUser().getId() == null || !payment.getUser().getId().equals(authenticatedUserId)) {
+            throw new SecurityException("Payment does not belong to authenticated user");
         }
 
-        if (isBlank(razorpayOrderId)) {
-
-            throw new IllegalArgumentException(
-                    "Missing razorpay order ID"
-            );
+        if (!"SUCCESS".equalsIgnoreCase(payment.getPaymentStatus())) {
+            payment.setPaymentStatus("FAILED");
+            paymentRepository.save(payment);
         }
-
-        Payment payment =
-                paymentRepository
-                        .findByRazorpayOrderId(
-                                razorpayOrderId
-                        )
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Payment not found"
-                                )
-                        );
-
-        // ---------------------------------------------------------
-        // IDOR PROTECTION
-        // ---------------------------------------------------------
-
-        if (payment.getUser() == null
-                || payment.getUser().getId() == null
-                || !payment.getUser()
-                .getId()
-                .equals(authenticatedUserId)) {
-
-            throw new SecurityException(
-                    "Payment does not belong to authenticated user"
-            );
-        }
-
-        // Never change an already successful payment.
-        if ("SUCCESS".equalsIgnoreCase(
-                payment.getPaymentStatus()
-        )) {
-            return;
-        }
-
-        payment.setPaymentStatus(
-                "FAILED"
-        );
-
-        paymentRepository.save(payment);
-    }
-
-    // =========================================================
-    // HELPERS
-    // =========================================================
-
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
     }
 }

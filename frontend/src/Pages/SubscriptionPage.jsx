@@ -234,17 +234,17 @@ export default function SubscriptionPage() {
             const order = await createTestOrder(
                 plan.id,
                 currency,
-                "razorpay",
+                "cashfree",
                 referralCode
             );
 
-            if (!order?.razorpayOrderId) {
+            if (!order?.cashfreeOrderId) {
                 throw new Error(
                     "Invalid Razorpay order response."
                 );
             }
 
-            initiateRazorpayCheckout(
+            initiateCashfreeCheckout(
                 order,
                 plan
             );
@@ -271,7 +271,7 @@ export default function SubscriptionPage() {
     // RAZORPAY CHECKOUT
     // =========================================================
 
-    const initiateRazorpayCheckout = (
+    const initiateCashfreeCheckout = (
         order,
         plan
     ) => {
@@ -322,7 +322,7 @@ export default function SubscriptionPage() {
                 `Subscription to ${plan.name} Plan`,
 
             order_id:
-                order.razorpayOrderId,
+                order.cashfreeOrderId,
 
             handler: function (response) {
 
@@ -371,7 +371,7 @@ export default function SubscriptionPage() {
                 try {
 
                     await markPaymentFailed(
-                        order.razorpayOrderId
+                        order.cashfreeOrderId
                     );
 
                 } catch (error) {
@@ -402,7 +402,7 @@ export default function SubscriptionPage() {
     // =========================================================
 
     const verifyAndActivate = async (
-        razorpayResponse,
+        cashfreeResponse,
         plan
     ) => {
 
@@ -414,13 +414,13 @@ export default function SubscriptionPage() {
                 await verifyPayment({
 
                     razorpay_order_id:
-                        razorpayResponse.razorpay_order_id,
+                        cashfreeResponse.order_id,
 
                     razorpay_payment_id:
-                        razorpayResponse.razorpay_payment_id,
+                        cashfreeResponse.razorpay_payment_id,
 
                     razorpay_signature:
-                        razorpayResponse.razorpay_signature
+                        cashfreeResponse.razorpay_signature
                 });
 
             if (
@@ -1007,7 +1007,7 @@ export default function SubscriptionPage() {
 
                     <p>
                         All payments processed securely
-                        via Razorpay Test Mode.
+                        via Cashfree Test Mode.
                     </p>
 
                     <p>

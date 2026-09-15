@@ -118,152 +118,67 @@ public class PaymentController {
             Authentication authentication,
             @RequestBody Map<String, String> payload) {
 
-        if (authentication == null
-                || !authentication.isAuthenticated()) {
-
-            return ResponseEntity.status(
-                            HttpStatus.UNAUTHORIZED
-                    )
-                    .body(Map.of(
-                            "error",
-                            "Unauthorized"
-                    ));
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized"));
         }
 
-        String razorpayOrderId =
-                payload.get("razorpay_order_id");
+        String orderId = payload.get("order_id");
+        if (orderId == null || orderId.isBlank()) {
+            // Check legacy razorpay key just in case, but rely on order_id
+            orderId = payload.get("razorpay_order_id");
+        }
 
-        String razorpayPaymentId =
-                payload.get("razorpay_payment_id");
-
-        String razorpaySignature =
-                payload.get("razorpay_signature");
-
-        if (isBlank(razorpayOrderId)
-                || isBlank(razorpayPaymentId)
-                || isBlank(razorpaySignature)) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of(
-                            "error",
-                            "Missing payment verification parameters"
-                    ));
+        if (isBlank(orderId)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing order_id"));
         }
 
         User user = getAuthenticatedUser(authentication);
 
         try {
-
-            Map<String, Object> result =
-                    paymentService.verifyAndActivatePayment(
-                            razorpayOrderId.trim(),
-                            razorpayPaymentId.trim(),
-                            razorpaySignature.trim(),
-                            user.getId()
-                    );
-
+            Map<String, Object> result = paymentService.verifyAndActivatePayment(orderId.trim(), user.getId());
             return ResponseEntity.ok(result);
-
         } catch (SecurityException e) {
-
-            return ResponseEntity.status(
-                            HttpStatus.FORBIDDEN
-                    )
-                    .body(Map.of(
-                            "error",
-                            e.getMessage()
-                    ));
-
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of(
-                            "error",
-                            e.getMessage() != null
-                                    ? e.getMessage()
-                                    : "Payment verification failed"
-                    ));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Payment verification failed"));
         }
     }
 
     // =========================================================
-    // RAZORPAY WEBHOOK
+    // CASHFREE WEBHOOK
     // =========================================================
 
     /**
-     * Razorpay calls this endpoint directly.
+     * Cashfree calls this endpoint directly.
      *
      * This endpoint does NOT use normal JWT authentication.
-     * Security is handled by PaymentService using the Razorpay
+     * Security is handled by PaymentService using the Cashfree
      * webhook signature.
      */
     @PostMapping("/webhook")
     public ResponseEntity<?> handleWebhook(
-            @RequestHeader(
-                    value = "X-Razorpay-Signature",
-                    required = false
-            ) String razorpaySignature,
+            @RequestHeader(value = "x-webhook-signature", required = false) String signature,
+            @RequestHeader(value = "x-webhook-timestamp", required = false) String timestamp,
             @RequestBody String rawBody) {
 
-        if (isBlank(razorpaySignature)) {
-
-            return ResponseEntity.status(
-                            HttpStatus.UNAUTHORIZED
-                    )
-                    .body(Map.of(
-                            "error",
-                            "Missing webhook signature"
-                    ));
+        if (isBlank(signature) || isBlank(timestamp)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Missing webhook signature or timestamp"));
         }
 
         if (rawBody == null || rawBody.isBlank()) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of(
-                            "error",
-                            "Empty webhook payload"
-                    ));
+            return ResponseEntity.badRequest().body(Map.of("error", "Empty webhook payload"));
         }
 
         try {
-
-            Map<String, Object> result =
-                    paymentService.handleWebhook(
-                            razorpaySignature.trim(),
-                            rawBody
-                    );
-
+            Map<String, Object> result = paymentService.handleWebhook(signature.trim(), timestamp.trim(), rawBody);
             return ResponseEntity.ok(result);
-
         } catch (SecurityException e) {
-
-            return ResponseEntity.status(
-                            HttpStatus.UNAUTHORIZED
-                    )
-                    .body(Map.of(
-                            "error",
-                            e.getMessage()
-                    ));
-
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of(
-                            "error",
-                            e.getMessage()
-                    ));
-
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {
-
-            return ResponseEntity.status(
-                            HttpStatus.INTERNAL_SERVER_ERROR
-                    )
-                    .body(Map.of(
-                            "error",
-                            e.getMessage() != null
-                                    ? e.getMessage()
-                                    : "Webhook processing failed"
-                    ));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Webhook processing failed"));
         }
     }
 
@@ -305,57 +220,24 @@ public class PaymentController {
                     ));
         }
 
-        String orderId =
-                payload.get("razorpay_order_id");
+        String orderId = payload.get("order_id");
+        if (orderId == null || orderId.isBlank()) {
+            orderId = payload.get("razorpay_order_id");
+        }
 
         if (isBlank(orderId)) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of(
-                            "error",
-                            "Missing razorpay_order_id"
-                    ));
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing order_id"));
         }
 
         User user = getAuthenticatedUser(authentication);
 
         try {
-
-            /*
-             * PaymentService must verify ownership before
-             * changing the payment status.
-             */
-            paymentService.markPaymentFailed(
-                    orderId.trim(),
-                    user.getId()
-            );
-
-            return ResponseEntity.ok(
-                    Map.of(
-                            "status",
-                            "marked_failed"
-                    )
-            );
-
+            paymentService.markPaymentFailed(orderId.trim(), user.getId());
+            return ResponseEntity.ok(Map.of("status", "marked_failed"));
         } catch (SecurityException e) {
-
-            return ResponseEntity.status(
-                            HttpStatus.FORBIDDEN
-                    )
-                    .body(Map.of(
-                            "error",
-                            e.getMessage()
-                    ));
-
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
         } catch (RuntimeException e) {
-
-            return ResponseEntity.badRequest()
-                    .body(Map.of(
-                            "error",
-                            e.getMessage() != null
-                                    ? e.getMessage()
-                                    : "Unable to mark payment failed"
-                    ));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Unable to mark payment failed"));
         }
     }
 

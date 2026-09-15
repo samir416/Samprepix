@@ -30,6 +30,7 @@ public class InvoiceService {
                 .amount(amount)
                 .currency(currency)
                 .status("PAID")
+                .cashfreeOrderId(payment.getCashfreeOrderId())
                 .razorpayOrderId(payment.getRazorpayOrderId())
                 .issuedAt(LocalDateTime.now())
                 .dueDate(LocalDateTime.now().plusDays(30))

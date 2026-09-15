@@ -37,10 +37,13 @@ public class Subscription {
     @Column(nullable = true)
     private String razorpaySubscriptionId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String razorpayOrderId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
+    private String cashfreeOrderId;
+
+    @Column(nullable = true)
     private String razorpayPaymentId;
 
     @Column(nullable = false)

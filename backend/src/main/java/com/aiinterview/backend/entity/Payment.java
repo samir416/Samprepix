@@ -26,14 +26,23 @@ public class Payment {
     @JoinColumn(name = "plan_id")
     private Plan plan;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String razorpayOrderId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String razorpayPaymentId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String razorpaySignature;
+
+    @Column(nullable = true, unique = true)
+    private String cashfreeOrderId;
+
+    @Column(nullable = true)
+    private String cashfreeSessionId;
+
+    @Column(nullable = true)
+    private String cashfreePaymentId;
 
     @Column(nullable = false)
     private double amount;

@@ -42,8 +42,11 @@ public class Invoice {
     @Column(nullable = false)
     private String status;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true)
     private String razorpayOrderId;
+
+    @Column(nullable = true, unique = true)
+    private String cashfreeOrderId;
 
     private LocalDateTime issuedAt;
 
