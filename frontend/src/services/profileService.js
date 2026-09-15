@@ -1,10 +1,11 @@
+import { API_BASE_URL } from "../config";
 import axios from "axios";
 
 const API =
-    "http://localhost:8080/api/profile";
+    API_BASE_URL + "/api/profile";
 
 const GITHUB_API =
-    "http://localhost:8080/api/github";
+    API_BASE_URL + "/api/github";
 
 export const getCleanToken = () => {
     const raw = localStorage.getItem("token");

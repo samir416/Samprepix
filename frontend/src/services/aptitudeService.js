@@ -1,7 +1,8 @@
+import { API_BASE_URL } from "../config";
 import axios from "axios";
 
 const API = axios.create({
-    baseURL: "http://localhost:8080/api/aptitude"
+    baseURL: API_BASE_URL + "/api/aptitude"
 });
 
 const addAuthToken = (config) => {

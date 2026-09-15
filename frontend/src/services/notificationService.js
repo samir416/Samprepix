@@ -1,6 +1,7 @@
+import { API_BASE_URL } from "../config";
 import axios from "axios";
 
-const API_BASE = "http://localhost:8080/api/notifications";
+const API_BASE = API_BASE_URL + "/api/notifications";
 
 const getHeaders = () => {
     const token = localStorage.getItem("token");

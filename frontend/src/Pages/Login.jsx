@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import Navbar from "../Components/Common/Navbar";
 import AppLoader from "../Components/Common/AppLoader";
 import "../styles/authmodal.css";
@@ -151,7 +152,7 @@ export default function Login() {
                             type="button"
                             onClick={() => {
                                 window.location.href =
-                                    "http://localhost:8080/oauth2/authorize/github";
+                                    API_BASE_URL + "/oauth2/authorize/github";
                             }}
                         >
                             <span>⌘</span>
@@ -162,7 +163,7 @@ export default function Login() {
                             type="button"
                             onClick={() => {
                                 window.location.href =
-                                    "http://localhost:8080/oauth2/authorize/google";
+                                    API_BASE_URL + "/oauth2/authorize/google";
                             }}
                         >
                             <span>✉</span>

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -2212,7 +2213,7 @@ export default function Profile() {
                                             src={
                                                 (user.profilePicture.startsWith("http")
                                                     ? user.profilePicture
-                                                    : `http://localhost:8080${user.profilePicture}`) +
+                                                    : `${API_BASE_URL}${user.profilePicture}`) +
                                                 `?t=${Date.now()}`
                                             }
                                             alt="Profile"

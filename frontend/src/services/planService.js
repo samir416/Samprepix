@@ -1,7 +1,8 @@
+import { API_BASE_URL } from "../config";
 import axios from "axios";
 
 const API = axios.create({
-    baseURL: "http://localhost:8080/api/admin/plans"
+    baseURL: API_BASE_URL + "/api/admin/plans"
 });
 
 const getToken = () => localStorage.getItem("token");
@@ -25,7 +26,7 @@ export const getAllPlans = () =>
 
 export const getActivePlans = () => {
     const token = getToken();
-    return axios.get("http://localhost:8080/api/plans/active", {
+    return axios.get(API_BASE_URL + "/api/plans/active", {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
     }).then((res) => res.data);
 };
