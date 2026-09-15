@@ -1291,3 +1291,111 @@
         flex-direction: column;
     }
 }
+
+/* =========================================================
+   CONFIRM MODAL
+   ========================================================= */
+
+.admin-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    padding: 20px;
+}
+
+.admin-confirm-content {
+    background: #ffffff;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border: 1px solid #e2e8f0;
+}
+
+.admin-confirm-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #fef2f2;
+    color: #ef4444;
+    margin: 0 auto 20px auto;
+}
+
+.admin-confirm-content h3 {
+    margin: 0 0 12px 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.admin-confirm-content p {
+    margin: 0 0 32px 0;
+    font-size: 15px;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.admin-confirm-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.admin-confirm-actions button {
+    flex: 1;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-confirm-cancel {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+}
+
+.admin-confirm-cancel:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+}
+
+.admin-confirm-submit {
+    background: #ef4444;
+    border: 1px solid #ef4444;
+    color: #ffffff;
+}
+
+.admin-confirm-submit:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+@media (max-width: 480px) {
+    .admin-confirm-content {
+        padding: 24px 20px;
+    }
+    .admin-confirm-actions {
+        flex-direction: column-reverse;
+    }
+    .admin-confirm-actions button {
+        width: 100%;
+    }
+}

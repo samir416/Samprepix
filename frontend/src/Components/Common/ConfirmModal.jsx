@@ -4,42 +4,40 @@ import { AlertTriangle } from "lucide-react";
 import "../../styles/admin.css";
 
 export default function ConfirmModal({ isOpen, message, onConfirm, onCancel }) {
-    if (!isOpen) return null;
-
     return (
         <AnimatePresence>
-            <motion.div
-                className="admin-modal-overlay"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-            >
+            {isOpen && (
                 <motion.div
-                    className="admin-modal-content"
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    style={{ maxWidth: "400px", textAlign: "center", padding: "30px 20px" }}
+                    className="admin-confirm-overlay"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                 >
-                    <div style={{ display: "flex", justifyContent: "center", marginBottom: "15px", color: "#ef4444" }}>
-                        <AlertTriangle size={48} />
-                    </div>
-                    <h3 style={{ margin: "0 0 10px 0", fontSize: "20px", color: "var(--text-color, #0f172a)" }}>
-                        Confirm Action
-                    </h3>
-                    <p style={{ margin: "0 0 24px 0", color: "var(--text-secondary, #475569)", fontSize: "15px" }}>
-                        {message}
-                    </p>
-                    <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-                        <button className="admin-btn-secondary" onClick={onCancel}>
-                            Cancel
-                        </button>
-                        <button className="admin-btn-danger" onClick={onConfirm}>
-                            Confirm
-                        </button>
-                    </div>
+                    <motion.div
+                        className="admin-confirm-content"
+                        initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    >
+                        <div className="admin-confirm-icon-wrapper">
+                            <AlertTriangle size={32} strokeWidth={2.5} />
+                        </div>
+                        <h3>Confirm Action</h3>
+                        <p>{message}</p>
+                        
+                        <div className="admin-confirm-actions">
+                            <button className="admin-confirm-cancel" onClick={onCancel}>
+                                Cancel
+                            </button>
+                            <button className="admin-confirm-submit" onClick={onConfirm}>
+                                Confirm
+                            </button>
+                        </div>
+                    </motion.div>
                 </motion.div>
-            </motion.div>
+            )}
         </AnimatePresence>
     );
 }
