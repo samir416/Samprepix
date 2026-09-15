@@ -430,28 +430,39 @@ public class IndependentVerificationTest {
                     return userRepository.save(newUser);
                 });
 
-        CodingProblem problem = codingProblemRepository.findByTitleIgnoreCase("Two Sum")
-                .orElseGet(() -> codingProblemRepository.findByActiveTrue().get(0));
+        try {
+            CodingProblem problem = codingProblemRepository.findByTitleIgnoreCase("Two Sum")
+                    .orElseGet(() -> codingProblemRepository.findByActiveTrue().get(0));
 
-        // Record submission
-        codingProgressService.updateSubmission(user, true);
-        codingProgressService.markProblemCompleted(user, problem);
-        codingProblemCompletionService.recordSubmission(user, problem, "java", "// solution", true);
+            // Record submission
+            codingProgressService.updateSubmission(user, true);
+            codingProgressService.markProblemCompleted(user, problem);
+            codingProblemCompletionService.recordSubmission(user, problem, "java", "// solution", true);
 
-        // Verify completion was saved
-        Optional<CodingProblemCompletion> completionOpt =
-                codingProblemCompletionRepository.findByUserIdAndProblemId(user.getId(), problem.getId());
-        assertTrue(completionOpt.isPresent(), "CodingProblemCompletion record must exist");
-        assertTrue(completionOpt.get().isCompleted());
+            // Verify completion was saved
+            Optional<CodingProblemCompletion> completionOpt =
+                    codingProblemCompletionRepository.findByUserIdAndProblemId(user.getId(), problem.getId());
+            assertTrue(completionOpt.isPresent(), "CodingProblemCompletion record must exist");
+            assertTrue(completionOpt.get().isCompleted());
 
-        // Verify progress was updated
-        Optional<CodingProgress> progressOpt = codingProgressRepository.findByUser(user);
-        assertTrue(progressOpt.isPresent(), "CodingProgress record must exist");
-        assertTrue(progressOpt.get().getTotalSubmissions() >= 1);
-        assertTrue(progressOpt.get().getCompletedProblems() >= 1);
+            // Verify progress was updated
+            Optional<CodingProgress> progressOpt = codingProgressRepository.findByUser(user);
+            assertTrue(progressOpt.isPresent(), "CodingProgress record must exist");
+            assertTrue(progressOpt.get().getTotalSubmissions() >= 1);
+            assertTrue(progressOpt.get().getCompletedProblems() >= 1);
 
-        System.out.printf("[VERIFY 14] User progress verified: totalSubmissions=%d, completedProblems=%d%n",
-                progressOpt.get().getTotalSubmissions(), progressOpt.get().getCompletedProblems());
+            System.out.printf("[VERIFY 14] User progress verified: totalSubmissions=%d, completedProblems=%d%n",
+                    progressOpt.get().getTotalSubmissions(), progressOpt.get().getCompletedProblems());
+        } finally {
+            // SAFE CLEANUP
+            try {
+                codingProblemCompletionRepository.deleteAll(codingProblemCompletionRepository.findByUserIdOrderByCompletedAtAsc(user.getId()));
+                codingProgressRepository.findByUser(user).ifPresent(codingProgressRepository::delete);
+                userRepository.delete(user);
+            } catch (Exception e) {
+                System.err.println("Failed to clean up test_verifier: " + e.getMessage());
+            }
+        }
     }
 
     @Test
