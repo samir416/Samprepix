@@ -5,7 +5,11 @@ import com.aiinterview.backend.entity.*;
 import com.aiinterview.backend.repository.PaymentRepository;
 import com.aiinterview.backend.repository.SubscriptionRepository;
 import com.aiinterview.backend.repository.UserRepository;
-import com.aiinterview.backend.service.*;
+import com.aiinterview.backend.service.AdminEntitlementService;
+import com.aiinterview.backend.service.EmailService;
+import com.aiinterview.backend.service.EntitlementService;
+import com.aiinterview.backend.service.PlanService;
+import com.aiinterview.backend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,14 +37,10 @@ public class AdminController {
     private final PaymentRepository paymentRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final EntitlementService effectiveEntitlementService;
-
-    // =========================================================
-    // ADMIN DASHBOARD STATS
-    // =========================================================
+    private final EmailService emailService;
 
     @GetMapping("/stats")
     public ResponseEntity<AdminStatsResponse> getStats() {
-
         long totalUsers = userRepository.count();
 
         long activeUsers =
@@ -52,31 +52,33 @@ public class AdminController {
         List<Subscription> subscriptions =
                 subscriptionRepository.findAll();
 
-        long totalSubscriptions =
-                subscriptions.size();
+        long totalSubscriptions = subscriptions.size();
 
         long activeSubscriptions =
                 subscriptions.stream()
                         .filter(subscription ->
                                 subscription.getSubscriptionStatus() != null
-                                && SubscriptionStatus.ACTIVE.equals(
-                                        subscription.getSubscriptionStatus()))
+                                        && SubscriptionStatus.ACTIVE.equals(
+                                        subscription.getSubscriptionStatus()
+                        )
+                        )
                         .count();
 
-        List<Payment> payments =
-                paymentRepository.findAll();
+        List<Payment> payments = paymentRepository.findAll();
 
-        long totalPayments =
-                payments.size();
+        long totalPayments = payments.size();
 
         double totalRevenue =
                 payments.stream()
                         .filter(payment ->
                                 payment.getPaymentStatus() != null
-                                && PaymentStatus.SUCCESS.name()
+                                        && PaymentStatus.SUCCESS.name()
                                         .equalsIgnoreCase(
                                                 String.valueOf(
-                                                        payment.getPaymentStatus())))
+                                                        payment.getPaymentStatus()
+                                                )
+                                        )
+                        )
                         .mapToDouble(Payment::getAmount)
                         .sum();
 
@@ -95,10 +97,6 @@ public class AdminController {
         );
     }
 
-    // =========================================================
-    // USER MANAGEMENT
-    // =========================================================
-
     @GetMapping("/users")
     public ResponseEntity<Page<UserAdminResponse>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
@@ -109,11 +107,12 @@ public class AdminController {
         int safePage = Math.max(0, page);
         int safeSize = Math.min(100, Math.max(1, size));
 
-        PageRequest pageable = PageRequest.of(
-                safePage,
-                safeSize,
-                Sort.by("createdAt").descending()
-        );
+        PageRequest pageable =
+                PageRequest.of(
+                        safePage,
+                        safeSize,
+                        Sort.by("createdAt").descending()
+                );
 
         Page<User> users;
 
@@ -122,7 +121,10 @@ public class AdminController {
 
         if (role != null && !role.isBlank()) {
             try {
-                roleEnum = Role.valueOf(role.trim().toUpperCase());
+                roleEnum =
+                        Role.valueOf(
+                                role.trim().toUpperCase()
+                        );
             } catch (IllegalArgumentException ex) {
                 return ResponseEntity.badRequest().build();
             }
@@ -140,29 +142,25 @@ public class AdminController {
         }
 
         if (roleEnum != null && accountStatusEnum != null) {
-
-            users = userRepository.findByRoleAndAccountStatus(
-                    roleEnum,
-                    accountStatusEnum,
-                    pageable
-            );
-
+            users =
+                    userRepository.findByRoleAndAccountStatus(
+                            roleEnum,
+                            accountStatusEnum,
+                            pageable
+                    );
         } else if (roleEnum != null) {
-
-            users = userRepository.findByRole(
-                    roleEnum,
-                    pageable
-            );
-
+            users =
+                    userRepository.findByRole(
+                            roleEnum,
+                            pageable
+                    );
         } else if (accountStatusEnum != null) {
-
-            users = userRepository.findByAccountStatus(
-                    accountStatusEnum,
-                    pageable
-            );
-
+            users =
+                    userRepository.findByAccountStatus(
+                            accountStatusEnum,
+                            pageable
+                    );
         } else {
-
             users = userRepository.findAll(pageable);
         }
 
@@ -175,26 +173,49 @@ public class AdminController {
     public ResponseEntity<UserAdminResponse> getUserById(
             @PathVariable Long id) {
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        User user =
+                userRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                )
+                        );
 
         return ResponseEntity.ok(
                 toUserAdminResponse(user)
         );
     }
 
-    private UserAdminResponse toUserAdminResponse(User user) {
+    private UserAdminResponse toUserAdminResponse(
+            User user) {
 
         String subscriptionStatus = "None";
 
         try {
-            List<Subscription> activeSubs = subscriptionRepository.findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE");
+            List<Subscription> activeSubs =
+                    subscriptionRepository
+                            .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(
+                                    user,
+                                    "ACTIVE"
+                            );
+
             if (!activeSubs.isEmpty()) {
                 subscriptionStatus = "ACTIVE";
-            } else if (user.getSubscriptions() != null && !user.getSubscriptions().isEmpty()) {
-                subscriptionStatus = String.valueOf(user.getSubscriptions().get(user.getSubscriptions().size() - 1).getSubscriptionStatus());
-                if (subscriptionStatus == null || subscriptionStatus.isBlank() || "null".equalsIgnoreCase(subscriptionStatus)) {
+            } else if (user.getSubscriptions() != null
+                    && !user.getSubscriptions().isEmpty()) {
+
+                subscriptionStatus =
+                        String.valueOf(
+                                user.getSubscriptions()
+                                        .get(
+                                                user.getSubscriptions().size() - 1
+                                        )
+                                        .getSubscriptionStatus()
+                        );
+
+                if (subscriptionStatus == null
+                        || subscriptionStatus.isBlank()
+                        || "null".equalsIgnoreCase(subscriptionStatus)) {
                     subscriptionStatus = "None";
                 }
             }
@@ -224,33 +245,40 @@ public class AdminController {
                 .build();
     }
 
-    // =========================================================
-    // USER ROLE
-    // =========================================================
-
     @PutMapping("/users/{id}/role")
     public ResponseEntity<?> updateUserRole(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRoleRequest request) {
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        User user =
+                userRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                )
+                        );
 
         if (OWNER_EMAIL.equalsIgnoreCase(user.getEmail())) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("message", "Owner account role cannot be modified")
-            );
+            return ResponseEntity.badRequest()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Owner account role cannot be modified"
+                            )
+                    );
         }
 
         if (request.getRole() == Role.ADMIN) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("message", "Assigning ADMIN role is prohibited. Only the single owner account has ADMIN privileges.")
-            );
+            return ResponseEntity.badRequest()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Assigning ADMIN role is prohibited. Only the single owner account has ADMIN privileges."
+                            )
+                    );
         }
 
         user.setRole(request.getRole());
-
         userRepository.save(user);
 
         return ResponseEntity.ok(
@@ -261,47 +289,47 @@ public class AdminController {
         );
     }
 
-    // =========================================================
-    // USER STATUS
-    // =========================================================
-
     @PutMapping("/users/{id}/status")
     public ResponseEntity<?> updateUserStatus(
             @PathVariable Long id,
             @RequestParam String accountStatus) {
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        User user =
+                userRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                )
+                        );
 
         if (OWNER_EMAIL.equalsIgnoreCase(user.getEmail())) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("message", "Owner account status cannot be modified")
-            );
+            return ResponseEntity.badRequest()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Owner account status cannot be modified"
+                            )
+                    );
         }
 
         final AccountStatus status;
 
         try {
-
-            status = AccountStatus.valueOf(
-                    accountStatus.trim().toUpperCase()
-            );
-
+            status =
+                    AccountStatus.valueOf(
+                            accountStatus.trim().toUpperCase()
+                    );
         } catch (IllegalArgumentException ex) {
-
             return ResponseEntity.badRequest()
                     .body(
                             Map.of(
                                     "message",
-                                    "Invalid account status: "
-                                            + accountStatus
+                                    "Invalid account status: " + accountStatus
                             )
                     );
         }
 
         user.setAccountStatus(status);
-
         userRepository.save(user);
 
         return ResponseEntity.ok(
@@ -312,22 +340,26 @@ public class AdminController {
         );
     }
 
-    // =========================================================
-    // DELETE USER
-    // =========================================================
-
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(
             @PathVariable Long id) {
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        User user =
+                userRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                )
+                        );
 
         if (OWNER_EMAIL.equalsIgnoreCase(user.getEmail())) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("message", "Owner account cannot be deleted")
-            );
+            return ResponseEntity.badRequest()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Owner account cannot be deleted"
+                            )
+                    );
         }
 
         userService.deleteUser(id);
@@ -340,35 +372,35 @@ public class AdminController {
         );
     }
 
-    // =========================================================
-    // USER SUBSCRIPTIONS
-    // =========================================================
-
     @GetMapping("/users/{id}/subscriptions")
     public ResponseEntity<List<Subscription>> getUserSubscriptions(
             @PathVariable Long id) {
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        User user =
+                userRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                )
+                        );
 
         return ResponseEntity.ok(
                 user.getSubscriptions()
         );
     }
 
-    // =========================================================
-    // TEMPORARY ENTITLEMENT
-    // =========================================================
-
     @PostMapping("/users/{id}/entitlements/temporary")
     public ResponseEntity<?> grantTemporaryEntitlement(
             @PathVariable Long id,
             @RequestBody Map<String, Object> request) {
 
-        userRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        User user =
+                userRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                )
+                        );
 
         String planName =
                 request.get("planName") != null
@@ -376,7 +408,6 @@ public class AdminController {
                         : null;
 
         if (planName == null || planName.isBlank()) {
-
             return ResponseEntity.badRequest()
                     .body(
                             Map.of(
@@ -388,12 +419,10 @@ public class AdminController {
 
         int durationDays =
                 request.get("durationDays") != null
-                        ? ((Number) request.get("durationDays"))
-                                .intValue()
+                        ? ((Number) request.get("durationDays")).intValue()
                         : 30;
 
         if (durationDays <= 0) {
-
             return ResponseEntity.badRequest()
                     .body(
                             Map.of(
@@ -406,6 +435,21 @@ public class AdminController {
         String reason =
                 request.get("reason") != null
                         ? request.get("reason").toString()
+                        : "Admin granted entitlement";
+
+        String emailMode =
+                request.get("emailMode") != null
+                        ? request.get("emailMode").toString()
+                        : "AUTO";
+
+        String subject =
+                request.get("emailSubject") != null
+                        ? request.get("emailSubject").toString()
+                        : null;
+
+        String body =
+                request.get("emailBody") != null
+                        ? request.get("emailBody").toString()
                         : null;
 
         ManualEntitlement entitlement =
@@ -417,28 +461,78 @@ public class AdminController {
                         reason
                 );
 
-        return ResponseEntity.ok(
-                Map.of(
-                        "message",
-                        "Temporary entitlement granted",
-                        "entitlementId",
-                        entitlement.getId()
-                )
-        );
-    }
+        try {
+            sendEntitlementEmail(
+                    user,
+                    entitlement,
+                    emailMode,
+                    subject,
+                    body
+            );
 
-    // =========================================================
-    // LIFETIME ENTITLEMENT
-    // =========================================================
+            ManualEntitlement activated =
+                    entitlementService.activateEntitlementAfterEmail(
+                            entitlement.getId(),
+                            emailMode,
+                            subject,
+                            body
+                    );
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message",
+                            "Temporary entitlement granted and confirmation email sent successfully",
+                            "entitlementId",
+                            activated.getId(),
+                            "planName",
+                            activated.getPlanName(),
+                            "grantStatus",
+                            activated.getGrantStatus(),
+                            "emailStatus",
+                            activated.getEmailStatus()
+                    )
+            );
+
+        } catch (Exception ex) {
+
+            ManualEntitlement failed =
+                    entitlementService.markEmailFailed(
+                            entitlement.getId(),
+                            ex.getMessage()
+                    );
+
+            return ResponseEntity.internalServerError()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Entitlement was not activated because the confirmation email could not be sent",
+                                    "entitlementId",
+                                    failed.getId(),
+                                    "grantStatus",
+                                    failed.getGrantStatus(),
+                                    "emailStatus",
+                                    failed.getEmailStatus(),
+                                    "error",
+                                    failed.getEmailFailureReason() != null
+                                            ? failed.getEmailFailureReason()
+                                            : "Email delivery failed"
+                            )
+                    );
+        }
+    }
 
     @PostMapping("/users/{id}/entitlements/lifetime")
     public ResponseEntity<?> grantLifetimeEntitlement(
             @PathVariable Long id,
             @RequestBody Map<String, Object> request) {
 
-        userRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+        User user =
+                userRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "User not found"
+                                )
+                        );
 
         String planName =
                 request.get("planName") != null
@@ -446,7 +540,6 @@ public class AdminController {
                         : null;
 
         if (planName == null || planName.isBlank()) {
-
             return ResponseEntity.badRequest()
                     .body(
                             Map.of(
@@ -459,6 +552,21 @@ public class AdminController {
         String reason =
                 request.get("reason") != null
                         ? request.get("reason").toString()
+                        : "Admin granted lifetime entitlement";
+
+        String emailMode =
+                request.get("emailMode") != null
+                        ? request.get("emailMode").toString()
+                        : "AUTO";
+
+        String subject =
+                request.get("emailSubject") != null
+                        ? request.get("emailSubject").toString()
+                        : null;
+
+        String body =
+                request.get("emailBody") != null
+                        ? request.get("emailBody").toString()
                         : null;
 
         ManualEntitlement entitlement =
@@ -469,19 +577,118 @@ public class AdminController {
                         reason
                 );
 
-        return ResponseEntity.ok(
-                Map.of(
-                        "message",
-                        "Lifetime entitlement granted",
-                        "entitlementId",
-                        entitlement.getId()
-                )
-        );
+        try {
+            sendEntitlementEmail(
+                    user,
+                    entitlement,
+                    emailMode,
+                    subject,
+                    body
+            );
+
+            ManualEntitlement activated =
+                    entitlementService.activateEntitlementAfterEmail(
+                            entitlement.getId(),
+                            emailMode,
+                            subject,
+                            body
+                    );
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message",
+                            "Lifetime entitlement granted and confirmation email sent successfully",
+                            "entitlementId",
+                            activated.getId(),
+                            "planName",
+                            activated.getPlanName(),
+                            "grantStatus",
+                            activated.getGrantStatus(),
+                            "emailStatus",
+                            activated.getEmailStatus()
+                    )
+            );
+
+        } catch (Exception ex) {
+
+            ManualEntitlement failed =
+                    entitlementService.markEmailFailed(
+                            entitlement.getId(),
+                            ex.getMessage()
+                    );
+
+            return ResponseEntity.internalServerError()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Entitlement was not activated because the confirmation email could not be sent",
+                                    "entitlementId",
+                                    failed.getId(),
+                                    "grantStatus",
+                                    failed.getGrantStatus(),
+                                    "emailStatus",
+                                    failed.getEmailStatus(),
+                                    "error",
+                                    failed.getEmailFailureReason() != null
+                                            ? failed.getEmailFailureReason()
+                                            : "Email delivery failed"
+                            )
+                    );
+        }
     }
 
-    // =========================================================
-    // REVOKE SINGLE ENTITLEMENT
-    // =========================================================
+    private void sendEntitlementEmail(
+            User user,
+            ManualEntitlement entitlement,
+            String emailMode,
+            String subject,
+            String body) {
+
+        String normalizedMode =
+                emailMode == null || emailMode.isBlank()
+                        ? "AUTO"
+                        : emailMode.trim().toUpperCase();
+
+        if ("AUTO".equals(normalizedMode)) {
+
+            emailService.sendPremiumAccessGrantedEmail(
+                    user.getEmail(),
+                    user.getUsername() != null
+                            ? user.getUsername()
+                            : user.getName(),
+                    entitlement.getPlanName()
+            );
+
+            return;
+        }
+
+        if ("MANUAL".equals(normalizedMode)) {
+
+            if (subject == null || subject.isBlank()) {
+                throw new IllegalArgumentException(
+                        "Email subject is required for manual email"
+                );
+            }
+
+            if (body == null || body.isBlank()) {
+                throw new IllegalArgumentException(
+                        "Email body is required for manual email"
+                );
+            }
+
+            emailService.sendManualPremiumAccessEmail(
+                    user.getEmail(),
+                    subject.trim(),
+                    body
+            );
+
+            return;
+        }
+
+        throw new IllegalArgumentException(
+                "Invalid email mode. Use AUTO or MANUAL"
+        );
+    }
 
     @DeleteMapping("/users/{id}/entitlements/{entitlementId}")
     public ResponseEntity<?> revokeEntitlement(
@@ -490,7 +697,10 @@ public class AdminController {
 
         userRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new RuntimeException(
+                                "User not found"
+                        )
+                );
 
         entitlementService.revokeEntitlement(
                 entitlementId,
@@ -505,17 +715,16 @@ public class AdminController {
         );
     }
 
-    // =========================================================
-    // REVOKE ALL ENTITLEMENTS
-    // =========================================================
-
     @DeleteMapping("/users/{id}/entitlements")
     public ResponseEntity<?> revokeAllEntitlements(
             @PathVariable Long id) {
 
         userRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new RuntimeException(
+                                "User not found"
+                        )
+                );
 
         entitlementService.revokeAllEntitlementsForUser(id);
 
@@ -527,26 +736,21 @@ public class AdminController {
         );
     }
 
-    // =========================================================
-    // ACTIVE ENTITLEMENTS
-    // =========================================================
-
     @GetMapping("/users/{id}/entitlements")
     public ResponseEntity<List<ManualEntitlement>> getUserEntitlements(
             @PathVariable Long id) {
 
         userRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new RuntimeException(
+                                "User not found"
+                        )
+                );
 
         return ResponseEntity.ok(
                 entitlementService.getActiveEntitlements(id)
         );
     }
-
-    // =========================================================
-    // ENTITLEMENT HISTORY
-    // =========================================================
 
     @GetMapping("/entitlements/history/{userId}")
     public ResponseEntity<List<EntitlementHistory>> getEntitlementHistory(
@@ -556,10 +760,6 @@ public class AdminController {
                 entitlementService.getEntitlementHistory(userId)
         );
     }
-
-    // =========================================================
-    // PRICING
-    // =========================================================
 
     @GetMapping("/plans/pricing")
     public ResponseEntity<Map<String, Object>> getPricing() {
@@ -582,20 +782,19 @@ public class AdminController {
         );
     }
 
-    // =========================================================
-    // BILLING HISTORY
-    // =========================================================
-
     @GetMapping("/billing/{userId}")
     public ResponseEntity<List<Payment>> getBillingHistory(
             @PathVariable Long userId) {
 
         userRepository.findById(userId)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new RuntimeException(
+                                "User not found"
+                        )
+                );
 
         return ResponseEntity.ok(
-                paymentRepository.findByUserId(userId)
+                paymentRepository.findByUserIdOrderByCreatedAtDesc(userId)
         );
     }
 }

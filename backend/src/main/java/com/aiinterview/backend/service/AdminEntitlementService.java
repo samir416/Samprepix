@@ -42,34 +42,55 @@ public class AdminEntitlementService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiresAt = now.plusDays(durationDays);
+        LocalDateTime expiresAt =
+                now.plusDays(durationDays);
 
-        ManualEntitlement entitlement = ManualEntitlement.builder()
-                .user(user)
-                .planName(normalizedPlan)
-                .type("TEMPORARY")
-                .grantedBy(grantedBy)
-                .reason(reason)
-                .grantedAt(now)
-                .expiresAt(expiresAt)
-                .revoked(false)
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
+        ManualEntitlement entitlement =
+                ManualEntitlement.builder()
+                        .user(user)
+                        .planName(normalizedPlan)
+                        .type("TEMPORARY")
+                        .grantedBy(
+                                grantedBy != null
+                                        ? grantedBy
+                                        : "ADMIN"
+                        )
+                        .reason(reason)
+                        .grantedAt(now)
+                        .expiresAt(expiresAt)
+                        .revoked(true)
+                        .revokedAt(null)
+                        .grantStatus("PENDING")
+                        .emailMode("AUTO")
+                        .emailRequired(true)
+                        .emailSent(false)
+                        .emailStatus("PENDING")
+                        .emailSentAt(null)
+                        .emailFailureReason(null)
+                        .emailSubject(null)
+                        .emailBody(null)
+                        .createdAt(now)
+                        .updatedAt(now)
+                        .build();
 
         ManualEntitlement saved =
                 manualEntitlementRepository.save(entitlement);
 
-        EntitlementHistory history = EntitlementHistory.builder()
-                .user(user)
-                .planName(normalizedPlan)
-                .action("GRANT_TEMPORARY")
-                .grantedBy(grantedBy)
-                .reason(reason)
-                .effectiveAt(now)
-                .expiresAt(expiresAt)
-                .createdAt(now)
-                .build();
+        EntitlementHistory history =
+                EntitlementHistory.builder()
+                        .user(user)
+                        .planName(normalizedPlan)
+                        .action("GRANT_TEMPORARY_PENDING")
+                        .grantedBy(
+                                grantedBy != null
+                                        ? grantedBy
+                                        : "ADMIN"
+                        )
+                        .reason(reason)
+                        .effectiveAt(now)
+                        .expiresAt(expiresAt)
+                        .createdAt(now)
+                        .build();
 
         entitlementHistoryRepository.save(history);
 
@@ -88,36 +109,144 @@ public class AdminEntitlementService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        ManualEntitlement entitlement = ManualEntitlement.builder()
-                .user(user)
-                .planName(normalizedPlan)
-                .type("LIFETIME")
-                .grantedBy(grantedBy)
-                .reason(reason)
-                .grantedAt(now)
-                .expiresAt(null)
-                .revoked(false)
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
+        ManualEntitlement entitlement =
+                ManualEntitlement.builder()
+                        .user(user)
+                        .planName(normalizedPlan)
+                        .type("LIFETIME")
+                        .grantedBy(
+                                grantedBy != null
+                                        ? grantedBy
+                                        : "ADMIN"
+                        )
+                        .reason(reason)
+                        .grantedAt(now)
+                        .expiresAt(null)
+                        .revoked(true)
+                        .revokedAt(null)
+                        .grantStatus("PENDING")
+                        .emailMode("AUTO")
+                        .emailRequired(true)
+                        .emailSent(false)
+                        .emailStatus("PENDING")
+                        .emailSentAt(null)
+                        .emailFailureReason(null)
+                        .emailSubject(null)
+                        .emailBody(null)
+                        .createdAt(now)
+                        .updatedAt(now)
+                        .build();
 
         ManualEntitlement saved =
                 manualEntitlementRepository.save(entitlement);
 
-        EntitlementHistory history = EntitlementHistory.builder()
-                .user(user)
-                .planName(normalizedPlan)
-                .action("GRANT_LIFETIME")
-                .grantedBy(grantedBy)
-                .reason(reason)
-                .effectiveAt(now)
-                .expiresAt(null)
-                .createdAt(now)
-                .build();
+        EntitlementHistory history =
+                EntitlementHistory.builder()
+                        .user(user)
+                        .planName(normalizedPlan)
+                        .action("GRANT_LIFETIME_PENDING")
+                        .grantedBy(
+                                grantedBy != null
+                                        ? grantedBy
+                                        : "ADMIN"
+                        )
+                        .reason(reason)
+                        .effectiveAt(now)
+                        .expiresAt(null)
+                        .createdAt(now)
+                        .build();
 
         entitlementHistoryRepository.save(history);
 
         return saved;
+    }
+
+    @Transactional
+    public ManualEntitlement activateEntitlementAfterEmail(
+            Long entitlementId,
+            String emailMode,
+            String emailSubject,
+            String emailBody) {
+
+        ManualEntitlement entitlement =
+                manualEntitlementRepository.findById(entitlementId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Entitlement not found"
+                                )
+                        );
+
+        if (!"PENDING".equalsIgnoreCase(
+                entitlement.getGrantStatus()
+        )) {
+            throw new IllegalStateException(
+                    "Entitlement is not pending"
+            );
+        }
+
+        entitlement.setEmailMode(
+                emailMode != null && !emailMode.isBlank()
+                        ? emailMode.trim().toUpperCase(Locale.ROOT)
+                        : "AUTO"
+        );
+
+        entitlement.setEmailSubject(emailSubject);
+        entitlement.setEmailBody(emailBody);
+        entitlement.setEmailSent(true);
+        entitlement.setEmailStatus("SENT");
+        entitlement.setEmailSentAt(LocalDateTime.now());
+        entitlement.setEmailFailureReason(null);
+
+        entitlement.setRevoked(false);
+        entitlement.setRevokedAt(null);
+        entitlement.setGrantStatus("ACTIVE");
+        entitlement.setUpdatedAt(LocalDateTime.now());
+
+        ManualEntitlement saved =
+                manualEntitlementRepository.save(entitlement);
+
+        EntitlementHistory history =
+                EntitlementHistory.builder()
+                        .user(entitlement.getUser())
+                        .planName(entitlement.getPlanName())
+                        .action("GRANT_ACTIVATED")
+                        .grantedBy(entitlement.getGrantedBy())
+                        .reason(entitlement.getReason())
+                        .effectiveAt(LocalDateTime.now())
+                        .expiresAt(entitlement.getExpiresAt())
+                        .createdAt(LocalDateTime.now())
+                        .build();
+
+        entitlementHistoryRepository.save(history);
+
+        return saved;
+    }
+
+    @Transactional
+    public ManualEntitlement markEmailFailed(
+            Long entitlementId,
+            String failureReason) {
+
+        ManualEntitlement entitlement =
+                manualEntitlementRepository.findById(entitlementId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Entitlement not found"
+                                )
+                        );
+
+        entitlement.setEmailSent(false);
+        entitlement.setEmailStatus("FAILED");
+        entitlement.setEmailFailureReason(
+                failureReason != null
+                        ? failureReason
+                        : "Unable to send entitlement email"
+        );
+        entitlement.setGrantStatus("EMAIL_FAILED");
+        entitlement.setRevoked(true);
+        entitlement.setUpdatedAt(LocalDateTime.now());
+
+        return manualEntitlementRepository.save(entitlement);
     }
 
     @Transactional
@@ -130,9 +259,13 @@ public class AdminEntitlementService {
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Entitlement not found"
-                                ));
+                                )
+                        );
 
-        if (entitlement.isRevoked()) {
+        if (entitlement.isRevoked()
+                && "REVOKED".equalsIgnoreCase(
+                entitlement.getGrantStatus()
+        )) {
             throw new RuntimeException(
                     "Entitlement already revoked"
             );
@@ -142,29 +275,32 @@ public class AdminEntitlementService {
 
         entitlement.setRevoked(true);
         entitlement.setRevokedAt(now);
+        entitlement.setGrantStatus("REVOKED");
         entitlement.setUpdatedAt(now);
 
         manualEntitlementRepository.save(entitlement);
 
-        EntitlementHistory history = EntitlementHistory.builder()
-                .user(entitlement.getUser())
-                .planName(entitlement.getPlanName())
-                .action("REVOKE")
-                .grantedBy(
-                        revokedBy != null
-                                ? revokedBy
-                                : "SYSTEM"
-                )
-                .reason("Entitlement revoked")
-                .effectiveAt(now)
-                .createdAt(now)
-                .build();
+        EntitlementHistory history =
+                EntitlementHistory.builder()
+                        .user(entitlement.getUser())
+                        .planName(entitlement.getPlanName())
+                        .action("REVOKE")
+                        .grantedBy(
+                                revokedBy != null
+                                        ? revokedBy
+                                        : "SYSTEM"
+                        )
+                        .reason("Entitlement revoked")
+                        .effectiveAt(now)
+                        .createdAt(now)
+                        .build();
 
         entitlementHistoryRepository.save(history);
     }
 
     @Transactional
-    public void revokeAllEntitlementsForUser(Long userId) {
+    public void revokeAllEntitlementsForUser(
+            Long userId) {
 
         User user = getUser(userId);
 
@@ -178,6 +314,7 @@ public class AdminEntitlementService {
 
             entitlement.setRevoked(true);
             entitlement.setRevokedAt(now);
+            entitlement.setGrantStatus("REVOKED");
             entitlement.setUpdatedAt(now);
 
             manualEntitlementRepository.save(entitlement);
@@ -185,10 +322,14 @@ public class AdminEntitlementService {
             EntitlementHistory history =
                     EntitlementHistory.builder()
                             .user(user)
-                            .planName(entitlement.getPlanName())
+                            .planName(
+                                    entitlement.getPlanName()
+                            )
                             .action("REVOKE_ALL")
                             .grantedBy("SYSTEM")
-                            .reason("All manual entitlements revoked")
+                            .reason(
+                                    "All manual entitlements revoked"
+                            )
                             .effectiveAt(now)
                             .createdAt(now)
                             .build();
@@ -219,7 +360,10 @@ public class AdminEntitlementService {
                 .findByUserIdAndRevokedFalse(userId)
                 .stream()
                 .filter(entitlement ->
-                        !entitlement.isRevoked()
+                        "ACTIVE".equalsIgnoreCase(
+                                entitlement.getGrantStatus()
+                        )
+                                && !entitlement.isRevoked()
                                 && (
                                 entitlement.getExpiresAt() == null
                                         || entitlement.getExpiresAt()
@@ -251,6 +395,9 @@ public class AdminEntitlementService {
                 .anyMatch(entitlement ->
                         normalizedPlan.equals(
                                 entitlement.getPlanName()
+                        )
+                                && "ACTIVE".equalsIgnoreCase(
+                                entitlement.getGrantStatus()
                         )
                                 && !entitlement.isRevoked()
                                 && (
@@ -286,6 +433,11 @@ public class AdminEntitlementService {
                         )
                 )
                 .filter(entitlement ->
+                        "ACTIVE".equalsIgnoreCase(
+                                entitlement.getGrantStatus()
+                        )
+                )
+                .filter(entitlement ->
                         !entitlement.isRevoked()
                 )
                 .filter(entitlement ->
@@ -308,12 +460,15 @@ public class AdminEntitlementService {
                 .orElseThrow(() ->
                         new RuntimeException(
                                 "User not found"
-                        ));
+                        )
+                );
     }
 
     private String validatePlan(String planName) {
 
-        if (planName == null || planName.isBlank()) {
+        if (planName == null
+                || planName.isBlank()) {
+
             throw new IllegalArgumentException(
                     "Plan name is required"
             );
@@ -324,6 +479,7 @@ public class AdminEntitlementService {
 
         if (!"PRO".equals(normalized)
                 && !"ELITE".equals(normalized)) {
+
             throw new IllegalArgumentException(
                     "Only PRO and ELITE entitlements can be granted"
             );

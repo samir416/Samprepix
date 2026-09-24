@@ -9,10 +9,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class PlanService {
+
+    private static final String MONTH_INTERVAL = "MONTH";
+    private static final String STARTER = "STARTER";
+    private static final String PRO = "PRO";
+    private static final String ELITE = "ELITE";
 
     private final PlanRepository planRepository;
 
@@ -20,7 +26,7 @@ public class PlanService {
     @Transactional
     public void seedPlans() {
         createPlanIfMissing(
-                "STARTER",
+                STARTER,
                 "Starter Plan",
                 0.0,
                 0.0,
@@ -37,10 +43,10 @@ public class PlanService {
         );
 
         createPlanIfMissing(
-                "PRO",
+                PRO,
                 "Pro Plan",
                 399.0,
-                8.0,
+                9.0,
                 15,
                 20,
                 50,
@@ -54,10 +60,10 @@ public class PlanService {
         );
 
         createPlanIfMissing(
-                "ELITE",
+                ELITE,
                 "Elite Plan",
                 799.0,
-                18.0,
+                19.0,
                 30,
                 50,
                 100,
@@ -87,13 +93,17 @@ public class PlanService {
             boolean active,
             boolean featured
     ) {
-        if (!planRepository.existsByName(name)) {
+        String normalizedName = normalizePlanName(name);
+
+        if (!planRepository.existsByNameIgnoreCase(normalizedName)) {
+            LocalDateTime now = LocalDateTime.now();
+
             Plan plan = Plan.builder()
-                    .name(name)
+                    .name(normalizedName)
                     .description(description)
                     .priceInr(priceInr)
                     .priceUsd(priceUsd)
-                    .interval("MONTHLY")
+                    .interval(MONTH_INTERVAL)
                     .maxMockInterviews(maxMockInterviews)
                     .maxResumeScans(maxResumeScans)
                     .maxCodingProblems(maxCodingProblems)
@@ -104,54 +114,62 @@ public class PlanService {
                     .includesPriorityCompute(includesPriorityCompute)
                     .active(active)
                     .featured(featured)
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
+                    .createdAt(now)
+                    .updatedAt(now)
                     .build();
 
             planRepository.save(plan);
         }
     }
 
+    @Transactional(readOnly = true)
     public Plan getActivePlan(String planName) {
-        if (planName == null || planName.isBlank()) {
-            throw new IllegalArgumentException("Plan name is required");
-        }
+        String normalizedName = normalizePlanName(planName);
 
-        return planRepository.findByNameAndActiveTrue(planName.toUpperCase())
+        return planRepository.findByNameIgnoreCaseAndActiveTrue(normalizedName)
                 .orElseThrow(() ->
-                        new RuntimeException("Plan not found or inactive: " + planName));
+                        new IllegalArgumentException("Plan not found or inactive"));
     }
 
+    @Transactional(readOnly = true)
     public Plan getTestPlan(String planName) {
         return getActivePlan(planName);
     }
 
+    @Transactional(readOnly = true)
     public double getProductionPrice(String planName) {
         return getActivePlan(planName).getPriceInr();
     }
 
+    @Transactional(readOnly = true)
     public double getTestPrice(String planName) {
-        if ("PRO".equalsIgnoreCase(planName)) {
+        String normalizedName = normalizePlanName(planName);
+
+        if (PRO.equals(normalizedName)) {
             return 1.0;
         }
 
-        if ("ELITE".equalsIgnoreCase(planName)) {
+        if (ELITE.equals(normalizedName)) {
             return 2.0;
         }
 
         return 0.0;
     }
 
+    @Transactional(readOnly = true)
     public double getProductionPriceUsd(String planName) {
         return getActivePlan(planName).getPriceUsd();
     }
 
+    @Transactional(readOnly = true)
     public double getTestPriceUsd(String planName) {
-        if ("PRO".equalsIgnoreCase(planName)) {
+        String normalizedName = normalizePlanName(planName);
+
+        if (PRO.equals(normalizedName)) {
             return 1.0;
         }
 
-        if ("ELITE".equalsIgnoreCase(planName)) {
+        if (ELITE.equals(normalizedName)) {
             return 2.0;
         }
 
@@ -159,11 +177,35 @@ public class PlanService {
     }
 
     public boolean isProOrElite(String planName) {
-        return "PRO".equalsIgnoreCase(planName)
-                || "ELITE".equalsIgnoreCase(planName);
+        if (planName == null || planName.isBlank()) {
+            return false;
+        }
+
+        String normalizedName = planName.trim().toUpperCase(Locale.ROOT);
+
+        return PRO.equals(normalizedName)
+                || ELITE.equals(normalizedName);
     }
 
     public boolean isStarter(String planName) {
-        return "STARTER".equalsIgnoreCase(planName);
+        if (planName == null || planName.isBlank()) {
+            return false;
+        }
+
+        return STARTER.equals(planName.trim().toUpperCase(Locale.ROOT));
+    }
+
+    private String normalizePlanName(String planName) {
+        if (planName == null || planName.isBlank()) {
+            throw new IllegalArgumentException("Plan name is required");
+        }
+
+        String normalizedName = planName.trim().toUpperCase(Locale.ROOT);
+
+        if (!normalizedName.matches("[A-Z0-9_-]{1,30}")) {
+            throw new IllegalArgumentException("Invalid plan name");
+        }
+
+        return normalizedName;
     }
 }

@@ -15,33 +15,64 @@ public class CustomUserDetailsService
     private final UserRepository userRepository;
 
     public CustomUserDetailsService(
-            UserRepository userRepository) {
+            UserRepository userRepository
+    ) {
         this.userRepository = userRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(
-            String email)
-            throws UsernameNotFoundException {
+            String email
+    ) throws UsernameNotFoundException {
 
-        String trimmedEmail = email != null ? email.trim() : "";
+        String normalizedEmail =
+                email == null
+                        ? ""
+                        : email.trim().toLowerCase();
+
+        if (normalizedEmail.isBlank()
+                || normalizedEmail.length() > 254
+                || normalizedEmail.contains("\r")
+                || normalizedEmail.contains("\n")) {
+
+            throw new UsernameNotFoundException(
+                    "User not found"
+            );
+        }
+
         User user = userRepository
-                .findByEmail(trimmedEmail)
-                .or(() -> userRepository.findByEmail(trimmedEmail.toLowerCase()))
+                .findByEmail(normalizedEmail)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found with email: " + email));
+                        new UsernameNotFoundException(
+                                "User not found"
+                        )
+                );
 
-        // Load actual role from database — never hardcoded
-        String authority = (user.getRole() != null && user.getRole() == Role.ADMIN)
-                ? "ROLE_ADMIN"
-                : "ROLE_USER";
+        String authority =
+                user.getRole() == Role.ADMIN
+                        ? "ROLE_ADMIN"
+                        : "ROLE_USER";
 
-        return org.springframework.security.core.userdetails
-                .User
+        boolean enabled =
+                user.isEmailVerified()
+                        && user.getAccountStatus() != null
+                        && "ACTIVE".equalsIgnoreCase(
+                                user.getAccountStatus().name()
+                        );
+
+        return org.springframework.security.core.userdetails.User
                 .builder()
                 .username(user.getEmail())
-                .password(user.getPassword() != null ? user.getPassword() : "")
+                .password(
+                        user.getPassword() != null
+                                ? user.getPassword()
+                                : ""
+                )
                 .authorities(authority)
+                .disabled(!enabled)
+                .accountExpired(false)
+                .accountLocked(false)
+                .credentialsExpired(false)
                 .build();
     }
 }

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "plans")
@@ -31,7 +30,7 @@ public class Plan {
     @Column(nullable = false)
     private double priceUsd;
 
-    @Column(name = "plan_interval", nullable = false)
+    @Column(name = "plan_interval", nullable = false, length = 20)
     private String interval;
 
     @Column(nullable = false)
@@ -64,14 +63,27 @@ public class Plan {
     @Column(nullable = false)
     private boolean featured;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
     public void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+
+        if (createdAt == null) {
+            createdAt = now;
+        }
+
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+
+        if (interval == null || interval.isBlank()) {
+            interval = "MONTH";
+        }
     }
 
     @PreUpdate

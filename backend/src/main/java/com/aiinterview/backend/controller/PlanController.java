@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/admin/plans")
@@ -21,6 +22,12 @@ import java.util.Map;
 public class PlanController {
 
     private final PlanRepository planRepository;
+
+    private static final Pattern PLAN_NAME_PATTERN =
+            Pattern.compile("[A-Z0-9_-]{1,30}");
+
+    private static final Pattern INTERVAL_PATTERN =
+            Pattern.compile("MONTH");
 
     // =========================================================
     // GET ALL PLANS
@@ -46,7 +53,7 @@ public class PlanController {
     public ResponseEntity<List<PlanResponse>> getActivePlans() {
 
         List<Plan> plans =
-                planRepository.findByActiveTrue();
+                planRepository.findByActiveTrueOrderByIdAsc();
 
         return ResponseEntity.ok(
                 plans.stream()
@@ -89,11 +96,8 @@ public class PlanController {
         String interval =
                 normalizeInterval(request.getInterval());
 
-        if (planRepository.existsByName(name)) {
-
-            throw new RuntimeException(
-                    "Plan already exists: " + name
-            );
+        if (planRepository.existsByNameIgnoreCase(name)) {
+            throw new IllegalArgumentException("Plan already exists");
         }
 
         Plan plan = Plan.builder()
@@ -165,14 +169,11 @@ public class PlanController {
         String interval =
                 normalizeInterval(request.getInterval());
 
-        planRepository.findByName(name)
-                .filter(existing ->
-                        !existing.getId().equals(id)
-                )
+        planRepository.findByNameIgnoreCase(name)
+                .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(existing -> {
-                    throw new RuntimeException(
-                            "Another plan already exists with name: "
-                                    + name
+                    throw new IllegalArgumentException(
+                            "Another plan already exists with name: " + name
                     );
                 });
 
@@ -300,34 +301,43 @@ public class PlanController {
         }
 
         if (request.getDescription() == null
-                || request.getDescription().isBlank()) {
+                || request.getDescription().isBlank()
+                || request.getDescription().trim().length() > 50) {
 
             throw new IllegalArgumentException(
-                    "Plan description is required"
+                    "Plan description is required and must be 50 characters or less"
             );
         }
 
-        if (request.getPriceInr() < 0) {
+        if (!Double.isFinite(request.getPriceInr())
+                || request.getPriceInr() < 0
+                || request.getPriceInr() > 1_000_000) {
 
             throw new IllegalArgumentException(
-                    "INR price cannot be negative"
+                    "Invalid INR price"
             );
         }
 
-        if (request.getPriceUsd() < 0) {
+        if (!Double.isFinite(request.getPriceUsd())
+                || request.getPriceUsd() < 0
+                || request.getPriceUsd() > 100_000) {
 
             throw new IllegalArgumentException(
-                    "USD price cannot be negative"
+                    "Invalid USD price"
             );
         }
 
         if (request.getMaxMockInterviews() < 0
                 || request.getMaxResumeScans() < 0
                 || request.getMaxCodingProblems() < 0
-                || request.getMaxAptitudeQuestions() < 0) {
+                || request.getMaxAptitudeQuestions() < 0
+                || request.getMaxMockInterviews() > 1_000_000
+                || request.getMaxResumeScans() > 1_000_000
+                || request.getMaxCodingProblems() > 1_000_000
+                || request.getMaxAptitudeQuestions() > 1_000_000) {
 
             throw new IllegalArgumentException(
-                    "Plan limits cannot be negative"
+                    "Plan limits are invalid"
             );
         }
 
@@ -355,8 +365,14 @@ public class PlanController {
             );
         }
 
-        return name.trim()
+        String normalized = name.trim()
                 .toUpperCase(Locale.ROOT);
+
+        if (!PLAN_NAME_PATTERN.matcher(normalized).matches()) {
+            throw new IllegalArgumentException("Invalid plan name");
+        }
+
+        return normalized;
     }
 
     private String normalizeInterval(
@@ -370,7 +386,13 @@ public class PlanController {
             );
         }
 
-        return interval.trim()
+        String normalized = interval.trim()
                 .toUpperCase(Locale.ROOT);
+
+        if (!INTERVAL_PATTERN.matcher(normalized).matches()) {
+            throw new IllegalArgumentException("Only monthly plans are supported");
+        }
+
+        return normalized;
     }
 }

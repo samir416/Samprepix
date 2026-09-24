@@ -25,7 +25,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,15 +34,9 @@ public class TestController {
     private final UserService userService;
     private final EntitlementService entitlementService;
 
-
-
-    // =========================================================
-    // AUTHENTICATION
-    // =========================================================
-
     @PostMapping("/login")
     public ResponseEntity<?> login(
-            @RequestBody LoginRequest loginRequest) {
+            @Valid @RequestBody LoginRequest loginRequest) {
 
         String response = userService.login(
                 loginRequest.getEmail(),
@@ -60,7 +53,9 @@ public class TestController {
                     .body(response);
         }
 
-        return ResponseEntity.ok(new LoginResponse(response));
+        return ResponseEntity.ok(
+                new LoginResponse(response)
+        );
     }
 
     @PostMapping("/register")
@@ -75,7 +70,8 @@ public class TestController {
         user.setPassword(request.getPassword());
         user.setProvider(AuthenticationProvider.EMAIL);
 
-        RegisterResponse response = userService.saveUser(user);
+        RegisterResponse response =
+                userService.saveUser(user);
 
         if (!response.isSuccess()) {
             return ResponseEntity
@@ -133,11 +129,17 @@ public class TestController {
 
             return ResponseEntity
                     .badRequest()
-                    .body(new ApiResponse(false, response));
+                    .body(new ApiResponse(
+                            false,
+                            response
+                    ));
         }
 
         return ResponseEntity.ok(
-                new ApiResponse(true, response)
+                new ApiResponse(
+                        true,
+                        response
+                )
         );
     }
 
@@ -145,19 +147,26 @@ public class TestController {
     public ResponseEntity<ApiResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {
 
-        String response = userService.forgotPassword(
-                request.getEmail()
-        );
+        String response =
+                userService.forgotPassword(
+                        request.getEmail()
+                );
 
         if (response.equals("Email not found!")) {
 
             return ResponseEntity
                     .badRequest()
-                    .body(new ApiResponse(false, response));
+                    .body(new ApiResponse(
+                            false,
+                            response
+                    ));
         }
 
         return ResponseEntity.ok(
-                new ApiResponse(true, response)
+                new ApiResponse(
+                        true,
+                        response
+                )
         );
     }
 
@@ -165,49 +174,59 @@ public class TestController {
     public ResponseEntity<ApiResponse> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request) {
 
-        String response = userService.resetPassword(
-                request.getToken(),
-                request.getPassword()
-        );
+        String response =
+                userService.resetPassword(
+                        request.getToken(),
+                        request.getPassword()
+                );
 
-        if (!response.equals("Password reset successfully!")) {
+        if (!response.equals(
+                "Password reset successfully!"
+        )) {
 
             return ResponseEntity
                     .badRequest()
-                    .body(new ApiResponse(false, response));
+                    .body(new ApiResponse(
+                            false,
+                            response
+                    ));
         }
 
         return ResponseEntity.ok(
-                new ApiResponse(true, response)
+                new ApiResponse(
+                        true,
+                        response
+                )
         );
     }
 
-    // =========================================================
-    // CURRENT USER
-    // =========================================================
-
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(
-            Authentication authentication,
-            @RequestHeader(value = "Authorization", required = false) String tokenHeader) {
+            Authentication authentication) {
 
-        String email = null;
-        if (authentication != null && authentication.isAuthenticated() && authentication.getName() != null && !authentication.getName().isBlank()) {
-            email = authentication.getName();
-        } else if (tokenHeader != null && tokenHeader.toLowerCase().startsWith("bearer ")) {
-            String token = tokenHeader.substring(7).replace("\"", "").trim();
-            if (JwtUtil.validateToken(token)) {
-                email = JwtUtil.extractEmail(token);
-            }
-        }
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication.getName() == null
+                || authentication.getName().isBlank()) {
 
-        if (email == null || email.isBlank()) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
                     .body("Unauthorized");
         }
 
-        UserResponse user = userService.getCurrentUser(email);
+        String email = authentication.getName().trim();
+
+        if (email.length() > 254
+                || email.contains("\r")
+                || email.contains("\n")) {
+
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Unauthorized");
+        }
+
+        UserResponse user =
+                userService.getCurrentUser(email);
 
         if (user == null) {
 
@@ -219,20 +238,15 @@ public class TestController {
         userRepository.findByEmail(email)
                 .ifPresent(currentUser ->
                         user.setPlan(
-                                entitlementService.getEffectivePlan(
-                                        currentUser
-                                )
+                                entitlementService
+                                        .getEffectivePlan(
+                                                currentUser
+                                        )
                         )
                 );
 
         return ResponseEntity.ok(user);
     }
-
-    // =========================================================
-    // LEGACY USER MANAGEMENT
-    // Keep restricted to ADMIN.
-    // Actual admin panel uses /api/admin/**.
-    // =========================================================
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
@@ -245,10 +259,14 @@ public class TestController {
     public ResponseEntity<User> getUserById(
             @PathVariable Long id) {
 
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+
         return userRepository.findById(id)
                 .map(ResponseEntity::ok)
-                .orElseGet(() ->
-                        ResponseEntity.notFound().build()
+                .orElseGet(
+                        () -> ResponseEntity.notFound().build()
                 );
     }
 
@@ -258,42 +276,84 @@ public class TestController {
             @PathVariable Long id,
             @RequestBody User updatedUser) {
 
-        Optional<User> existingUser =
-                userRepository.findById(id);
+        if (id == null
+                || id <= 0
+                || updatedUser == null) {
 
-        if (existingUser.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().build();
         }
 
-        User user = existingUser.get();
+        return userRepository.findById(id)
+                .map(user -> {
 
-        if (updatedUser.getUsername() != null
-                && !updatedUser.getUsername().isBlank()) {
+                    if (updatedUser.getUsername() != null
+                            && !updatedUser.getUsername().isBlank()) {
 
-            user.setUsername(updatedUser.getUsername());
-        }
+                        String username =
+                                updatedUser.getUsername().trim();
 
-        if (updatedUser.getEmail() != null
-                && !updatedUser.getEmail().isBlank()) {
+                        if (username.length() <= 50
+                                && !user.getUsername()
+                                .equals(username)
+                                && userRepository
+                                .existsByUsername(username)) {
 
-            user.setEmail(updatedUser.getEmail());
-        }
+                            return null;
+                        }
 
-        if (updatedUser.getPassword() != null
-                && !updatedUser.getPassword().isBlank()) {
+                        if (username.length() <= 50) {
+                            user.setUsername(username);
+                        }
+                    }
 
-            user.setPassword(updatedUser.getPassword());
-        }
+                    if (updatedUser.getEmail() != null
+                            && !updatedUser.getEmail().isBlank()) {
 
-        return ResponseEntity.ok(
-                userRepository.save(user)
-        );
+                        String email =
+                                updatedUser.getEmail().trim();
+
+                        if (email.length() <= 254
+                                && !user.getEmail()
+                                .equalsIgnoreCase(email)
+                                && userRepository
+                                .existsByEmail(email)) {
+
+                            return null;
+                        }
+
+                        if (email.length() <= 254) {
+                            user.setEmail(email);
+                        }
+                    }
+
+                    if (updatedUser.getName() != null
+                            && updatedUser.getName().length() <= 100) {
+
+                        user.setName(
+                                updatedUser.getName().trim()
+                        );
+                    }
+
+                    return userRepository.save(user);
+                })
+                .map(ResponseEntity::ok)
+                .orElseGet(
+                        () -> ResponseEntity
+                                .badRequest()
+                                .build()
+                );
     }
 
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteUser(
             @PathVariable Long id) {
+
+        if (id == null || id <= 0) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Invalid user ID.");
+        }
 
         if (!userRepository.existsById(id)) {
 

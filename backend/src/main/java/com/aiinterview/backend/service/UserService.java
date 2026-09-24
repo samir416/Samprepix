@@ -1,10 +1,9 @@
 package com.aiinterview.backend.service;
 
-import com.aiinterview.backend.entity.UserProfile;
 import com.aiinterview.backend.entity.AccountStatus;
 import com.aiinterview.backend.entity.EmailVerificationToken;
-import com.aiinterview.backend.entity.PasswordResetToken;
 import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.entity.UserProfile;
 import com.aiinterview.backend.model.RegisterResponse;
 import com.aiinterview.backend.model.UserResponse;
 import com.aiinterview.backend.repository.EmailVerificationTokenRepository;
@@ -35,7 +34,8 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder =
             new BCryptPasswordEncoder();
 
-    private final SecureRandom secureRandom = new SecureRandom();
+    private final SecureRandom secureRandom =
+            new SecureRandom();
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
@@ -50,30 +50,95 @@ public class UserService {
         this.userRepository = userRepository;
         this.userProfileRepository = userProfileRepository;
         this.tokenRepository = tokenRepository;
-        this.emailService = emailService;
         this.emailVerificationTokenRepository =
                 emailVerificationTokenRepository;
+        this.emailService = emailService;
     }
-
-    // =========================================================
-    // REGISTER (DIRECT ACCOUNT CREATION — NO REGISTRATION OTP)
-    // =========================================================
 
     @Transactional
     public RegisterResponse saveUser(User user) {
 
-        if (userRepository.existsByEmail(user.getEmail())) {
-            return new RegisterResponse(false, "Email already exists!", null, null);
+        if (user == null) {
+            return new RegisterResponse(
+                    false,
+                    "Invalid registration request!",
+                    null,
+                    null
+            );
         }
 
-        if (userRepository.existsByUsername(user.getUsername())) {
-            return new RegisterResponse(false, "Username already exists!", null, null);
+        String email = normalizeEmail(user.getEmail());
+        String username = normalizeUsername(user.getUsername());
+        String name = normalizeName(user.getName());
+        String password = user.getPassword();
+
+        if (!isValidEmail(email)) {
+            return new RegisterResponse(
+                    false,
+                    "Invalid email!",
+                    null,
+                    null
+            );
         }
 
+        if (username == null
+                || username.length() < 3
+                || username.length() > 50
+                || !username.matches("[A-Za-z0-9_.-]+")) {
+
+            return new RegisterResponse(
+                    false,
+                    "Invalid username!",
+                    null,
+                    null
+            );
+        }
+
+        if (password == null
+                || password.length() < 8
+                || password.length() > 72) {
+
+            return new RegisterResponse(
+                    false,
+                    "Password must contain 8 to 72 characters!",
+                    null,
+                    null
+            );
+        }
+
+        if (name != null && name.length() > 100) {
+            return new RegisterResponse(
+                    false,
+                    "Invalid name!",
+                    null,
+                    null
+            );
+        }
+
+        if (userRepository.existsByEmail(email)) {
+            return new RegisterResponse(
+                    false,
+                    "Email already exists!",
+                    null,
+                    null
+            );
+        }
+
+        if (userRepository.existsByUsername(username)) {
+            return new RegisterResponse(
+                    false,
+                    "Username already exists!",
+                    null,
+                    null
+            );
+        }
+
+        user.setEmail(email);
+        user.setUsername(username);
+        user.setName(name);
         user.setPassword(
-                passwordEncoder.encode(user.getPassword())
+                passwordEncoder.encode(password)
         );
-
         user.setEmailVerified(true);
         user.setAccountStatus(AccountStatus.ACTIVE);
 
@@ -86,7 +151,8 @@ public class UserService {
         user.setProfile(profile);
         userProfileRepository.saveAndFlush(profile);
 
-        String token = JwtUtil.generateToken(user.getEmail());
+        String token =
+                JwtUtil.generateToken(user.getEmail());
 
         return new RegisterResponse(
                 true,
@@ -96,21 +162,32 @@ public class UserService {
         );
     }
 
-    // =========================================================
-    // USER MANAGEMENT
-    // =========================================================
-
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
     public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
+
+        if (id == null || id <= 0) {
+            return null;
+        }
+
+        return userRepository
+                .findById(id)
+                .orElse(null);
     }
 
+    @Transactional
     public User updateUser(
             Long id,
             User updatedUser) {
+
+        if (id == null
+                || id <= 0
+                || updatedUser == null) {
+
+            return null;
+        }
 
         Optional<User> existingUser =
                 userRepository.findById(id);
@@ -122,41 +199,88 @@ public class UserService {
         User user = existingUser.get();
 
         if (updatedUser.getUsername() != null
-                && !user.getUsername()
-                .equals(updatedUser.getUsername())
-                && userRepository.existsByUsername(
-                        updatedUser.getUsername())) {
-
-            throw new RuntimeException(
-                    "Username already exists!"
-            );
-        }
-
-        if (updatedUser.getEmail() != null
-                && !user.getEmail()
-                .equals(updatedUser.getEmail())
-                && userRepository.existsByEmail(
-                        updatedUser.getEmail())) {
-
-            throw new RuntimeException(
-                    "Email already exists!"
-            );
-        }
-
-        if (updatedUser.getUsername() != null
                 && !updatedUser.getUsername().isBlank()) {
 
-            user.setUsername(updatedUser.getUsername());
+            String username =
+                    normalizeUsername(
+                            updatedUser.getUsername()
+                    );
+
+            if (username == null
+                    || username.length() < 3
+                    || username.length() > 50
+                    || !username.matches(
+                            "[A-Za-z0-9_.-]+"
+                    )) {
+
+                throw new IllegalArgumentException(
+                        "Invalid username!"
+                );
+            }
+
+            if (!username.equals(user.getUsername())
+                    && userRepository
+                    .existsByUsername(username)) {
+
+                throw new IllegalArgumentException(
+                        "Username already exists!"
+                );
+            }
+
+            user.setUsername(username);
         }
 
         if (updatedUser.getEmail() != null
                 && !updatedUser.getEmail().isBlank()) {
 
-            user.setEmail(updatedUser.getEmail());
+            String email =
+                    normalizeEmail(
+                            updatedUser.getEmail()
+                    );
+
+            if (!isValidEmail(email)) {
+                throw new IllegalArgumentException(
+                        "Invalid email!"
+                );
+            }
+
+            if (!email.equalsIgnoreCase(user.getEmail())
+                    && userRepository.existsByEmail(email)) {
+
+                throw new IllegalArgumentException(
+                        "Email already exists!"
+                );
+            }
+
+            user.setEmail(email);
+        }
+
+        if (updatedUser.getName() != null) {
+
+            String name =
+                    normalizeName(
+                            updatedUser.getName()
+                    );
+
+            if (name != null && name.length() > 100) {
+                throw new IllegalArgumentException(
+                        "Invalid name!"
+                );
+            }
+
+            user.setName(name);
         }
 
         if (updatedUser.getPassword() != null
                 && !updatedUser.getPassword().isBlank()) {
+
+            if (updatedUser.getPassword().length() < 8
+                    || updatedUser.getPassword().length() > 72) {
+
+                throw new IllegalArgumentException(
+                        "Password must contain 8 to 72 characters!"
+                );
+            }
 
             user.setPassword(
                     passwordEncoder.encode(
@@ -168,15 +292,18 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public String deleteUser(Long id) {
 
-        Optional<User> userOpt = userRepository.findById(id);
-        if (userOpt.isEmpty()) {
-            return "User not found!";
+        if (id == null || id <= 0) {
+            return "Invalid user ID!";
         }
 
-        if ("samirprajapat5@gmail.com".equalsIgnoreCase(userOpt.get().getEmail())) {
-            throw new IllegalArgumentException("Owner account cannot be deleted!");
+        Optional<User> userOpt =
+                userRepository.findById(id);
+
+        if (userOpt.isEmpty()) {
+            return "User not found!";
         }
 
         userRepository.deleteById(id);
@@ -184,19 +311,27 @@ public class UserService {
         return "User deleted successfully!";
     }
 
-    // =========================================================
-    // LOGIN
-    // =========================================================
-
     public String login(
             String email,
             String password) {
 
+        String normalizedEmail =
+                normalizeEmail(email);
+
+        if (!isValidEmail(normalizedEmail)
+                || password == null
+                || password.isBlank()) {
+
+            return "Invalid credentials!";
+        }
+
         Optional<User> optionalUser =
-                userRepository.findByEmail(email);
+                userRepository.findByEmail(
+                        normalizedEmail
+                );
 
         if (optionalUser.isEmpty()) {
-            return "User not found!";
+            return "Invalid credentials!";
         }
 
         User user = optionalUser.get();
@@ -204,33 +339,44 @@ public class UserService {
         if (user.getPassword() == null
                 || !passwordEncoder.matches(
                         password,
-                        user.getPassword())) {
+                        user.getPassword()
+                )) {
 
-            return "Invalid password!";
+            return "Invalid credentials!";
         }
 
         if (!user.isEmailVerified()) {
             return "Please verify your email first!";
         }
 
-        if (user.getAccountStatus() != AccountStatus.ACTIVE) {
+        if (user.getAccountStatus()
+                != AccountStatus.ACTIVE) {
+
             return "Account is not active!";
         }
 
-        return JwtUtil.generateToken(user.getEmail());
+        return JwtUtil.generateToken(
+                user.getEmail()
+        );
     }
 
-    // =========================================================
-    // FORGOT PASSWORD
-    // =========================================================
-
+    @Transactional
     public String forgotPassword(String email) {
 
+        String normalizedEmail =
+                normalizeEmail(email);
+
+        if (!isValidEmail(normalizedEmail)) {
+            return "If the account exists, a reset link has been sent.";
+        }
+
         Optional<User> optionalUser =
-                userRepository.findByEmail(email);
+                userRepository.findByEmail(
+                        normalizedEmail
+                );
 
         if (optionalUser.isEmpty()) {
-            return "Email not found!";
+            return "If the account exists, a reset link has been sent.";
         }
 
         User user = optionalUser.get();
@@ -243,7 +389,9 @@ public class UserService {
                 new PasswordResetToken();
 
         token.setUser(user);
-        token.setToken(UUID.randomUUID().toString());
+        token.setToken(
+                UUID.randomUUID().toString()
+        );
         token.setExpiryTime(
                 LocalDateTime.now().plusMinutes(30)
         );
@@ -262,16 +410,27 @@ public class UserService {
                 resetLink
         );
 
-        return "Reset link sent successfully!";
+        return "If the account exists, a reset link has been sent.";
     }
 
-    // =========================================================
-    // RESET PASSWORD
-    // =========================================================
-
+    @Transactional
     public String resetPassword(
             String token,
             String newPassword) {
+
+        if (token == null
+                || token.isBlank()
+                || token.length() > 255) {
+
+            return "Invalid reset token!";
+        }
+
+        if (newPassword == null
+                || newPassword.length() < 8
+                || newPassword.length() > 72) {
+
+            return "Password must contain 8 to 72 characters!";
+        }
 
         Optional<PasswordResetToken> optionalToken =
                 tokenRepository.findByToken(token);
@@ -287,19 +446,18 @@ public class UserService {
             return "Reset token has already been used!";
         }
 
-        if (resetToken.getExpiryTime()
+        if (resetToken.getExpiryTime() == null
+                || resetToken.getExpiryTime()
                 .isBefore(LocalDateTime.now())) {
 
             return "Reset token has expired!";
         }
 
-        if (newPassword == null
-                || newPassword.isBlank()) {
-
-            return "Password cannot be empty!";
-        }
-
         User user = resetToken.getUser();
+
+        if (user == null) {
+            return "Invalid reset token!";
+        }
 
         user.setPassword(
                 passwordEncoder.encode(newPassword)
@@ -313,10 +471,6 @@ public class UserService {
         return "Password reset successfully!";
     }
 
-    // =========================================================
-    // EMAIL OTP
-    // =========================================================
-
     private String generateOtp() {
 
         return String.format(
@@ -325,15 +479,25 @@ public class UserService {
         );
     }
 
+    @Transactional
     public String verifyOtp(
             String email,
             String otp) {
 
+        String normalizedEmail =
+                normalizeEmail(email);
+
+        if (!isValidEmail(normalizedEmail)) {
+            return "Invalid OTP!";
+        }
+
         Optional<User> optionalUser =
-                userRepository.findByEmail(email);
+                userRepository.findByEmail(
+                        normalizedEmail
+                );
 
         if (optionalUser.isEmpty()) {
-            return "User not found!";
+            return "Invalid OTP!";
         }
 
         User user = optionalUser.get();
@@ -353,20 +517,24 @@ public class UserService {
             return "OTP has already been used!";
         }
 
-        if (token.getExpiryTime()
+        if (token.getExpiryTime() == null
+                || token.getExpiryTime()
                 .isBefore(LocalDateTime.now())) {
 
             return "OTP has expired!";
         }
 
         if (otp == null
-                || !token.getOtp().equals(otp)) {
+                || !otp.matches("\\d{4}")
+                || !otp.equals(token.getOtp())) {
 
             return "Invalid OTP!";
         }
 
         user.setEmailVerified(true);
-        user.setAccountStatus(AccountStatus.ACTIVE);
+        user.setAccountStatus(
+                AccountStatus.ACTIVE
+        );
 
         userRepository.save(user);
 
@@ -378,14 +546,20 @@ public class UserService {
         );
     }
 
-    // =========================================================
-    // RESEND OTP
-    // =========================================================
-
+    @Transactional
     public String resendOtp(String email) {
 
+        String normalizedEmail =
+                normalizeEmail(email);
+
+        if (!isValidEmail(normalizedEmail)) {
+            return "Invalid email!";
+        }
+
         Optional<User> optionalUser =
-                userRepository.findByEmail(email);
+                userRepository.findByEmail(
+                        normalizedEmail
+                );
 
         if (optionalUser.isEmpty()) {
             return "User not found!";
@@ -424,14 +598,19 @@ public class UserService {
         return "OTP sent successfully!";
     }
 
-    // =========================================================
-    // CURRENT USER
-    // =========================================================
+    public UserResponse getCurrentUser(
+            String email) {
 
-    public UserResponse getCurrentUser(String email) {
+        String normalizedEmail =
+                normalizeEmail(email);
+
+        if (!isValidEmail(normalizedEmail)) {
+            return null;
+        }
 
         User user =
-                userRepository.findByEmail(email)
+                userRepository
+                        .findByEmail(normalizedEmail)
                         .orElse(null);
 
         if (user == null) {
@@ -454,26 +633,88 @@ public class UserService {
                 user.getProfilePicture()
         );
 
-        UserProfile profile = user.getProfile();
+        UserProfile profile =
+                user.getProfile();
+
         if (profile == null) {
-            profile = userProfileRepository.findByUser(user).orElse(null);
+            profile =
+                    userProfileRepository
+                            .findByUser(user)
+                            .orElse(null);
         }
 
-        boolean isCompleted = profile != null
-                && (profile.isProfileCompleted()
-                        || (profile.getJourneyType() != null
-                                && profile.getTargetRole() != null
-                                && !profile.getTargetRole().isBlank()
-                                && profile.getCareerGoal() != null));
+        boolean isCompleted =
+                profile != null
+                        && (
+                        profile.isProfileCompleted()
+                                || (
+                                profile.getJourneyType() != null
+                                        && profile.getTargetRole() != null
+                                        && !profile.getTargetRole().isBlank()
+                                        && profile.getCareerGoal() != null
+                        )
+                );
 
-        response.setProfileCompleted(isCompleted);
+        response.setProfileCompleted(
+                isCompleted
+        );
 
         response.setRole(roleStr);
-
-        // Plan is populated by TestController
-        // using backend-authoritative EntitlementService.
         response.setPlan(null);
 
         return response;
+    }
+
+    private String normalizeEmail(String email) {
+
+        if (email == null) {
+            return "";
+        }
+
+        return email.trim().toLowerCase();
+    }
+
+    private String normalizeUsername(
+            String username) {
+
+        if (username == null) {
+            return null;
+        }
+
+        return username.trim();
+    }
+
+    private String normalizeName(String name) {
+
+        if (name == null) {
+            return null;
+        }
+
+        String normalized = name.trim();
+
+        return normalized.isBlank()
+                ? null
+                : normalized;
+    }
+
+    private boolean isValidEmail(String email) {
+
+        if (email == null
+                || email.isBlank()
+                || email.length() > 254
+                || email.contains("\r")
+                || email.contains("\n")) {
+
+            return false;
+        }
+
+        return email.matches(
+                "^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+                        + "[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}"
+                        + "[A-Za-z0-9])?"
+                        + "(?:\\.[A-Za-z0-9]"
+                        + "(?:[A-Za-z0-9-]{0,61}"
+                        + "[A-Za-z0-9])?)+$"
+        );
     }
 }

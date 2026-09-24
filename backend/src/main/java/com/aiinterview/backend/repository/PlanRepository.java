@@ -9,8 +9,18 @@ import java.util.Optional;
 
 @Repository
 public interface PlanRepository extends JpaRepository<Plan, Long> {
+
     boolean existsByName(String name);
-    List<Plan> findByActiveTrue();
+
+    boolean existsByNameIgnoreCase(String name);
+
+    List<Plan> findByActiveTrueOrderByIdAsc();
+
     Optional<Plan> findByNameAndActiveTrue(String name);
+
+    Optional<Plan> findByNameIgnoreCaseAndActiveTrue(String name);
+
     Optional<Plan> findByName(String name);
+
+    Optional<Plan> findByNameIgnoreCase(String name);
 }

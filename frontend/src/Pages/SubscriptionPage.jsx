@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import {
     getActiveSubscription,
-    cancelSubscription,
     getCapabilities
 } from "../services/subscriptionService";
 
@@ -31,7 +30,6 @@ import {
     FaUnlock,
     FaChartLine
 } from "react-icons/fa";
-import ConfirmModal from "../Components/Common/ConfirmModal";
 
 export default function SubscriptionPage() {
 
@@ -49,14 +47,11 @@ export default function SubscriptionPage() {
 
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
-    const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: "", onConfirm: null });
 
     const [currency, setCurrency] = useState("INR");
 
     const [capabilities, setCapabilities] = useState(null);
 
-    // Test-mode display pricing.
-    // Actual payment amount is always determined by backend.
     const [testPricing] = useState({
         PRO: {
             INR: 1.0,
@@ -74,10 +69,6 @@ export default function SubscriptionPage() {
 
     const pricingMode = "test";
 
-    // =========================================================
-    // INITIAL LOAD
-    // =========================================================
-
     useEffect(() => {
 
         if (!localStorage.getItem("token")) {
@@ -90,10 +81,6 @@ export default function SubscriptionPage() {
         loadData();
 
     }, [navigate]);
-
-    // =========================================================
-    // SELECT PLAN FROM QUERY PARAM
-    // =========================================================
 
     useEffect(() => {
 
@@ -110,10 +97,6 @@ export default function SubscriptionPage() {
         setSelectedPlan(selected);
 
     }, [planId, plans]);
-
-    // =========================================================
-    // LOAD SUBSCRIPTION DATA
-    // =========================================================
 
     const loadData = async () => {
 
@@ -164,10 +147,6 @@ export default function SubscriptionPage() {
         }
     };
 
-    // =========================================================
-    // PRICE DISPLAY
-    // =========================================================
-
     const getDisplayPrice = (plan) => {
 
         if (!plan) {
@@ -191,9 +170,88 @@ export default function SubscriptionPage() {
             : (plan.priceInr ?? 0);
     };
 
-    // =========================================================
-    // SUBSCRIBE
-    // =========================================================
+    const loadCashfree = () => {
+
+        return new Promise((resolve, reject) => {
+
+            if (window.Cashfree) {
+                resolve(window.Cashfree);
+                return;
+            }
+
+            const existingScript =
+                document.querySelector(
+                    'script[src="https://sdk.cashfree.com/js/v3/cashfree.js"]'
+                );
+
+            if (existingScript) {
+
+                existingScript.addEventListener(
+                    "load",
+                    () => {
+
+                        if (window.Cashfree) {
+                            resolve(window.Cashfree);
+                        } else {
+                            reject(
+                                new Error(
+                                    "Cashfree SDK failed to initialize."
+                                )
+                            );
+                        }
+
+                    },
+                    { once: true }
+                );
+
+                existingScript.addEventListener(
+                    "error",
+                    () => {
+                        reject(
+                            new Error(
+                                "Cashfree SDK failed to load."
+                            )
+                        );
+                    },
+                    { once: true }
+                );
+
+                return;
+            }
+
+            const script =
+                document.createElement("script");
+
+            script.src =
+                "https://sdk.cashfree.com/js/v3/cashfree.js";
+
+            script.async = true;
+
+            script.onload = () => {
+
+                if (window.Cashfree) {
+                    resolve(window.Cashfree);
+                } else {
+                    reject(
+                        new Error(
+                            "Cashfree SDK failed to initialize."
+                        )
+                    );
+                }
+            };
+
+            script.onerror = () => {
+
+                reject(
+                    new Error(
+                        "Cashfree SDK failed to load."
+                    )
+                );
+            };
+
+            document.body.appendChild(script);
+        });
+    };
 
     const handleSubscribe = async (plan) => {
 
@@ -223,14 +281,6 @@ export default function SubscriptionPage() {
             const referralCode =
                 localStorage.getItem("referralCode") || null;
 
-            /*
-             * Backend determines:
-             * - plan
-             * - amount
-             * - currency validation
-             * - referral discount
-             * - Razorpay order
-             */
             const order = await createTestOrder(
                 plan.id,
                 currency,
@@ -240,11 +290,17 @@ export default function SubscriptionPage() {
 
             if (!order?.cashfreeOrderId) {
                 throw new Error(
-                    "Invalid Razorpay order response."
+                    "Invalid Cashfree order response."
                 );
             }
 
-            initiateCashfreeCheckout(
+            if (!order?.paymentSessionId) {
+                throw new Error(
+                    "Cashfree payment session was not returned by the server."
+                );
+            }
+
+            await initiateCashfreeCheckout(
                 order,
                 plan
             );
@@ -252,7 +308,7 @@ export default function SubscriptionPage() {
         } catch (err) {
 
             console.error(
-                "Failed to create Razorpay order:",
+                "Failed to create Cashfree order:",
                 err
             );
 
@@ -267,142 +323,88 @@ export default function SubscriptionPage() {
         }
     };
 
-    // =========================================================
-    // RAZORPAY CHECKOUT
-    // =========================================================
-
-    const initiateCashfreeCheckout = (
+    const initiateCashfreeCheckout = async (
         order,
         plan
     ) => {
 
-        if (!window.Razorpay) {
-
-            setError(
-                "Razorpay checkout is not loaded. Please refresh the page and try again."
-            );
-
-            setProcessing(false);
-
-            return;
-        }
-
-        const storedUser =
-            localStorage.getItem("user");
-
-        let user = {};
-
         try {
 
-            user = storedUser
-                ? JSON.parse(storedUser)
-                : {};
+            const Cashfree = await loadCashfree();
 
-        } catch {
-            user = {};
-        }
+            const cashfree =
+                Cashfree({
+                    mode: "sandbox"
+                });
 
-        const options = {
+            const result =
+                await cashfree.checkout({
+                    paymentSessionId:
+                        order.paymentSessionId,
+                    redirectTarget: "_modal"
+                });
 
-            key: order.key,
-
-            /*
-             * Razorpay expects amount in paise.
-             * Backend returns amount in major currency unit.
-             */
-            amount:
-                Number(order.amount || 0) * 100,
-
-            currency:
-                order.currency || currency,
-
-            name: "Samprepix",
-
-            description:
-                `Subscription to ${plan.name} Plan`,
-
-            order_id:
-                order.cashfreeOrderId,
-
-            handler: function (response) {
-
-                verifyAndActivate(
-                    response,
-                    plan
-                );
-            },
-
-            prefill: {
-
-                name:
-                    user?.name || "",
-
-                email:
-                    user?.email || "",
-
-                contact:
-                    user?.phone || ""
-            },
-
-            notes: {
-                plan: plan.name
-            },
-
-            theme: {
-                color: "#4f46e5"
-            },
-
-            modal: {
-
-                ondismiss: function () {
-
-                    setProcessing(false);
-                }
-            }
-        };
-
-        const razorpay =
-            new window.Razorpay(options);
-
-        razorpay.on(
-            "payment.failed",
-            async function (response) {
+            if (result?.error) {
 
                 try {
-
                     await markPaymentFailed(
                         order.cashfreeOrderId
                     );
-
-                } catch (error) {
-
+                } catch (paymentError) {
                     console.error(
                         "Failed to mark payment as failed:",
-                        error
+                        paymentError
                     );
                 }
 
                 setError(
-                    "Payment failed: " +
-                    (
-                        response?.error?.description ||
-                        "Please try again."
-                    )
+                    result.error.message ||
+                    "Payment could not be completed."
                 );
 
                 setProcessing(false);
+                return;
             }
-        );
 
-        razorpay.open();
+            if (result?.redirect) {
+                setProcessing(false);
+                return;
+            }
+
+            await verifyAndActivate(
+                order.cashfreeOrderId,
+                plan
+            );
+
+        } catch (err) {
+
+            console.error(
+                "Cashfree checkout failed:",
+                err
+            );
+
+            try {
+                await markPaymentFailed(
+                    order.cashfreeOrderId
+                );
+            } catch (paymentError) {
+                console.error(
+                    "Failed to mark payment as failed:",
+                    paymentError
+                );
+            }
+
+            setError(
+                err?.message ||
+                "Cashfree checkout failed. Please try again."
+            );
+
+            setProcessing(false);
+        }
     };
 
-    // =========================================================
-    // PAYMENT VERIFICATION
-    // =========================================================
-
     const verifyAndActivate = async (
-        cashfreeResponse,
+        cashfreeOrderId,
         plan
     ) => {
 
@@ -412,123 +414,112 @@ export default function SubscriptionPage() {
 
             const result =
                 await verifyPayment({
-
-                    razorpay_order_id:
-                        cashfreeResponse.order_id,
-
-                    razorpay_payment_id:
-                        cashfreeResponse.razorpay_payment_id,
-
-                    razorpay_signature:
-                        cashfreeResponse.razorpay_signature
+                    order_id: cashfreeOrderId
                 });
 
+            const status =
+                String(result?.status || "").toLowerCase();
+
             if (
-                result?.status === "success" ||
-                result?.status === "already_success"
+                status === "success" ||
+                status === "paid" ||
+                status === "completed" ||
+                status === "already_success" ||
+                status === "already_processed"
             ) {
 
-                /*
-                 * IMPORTANT:
-                 * Do NOT create/fake subscription
-                 * on frontend.
-                 *
-                 * Backend verification activates it.
-                 */
                 setSuccess(true);
 
                 await loadData();
 
                 setTimeout(() => {
                     setSuccess(false);
-                }, 5000);
+                    navigate(
+                        `/payment/verify?order_id=${encodeURIComponent(
+                            cashfreeOrderId
+                        )}`
+                    );
+                }, 1200);
 
-            } else {
-
-                setError(
-                    result?.message ||
-                    "Payment verification was unsuccessful."
-                );
+                return;
             }
+
+            if (status === "pending") {
+
+                setProcessing(false);
+
+                navigate(
+                    `/payment/verify?order_id=${encodeURIComponent(
+                        cashfreeOrderId
+                    )}&status=pending`
+                );
+
+                return;
+            }
+
+            if (status === "failed") {
+
+                setProcessing(false);
+
+                navigate(
+                    `/payment/verify?order_id=${encodeURIComponent(
+                        cashfreeOrderId
+                    )}&status=failed`
+                );
+
+                return;
+            }
+
+            setError(
+                result?.message ||
+                "Payment verification is still in progress."
+            );
+
+            setProcessing(false);
 
         } catch (err) {
 
             console.error(
-                "Payment verification failed:",
+                "Cashfree payment verification failed:",
                 err
             );
 
+            if (err?.response?.status === 202) {
+
+                setProcessing(false);
+
+                navigate(
+                    `/payment/verify?order_id=${encodeURIComponent(
+                        cashfreeOrderId
+                    )}&status=pending`
+                );
+
+                return;
+            }
+
+            if (err?.response?.status === 402) {
+
+                setProcessing(false);
+
+                navigate(
+                    `/payment/verify?order_id=${encodeURIComponent(
+                        cashfreeOrderId
+                    )}&status=failed`
+                );
+
+                return;
+            }
+
             setError(
                 err?.response?.data?.message ||
-                err?.response?.data ||
+                err?.response?.data?.error ||
+                err?.message ||
                 "Payment verification failed. Please contact support."
             );
 
-        } finally {
-
             setProcessing(false);
         }
     };
-
-    // =========================================================
-    // CANCEL SUBSCRIPTION
-    // =========================================================
-
-    const handleCancel = async () => {
-
-        if (!activeSub) {
-            return;
-        }
-
-        setConfirmModal({
-            isOpen: true,
-            message: "Cancel your subscription?",
-            onConfirm: async () => {
-                setConfirmModal({ isOpen: false, message: "", onConfirm: null });
-                try {
-
-            setError(null);
-            setProcessing(true);
-
-            await cancelSubscription(
-                activeSub.subscriptionId ||
-                activeSub.id
-            );
-
-            setActiveSub(null);
-
-            setSuccess(true);
-
-            await loadData();
-
-            setTimeout(() => {
-                setSuccess(false);
-            }, 3000);
-
-        } catch (err) {
-
-            console.error(
-                "Failed to cancel subscription:",
-                err
-            );
-
-            setError(
-                err?.response?.data?.message ||
-                err?.response?.data ||
-                "Failed to cancel subscription"
-            );
-
-        } finally {
-
-            setProcessing(false);
-        }
-            }
-        });
-    };
-
-    // =========================================================
-    // CURRENCY DETECTION
-    // =========================================================
 
     const detectCurrency = () => {
 
@@ -563,15 +554,10 @@ export default function SubscriptionPage() {
             }
 
         } catch {
-            // Fallback below.
         }
 
         return "USD";
     };
-
-    // =========================================================
-    // LOADING
-    // =========================================================
 
     if (loading) {
 
@@ -584,17 +570,11 @@ export default function SubscriptionPage() {
         );
     }
 
-    // =========================================================
-    // PAGE
-    // =========================================================
-
     return (
 
         <div className="subscription-page">
 
             <div className="subscription-container">
-
-                {/* SUCCESS */}
 
                 {success && (
 
@@ -602,12 +582,10 @@ export default function SubscriptionPage() {
 
                         <FaCheckCircle />
 
-                        Operation completed successfully!
+                        Payment successful. Premium access is being activated...
 
                     </div>
                 )}
-
-                {/* ERROR */}
 
                 {error && (
 
@@ -619,8 +597,6 @@ export default function SubscriptionPage() {
 
                     </div>
                 )}
-
-                {/* CAPABILITIES */}
 
                 {capabilities && (
 
@@ -691,8 +667,6 @@ export default function SubscriptionPage() {
                     </div>
                 )}
 
-                {/* ACTIVE SUBSCRIPTION */}
-
                 {activeSub &&
                     !capabilities?.isAdmin && (
 
@@ -702,7 +676,7 @@ export default function SubscriptionPage() {
 
                             <FaCheckCircle />
 
-                            Active Subscription
+                            Active Plan
 
                         </h1>
 
@@ -734,7 +708,7 @@ export default function SubscriptionPage() {
 
                             <div className="sub-expiry">
 
-                                Expires:{" "}
+                                Access Until:{" "}
 
                                 {
                                     activeSub.expiresAt
@@ -748,7 +722,7 @@ export default function SubscriptionPage() {
 
                             <div className="sub-amount">
 
-                                Amount:{" "}
+                                Paid:{" "}
 
                                 {
                                     activeSub.currency === "USD"
@@ -762,7 +736,7 @@ export default function SubscriptionPage() {
                                     0
                                 }
 
-                                {" / "}
+                                {" "}
 
                                 {
                                     activeSub.currency ||
@@ -771,20 +745,21 @@ export default function SubscriptionPage() {
 
                             </div>
 
-                            <button
-                                className="cancel-sub-btn"
-                                onClick={handleCancel}
-                                disabled={processing}
+                            <div
+                                style={{
+                                    marginTop: "12px",
+                                    color: "#8a94a8",
+                                    fontSize: "13px"
+                                }}
                             >
-                                Cancel Subscription
-                            </button>
+                                One-time payment. Your premium access remains
+                                active according to your plan period.
+                            </div>
 
                         </div>
 
                     </div>
                 )}
-
-                {/* PLAN SELECTION */}
 
                 {(!activeSub ||
                     capabilities?.isAdmin) && (
@@ -886,7 +861,7 @@ export default function SubscriptionPage() {
 
                                             <span className="price-period">
 
-                                                /{plan.interval}
+                                                One-time
 
                                             </span>
 
@@ -981,7 +956,7 @@ export default function SubscriptionPage() {
                                                         ? "Processing..."
                                                         : plan.name === "STARTER"
                                                             ? "Continue with Starter"
-                                                            : `Subscribe to ${plan.name}`
+                                                            : `Pay Once for ${plan.name}`
                                             }
 
                                         </button>
@@ -994,8 +969,6 @@ export default function SubscriptionPage() {
 
                     </div>
                 )}
-
-                {/* TEST MODE NOTE */}
 
                 <div className="pricing-note">
 
@@ -1011,20 +984,12 @@ export default function SubscriptionPage() {
                     </p>
 
                     <p>
-                        Test card:
-                        4111 1111 1111 1111
+                        Cashfree Sandbox payment testing is enabled.
                     </p>
 
                 </div>
 
             </div>
-
-            <ConfirmModal
-                isOpen={confirmModal.isOpen}
-                message={confirmModal.message}
-                onConfirm={confirmModal.onConfirm}
-                onCancel={() => setConfirmModal({ isOpen: false, message: "", onConfirm: null })}
-            />
 
         </div>
     );

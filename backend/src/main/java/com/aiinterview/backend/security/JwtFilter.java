@@ -1,10 +1,15 @@
 package com.aiinterview.backend.security;
 
 import com.aiinterview.backend.service.CustomUserDetailsService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,6 +21,9 @@ import java.io.IOException;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(JwtFilter.class);
 
     private final CustomUserDetailsService customUserDetailsService;
 
@@ -30,18 +38,23 @@ public class JwtFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(
             HttpServletRequest request
     ) {
-
-        String path =
-                request.getServletPath();
+        String path = request.getServletPath();
 
         return path.equals("/")
                 || path.equals("/test")
                 || path.equals("/login")
                 || path.equals("/register")
+                || path.equals("/verify-otp")
+                || path.equals("/resend-otp")
+                || path.equals("/forgot-password")
+                || path.equals("/reset-password")
                 || path.startsWith("/api/auth/")
+                || path.startsWith("/oauth2/")
+                || path.startsWith("/login/oauth2/")
                 || path.equals("/api/feedback/approve")
                 || path.equals("/api/feedback/reject")
-                || path.equals("/api/feedback/public");
+                || path.equals("/api/feedback/public")
+                || path.equals("/api/payment/webhook");
     }
 
     @Override
@@ -49,76 +62,90 @@ public class JwtFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain
-    )
-            throws ServletException, IOException {
+    ) throws ServletException, IOException {
 
-        String authHeader =
-                request.getHeader(
-                        "Authorization"
-                );
+        String authHeader = request.getHeader("Authorization");
 
-        if (
-                authHeader == null ||
-                !authHeader.toLowerCase().startsWith("bearer ")
-        ) {
+        if (authHeader == null || authHeader.isBlank()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-            filterChain.doFilter(
-                    request,
-                    response
+        if (!authHeader.regionMatches(
+                true,
+                0,
+                "Bearer ",
+                0,
+                7
+        )) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String token = authHeader.substring(7).trim();
+
+        if (token.isBlank()
+                || token.length() > 4096
+                || token.indexOf('"') >= 0
+                || token.indexOf('\r') >= 0
+                || token.indexOf('\n') >= 0) {
+
+            SecurityContextHolder.clearContext();
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String email;
+
+        try {
+            Claims claims = JwtUtil.parseClaims(token);
+            email = claims.getSubject();
+
+        } catch (ExpiredJwtException exception) {
+            SecurityContextHolder.clearContext();
+
+            log.debug(
+                    "Expired JWT rejected for URI [{}]",
+                    request.getRequestURI()
             );
 
+            filterChain.doFilter(request, response);
             return;
-        }
 
-        String rawToken = authHeader.substring(7).trim();
-        while (rawToken.toLowerCase().startsWith("bearer ")) {
-            rawToken = rawToken.substring(7).trim();
-        }
-        String token = rawToken.replace("\"", "").trim();
-
-        if (token.isBlank()) {
+        } catch (JwtException | IllegalArgumentException exception) {
             SecurityContextHolder.clearContext();
+
+            log.debug(
+                    "Invalid JWT rejected for URI [{}]",
+                    request.getRequestURI()
+            );
+
+            filterChain.doFilter(request, response);
+            return;
+
+        } catch (Exception exception) {
+            SecurityContextHolder.clearContext();
+
+            log.debug(
+                    "JWT processing failed for URI [{}]",
+                    request.getRequestURI()
+            );
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        String email = null;
-        try {
-            io.jsonwebtoken.Claims claims = JwtUtil.parseClaims(token);
-            email = claims.getSubject();
-        } catch (io.jsonwebtoken.ExpiredJwtException eje) {
-            int len = token.length();
-            String prefix = len >= 10 ? token.substring(0, 10) : token;
-            String suffix = len >= 10 ? token.substring(len - 10) : token;
-            org.slf4j.LoggerFactory.getLogger(JwtFilter.class)
-                    .warn("JwtFilter expired token for URI [{}] (tokenLen={}, prefix='{}...', suffix='...{}', expiredAt={})",
-                            request.getRequestURI(), len, prefix, suffix, eje.getClaims().getExpiration());
-            SecurityContextHolder.clearContext();
-            filterChain.doFilter(request, response);
-            return;
-        } catch (io.jsonwebtoken.security.SignatureException | io.jsonwebtoken.MalformedJwtException mje) {
-            int len = token.length();
-            String prefix = len >= 10 ? token.substring(0, 10) : token;
-            String suffix = len >= 10 ? token.substring(len - 10) : token;
-            org.slf4j.LoggerFactory.getLogger(JwtFilter.class)
-                    .warn("JwtFilter invalid signature/malformed token for URI [{}] (tokenLen={}, prefix='{}...', suffix='...{}'): {}",
-                            request.getRequestURI(), len, prefix, suffix, mje.getMessage());
-            SecurityContextHolder.clearContext();
-            filterChain.doFilter(request, response);
-            return;
-        } catch (Exception ex) {
-            int len = token.length();
-            String prefix = len >= 10 ? token.substring(0, 10) : token;
-            String suffix = len >= 10 ? token.substring(len - 10) : token;
-            org.slf4j.LoggerFactory.getLogger(JwtFilter.class)
-                    .warn("JwtFilter token parse failed for URI [{}] (tokenLen={}, prefix='{}...', suffix='...{}'): {}",
-                            request.getRequestURI(), len, prefix, suffix, ex.getMessage());
-            SecurityContextHolder.clearContext();
-            filterChain.doFilter(request, response);
-            return;
-        }
+        if (email == null
+                || email.isBlank()
+                || email.length() > 254
+                || email.indexOf('\r') >= 0
+                || email.indexOf('\n') >= 0) {
 
-        if (email == null || email.isBlank()) {
             SecurityContextHolder.clearContext();
             filterChain.doFilter(request, response);
             return;
@@ -128,28 +155,19 @@ public class JwtFilter extends OncePerRequestFilter {
 
             UserDetails userDetails =
                     customUserDetailsService
-                            .loadUserByUsername(
-                                    email
-                            );
+                            .loadUserByUsername(email.trim());
 
-            if (
-                    userDetails == null ||
-                    !userDetails.isEnabled()
-            ) {
+            if (userDetails == null
+                    || !userDetails.isEnabled()
+                    || !userDetails.isAccountNonLocked()
+                    || !userDetails.isAccountNonExpired()) {
 
-                SecurityContextHolder
-                        .clearContext();
-
-                filterChain.doFilter(
-                        request,
-                        response
-                );
-
+                SecurityContextHolder.clearContext();
+                filterChain.doFilter(request, response);
                 return;
             }
 
-            UsernamePasswordAuthenticationToken
-                    authentication =
+            UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
@@ -158,30 +176,25 @@ public class JwtFilter extends OncePerRequestFilter {
 
             authentication.setDetails(
                     new WebAuthenticationDetailsSource()
-                            .buildDetails(
-                                    request
-                            )
+                            .buildDetails(request)
             );
 
             SecurityContextHolder
                     .getContext()
-                    .setAuthentication(
-                            authentication
-                    );
+                    .setAuthentication(authentication);
 
-            request.setAttribute("email", email);
+            request.setAttribute("email", email.trim());
 
         } catch (Exception exception) {
-            org.slf4j.LoggerFactory.getLogger(JwtFilter.class)
-                    .error("JwtFilter authentication error for URI [{}]: {}", request.getRequestURI(), exception.getMessage(), exception);
 
-            SecurityContextHolder
-                    .clearContext();
+            SecurityContextHolder.clearContext();
+
+            log.debug(
+                    "JWT user authentication failed for URI [{}]",
+                    request.getRequestURI()
+            );
         }
 
-        filterChain.doFilter(
-                request,
-                response
-        );
+        filterChain.doFilter(request, response);
     }
 }

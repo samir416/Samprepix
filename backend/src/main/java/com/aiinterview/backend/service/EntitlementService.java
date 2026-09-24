@@ -41,7 +41,14 @@ public class EntitlementService {
                         .findByUserIdAndRevokedFalse(user.getId())
                         .stream()
                         .filter(entitlement ->
-                                !entitlement.isRevoked()
+                                "ACTIVE".equalsIgnoreCase(
+                                        entitlement.getGrantStatus()
+                                )
+                                        && entitlement.isEmailSent()
+                                        && "SENT".equalsIgnoreCase(
+                                        entitlement.getEmailStatus()
+                                )
+                                        && !entitlement.isRevoked()
                                         && (
                                         entitlement.getExpiresAt() == null
                                                 || entitlement.getExpiresAt().isAfter(now)
@@ -63,11 +70,11 @@ public class EntitlementService {
                         );
 
         for (Subscription subscription : activeSubscriptions) {
+
             if (subscription.getPlan() != null
-                    && (
-                    subscription.getExpiresAt() == null
-                            || subscription.getExpiresAt().isAfter(now)
-            )) {
+                    && subscription.getExpiresAt() != null
+                    && subscription.getExpiresAt().isAfter(now)) {
+
                 return normalizePlan(
                         subscription.getPlan().getName()
                 );
@@ -77,10 +84,6 @@ public class EntitlementService {
         return "STARTER";
     }
 
-    /**
-     * Checks whether a user has an active manual entitlement
-     * for the requested plan.
-     */
     @Transactional(readOnly = true)
     public boolean hasActiveEntitlement(
             Long userId,
@@ -98,18 +101,25 @@ public class EntitlementService {
                 .findByUserIdAndRevokedFalse(userId)
                 .stream()
                 .anyMatch(entitlement ->
-                        planName.equalsIgnoreCase(
+                        "ACTIVE".equalsIgnoreCase(
+                                entitlement.getGrantStatus()
+                        )
+                                && entitlement.isEmailSent()
+                                && "SENT".equalsIgnoreCase(
+                                entitlement.getEmailStatus()
+                        )
+                                && planName.equalsIgnoreCase(
                                 entitlement.getPlanName()
                         )
                                 && !entitlement.isRevoked()
                                 && (
                                 entitlement.getExpiresAt() == null
-                                        || entitlement.getExpiresAt()
-                                        .isAfter(now)
+                                        || entitlement.getExpiresAt().isAfter(now)
                         )
                 );
     }
 
+    @Transactional(readOnly = true)
     public boolean hasPremiumAccess(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -119,6 +129,7 @@ public class EntitlementService {
                 || "ADMIN".equals(effectivePlan);
     }
 
+    @Transactional(readOnly = true)
     public boolean hasEliteAccess(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -127,6 +138,7 @@ public class EntitlementService {
                 || "ADMIN".equals(effectivePlan);
     }
 
+    @Transactional(readOnly = true)
     public boolean hasAiHintsAccess(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -142,6 +154,7 @@ public class EntitlementService {
         return getPlan(effectivePlan).isIncludesAIHints();
     }
 
+    @Transactional(readOnly = true)
     public boolean hasAnalyticsAccess(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -157,6 +170,7 @@ public class EntitlementService {
         return getPlan(effectivePlan).isIncludesAnalytics();
     }
 
+    @Transactional(readOnly = true)
     public boolean hasTier1CompaniesAccess(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -172,6 +186,7 @@ public class EntitlementService {
         return getPlan(effectivePlan).isIncludesTier1Companies();
     }
 
+    @Transactional(readOnly = true)
     public boolean hasPriorityComputeAccess(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -187,6 +202,7 @@ public class EntitlementService {
         return getPlan(effectivePlan).isIncludesPriorityCompute();
     }
 
+    @Transactional(readOnly = true)
     public int getMaxMockInterviews(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -198,6 +214,7 @@ public class EntitlementService {
         return getPlan(effectivePlan).getMaxMockInterviews();
     }
 
+    @Transactional(readOnly = true)
     public int getMaxResumeScans(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -209,6 +226,7 @@ public class EntitlementService {
         return getPlan(effectivePlan).getMaxResumeScans();
     }
 
+    @Transactional(readOnly = true)
     public int getMaxCodingProblems(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -220,6 +238,7 @@ public class EntitlementService {
         return getPlan(effectivePlan).getMaxCodingProblems();
     }
 
+    @Transactional(readOnly = true)
     public int getMaxAptitudeQuestions(User user) {
 
         String effectivePlan = getEffectivePlan(user);
@@ -229,6 +248,98 @@ public class EntitlementService {
         }
 
         return getPlan(effectivePlan).getMaxAptitudeQuestions();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasLifetimePremiumAccess(User user) {
+
+        if (user == null || user.getId() == null) {
+            return false;
+        }
+
+        if (user.getRole() == Role.ADMIN) {
+            return true;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return manualEntitlementRepository
+                .findByUserIdAndRevokedFalse(user.getId())
+                .stream()
+                .anyMatch(entitlement ->
+                        "ACTIVE".equalsIgnoreCase(
+                                entitlement.getGrantStatus()
+                        )
+                                && entitlement.isEmailSent()
+                                && "SENT".equalsIgnoreCase(
+                                entitlement.getEmailStatus()
+                        )
+                                && !entitlement.isRevoked()
+                                && entitlement.getExpiresAt() == null
+                                && (
+                                "PRO".equalsIgnoreCase(
+                                        entitlement.getPlanName()
+                                )
+                                        || "ELITE".equalsIgnoreCase(
+                                        entitlement.getPlanName()
+                                )
+                        )
+                );
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasManualPremiumAccess(User user) {
+
+        if (user == null || user.getId() == null) {
+            return false;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return manualEntitlementRepository
+                .findByUserIdAndRevokedFalse(user.getId())
+                .stream()
+                .anyMatch(entitlement ->
+                        "ACTIVE".equalsIgnoreCase(
+                                entitlement.getGrantStatus()
+                        )
+                                && entitlement.isEmailSent()
+                                && "SENT".equalsIgnoreCase(
+                                entitlement.getEmailStatus()
+                        )
+                                && !entitlement.isRevoked()
+                                && (
+                                "PRO".equalsIgnoreCase(
+                                        entitlement.getPlanName()
+                                )
+                                        || "ELITE".equalsIgnoreCase(
+                                        entitlement.getPlanName()
+                                )
+                        )
+                                && (
+                                entitlement.getExpiresAt() == null
+                                        || entitlement.getExpiresAt().isAfter(now)
+                        )
+                );
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasProAccess(User user) {
+
+        String effectivePlan = getEffectivePlan(user);
+
+        return "PRO".equals(effectivePlan)
+                || "ELITE".equals(effectivePlan)
+                || "ADMIN".equals(effectivePlan);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasAnyPremiumPlan(User user) {
+
+        String effectivePlan = getEffectivePlan(user);
+
+        return "PRO".equals(effectivePlan)
+                || "ELITE".equals(effectivePlan);
     }
 
     private Plan getPlan(String planName) {
@@ -250,12 +361,14 @@ public class EntitlementService {
             return "STARTER";
         }
 
-        String normalized = planName.trim().toUpperCase();
+        String normalized =
+                planName.trim().toUpperCase();
 
         if ("ADMIN".equals(normalized)
                 || "ELITE".equals(normalized)
                 || "PRO".equals(normalized)
                 || "STARTER".equals(normalized)) {
+
             return normalized;
         }
 

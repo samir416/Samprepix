@@ -26,14 +26,9 @@ public class Subscription {
     @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String subscriptionStatus;
 
-    /*
-     * Razorpay subscription ID is optional because the current
-     * one-time payment flow creates a Razorpay Order + Payment,
-     * not a recurring Razorpay Subscription.
-     */
     @Column(nullable = true)
     private String razorpaySubscriptionId;
 
@@ -41,28 +36,63 @@ public class Subscription {
     private String razorpayOrderId;
 
     @Column(nullable = true)
+    private String razorpayPaymentId;
+
+    @Column(nullable = true, unique = true)
     private String cashfreeOrderId;
 
     @Column(nullable = true)
-    private String razorpayPaymentId;
+    private String cashfreeSessionId;
+
+    @Column(nullable = true)
+    private String cashfreePaymentId;
 
     @Column(nullable = false)
     private double amountPaid;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     private String currency;
 
-    @Column
+    @Column(nullable = true, length = 50)
     private String paymentMethod;
+
+    @Column(nullable = false)
+    private boolean lifetime = false;
 
     private LocalDateTime subscribedAt;
 
+    @Column(nullable = false)
     private LocalDateTime expiresAt;
 
     private LocalDateTime cancelledAt;
 
+    @Column(nullable = true, length = 255)
+    private String cancelledBy;
+
+    @Column(nullable = true, length = 1000)
+    private String cancellationReason;
+
     @Column(nullable = false)
-    private boolean autoRenew;
+    private boolean refundEligible = false;
+
+    @Column(nullable = false)
+    private boolean refundInitiated = false;
+
+    @Column(nullable = true, length = 100)
+    private String refundId;
+
+    @Column(nullable = true, length = 30)
+    private String refundStatus;
+
+    private LocalDateTime refundInitiatedAt;
+
+    private LocalDateTime refundedAt;
+
+    @Column(nullable = true, length = 1000)
+    private String refundReason;
+
+    @Column(nullable = false)
+    private boolean autoRenew = true;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -83,6 +113,20 @@ public class Subscription {
 
         if (subscribedAt == null) {
             subscribedAt = now;
+        }
+
+        lifetime = false;
+
+        if (expiresAt == null) {
+            expiresAt = subscribedAt.plusMonths(1);
+        }
+
+        if (!autoRenew) {
+            autoRenew = false;
+        }
+
+        if (!refundEligible) {
+            refundEligible = true;
         }
     }
 

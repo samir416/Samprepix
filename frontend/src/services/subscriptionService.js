@@ -28,7 +28,7 @@ export const getActiveSubscription = () =>
 export const checkout = (
     planId,
     currency = "INR",
-    paymentMethod = "razorpay",
+    paymentMethod = "cashfree",
     referralCode = null
 ) =>
     API.post("/checkout", {
@@ -38,21 +38,12 @@ export const checkout = (
         referralCode
     }).then((res) => res.data);
 
-/*
- * Direct subscription activation is intentionally not used.
- * Subscription becomes ACTIVE only after successful
- * server-side Razorpay payment verification.
- */
 export const subscribe = () =>
     Promise.reject(
         new Error(
             "Direct subscription activation is disabled. Complete the payment first."
         )
     );
-
-export const cancelSubscription = (subscriptionId) =>
-    API.post(`/cancel/${subscriptionId}`)
-        .then((res) => res.data);
 
 export const getCapabilities = () =>
     API.get("/capabilities")

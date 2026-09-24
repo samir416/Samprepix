@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class PlanResponse {
+
     private Long id;
     private String name;
     private String description;
@@ -31,6 +32,10 @@ public class PlanResponse {
     private LocalDateTime updatedAt;
 
     public static PlanResponse fromEntity(Plan plan) {
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan is required");
+        }
+
         return PlanResponse.builder()
                 .id(plan.getId())
                 .name(plan.getName())

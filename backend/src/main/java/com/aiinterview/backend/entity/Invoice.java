@@ -36,16 +36,16 @@ public class Invoice {
     @Column(nullable = false)
     private double amount;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     private String currency;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String status;
 
-    @Column(nullable = true)
+    @Column(nullable = true, length = 100)
     private String razorpayOrderId;
 
-    @Column(nullable = true, unique = true)
+    @Column(nullable = true, unique = true, length = 100)
     private String cashfreeOrderId;
 
     private LocalDateTime issuedAt;
@@ -59,10 +59,31 @@ public class Invoice {
 
     @PrePersist
     public void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        issuedAt = LocalDateTime.now();
-        dueDate = LocalDateTime.now().plusDays(30);
+        LocalDateTime now = LocalDateTime.now();
+
+        if (createdAt == null) {
+            createdAt = now;
+        }
+
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+
+        if (issuedAt == null) {
+            issuedAt = now;
+        }
+
+        if (dueDate == null) {
+            dueDate = now.plusMonths(1);
+        }
+
+        if (currency == null || currency.isBlank()) {
+            currency = "INR";
+        }
+
+        if (status == null || status.isBlank()) {
+            status = "PAID";
+        }
     }
 
     @PreUpdate

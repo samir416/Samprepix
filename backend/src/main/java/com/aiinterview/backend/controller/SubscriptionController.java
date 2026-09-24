@@ -11,7 +11,10 @@ import com.aiinterview.backend.service.EntitlementService;
 import com.aiinterview.backend.service.PaymentService;
 import com.aiinterview.backend.service.SubscriptionService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -32,10 +35,6 @@ public class SubscriptionController {
     private final PaymentService paymentService;
     private final SubscriptionService subscriptionService;
 
-    // =========================================================
-    // CURRENT USER SUBSCRIPTIONS
-    // =========================================================
-
     @GetMapping("/my")
     public ResponseEntity<?> getMySubscription(
             Authentication authentication) {
@@ -50,15 +49,13 @@ public class SubscriptionController {
 
         return ResponseEntity.ok(
                 Map.of(
-                        "subscriptions", subscriptions,
-                        "effectivePlan", effectivePlan
+                        "subscriptions",
+                        subscriptions,
+                        "effectivePlan",
+                        effectivePlan
                 )
         );
     }
-
-    // =========================================================
-    // CURRENT USER ACTIVE SUBSCRIPTION
-    // =========================================================
 
     @GetMapping({"/my/active", "/current"})
     public ResponseEntity<?> getActiveSubscription(
@@ -69,6 +66,12 @@ public class SubscriptionController {
         String effectivePlan =
                 entitlementService.getEffectivePlan(user);
 
+        SubscriptionResponse activeSubscription =
+                subscriptionService.getActiveSubscription(user.getId());
+
+        Map<String, Object> response =
+                new LinkedHashMap<>();
+
         if (!"STARTER".equalsIgnoreCase(effectivePlan)) {
 
             boolean entitlement =
@@ -76,9 +79,6 @@ public class SubscriptionController {
                             user.getId(),
                             effectivePlan
                     );
-
-            Map<String, Object> response =
-                    new LinkedHashMap<>();
 
             response.put("active", true);
             response.put("plan", effectivePlan);
@@ -88,29 +88,221 @@ public class SubscriptionController {
                             ? "ENTITLEMENT"
                             : "SUBSCRIPTION"
             );
+            response.put(
+                    "effectivePlan",
+                    effectivePlan
+            );
+
+            if (activeSubscription != null) {
+
+                response.put(
+                        "subscriptionId",
+                        activeSubscription.getId()
+                );
+
+                response.put(
+                        "subscriptionStatus",
+                        activeSubscription.getSubscriptionStatus()
+                );
+
+                response.put(
+                        "status",
+                        activeSubscription.getSubscriptionStatus()
+                );
+
+                response.put(
+                        "amountPaid",
+                        activeSubscription.getAmountPaid()
+                );
+
+                response.put(
+                        "currency",
+                        activeSubscription.getCurrency()
+                );
+
+                response.put(
+                        "paymentMethod",
+                        activeSubscription.getPaymentMethod()
+                );
+
+                response.put(
+                        "subscribedAt",
+                        activeSubscription.getSubscribedAt()
+                );
+
+                response.put(
+                        "expiresAt",
+                        activeSubscription.getExpiresAt()
+                );
+
+                response.put(
+                        "cancelledAt",
+                        activeSubscription.getCancelledAt()
+                );
+
+                response.put(
+                        "autoRenew",
+                        activeSubscription.isAutoRenew()
+                );
+
+                response.put(
+                        "createdAt",
+                        activeSubscription.getCreatedAt()
+                );
+
+            } else {
+
+                response.put(
+                        "subscriptionId",
+                        null
+                );
+
+                response.put(
+                        "subscriptionStatus",
+                        "ACTIVE"
+                );
+
+                response.put(
+                        "status",
+                        "ACTIVE"
+                );
+
+                response.put(
+                        "amountPaid",
+                        0.0
+                );
+
+                response.put(
+                        "currency",
+                        "INR"
+                );
+
+                response.put(
+                        "paymentMethod",
+                        "ENTITLEMENT"
+                );
+
+                response.put(
+                        "subscribedAt",
+                        null
+                );
+
+                response.put(
+                        "expiresAt",
+                        null
+                );
+
+                response.put(
+                        "cancelledAt",
+                        null
+                );
+
+                response.put(
+                        "autoRenew",
+                        false
+                );
+
+                response.put(
+                        "createdAt",
+                        null
+                );
+            }
+
+            response.put(
+                    "lifetime",
+                    false
+            );
+
+            response.put(
+                    "premium",
+                    true
+            );
 
             return ResponseEntity.ok(response);
         }
 
-        SubscriptionResponse activeSubscription =
-                subscriptionService.getActiveSubscription(
-                        user.getId()
-                );
-
         if (activeSubscription != null) {
 
-            Map<String, Object> response =
-                    new LinkedHashMap<>();
+            response.put(
+                    "active",
+                    true
+            );
 
-            response.put("active", true);
             response.put(
                     "plan",
                     activeSubscription.getPlanName()
             );
+
+            response.put(
+                    "effectivePlan",
+                    activeSubscription.getPlanName()
+            );
+
             response.put(
                     "subscriptionId",
                     activeSubscription.getId()
             );
+
+            response.put(
+                    "subscriptionStatus",
+                    activeSubscription.getSubscriptionStatus()
+            );
+
+            response.put(
+                    "status",
+                    activeSubscription.getSubscriptionStatus()
+            );
+
+            response.put(
+                    "amountPaid",
+                    activeSubscription.getAmountPaid()
+            );
+
+            response.put(
+                    "currency",
+                    activeSubscription.getCurrency()
+            );
+
+            response.put(
+                    "paymentMethod",
+                    activeSubscription.getPaymentMethod()
+            );
+
+            response.put(
+                    "subscribedAt",
+                    activeSubscription.getSubscribedAt()
+            );
+
+            response.put(
+                    "expiresAt",
+                    activeSubscription.getExpiresAt()
+            );
+
+            response.put(
+                    "cancelledAt",
+                    activeSubscription.getCancelledAt()
+            );
+
+            response.put(
+                    "autoRenew",
+                    activeSubscription.isAutoRenew()
+            );
+
+            response.put(
+                    "createdAt",
+                    activeSubscription.getCreatedAt()
+            );
+
+            response.put(
+                    "lifetime",
+                    false
+            );
+
+            response.put(
+                    "premium",
+                    false
+            );
+
             response.put(
                     "source",
                     "SUBSCRIPTION"
@@ -119,17 +311,93 @@ public class SubscriptionController {
             return ResponseEntity.ok(response);
         }
 
-        return ResponseEntity.ok(
-                Map.of(
-                        "active", false,
-                        "plan", "STARTER"
-                )
+        response.put(
+                "active",
+                false
         );
-    }
 
-    // =========================================================
-    // ADMIN - ALL SUBSCRIPTIONS
-    // =========================================================
+        response.put(
+                "plan",
+                "STARTER"
+        );
+
+        response.put(
+                "effectivePlan",
+                "STARTER"
+        );
+
+        response.put(
+                "subscriptionId",
+                null
+        );
+
+        response.put(
+                "subscriptionStatus",
+                "INACTIVE"
+        );
+
+        response.put(
+                "status",
+                "INACTIVE"
+        );
+
+        response.put(
+                "amountPaid",
+                0.0
+        );
+
+        response.put(
+                "currency",
+                "INR"
+        );
+
+        response.put(
+                "paymentMethod",
+                null
+        );
+
+        response.put(
+                "subscribedAt",
+                null
+        );
+
+        response.put(
+                "expiresAt",
+                null
+        );
+
+        response.put(
+                "cancelledAt",
+                null
+        );
+
+        response.put(
+                "autoRenew",
+                false
+        );
+
+        response.put(
+                "createdAt",
+                null
+        );
+
+        response.put(
+                "lifetime",
+                false
+        );
+
+        response.put(
+                "premium",
+                false
+        );
+
+        response.put(
+                "source",
+                "STARTER"
+        );
+
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping("/admin/all")
     @PreAuthorize("hasRole('ADMIN')")
@@ -140,16 +408,6 @@ public class SubscriptionController {
         );
     }
 
-    // =========================================================
-    // LEGACY CHECKOUT
-    // =========================================================
-
-    /**
-     * Legacy checkout endpoint.
-     *
-     * Actual payment creation is handled by PaymentController
-     * through Razorpay's server-side order creation flow.
-     */
     @PostMapping("/checkout")
     public ResponseEntity<?> createCheckoutSession(
             Authentication authentication,
@@ -171,23 +429,13 @@ public class SubscriptionController {
         return ResponseEntity.ok(
                 Map.of(
                         "message",
-                        "Use the payment checkout flow to create and complete the order.",
+                        "Use the Cashfree payment checkout flow to create and complete the order.",
                         "planId",
                         request.getPlanId()
                 )
         );
     }
 
-    // =========================================================
-    // DIRECT SUBSCRIPTION ACTIVATION DISABLED
-    // =========================================================
-
-    /**
-     * Subscription activation must happen only after
-     * successful server-side payment verification.
-     *
-     * Frontend cannot directly activate a subscription.
-     */
     @PostMapping("/subscribe")
     public ResponseEntity<?> subscribe(
             Authentication authentication,
@@ -198,80 +446,61 @@ public class SubscriptionController {
         return ResponseEntity.badRequest().body(
                 Map.of(
                         "message",
-                        "Direct subscription activation is not allowed. Complete the Razorpay payment first."
+                        "Direct subscription activation is not allowed. Complete the Cashfree payment first."
                 )
         );
     }
 
-    // =========================================================
-    // CANCEL SUBSCRIPTION
-    // =========================================================
-
-    @PostMapping("/cancel/{subscriptionId}")
-    public ResponseEntity<?> cancelSubscription(
+    @PostMapping("/{subscriptionId}/auto-renew")
+    public ResponseEntity<?> updateAutoRenew(
+            Authentication authentication,
             @PathVariable Long subscriptionId,
-            Authentication authentication) {
+            @RequestBody AutoRenewRequest request) {
 
-        User user =
-                getAuthenticatedUser(authentication);
+        User user = getAuthenticatedUser(authentication);
+
+        if (subscriptionId == null || subscriptionId <= 0) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("error", "Invalid subscription ID")
+            );
+        }
+
+        if (request == null) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("error", "Auto-renew value is required")
+            );
+        }
 
         try {
-
-            SubscriptionResponse response =
-                    subscriptionService.cancelSubscription(
+            Subscription subscription =
+                    subscriptionService.setAutoRenew(
+                            subscriptionId,
                             user.getId(),
-                            subscriptionId
+                            request.isAutoRenew()
                     );
 
             return ResponseEntity.ok(
                     Map.of(
-                            "message",
-                            "Subscription cancelled successfully",
-                            "subscription",
-                            response
+                            "success", true,
+                            "subscriptionId", subscription.getId(),
+                            "autoRenew", subscription.isAutoRenew(),
+                            "expiresAt", subscription.getExpiresAt()
                     )
             );
-
-        } catch (RuntimeException ex) {
-
-            if ("Subscription not found"
-                    .equals(ex.getMessage())) {
-
-                return ResponseEntity
-                        .notFound()
-                        .build();
-            }
-
-            if (ex.getMessage() != null
-                    && ex.getMessage()
-                    .contains("not authorized")) {
-
-                return ResponseEntity
-                        .status(403)
-                        .body(
-                                Map.of(
-                                        "message",
-                                        ex.getMessage()
-                                )
-                        );
-            }
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            Map.of(
-                                    "message",
-                                    ex.getMessage() != null
-                                            ? ex.getMessage()
-                                            : "Unable to cancel subscription"
-                            )
-                    );
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    Map.of("error", e.getMessage())
+            );
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("error", e.getMessage())
+            );
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    Map.of("error", e.getMessage())
+            );
         }
     }
-
-    // =========================================================
-    // CAPABILITIES
-    // =========================================================
 
     @GetMapping("/capabilities")
     public ResponseEntity<?> getCapabilities(
@@ -356,33 +585,174 @@ public class SubscriptionController {
                 user.getRole() == Role.ADMIN
         );
 
+        capabilities.put(
+                "lifetime",
+                false
+        );
+
+        capabilities.put(
+                "premiumBadge",
+                !"STARTER".equalsIgnoreCase(effectivePlan)
+                        ? effectivePlan
+                        : null
+        );
+
         return ResponseEntity.ok(
                 capabilities
         );
     }
 
-    // =========================================================
-    // AUTHENTICATED USER
-    // =========================================================
+    @PostMapping("/admin/{subscriptionId}/cancel-refund")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> adminCancelAndRefund(
+            Authentication authentication,
+            @PathVariable Long subscriptionId,
+            @Valid @RequestBody CancellationRequest request) {
+
+        User admin =
+                getAuthenticatedUser(authentication);
+
+        try {
+
+            return ResponseEntity.ok(
+                    paymentService.cancelAndRefundSubscription(
+                            subscriptionId,
+                            admin.getId(),
+                            request.getReason().trim()
+                    )
+            );
+
+        } catch (SecurityException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(
+                            Map.of(
+                                    "error",
+                                    e.getMessage()
+                            )
+                    );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            Map.of(
+                                    "error",
+                                    e.getMessage()
+                            )
+                    );
+
+        } catch (IllegalStateException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(
+                            Map.of(
+                                    "error",
+                                    e.getMessage()
+                            )
+                    );
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.BAD_GATEWAY)
+                    .body(
+                            Map.of(
+                                    "error",
+                                    e.getMessage() != null
+                                            ? e.getMessage()
+                                            : "Refund processing failed"
+                            )
+                    );
+        }
+    }
+
+    @GetMapping("/admin/refunds/{refundId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getRefundDetails(
+            Authentication authentication,
+            @PathVariable Long refundId) {
+
+        User admin =
+                getAuthenticatedUser(authentication);
+
+        try {
+
+            return ResponseEntity.ok(
+                    paymentService.getRefundDetails(
+                            refundId,
+                            admin.getId()
+                    )
+            );
+
+        } catch (SecurityException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(
+                            Map.of(
+                                    "error",
+                                    e.getMessage()
+                            )
+                    );
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            Map.of(
+                                    "error",
+                                    e.getMessage() != null
+                                            ? e.getMessage()
+                                            : "Unable to fetch refund details"
+                            )
+                    );
+        }
+    }
 
     private User getAuthenticatedUser(
             Authentication authentication) {
 
         if (authentication == null
+                || !authentication.isAuthenticated()
                 || authentication.getName() == null
                 || authentication.getName().isBlank()) {
 
-            throw new RuntimeException(
+            throw new SecurityException(
                     "Authentication required"
             );
         }
 
+        String email = authentication.getName().trim();
+
+        if (email.length() > 254) {
+            throw new SecurityException(
+                    "Invalid authentication identity"
+            );
+        }
+
         return userRepository
-                .findByEmail(authentication.getName())
+                .findByEmail(email)
                 .orElseThrow(
-                        () -> new RuntimeException(
+                        () -> new SecurityException(
                                 "User not found"
                         )
                 );
+    }
+
+    @Data
+    public static class AutoRenewRequest {
+        private boolean autoRenew;
+    }
+
+    @Data
+    public static class CancellationRequest {
+
+        @NotBlank
+        private String reason;
     }
 }

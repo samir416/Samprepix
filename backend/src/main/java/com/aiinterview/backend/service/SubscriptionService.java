@@ -20,14 +20,12 @@ public class SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
 
-    /**
-     * Get all subscriptions belonging to a user.
-     */
     @Transactional(readOnly = true)
     public List<SubscriptionResponse> getUserSubscriptions(Long userId) {
-        User user = getUser(userId);
+        getUser(userId);
 
-        return subscriptionRepository.findByUserId(userId)
+        return subscriptionRepository
+                .findByUserIdOrderBySubscribedAtDesc(userId)
                 .stream()
                 .map(subscription ->
                         SubscriptionResponse.fromEntity(
@@ -40,18 +38,11 @@ public class SubscriptionService {
                 .toList();
     }
 
-    /**
-     * Get the user's active subscription.
-     */
     @Transactional(readOnly = true)
     public SubscriptionResponse getActiveSubscription(Long userId) {
         User user = getUser(userId);
 
-        Subscription subscription = subscriptionRepository
-                .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE")
-                .stream()
-                .findFirst()
-                .orElse(null);
+        Subscription subscription = getLatestActiveSubscription(user);
 
         if (subscription == null) {
             return null;
@@ -65,87 +56,239 @@ public class SubscriptionService {
         );
     }
 
-    /**
-     * Cancel a subscription.
-     * Ownership is checked before cancellation.
-     */
+    @Transactional(readOnly = true)
+    public boolean hasActiveSubscription(Long userId) {
+        return getLatestActiveSubscription(getUser(userId)) != null;
+    }
+
+    @Transactional(readOnly = true)
+    public Plan getActivePlan(Long userId) {
+        Subscription subscription =
+                getLatestActiveSubscription(getUser(userId));
+
+        return subscription != null
+                ? subscription.getPlan()
+                : null;
+    }
+
+    @Transactional(readOnly = true)
+    public Subscription getActiveSubscriptionEntity(Long userId) {
+        return getLatestActiveSubscription(getUser(userId));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasLifetimeSubscription(Long userId) {
+        return subscriptionRepository
+                .findByUserIdAndSubscriptionStatusOrderBySubscribedAtDesc(
+                        userId,
+                        "ACTIVE"
+                )
+                .stream()
+                .anyMatch(subscription ->
+                        subscription.isLifetime()
+                                && isSubscriptionActive(subscription)
+                );
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasPremiumSubscription(Long userId) {
+        return subscriptionRepository
+                .findByUserIdAndSubscriptionStatusOrderBySubscribedAtDesc(
+                        userId,
+                        "ACTIVE"
+                )
+                .stream()
+                .filter(this::isSubscriptionActive)
+                .map(Subscription::getPlan)
+                .anyMatch(this::isPremiumPlan);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasEliteSubscription(Long userId) {
+        return subscriptionRepository
+                .findByUserIdAndSubscriptionStatusOrderBySubscribedAtDesc(
+                        userId,
+                        "ACTIVE"
+                )
+                .stream()
+                .filter(this::isSubscriptionActive)
+                .map(Subscription::getPlan)
+                .anyMatch(plan ->
+                        plan != null
+                                && "ELITE".equalsIgnoreCase(plan.getName())
+                );
+    }
+
     @Transactional
-    public SubscriptionResponse cancelSubscription(
-            Long userId,
-            Long subscriptionId
+    public Subscription markSubscriptionCancelled(
+            Long subscriptionId,
+            Long adminUserId,
+            String reason
     ) {
-        User user = getUser(userId);
+        if (subscriptionId == null) {
+            throw new IllegalArgumentException("Subscription ID is required");
+        }
+
+        if (adminUserId == null) {
+            throw new IllegalArgumentException("Admin user ID is required");
+        }
+
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Cancellation reason is required");
+        }
+
+        User admin = getUser(adminUserId);
+
+        if (admin.getRole() == null
+                || !"ADMIN".equalsIgnoreCase(admin.getRole().name())) {
+            throw new SecurityException(
+                    "Only administrators can cancel subscriptions"
+            );
+        }
 
         Subscription subscription = subscriptionRepository
                 .findById(subscriptionId)
                 .orElseThrow(() ->
-                        new RuntimeException("Subscription not found"));
-
-        if (subscription.getUser() == null
-                || !subscription.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException(
-                    "You are not authorized to cancel this subscription"
-            );
-        }
+                        new RuntimeException("Subscription not found")
+                );
 
         if (!"ACTIVE".equalsIgnoreCase(
-                subscription.getSubscriptionStatus())) {
-            throw new RuntimeException(
+                subscription.getSubscriptionStatus()
+        )) {
+            throw new IllegalStateException(
                     "Only an active subscription can be cancelled"
             );
         }
 
         subscription.setSubscriptionStatus("CANCELLED");
         subscription.setCancelledAt(LocalDateTime.now());
+        subscription.setCancelledBy(admin.getEmail());
+        subscription.setCancellationReason(reason.trim());
         subscription.setAutoRenew(false);
 
-        Subscription saved = subscriptionRepository.save(subscription);
+        LocalDateTime now = LocalDateTime.now();
 
-        return SubscriptionResponse.fromEntity(
-                saved,
-                saved.getPlan() != null
-                        ? saved.getPlan().getName()
-                        : "UNKNOWN"
-        );
+        if (subscription.getExpiresAt() == null
+                || subscription.getExpiresAt().isAfter(now)) {
+            subscription.setExpiresAt(now);
+        }
+
+        return subscriptionRepository.save(subscription);
     }
 
-    /**
-     * Check whether a user currently has an active subscription.
-     */
-    @Transactional(readOnly = true)
-    public boolean hasActiveSubscription(Long userId) {
+    @Transactional
+    public Subscription setAutoRenew(
+            Long subscriptionId,
+            Long userId,
+            boolean autoRenew
+    ) {
+        if (subscriptionId == null) {
+            throw new IllegalArgumentException("Subscription ID is required");
+        }
+
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+
         User user = getUser(userId);
 
-        return !subscriptionRepository
-                .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE")
-                .isEmpty();
+        Subscription subscription = subscriptionRepository
+                .findByIdAndUserId(subscriptionId, user.getId())
+                .orElseThrow(() ->
+                        new RuntimeException("Subscription not found")
+                );
+
+        if (!"ACTIVE".equalsIgnoreCase(
+                subscription.getSubscriptionStatus()
+        )) {
+            throw new IllegalStateException(
+                    "Only an active subscription can change auto-renew"
+            );
+        }
+
+        if (!isSubscriptionActive(subscription)) {
+            throw new IllegalStateException(
+                    "Subscription has expired"
+            );
+        }
+
+        subscription.setAutoRenew(autoRenew);
+
+        return subscriptionRepository.save(subscription);
     }
 
-    /**
-     * Return the active plan for a user, if available.
-     */
-    @Transactional(readOnly = true)
-    public Plan getActivePlan(Long userId) {
-        User user = getUser(userId);
+    @Transactional
+    public int expireSubscriptions() {
+        LocalDateTime now = LocalDateTime.now();
 
+        List<Subscription> subscriptions =
+                subscriptionRepository
+                        .findBySubscriptionStatusOrderBySubscribedAtDesc(
+                                "ACTIVE"
+                        );
+
+        int expiredCount = 0;
+
+        for (Subscription subscription : subscriptions) {
+            if (subscription.getExpiresAt() != null
+                    && !subscription.getExpiresAt().isAfter(now)) {
+
+                subscription.setSubscriptionStatus("EXPIRED");
+                subscription.setAutoRenew(false);
+
+                subscriptionRepository.save(subscription);
+
+                expiredCount++;
+            }
+        }
+
+        return expiredCount;
+    }
+
+    private Subscription getLatestActiveSubscription(User user) {
         return subscriptionRepository
-                .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE")
+                .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(
+                        user,
+                        "ACTIVE"
+                )
                 .stream()
-                .map(Subscription::getPlan)
+                .filter(this::isSubscriptionActive)
                 .findFirst()
                 .orElse(null);
     }
 
-    /**
-     * Load user or fail with a clear error.
-     */
+    private boolean isSubscriptionActive(Subscription subscription) {
+        if (subscription == null
+                || !"ACTIVE".equalsIgnoreCase(
+                subscription.getSubscriptionStatus())) {
+            return false;
+        }
+
+        if (subscription.getExpiresAt() == null) {
+            return false;
+        }
+
+        return subscription.getExpiresAt()
+                .isAfter(LocalDateTime.now());
+    }
+
+    private boolean isPremiumPlan(Plan plan) {
+        return plan != null
+                && (
+                "PRO".equalsIgnoreCase(plan.getName())
+                        || "ELITE".equalsIgnoreCase(plan.getName())
+        );
+    }
+
     private User getUser(Long userId) {
         if (userId == null) {
             throw new IllegalArgumentException("User ID is required");
         }
 
-        return userRepository.findById(userId)
+        return userRepository
+                .findById(userId)
                 .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                        new RuntimeException("User not found")
+                );
     }
 }

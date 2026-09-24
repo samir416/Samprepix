@@ -21,9 +21,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsername(String username);
 
-    Page<User> findByRole(Role role, Pageable pageable);
+    Page<User> findByRole(
+            Role role,
+            Pageable pageable
+    );
 
-    Page<User> findByAccountStatus(AccountStatus accountStatus, Pageable pageable);
+    Page<User> findByAccountStatus(
+            AccountStatus accountStatus,
+            Pageable pageable
+    );
 
     Page<User> findByRoleAndAccountStatus(
             Role role,
@@ -31,7 +37,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
             Pageable pageable
     );
 
-    long countByAccountStatus(AccountStatus accountStatus);
+    long countByAccountStatus(
+            AccountStatus accountStatus
+    );
 
     Page<User> findAll(Pageable pageable);
 }

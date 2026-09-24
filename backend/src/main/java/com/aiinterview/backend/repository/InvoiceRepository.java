@@ -14,7 +14,19 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     Optional<Invoice> findByRazorpayOrderId(String razorpayOrderId);
 
+    Optional<Invoice> findByCashfreeOrderId(String cashfreeOrderId);
+
     boolean existsByInvoiceNumber(String invoiceNumber);
 
-    List<Invoice> findByUserId(Long userId);
+    List<Invoice> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<Invoice> findByUserIdAndStatusOrderByCreatedAtDesc(
+            Long userId,
+            String status
+    );
+
+    Optional<Invoice> findByUserIdAndInvoiceNumber(
+            Long userId,
+            String invoiceNumber
+    );
 }

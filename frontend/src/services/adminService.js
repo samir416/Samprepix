@@ -25,18 +25,33 @@ API.interceptors.request.use(addAuthToken);
 ROOT_API.interceptors.request.use(addAuthToken);
 
 const handleUnauthorized = (error) => {
-    if (error.response && error.response.status === 401) {
-        if (typeof window !== "undefined" && window.location && window.location.pathname.startsWith("/admin")) {
+    if (
+        error.response &&
+        error.response.status === 401
+    ) {
+        if (
+            typeof window !== "undefined" &&
+            window.location &&
+            window.location.pathname.startsWith("/admin")
+        ) {
             localStorage.removeItem("token");
             localStorage.removeItem("user");
             window.location.href = "/login";
         }
     }
+
     return Promise.reject(error);
 };
 
-API.interceptors.response.use((res) => res, handleUnauthorized);
-ROOT_API.interceptors.response.use((res) => res, handleUnauthorized);
+API.interceptors.response.use(
+    (res) => res,
+    handleUnauthorized
+);
+
+ROOT_API.interceptors.response.use(
+    (res) => res,
+    handleUnauthorized
+);
 
 // =========================================================
 // DASHBOARD
@@ -99,6 +114,28 @@ export const getAllSubscriptions = () =>
         .then((res) => res.data);
 
 // =========================================================
+// SUBSCRIPTION CANCELLATION & REFUND
+// =========================================================
+
+export const cancelAndRefundSubscription = (
+    subscriptionId,
+    reason
+) =>
+    ROOT_API.post(
+        `/subscription/admin/${subscriptionId}/cancel-refund`,
+        null,
+        {
+            params: {
+                reason
+            }
+        }
+    ).then((res) => res.data);
+
+export const getRefundDetails = (refundId) =>
+    ROOT_API.get(`/subscription/admin/refunds/${refundId}`)
+        .then((res) => res.data);
+
+// =========================================================
 // ENTITLEMENTS
 // =========================================================
 
@@ -118,7 +155,34 @@ export const grantLifetimeEntitlement = (id, data) =>
         data
     ).then((res) => res.data);
 
-export const revokeEntitlement = (id, entitlementId) =>
+export const grantTemporaryEntitlementWithEmail = (
+    id,
+    data
+) =>
+    API.post(
+        `/users/${id}/entitlements/temporary`,
+        {
+            ...data,
+            emailMode: data?.emailMode || "AUTO"
+        }
+    ).then((res) => res.data);
+
+export const grantLifetimeEntitlementWithEmail = (
+    id,
+    data
+) =>
+    API.post(
+        `/users/${id}/entitlements/lifetime`,
+        {
+            ...data,
+            emailMode: data?.emailMode || "AUTO"
+        }
+    ).then((res) => res.data);
+
+export const revokeEntitlement = (
+    id,
+    entitlementId
+) =>
     API.delete(
         `/users/${id}/entitlements/${entitlementId}`
     ).then((res) => res.data);

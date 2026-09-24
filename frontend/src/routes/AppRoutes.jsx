@@ -33,19 +33,32 @@ import Aptitude from "../Pages/Aptitude";
 import AppLayout from "../Layout/AppLayout";
 import Admin from "../Pages/Admin";
 import SubscriptionPage from "../Pages/SubscriptionPage";
+import PaymentResult from "../Pages/PaymentResult";
 
 function AdminRoute({ children }) {
-    const isAdmin = localStorage.getItem("user")
-        ? JSON.parse(localStorage.getItem("user")).role === "ADMIN"
-        : false;
-    if (!isAdmin) return <Navigate to="/dashboard" replace />;
+    const storedUser = localStorage.getItem("user");
+
+    let isAdmin = false;
+
+    if (storedUser) {
+        try {
+            const user = JSON.parse(storedUser);
+            isAdmin = user?.role === "ADMIN";
+        } catch {
+            isAdmin = false;
+        }
+    }
+
+    if (!isAdmin) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
     return children;
 }
 
 export default function AppRoutes() {
     return (
         <Routes>
-            {/* PUBLIC MARKETING & CONTENT ROUTES */}
             <Route path="/" element={<Home />} />
             <Route path="/features" element={<Features />} />
             <Route path="/pricing" element={<Pricing />} />
@@ -60,27 +73,28 @@ export default function AppRoutes() {
             <Route path="/accessibility" element={<Accessibility />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/legal" element={<Legal />} />
-            <Route path="/terms" element={<Legal />} />
-            <Route path="/privacy" element={<Legal />} />
 
-            {/* AUTHENTICATION ROUTES */}
             <Route path="/login" element={<Login />} />
-            <Route path="/signin" element={<Navigate to="/login" replace />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/auth" element={<AuthModal />} />
-
+            <Route
+                path="/forgot-password"
+                element={<ForgotPasswordPage />}
+            />
+            <Route
+                path="/reset-password"
+                element={<ResetPasswordPage />}
+            />
             <Route
                 path="/onboarding"
-                element={
-                    <ProtectedRoute>
-                        <Onboarding />
-                    </ProtectedRoute>
-                }
+                element={<Onboarding />}
             />
 
-            {/* AUTHENTICATED GLOBAL APP SHELL (SIDEBAR + TOPBAR + CONTENT) */}
+            <Route
+                path="/payment/verify"
+                element={<PaymentResult />}
+            />
+
             <Route
                 element={
                     <ProtectedRoute>
@@ -88,22 +102,75 @@ export default function AppRoutes() {
                     </ProtectedRoute>
                 }
             >
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
-                <Route path="/mock-interview" element={<MockInterview />} />
-                <Route path="/interview-result" element={<InterviewResult />} />
-                <Route path="/coding-arena" element={<CodingArena />} />
-                <Route path="/aptitude" element={<Aptitude />} />
-                <Route path="/performance" element={<Performance />} />
-                <Route path="/analytics" element={<Performance />} />
-                <Route path="/billing" element={<Pricing />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/subscription" element={<SubscriptionPage />} />
-                <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+                <Route
+                    path="/dashboard"
+                    element={<Dashboard />}
+                />
+
+                <Route
+                    path="/resume-analyzer"
+                    element={<ResumeAnalyzer />}
+                />
+
+                <Route
+                    path="/mock-interview"
+                    element={<MockInterview />}
+                />
+
+                <Route
+                    path="/interview-result"
+                    element={<InterviewResult />}
+                />
+
+                <Route
+                    path="/coding-arena"
+                    element={<CodingArena />}
+                />
+
+                <Route
+                    path="/aptitude"
+                    element={<Aptitude />}
+                />
+
+                <Route
+                    path="/performance"
+                    element={<Performance />}
+                />
+
+                <Route
+                    path="/analytics"
+                    element={<Performance />}
+                />
+
+                <Route
+                    path="/billing"
+                    element={<SubscriptionPage />}
+                />
+
+                <Route
+                    path="/profile"
+                    element={<Profile />}
+                />
+
+                <Route
+                    path="/subscription"
+                    element={<SubscriptionPage />}
+                />
+
+                <Route
+                    path="/admin"
+                    element={
+                        <AdminRoute>
+                            <Admin />
+                        </AdminRoute>
+                    }
+                />
             </Route>
 
-            {/* 404 NOT FOUND CATCH-ALL */}
-            <Route path="*" element={<NotFound />} />
+            <Route
+                path="*"
+                element={<NotFound />}
+            />
         </Routes>
     );
 }
