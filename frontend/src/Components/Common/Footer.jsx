@@ -38,7 +38,7 @@ export default function Footer() {
                     {/* RESOURCES */}
                     <div className="footer-column">
                         <h4>Resources</h4>
-                        <Link to="/docs">Docs</Link>
+                        <Link to="/docs">Docs & FAQ</Link>
                         <Link to="/blog">Blog</Link>
                         <Link to="/guides">Guides</Link>
                         <Link to="/community">Community</Link>

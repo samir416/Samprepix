@@ -26,7 +26,7 @@ body{
     flex-direction: column;
     border-radius: 28px;
     overflow: hidden;
-    z-index: 999;
+    z-index: 10000;
 
     animation: dropdownShow 0.22s ease;
 
@@ -61,12 +61,12 @@ body{
 ========================= */
 
 body.dark-theme .profile-dropdown{
-    background: rgba(8,12,24,0.96);
+    background: #0b132b;
 
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
 
     box-shadow:
-    0 30px 90px rgba(0,0,0,0.45);
+    0 30px 90px rgba(0,0,0,0.65);
 }
 
 /* =========================
@@ -74,12 +74,12 @@ body.dark-theme .profile-dropdown{
 ========================= */
 
 body:not(.dark-theme) .profile-dropdown{
-    background: rgba(255,255,255,0.95);
+    background: #ffffff;
 
-    border: 1px solid rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.08);
 
     box-shadow:
-    0 20px 60px rgba(15,23,42,0.12);
+    0 20px 60px rgba(15,23,42,0.18);
 }
 
 /* =========================
@@ -248,7 +248,8 @@ body:not(.dark-theme) .profile-menu-btn:hover{
 .menu-emoji{
     font-size: 20px;
 
-    width: 0px;
+    width: 24px;
+    min-width: 24px;
 
     display: flex;
     align-items: center;

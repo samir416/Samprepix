@@ -1,0 +1,278 @@
+/* =========================================================
+   REPORT A PROBLEM MODAL STYLING
+   ========================================================= */
+
+.problem-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 15, 29, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 16px;
+    animation: problemModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes problemModalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.problem-modal-content {
+    background: var(--bg-card, #111827);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    border-radius: 18px;
+    width: 100%;
+    max-width: 540px;
+    padding: 28px;
+    color: var(--text-primary, #f1f5f9);
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: problemModalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes problemModalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.problem-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.problem-modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.problem-modal-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.problem-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--text-primary, #ffffff);
+}
+
+.problem-modal-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #94a3b8);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.problem-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 22px;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.problem-modal-close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.problem-modal-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.problem-modal-alert.success {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+}
+
+.problem-modal-alert.error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #f87171;
+}
+
+.problem-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.problem-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.problem-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary, #cbd5e1);
+}
+
+.required-star {
+    color: #ef4444;
+}
+
+.problem-select,
+.problem-input,
+.problem-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 14px;
+    background: var(--bg-input, #0f172a);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    border-radius: 10px;
+    color: var(--text-primary, #ffffff);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+}
+
+.problem-select:focus,
+.problem-input:focus,
+.problem-textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.problem-textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.5;
+}
+
+.problem-char-count {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-align: right;
+    margin-top: 2px;
+}
+
+.problem-page-hint {
+    font-size: 0.8rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.problem-page-hint code {
+    font-family: monospace;
+    color: #818cf8;
+    background: rgba(99, 102, 241, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.problem-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.problem-btn-secondary {
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-primary, #e2e8f0);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.problem-btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.problem-btn-primary {
+    padding: 10px 22px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    border: none;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+
+.problem-btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+}
+
+.problem-btn-primary:disabled,
+.problem-btn-secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.problem-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: problemSpin 0.7s linear infinite;
+    display: inline-block;
+}
+
+@keyframes problemSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}

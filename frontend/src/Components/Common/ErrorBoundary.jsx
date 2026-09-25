@@ -122,6 +122,29 @@ export class ErrorBoundary extends React.Component {
                             >
                                 Go to Dashboard
                             </button>
+                            <button
+                                onClick={() => {
+                                    window.dispatchEvent(new CustomEvent("open-report-problem", {
+                                        detail: {
+                                            feature: "Application Crash / Error",
+                                            description: `An unhandled error occurred: ${this.state.error?.message || "Unknown error"}`,
+                                            actionAttempted: "Viewing section: " + window.location.pathname
+                                        }
+                                    }));
+                                }}
+                                style={{
+                                    padding: "10px 20px",
+                                    borderRadius: "8px",
+                                    background: "rgba(239, 68, 68, 0.15)",
+                                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                                    color: "#fca5a5",
+                                    cursor: "pointer",
+                                    fontSize: "0.9rem",
+                                    fontWeight: "500"
+                                }}
+                            >
+                                Report Problem
+                            </button>
                         </div>
                     </div>
                 </div>

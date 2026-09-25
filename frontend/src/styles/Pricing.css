@@ -131,6 +131,12 @@
         0 4px 14px rgba(15, 23, 42, 0.03),
         0 12px 28px rgba(15, 23, 42, 0.04);
 
+    display: flex;
+
+    flex-direction: column;
+
+    height: 100%;
+
     transition:
         transform 0.32s ease,
         box-shadow 0.32s ease,
@@ -400,6 +406,8 @@ body.dark-theme .discount-badge {
     gap: 16px;
 
     margin-bottom: 28px;
+
+    flex: 1;
 }
 
 .plan-features div {
@@ -431,6 +439,8 @@ body.dark-theme .discount-badge {
     width: 100%;
 
     height: 56px;
+
+    margin-top: auto;
 
     border: none;
 
@@ -1340,4 +1350,217 @@ body.dark-theme .pricing-card:hover {
     box-shadow:
         0 24px 60px rgba(0,0,0,0.42),
         0 0 24px rgba(99,102,241,0.12) !important;
+}
+/* =========================================================
+   INVOICE MODAL SYSTEM & DARK MODE
+   ========================================================= */
+
+.invoice-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.invoice-modal-content {
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    max-width: 720px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+    padding: 28px;
+    box-sizing: border-box;
+}
+
+body.dark-theme .invoice-modal-content {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7) !important;
+}
+
+body.dark-theme .invoice-modal-content h2,
+body.dark-theme .invoice-modal-content h4 {
+    color: #ffffff !important;
+}
+
+body.dark-theme .invoice-modal-content p {
+    color: #94a3b8 !important;
+}
+
+.invoice-row-card {
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+body.dark-theme .invoice-row-card {
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .invoice-row-card span {
+    color: #ffffff !important;
+}
+
+/* =========================================================
+   CURRENCY SEGMENTED SWITCH (SMOOTH 240MS SLIDING PILL)
+   ========================================================= */
+.currency-toggle-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(99, 102, 241, 0.08);
+    padding: 6px 8px 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(99, 102, 241, 0.18);
+    position: relative;
+    user-select: none;
+    margin-top: 24px;
+    max-width: 100%;
+}
+
+body.dark-theme .currency-toggle-wrapper {
+    background: rgba(15, 23, 42, 0.75);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.currency-toggle-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4f46e5;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+body.dark-theme .currency-toggle-label {
+    color: #a5b4fc;
+}
+
+.currency-segmented-track {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 3px;
+    box-sizing: border-box;
+    width: 380px;
+    max-width: 100%;
+}
+
+body.dark-theme .currency-segmented-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.currency-sliding-pill {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    background: #4f46e5;
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+    transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.currency-sliding-pill.slide-inr {
+    transform: translateX(0%);
+}
+
+.currency-sliding-pill.slide-usd {
+    transform: translateX(100%);
+}
+
+.currency-option-btn {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    min-width: 180px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.85rem;
+    background: transparent;
+    color: #64748b;
+    transition: color 200ms ease;
+    text-align: center;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+body.dark-theme .currency-option-btn {
+    color: #94a3b8;
+}
+
+.currency-option-btn.active {
+    color: #ffffff !important;
+}
+
+/* STARTER / FREE CARD DARK MODE FIX */
+body.dark-theme .plan-tag {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-theme .pro-tag {
+    background: rgba(99, 102, 241, 0.20) !important;
+    color: #a5b4fc !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+}
+
+body.dark-theme .elite-tag {
+    background: rgba(6, 182, 212, 0.20) !important;
+    color: #67e8f9 !important;
+    border: 1px solid rgba(6, 182, 212, 0.35) !important;
+}
+
+body.dark-theme .pricing-card:not(.pro-card):not(.elite-card) .plan-btn {
+    background: rgba(99, 102, 241, 0.15) !important;
+    color: #e0e7ff !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+    box-shadow: none !important;
+}
+
+body.dark-theme .pricing-card:not(.pro-card):not(.elite-card) .plan-btn:hover {
+    background: rgba(99, 102, 241, 0.28) !important;
+    color: #ffffff !important;
+    border-color: rgba(99, 102, 241, 0.55) !important;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25) !important;
+}
+
+@media (max-width: 640px) {
+    .currency-toggle-wrapper {
+        border-radius: 20px;
+        flex-direction: column;
+        padding: 10px;
+        gap: 8px;
+    }
+    .currency-segmented-track {
+        width: 100%;
+    }
+    .currency-option-btn {
+        min-width: 130px;
+        font-size: 0.78rem;
+        padding: 6px 10px;
+    }
 }

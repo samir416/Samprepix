@@ -1,0 +1,1736 @@
+/* =========================================================
+   FUTURISTIC AI ROADMAP COMPONENT SYSTEM
+   Samprepix Placement Intelligence Core
+   Layered Glassmorphism, 3D Depth, Neon Glow & High Contrast
+   ========================================================= */
+
+:root {
+    --air-primary: #6366f1;
+    --air-primary-hover: #4f46e5;
+    --air-primary-glow: rgba(99, 102, 241, 0.28);
+    --air-accent-cyan: #06b6d4;
+    --air-accent-cyan-glow: rgba(6, 182, 212, 0.25);
+    --air-accent-emerald: #10b981;
+    --air-accent-amber: #f59e0b;
+    --air-accent-purple: #8b5cf6;
+    
+    --air-surface-light: rgba(255, 255, 255, 0.85);
+    --air-border-light: rgba(226, 232, 240, 0.9);
+    --air-shadow-light: 0 10px 30px -5px rgba(0, 0, 0, 0.06), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+}
+
+.ai-roadmap-page {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100%;
+    padding: 24px 28px 72px;
+    box-sizing: border-box;
+    color: var(--text-color, #0f172a);
+    font-family: inherit;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.dark-theme .ai-roadmap-page {
+    color: #f1f5f9;
+}
+
+/* LOADING & SPINNER */
+.air-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 480px;
+    gap: 16px;
+    color: #64748b;
+}
+
+.dark-theme .air-loading-container {
+    color: #94a3b8;
+}
+
+.air-spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(99, 102, 241, 0.15);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: air-spin 0.8s linear infinite;
+}
+
+@keyframes air-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* SYNC BANNER */
+.air-sync-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 14px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    color: #4f46e5;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    backdrop-filter: blur(8px);
+}
+
+.dark-theme .air-sync-banner {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.35);
+    color: #a5b4fc;
+}
+
+.air-sync-icon {
+    font-size: 16px;
+    animation: air-spin 2s linear infinite;
+}
+
+.air-sync-retry-btn {
+    background: #6366f1;
+    color: #ffffff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.air-sync-retry-btn:hover {
+    background: #4f46e5;
+}
+
+/* =========================================================
+   COMMAND DECK HERO (3D LAYERED GLASS)
+   ========================================================= */
+.air-deck-hero {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 28px;
+    padding: 30px 32px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.92) 100%);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    backdrop-filter: blur(16px);
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+}
+
+.dark-theme .air-deck-hero {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.air-deck-hero::before {
+    content: "";
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.air-deck-left {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 360px;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.air-deck-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    width: fit-content;
+}
+
+.dark-theme .air-deck-eyebrow {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.air-radar-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: air-pulse 2s infinite;
+}
+
+@keyframes air-pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.air-deck-badge-text {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #10b981;
+}
+
+.dark-theme .air-deck-badge-text {
+    color: #34d399;
+}
+
+.air-hero-track-showcase {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.air-track-super {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6366f1;
+}
+
+.dark-theme .air-track-super {
+    color: #818cf8;
+}
+
+.air-track-title-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.air-track-hero-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.dark-theme .air-track-hero-icon {
+    background: rgba(99, 102, 241, 0.16);
+    border-color: rgba(99, 102, 241, 0.35);
+}
+
+.air-track-hero-heading {
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: -0.6px;
+    margin: 0;
+    color: var(--text-color, #0f172a);
+    line-height: 1.2;
+}
+
+.dark-theme .air-track-hero-heading {
+    color: #ffffff;
+}
+
+.air-category-badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.22);
+}
+
+.dark-theme .air-category-badge {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+}
+
+.air-track-hero-desc {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.6;
+    margin: 4px 0 8px 0;
+}
+
+.dark-theme .air-track-hero-desc {
+    color: #94a3b8;
+}
+
+.air-hero-action-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+/* BUTTONS */
+.air-deck-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+    border: none;
+    text-decoration: none;
+    transform: none !important;
+}
+
+.air-deck-btn.primary-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.air-deck-btn.primary-btn:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+}
+
+.air-deck-btn.secondary-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    color: #334155;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.dark-theme .air-deck-btn.secondary-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #e2e8f0;
+}
+
+.air-deck-btn.secondary-btn:hover {
+    border-color: #6366f1;
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.08);
+}
+
+/* PREMIUM REFRESH BUTTON (NO DASHED BORDER) */
+.air-deck-btn.refresh-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    color: #475569;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.dark-theme .air-deck-btn.refresh-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+}
+
+.air-deck-btn.refresh-btn:hover:not(:disabled) {
+    border-color: #6366f1;
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.08);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.air-deck-btn.refresh-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Fallback ghost-btn for backwards compatibility */
+.air-deck-btn.ghost-btn {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(203, 213, 225, 0.8);
+    color: #64748b;
+}
+
+.dark-theme .air-deck-btn.ghost-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+}
+
+.air-deck-btn.ghost-btn:hover {
+    border-color: #6366f1;
+    color: #6366f1;
+}
+
+/* =========================================================
+   HOLOGRAPHIC TELEMETRY CARDS (RESPONSIVE GRID & NEVER CLIPPED)
+   ========================================================= */
+.air-telemetry-deck {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.air-telemetry-item {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 18px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+    backdrop-filter: blur(10px);
+    min-width: 0;
+    box-sizing: border-box;
+    word-break: break-word;
+}
+
+.dark-theme .air-telemetry-item {
+    background: rgba(15, 23, 42, 0.65);
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.air-tele-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.air-tele-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+}
+
+.dark-theme .air-tele-label {
+    color: #94a3b8;
+}
+
+.air-tele-icon {
+    font-size: 16px;
+    color: #6366f1;
+}
+
+.dark-theme .air-tele-icon {
+    color: #818cf8;
+}
+
+.air-tele-val {
+    font-size: 24px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+}
+
+.dark-theme .air-tele-val {
+    color: #ffffff;
+}
+
+.air-tele-val.xp-val {
+    color: #8b5cf6;
+}
+
+.dark-theme .air-tele-val.xp-val {
+    color: #a78bfa;
+}
+
+.air-tele-max {
+    font-size: 13px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-left: 2px;
+}
+
+.air-tele-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 6px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.dark-theme .air-tele-sub {
+    color: #94a3b8;
+}
+
+.air-meter-container {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(226, 232, 240, 0.8);
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.dark-theme .air-meter-container {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.air-meter-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6366f1 0%, #10b981 100%);
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* =========================================================
+   TARGET ADVANCEMENT PIPELINE
+   ========================================================= */
+.air-progression-pipeline-box {
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: var(--air-shadow-light);
+    backdrop-filter: blur(12px);
+}
+
+.dark-theme .air-progression-pipeline-box {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.air-pipeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.air-pipe-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #6366f1;
+}
+
+.dark-theme .air-pipe-title {
+    color: #818cf8;
+}
+
+.air-pipe-desc {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.dark-theme .air-pipe-desc {
+    color: #94a3b8;
+}
+
+.air-pipeline-ribbon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.air-pipe-node {
+    flex: 1;
+    min-width: 140px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dark-theme .air-pipe-node {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.air-pipe-tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+}
+
+.dark-theme .air-pipe-tag {
+    color: #94a3b8;
+}
+
+.air-pipe-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #0f172a;
+}
+
+.dark-theme .air-pipe-content {
+    color: #ffffff;
+}
+
+.air-node-icon {
+    font-size: 14px;
+    color: #6366f1;
+    flex-shrink: 0;
+}
+
+.dark-theme .air-node-icon {
+    color: #818cf8;
+}
+
+.air-pipe-beam {
+    color: #94a3b8;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.dark-theme .air-pipe-beam {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* =========================================================
+   INTERACTIVE PHASE HORIZON STEPPER
+   ========================================================= */
+.air-horizon-stepper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 16px;
+    padding: 8px 16px;
+    backdrop-filter: blur(10px);
+}
+
+.dark-theme .air-horizon-stepper {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.air-stepper-title {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.dark-theme .air-stepper-title {
+    color: #94a3b8;
+}
+
+.air-stepper-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    width: 100%;
+    scrollbar-width: none;
+}
+
+.air-stepper-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.air-step-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.dark-theme .air-step-tab {
+    color: #94a3b8;
+}
+
+.air-step-tab:hover {
+    background: rgba(99, 102, 241, 0.08);
+    color: #6366f1;
+}
+
+.air-step-tab.active {
+    background: #6366f1;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.dark-theme .air-step-tab.active {
+    background: #6366f1;
+    color: #ffffff;
+}
+
+.air-step-num {
+    font-family: monospace;
+    font-size: 11px;
+    opacity: 0.85;
+}
+
+.air-step-indicator.live {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.air-step-indicator.done {
+    color: #10b981;
+}
+
+.air-step-indicator.lock {
+    color: #94a3b8;
+}
+
+/* =========================================================
+   ROADMAP PHASES STAGE & DECK
+   ========================================================= */
+.air-phases-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.air-phase-deck {
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
+    padding: 28px 32px;
+    backdrop-filter: blur(12px);
+    transition: border-color 0.2s ease;
+}
+
+.dark-theme .air-phase-deck {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+}
+
+.air-deck-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark-theme .air-deck-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.air-deck-title-cluster {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.air-phase-indexer {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 18px;
+    color: #6366f1;
+    font-family: monospace;
+}
+
+.dark-theme .air-phase-indexer {
+    background: rgba(99, 102, 241, 0.16);
+    border-color: rgba(99, 102, 241, 0.35);
+    color: #a5b4fc;
+}
+
+.air-phase-main-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    color: #0f172a;
+}
+
+.dark-theme .air-phase-main-title {
+    color: #ffffff;
+}
+
+.air-phase-sub-title {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+}
+
+.dark-theme .air-phase-sub-title {
+    color: #94a3b8;
+}
+
+.air-badge-available {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #10b981;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.dark-theme .air-badge-available {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+}
+
+.air-badge-lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    color: #d97706;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.dark-theme .air-badge-lock {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
+/* LOCKED CURTAIN OVERLAY */
+.air-locked-curtain {
+    border-radius: 18px;
+    padding: 48px 24px;
+    background: rgba(248, 250, 252, 0.7);
+    border: 1px dashed rgba(203, 213, 225, 0.9);
+    text-align: center;
+}
+
+.dark-theme .air-locked-curtain {
+    background: rgba(15, 23, 42, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.air-locked-content {
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.air-lock-icon-wrap {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.air-locked-content h3 {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0;
+    color: #0f172a;
+}
+
+.dark-theme .air-locked-content h3 {
+    color: #ffffff;
+}
+
+.air-locked-content p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+}
+
+.dark-theme .air-locked-content p {
+    color: #94a3b8;
+}
+
+/* =========================================================
+   MILESTONE CARDS & GRID
+   CRITICAL: TRANSFORM NONE TO ELIMINATE HOVER LAYOUT SHIFT
+   ========================================================= */
+.air-milestone-deck-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.air-milestone-card {
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1.5px solid rgba(226, 232, 240, 0.9);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transform: none !important; /* CRITICAL: NO HOVER JUMP */
+}
+
+.dark-theme .air-milestone-card {
+    background: rgba(15, 23, 42, 0.8);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    transform: none !important;
+}
+
+.air-milestone-card:hover {
+    border-color: rgba(99, 102, 241, 0.45);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+    transform: none !important;
+}
+
+.dark-theme .air-milestone-card:hover {
+    border-color: rgba(129, 140, 248, 0.45);
+    box-shadow: 0 10px 28px rgba(99, 102, 241, 0.2);
+    transform: none !important;
+}
+
+.air-milestone-card.completed {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 253, 244, 0.5) 100%);
+}
+
+.dark-theme .air-milestone-card.completed {
+    border-color: rgba(16, 185, 129, 0.3);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.85) 0%, rgba(6, 78, 59, 0.15) 100%);
+}
+
+.air-card-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.air-card-status-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.air-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.air-chip.in-progress {
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+}
+
+.dark-theme .air-chip.in-progress {
+    background: rgba(99, 102, 241, 0.18);
+    color: #a5b4fc;
+}
+
+.air-chip.done {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+}
+
+.dark-theme .air-chip.done {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.air-time-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.dark-theme .air-time-pill {
+    color: #94a3b8;
+}
+
+.air-xp-reward {
+    font-size: 11px;
+    font-weight: 800;
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.dark-theme .air-xp-reward {
+    background: rgba(139, 92, 246, 0.18);
+    color: #c4b5fd;
+}
+
+.air-m-card-title {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
+    color: #0f172a;
+    line-height: 1.35;
+}
+
+.dark-theme .air-m-card-title {
+    color: #ffffff;
+}
+
+.air-m-card-desc {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.dark-theme .air-m-card-desc {
+    color: #94a3b8;
+}
+
+.air-skills-tags-tray {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.air-skill-tag {
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(99, 102, 241, 0.08);
+    color: #4f46e5;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.dark-theme .air-skill-tag {
+    background: rgba(99, 102, 241, 0.16);
+    color: #c7d2fe;
+}
+
+.air-project-brief-box {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dark-theme .air-project-brief-box {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.air-project-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+}
+
+.dark-theme .air-project-label {
+    color: #94a3b8;
+}
+
+.air-project-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.dark-theme .air-project-name {
+    color: #f1f5f9;
+}
+
+.air-card-footer-action {
+    margin-top: 4px;
+}
+
+/* INTERACTIVE TOGGLE BUTTON: ZERO FAKE CONTROLS */
+.air-interactive-toggle-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1.5px solid transparent;
+}
+
+.air-interactive-toggle-btn.btn-complete {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.dark-theme .air-interactive-toggle-btn.btn-complete {
+    background: rgba(99, 102, 241, 0.18);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.air-interactive-toggle-btn.btn-complete:hover {
+    background: #6366f1;
+    color: #ffffff;
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.air-interactive-toggle-btn.btn-undo {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+.dark-theme .air-interactive-toggle-btn.btn-undo {
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.air-interactive-toggle-btn.btn-undo:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.dark-theme .air-interactive-toggle-btn.btn-undo:hover {
+    background: rgba(239, 68, 68, 0.18);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* =========================================================
+   TRACK SWITCHER & CUSTOM TRACK MODAL
+   ========================================================= */
+.air-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.air-modal-deck {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 24px;
+    padding: 32px;
+    max-width: 760px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-theme .air-modal-deck,
+.dark-theme .air-modal-deck {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7) !important;
+    color: #ffffff !important;
+}
+
+.air-modal-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.air-modal-close-btn:hover {
+    color: #0f172a;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-theme .air-modal-close-btn:hover,
+.dark-theme .air-modal-close-btn:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.air-modal-heading {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0 0 6px 0;
+    color: #0f172a;
+}
+
+body.dark-theme .air-modal-heading,
+.dark-theme .air-modal-heading {
+    color: #ffffff !important;
+}
+
+.air-modal-subheading {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0 0 24px 0;
+}
+
+body.dark-theme .air-modal-subheading,
+.dark-theme .air-modal-subheading {
+    color: #94a3b8 !important;
+}
+
+.air-modal-tracks-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+.air-track-selector-card,
+.air-track-card {
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1.5px solid rgba(226, 232, 240, 0.9);
+    background: rgba(248, 250, 252, 0.7);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+}
+
+body.dark-theme .air-track-selector-card,
+.dark-theme .air-track-selector-card,
+body.dark-theme .air-track-card,
+.dark-theme .air-track-card {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+.air-track-selector-card:hover,
+.air-track-card:hover {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.04);
+}
+
+body.dark-theme .air-track-selector-card:hover,
+.dark-theme .air-track-selector-card:hover,
+body.dark-theme .air-track-card:hover,
+.dark-theme .air-track-card:hover {
+    border-color: #818cf8 !important;
+    background: rgba(99, 102, 241, 0.15) !important;
+}
+
+.air-track-selector-card.active-track,
+.air-track-selector-card.active,
+.air-track-card.active {
+    border-color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.08) !important;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.15);
+}
+
+body.dark-theme .air-track-selector-card.active-track,
+.dark-theme .air-track-selector-card.active-track,
+body.dark-theme .air-track-card.active,
+.dark-theme .air-track-card.active {
+    border-color: #818cf8 !important;
+    background: rgba(99, 102, 241, 0.22) !important;
+}
+
+.air-track-selector-card.custom-card,
+.air-track-card.custom-glow {
+    border-style: dashed;
+    border-color: rgba(139, 92, 246, 0.5);
+    background: rgba(139, 92, 246, 0.04);
+}
+
+body.dark-theme .air-track-selector-card.custom-card,
+.dark-theme .air-track-selector-card.custom-card,
+body.dark-theme .air-track-card.custom-glow,
+.dark-theme .air-track-card.custom-glow {
+    border-color: rgba(168, 85, 247, 0.45) !important;
+    background: rgba(139, 92, 246, 0.1) !important;
+}
+
+.air-selector-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.air-selector-icon {
+    display: flex;
+    align-items: center;
+}
+
+.air-category-badge,
+.air-status-pill {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(99, 102, 241, 0.08);
+    color: #4f46e5;
+}
+
+body.dark-theme .air-category-badge,
+.dark-theme .air-category-badge,
+body.dark-theme .air-status-pill,
+.dark-theme .air-status-pill {
+    background: rgba(99, 102, 241, 0.2) !important;
+    color: #c7d2fe !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+
+.air-category-badge.custom-pill,
+.air-status-pill.custom-pill {
+    background: rgba(139, 92, 246, 0.12);
+    color: #8b5cf6;
+}
+
+body.dark-theme .air-category-badge.custom-pill,
+.dark-theme .air-category-badge.custom-pill,
+body.dark-theme .air-status-pill.custom-pill,
+.dark-theme .air-status-pill.custom-pill {
+    background: rgba(168, 85, 247, 0.2) !important;
+    color: #d8b4fe !important;
+    border: 1px solid rgba(168, 85, 247, 0.3) !important;
+}
+
+.air-modal-current-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #10b981;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+body.dark-theme .air-modal-current-indicator,
+.dark-theme .air-modal-current-indicator {
+    color: #34d399 !important;
+}
+
+.air-selector-title {
+    font-size: 14px;
+    font-weight: 800;
+    margin: 0;
+    color: #0f172a;
+}
+
+body.dark-theme .air-selector-title,
+.dark-theme .air-selector-title {
+    color: #ffffff !important;
+}
+
+.air-selector-desc {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+}
+
+body.dark-theme .air-selector-desc,
+.dark-theme .air-selector-desc {
+    color: #94a3b8 !important;
+}
+
+/* CUSTOM DOMAIN SEARCH & REAL-TIME SUGGESTIONS */
+.air-custom-search-container {
+    padding-top: 20px;
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+body.dark-theme .air-custom-search-container,
+.dark-theme .air-custom-search-container {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.air-search-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.air-search-header h4 {
+    font-size: 14px;
+    font-weight: 800;
+    color: #8b5cf6;
+    margin: 0;
+}
+
+body.dark-theme .air-search-header h4,
+.dark-theme .air-search-header h4 {
+    color: #c084fc !important;
+}
+
+.air-search-header p {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+}
+
+body.dark-theme .air-search-header p,
+.dark-theme .air-search-header p {
+    color: #94a3b8 !important;
+}
+
+.air-suggestions-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.air-sugg-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+}
+
+body.dark-theme .air-sugg-title,
+.dark-theme .air-sugg-title {
+    color: #94a3b8 !important;
+}
+
+.air-chips-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.air-dynamic-chip,
+.air-custom-chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    background: #ffffff;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+}
+
+body.dark-theme .air-dynamic-chip,
+.dark-theme .air-dynamic-chip,
+body.dark-theme .air-custom-chip,
+.dark-theme .air-custom-chip {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+}
+
+.air-dynamic-chip:hover,
+.air-dynamic-chip.chip-active,
+.air-custom-chip:hover,
+.air-custom-chip.selected {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+}
+
+body.dark-theme .air-dynamic-chip:hover,
+body.dark-theme .air-dynamic-chip.chip-active,
+.dark-theme .air-dynamic-chip.chip-active,
+body.dark-theme .air-custom-chip:hover,
+body.dark-theme .air-custom-chip.selected,
+.dark-theme .air-custom-chip.selected {
+    background: rgba(99, 102, 241, 0.25) !important;
+    color: #a5b4fc !important;
+    border-color: #818cf8 !important;
+}
+
+.air-input-search-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.air-input-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.air-search-input-icon {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+    font-size: 16px;
+    pointer-events: none;
+}
+
+.air-domain-input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(226, 232, 240, 0.9);
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+body.dark-theme .air-domain-input,
+.dark-theme .air-domain-input {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+}
+
+.air-domain-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+body.dark-theme .air-domain-input:focus,
+.dark-theme .air-domain-input:focus {
+    border-color: #818cf8 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* MILESTONE CARD ACTION BUTTONS */
+.air-card-action-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.air-action-link-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    background: rgba(99, 102, 241, 0.08);
+    color: #4f46e5;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    transition: all 0.2s ease;
+}
+
+.air-action-link-btn:hover {
+    background: #4f46e5;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+}
+
+body.dark-theme .air-action-link-btn,
+.dark-theme .air-action-link-btn {
+    background: rgba(99, 102, 241, 0.16) !important;
+    color: #a5b4fc !important;
+    border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+body.dark-theme .air-action-link-btn:hover,
+.dark-theme .air-action-link-btn:hover {
+    background: #6366f1 !important;
+    color: #ffffff !important;
+}
+
+.air-gen-btn {
+    white-space: nowrap;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN SYSTEM
+   ========================================================= */
+@media (max-width: 1080px) {
+    .air-deck-hero {
+        flex-direction: column;
+    }
+
+    .air-telemetry-deck {
+        width: 100%;
+        min-width: unset;
+    }
+}
+
+@media (max-width: 768px) {
+    .ai-roadmap-page {
+        padding: 16px 16px 48px;
+    }
+
+    .air-deck-hero {
+        padding: 24px 20px;
+    }
+
+    .air-telemetry-deck {
+        grid-template-columns: 1fr;
+    }
+
+    .air-modal-tracks-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .air-milestone-deck-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .air-input-search-row {
+        flex-direction: column;
+    }
+
+    .air-gen-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Additional helper classes */
+.air-active-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.dark-theme .air-active-badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.air-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.air-pulse-radar {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: air-pulse 2s infinite;
+}
+
+.air-step-label {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pipe-project-node {
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.dark-theme .pipe-project-node {
+    border-color: rgba(99, 102, 241, 0.4);
+}

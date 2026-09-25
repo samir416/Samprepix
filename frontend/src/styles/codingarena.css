@@ -3261,3 +3261,134 @@ body:not(.dark-theme) .coding-nav-cat-pill.db {
     color: #0369a1;
     border-color: #7dd3fc;
 }
+
+/* ROADMAP INTEGRATION BANNER & COMPLETION */
+.coding-roadmap-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 12px;
+    padding: 10px 18px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+body.dark-theme .coding-roadmap-bar {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.15), rgba(59, 130, 246, 0.15));
+    border-color: rgba(99, 102, 241, 0.35);
+}
+
+.coding-roadmap-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.coding-roadmap-badge {
+    background: #6366f1;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.coding-roadmap-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+body.dark-theme .coding-roadmap-title {
+    color: #e2e8f0;
+}
+
+.coding-roadmap-back-btn {
+    background: transparent;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #6366f1;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.coding-roadmap-back-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+body.dark-theme .coding-roadmap-back-btn {
+    color: #818cf8;
+    border-color: rgba(129, 140, 248, 0.4);
+}
+
+.coding-roadmap-complete-card {
+    margin-top: 14px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(99, 102, 241, 0.1));
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+body.dark-theme .coding-roadmap-complete-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(99, 102, 241, 0.15));
+    border-color: rgba(16, 185, 129, 0.45);
+}
+
+.complete-badge {
+    font-size: 13px;
+    font-weight: 700;
+    color: #059669;
+    display: block;
+    margin-bottom: 2px;
+}
+
+body.dark-theme .complete-badge {
+    color: #34d49a;
+}
+
+.complete-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+}
+
+body.dark-theme .complete-sub {
+    color: #94a3b8;
+}
+
+.coding-roadmap-next-step-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: #6366f1;
+    color: #ffffff;
+    border: none;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.coding-roadmap-next-step-btn:hover {
+    background: #4f46e5;
+    transform: translateY(-1px);
+}

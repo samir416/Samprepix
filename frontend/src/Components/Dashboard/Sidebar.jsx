@@ -8,7 +8,9 @@ import {
     FiCode,
     FiBookOpen,
     FiBarChart2,
-    FiShield
+    FiShield,
+    FiGithub,
+    FiCompass
 } from "react-icons/fi";
 
 import {
@@ -113,6 +115,32 @@ export default function Sidebar() {
                             }
                         >
                             <FiBarChart2 /> Performance
+                        </button>
+                    </Link>
+
+                    {/* GITHUB ANALYZER */}
+                    <Link to="/github-analyzer" className="sidebar-link">
+                        <button
+                            className={
+                                location.pathname === "/github-analyzer"
+                                    ? "active"
+                                    : ""
+                            }
+                        >
+                            <FiGithub /> GitHub Analyzer
+                        </button>
+                    </Link>
+
+                    {/* AI ROADMAP */}
+                    <Link to="/ai-roadmap" className="sidebar-link">
+                        <button
+                            className={
+                                location.pathname === "/ai-roadmap"
+                                    ? "active"
+                                    : ""
+                            }
+                        >
+                            <FiCompass /> AI Roadmap
                         </button>
                     </Link>
 

@@ -580,9 +580,7 @@ body.dark-theme .pricing-page,
 body.dark-theme .pricing-wrapper,
 body.dark-theme .pricing-section,
 body.dark-theme .pricing-container,
-body.dark-theme .cta-section,
-body.dark-theme .referral-section,
-body.dark-theme .footer-section {
+body.dark-theme .referral-section {
 
     background:
     linear-gradient(
@@ -593,6 +591,41 @@ body.dark-theme .footer-section {
     ) !important;
 
     color: white !important;
+}
+
+/* CTA & HOME SECTIONS DARK MODE SEAMLESS CONTINUITY */
+body.dark-theme .hero-section,
+body.dark-theme .ai-section,
+body.dark-theme .trusted-section,
+body.dark-theme .features-section,
+body.dark-theme .testimonial-section,
+body.dark-theme .cta-section {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+body.dark-theme .cta-box {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 50%, rgba(6, 182, 212, 0.25) 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* HERO LIVE DEMO BUTTON READABILITY FIX */
+body.dark-theme .demo-btn {
+    background: rgba(30, 41, 59, 0.9) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35) !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+}
+
+body.dark-theme .demo-btn:hover {
+    background: rgba(51, 65, 85, 0.95) !important;
+    color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.6) !important;
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25) !important;
 }
 
 /* WHITE CARDS FORCE REMOVE */
@@ -672,4 +705,78 @@ body.dark-theme h4 {
 
 .cta-box button{
     color: black !important;
+}
+
+/* =========================================================
+   SMOOTH THEME TRANSITION SYSTEM (250ms - 350ms)
+========================================================= */
+
+body.theme-transition-ready,
+body.theme-transition-ready html,
+body.theme-transition-ready #root,
+body.theme-transition-ready .dashboard-layout,
+body.theme-transition-ready .dashboard-sidebar,
+body.theme-transition-ready .dashboard-topbar,
+body.theme-transition-ready .dashboard-content,
+body.theme-transition-ready .feature-card,
+body.theme-transition-ready .pricing-card,
+body.theme-transition-ready .settings-modal-card,
+body.theme-transition-ready .settings-tabs,
+body.theme-transition-ready .settings-header,
+body.theme-transition-ready .settings-footer,
+body.theme-transition-ready .ai-bot-window,
+body.theme-transition-ready .ai-bot-body,
+body.theme-transition-ready .custom-navbar,
+body.theme-transition-ready .glass-card,
+body.theme-transition-ready input,
+body.theme-transition-ready textarea,
+body.theme-transition-ready select {
+    transition:
+        background 0.3s ease,
+        background-color 0.3s ease,
+        border-color 0.3s ease,
+        color 0.3s ease,
+        box-shadow 0.3s ease !important;
+}
+
+/* =========================================================
+   APP ROUTE PAGE TRANSITION
+========================================================= */
+
+@keyframes appPageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.app-page-transition {
+    width: 100%;
+    animation: appPageFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* REDUCED MOTION PREFERENCE OVERRIDE */
+@media (prefers-reduced-motion: reduce) {
+    body.theme-transition-ready,
+    body.theme-transition-ready * {
+        transition: none !important;
+        animation: none !important;
+    }
+    .app-page-transition {
+        animation: none !important;
+    }
+}
+
+body.reduce-motion,
+body.reduce-motion * {
+    transition: none !important;
+    animation: none !important;
+}
+
+body.reduce-motion .app-page-transition {
+    animation: none !important;
 }

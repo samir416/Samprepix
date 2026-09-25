@@ -2,6 +2,7 @@ package com.aiinterview.backend.service;
 
 import com.aiinterview.backend.entity.AccountStatus;
 import com.aiinterview.backend.entity.EmailVerificationToken;
+import com.aiinterview.backend.entity.PasswordResetToken;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.entity.UserProfile;
 import com.aiinterview.backend.model.RegisterResponse;

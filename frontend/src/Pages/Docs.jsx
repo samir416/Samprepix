@@ -17,12 +17,153 @@ import {
     FaInfoCircle,
     FaLightbulb,
     FaExclamationTriangle,
-    FaBars
+    FaBars,
+    FaQuestionCircle
 } from "react-icons/fa";
 import "../styles/docs.css";
 
 // Comprehensive Documentation Topic Database
 const DOC_SECTIONS = [
+    {
+        id: "faq",
+        title: "Frequently Asked Questions",
+        icon: <FaQuestionCircle />,
+        topics: [
+            {
+                id: "platform-faq",
+                title: "Platform & Placement FAQ",
+                lead: "Everything you need to know about Samprepix features, coding evaluations, AI interviews, and accounts.",
+                content: (
+                    <div className="docs-faq-container">
+                        <div className="faq-item">
+                            <h3>1. What is Samprepix and how does it help in campus and tech placements?</h3>
+                            <p>Samprepix is a unified interview and placement acceleration platform tailored for computer science students and software engineers. It replaces fragmented study materials with an authentic multi-language coding arena, aptitude modules, real-time AI voice mock interviews, ATS resume diagnostics, and GitHub portfolio intelligence.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>2. Which programming languages are supported in the Coding Arena?</h3>
+                            <p>The Coding Arena supports 8 core languages: Java, Python, C++, C, JavaScript, TypeScript, Go, and Rust. Every submission executes inside an isolated compiler sandbox against verified standard input and hidden testcase suites with real-time compilation feedback.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>3. How does code execution and evaluation work?</h3>
+                            <p>When you click &quot;Run Code&quot;, your solution is compiled and executed against public sample testcases. When you click &quot;Submit Solution&quot;, your code is tested against hidden boundary cases and memory constraints. Passing solutions can automatically synchronize to your personal GitHub repository.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>4. How do Multi-Level AI Hints work in the Coding Arena?</h3>
+                            <p>When you encounter a roadblock, the platform provides three tiered hint levels: <strong>Level 1 (Concept)</strong> explains the underlying data structure or technique without revealing code; <strong>Level 2 (Approach)</strong> outlines the optimal time/space complexity strategy; and <strong>Level 3 (Solution Walkthrough)</strong> provides step-by-step logic breakdown.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>5. What is the GitHub Profile Analyzer and how is the score computed?</h3>
+                            <p>The GitHub Profile Analyzer inspects your public GitHub profile and repository metrics to compute an objective 0–100 engineering readiness score based on 5 pillars: Repository Quality (0–25), Documentation &amp; READMEs (0–20), Consistency &amp; Activity (0–20), Tech Stack Diversity (0–20), and Project Impact (0–15).</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>6. What is the Tailored Profile README generator?</h3>
+                            <p>Inside the GitHub Analyzer, the README generator synthesizes your verified repositories, highlighted technologies, and contact links into a modern, recruiter-ready markdown template that you can copy directly to your special GitHub profile repository (e.g. <code>username/username</code>).</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>7. How does the AI Personalized Roadmap work?</h3>
+                            <p>The AI Roadmap generates an 8-to-9 phase progressive engineering curriculum customized to your target role (Full-Stack, Backend, Frontend, AI/ML, DevOps, Mobile, Data Engineering, or Cybersecurity). You can track phase milestones, check off completed concepts, gain XP points, and export your roadmap as a printable PDF report.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>8. How do AI Mock Interviews work?</h3>
+                            <p>AI Mock Interviews simulate real technical and HR interviews with speech-to-text recognition, dynamic AI follow-up questions tailored to your responses, and real-time audio analysis. You can answer via microphone or text, and the system assesses both technical accuracy and behavioral clarity.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>9. What feedback is provided after a mock interview?</h3>
+                            <p>After concluding an interview, the platform generates a comprehensive scorecard featuring: Overall Readiness Score, Technical Accuracy percentage, Communication &amp; Articulation score, granular strengths, prioritized improvement areas, and a question-by-question transcript analysis.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>10. How does the ATS Resume Analyzer score resumes?</h3>
+                            <p>The ATS Resume Analyzer parses your uploaded PDF resume and inspects text structure, section completeness (Contact, Education, Experience, Projects, Skills), quantified achievement bullet points, and keyword alignment with target software engineering job descriptions.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>11. What is the difference between Starter, PRO, and ELITE plans?</h3>
+                            <p><strong>Starter (Free):</strong> Access to core problem sets, foundation roadmap phases, and basic tests.<br /><strong>PRO:</strong> Unrestricted access to all 5,050+ coding problems, complete AI roadmap phases, resume analyzer, and GitHub sync.<br /><strong>ELITE:</strong> Everything in PRO plus unlimited AI Mock Interviews, video/audio analytics, priority hints, and dedicated performance reports.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>12. What are the current subscription prices on the platform?</h3>
+                            <p>The platform currently uses sandbox test pricing: <strong>PRO is ₹1</strong> and <strong>ELITE is ₹2</strong>. This allows candidates to test and experience the full suite of premium features seamlessly.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>13. What payment methods are supported for subscriptions?</h3>
+                            <p>Subscriptions are processed through secure 256-bit encrypted payment gateways supporting UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, Net Banking, and digital wallets.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>14. How does the Aptitude assessment module help in campus drives?</h3>
+                            <p>Most initial campus screening rounds include an aptitude elimination test. Samprepix provides 22,060+ practice questions across Quantitative Aptitude, Logical Reasoning, Verbal Ability, and Technical MCQs with timed mock tests and category-level accuracy telemetry.</p>
+                        </div>
+                        <div className="faq-item">
+                            <h3>15. How do I report a problem or submit feedback?</h3>
+                            <p>You can report an issue anytime by opening your Profile dropdown and clicking &quot;Report Problem&quot;, or by clicking &quot;Report an Issue or Bug&quot; inside the AI Help Bot in your workspace. You can categorize the issue, attach details, and our engineering team receives the ticket immediately.</p>
+                        </div>
+                    </div>
+                )
+            }
+        ]
+    },
+    {
+        id: "career-intelligence",
+        title: "Career Intelligence & AI",
+        icon: <FaChartBar />,
+        topics: [
+            {
+                id: "github-analyzer",
+                title: "GitHub Profile Analyzer",
+                lead: "Automated intelligence and audits for your public GitHub developer presence.",
+                content: (
+                    <>
+                        <h2>Overview</h2>
+                        <p>
+                            The GitHub Profile Analyzer scans your public GitHub profile and repositories to provide an objective 0–100 engineering score, granular deduction breakdowns, repository health checks, and a recruiter-ready profile README generator.
+                        </p>
+                        <h2>5 Core Scoring Pillars</h2>
+                        <ul>
+                            <li><strong>Repository Quality (0–25):</strong> Evaluates commit depth, descriptive titles, license presence, and clean project structure.</li>
+                            <li><strong>Documentation & README (0–20):</strong> Audits project READMEs for clear installation steps, architecture diagrams, and usage examples.</li>
+                            <li><strong>Consistency & Activity (0–20):</strong> Analyzes commit regularity and active contribution cadences over time.</li>
+                            <li><strong>Technology Diversity (0–20):</strong> Rewards multi-stack versatility across languages, frameworks, and tools.</li>
+                            <li><strong>Project Impact (0–15):</strong> Measures community stars, forks, and deployment links.</li>
+                        </ul>
+                        <h2>Tailored README Generator</h2>
+                        <p>
+                            Generates an optimized, recruiter-friendly markdown profile README synthesizing your best repositories, verified skills, and contact details with one-click clipboard copy.
+                        </p>
+                    </>
+                )
+            },
+            {
+                id: "ai-roadmap",
+                title: "AI Personalized Roadmap",
+                lead: "Adaptive, milestone-driven curriculum tailored to your domain and skills.",
+                content: (
+                    <>
+                        <h2>Curated Engineering Tracks</h2>
+                        <p>
+                            Choose from 8 specialized engineering tracks: Full-Stack Web, Backend Systems, Frontend & UI/UX, AI/ML Engineering, DevOps & Cloud, Mobile App, Data Engineering, and Cybersecurity.
+                        </p>
+                        <h2>Phases & Progressive XP</h2>
+                        <p>
+                            Each track contains 8 to 9 structured progression phases from Core Foundations to Production & System Design. Toggle completed milestones to earn XP, level up your developer rank, and export your roadmap to PDF.
+                        </p>
+                    </>
+                )
+            },
+            {
+                id: "premium-entitlement",
+                title: "Plans & Premium Access",
+                lead: "Understanding Starter, PRO, and ELITE subscription tiers.",
+                content: (
+                    <>
+                        <h2>Tier Comparison</h2>
+                        <p>
+                            <strong>Starter:</strong> Access to core problem sets, foundational roadmap phases, and basic assessments.<br />
+                            <strong>PRO & ELITE:</strong> Unrestricted access to all 5,050+ problems, complete AI roadmap phases, deep GitHub audit & recruiter view, priority AI interview compute, and detailed analytics.
+                        </p>
+                    </>
+                )
+            }
+        ]
+    },
+
     {
         id: "getting-started",
         title: "Getting Started",

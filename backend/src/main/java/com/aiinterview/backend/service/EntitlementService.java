@@ -203,6 +203,16 @@ public class EntitlementService {
     }
 
     @Transactional(readOnly = true)
+    public boolean hasGithubAnalyzerAccess(User user) {
+        return hasPremiumAccess(user);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasAiRoadmapAccess(User user) {
+        return hasPremiumAccess(user);
+    }
+
+    @Transactional(readOnly = true)
     public int getMaxMockInterviews(User user) {
 
         String effectivePlan = getEffectivePlan(user);

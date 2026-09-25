@@ -14,6 +14,8 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
     boolean existsByNameIgnoreCase(String name);
 
+    List<Plan> findByActiveTrue();
+
     List<Plan> findByActiveTrueOrderByIdAsc();
 
     Optional<Plan> findByNameAndActiveTrue(String name);

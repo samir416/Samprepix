@@ -109,7 +109,7 @@
 .admin-refresh-btn:hover {
     background: #f5f7ff;
     border-color: rgba(99, 102, 241, 0.35);
-    transform: translateY(-1px);
+    transform: none;
 }
 
 .admin-refresh-btn:disabled {
@@ -333,7 +333,7 @@
 }
 
 .admin-stat-card:hover {
-    transform: translateY(-2px);
+    transform: none;
     box-shadow: 0 12px 32px rgba(30, 41, 59, 0.09);
 }
 
@@ -601,7 +601,7 @@
 }
 
 .admin-btn-primary:hover {
-    transform: translateY(-1px);
+    transform: none;
     box-shadow: 0 7px 17px rgba(79, 70, 229, 0.2);
 }
 
@@ -1398,4 +1398,395 @@
     .admin-confirm-actions button {
         width: 100%;
     }
+}
+
+/* =========================================================
+   ADMIN PANEL DARK THEME
+   ========================================================= */
+
+body.dark-theme .admin-page {
+    color: #f1f5f9;
+}
+
+body.dark-theme .admin-page-header h1 {
+    color: #ffffff;
+}
+
+body.dark-theme .admin-page-header p {
+    color: #94a3b8;
+}
+
+body.dark-theme .admin-refresh-btn {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .admin-refresh-btn:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .admin-tabs {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-theme .admin-tab {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .admin-tab:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-theme .admin-tab.active {
+    background: linear-gradient(135deg, #6366f1, #06b6d4) !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .admin-section-header h1,
+body.dark-theme .admin-section-header h2,
+body.dark-theme .admin-section-heading h2 {
+    color: #ffffff !important;
+}
+
+body.dark-theme .admin-section-header p,
+body.dark-theme .admin-section-heading p {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .admin-stat-card {
+    background: #111827 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-theme .admin-stat-card .stat-value {
+    color: #ffffff !important;
+}
+
+body.dark-theme .admin-stat-card .stat-label {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .admin-stat-card .stat-icon {
+    background: rgba(99, 102, 241, 0.18) !important;
+}
+
+body.dark-theme .admin-filters select,
+body.dark-theme .admin-inline-select {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-theme .admin-search {
+    background: transparent !important;
+}
+
+body.dark-theme .admin-search svg {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .admin-search input {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-theme .admin-search input::placeholder {
+    color: #64748b !important;
+}
+
+body.dark-theme .admin-table-wrapper {
+    background: #111827 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-theme .admin-table th {
+    background: #1e293b !important;
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .admin-table td {
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .admin-table td strong {
+    color: #ffffff !important;
+}
+
+body.dark-theme .admin-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+body.dark-theme .admin-btn-secondary {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .admin-btn-secondary:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .admin-plan-form {
+    background: #111827 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-theme .admin-form-header h3,
+body.dark-theme .admin-plan-form h3 {
+    color: #ffffff !important;
+}
+
+body.dark-theme .admin-form-header p {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .admin-form-group label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .admin-form-group input,
+body.dark-theme .admin-form-group select,
+body.dark-theme .admin-form-group textarea {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-theme .admin-form-group input:focus,
+body.dark-theme .admin-form-group select:focus,
+body.dark-theme .admin-form-group textarea:focus {
+    border-color: #6366f1 !important;
+    background: #1e293b !important;
+}
+
+body.dark-theme .admin-form-group input::placeholder,
+body.dark-theme .admin-form-group textarea::placeholder {
+    color: #64748b !important;
+}
+
+body.dark-theme .admin-confirm-content,
+body.dark-theme .admin-modal-content {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-theme .admin-confirm-content h3 {
+    color: #ffffff !important;
+}
+
+body.dark-theme .admin-confirm-content p {
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .admin-confirm-cancel {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .admin-confirm-cancel:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .admin-empty {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .admin-empty svg {
+    color: #475569 !important;
+}
+
+body.dark-theme .admin-notice {
+    background: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.25) !important;
+    color: #fcd34d !important;
+}
+
+body.dark-theme .admin-loading {
+    color: #cbd5e1 !important;
+}
+
+/* High-contrast status, role, and plan badges in dark mode */
+body.dark-theme .role-badge.user-role-badge {
+    background: rgba(148, 163, 184, 0.15) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-theme .status-badge.active {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(52, 211, 153, 0.3) !important;
+}
+
+body.dark-theme .status-badge.pending {
+    background: rgba(245, 158, 11, 0.18) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(251, 191, 36, 0.3) !important;
+}
+
+body.dark-theme .plan-badge {
+    background: rgba(99, 102, 241, 0.18) !important;
+    color: #a5b4fc !important;
+    border: 1px solid rgba(165, 180, 252, 0.3) !important;
+}
+
+/* =========================================================
+   ZERO-SHIFT HOVER STABILITY FOR ADMIN TABLES, BADGES & BUTTONS
+   ========================================================= */
+
+.admin-table tbody tr:hover,
+.admin-table td,
+.admin-table th,
+.admin-table .plan-badge,
+.admin-table .role-badge,
+.admin-table .status-badge,
+.admin-table .admin-btn-primary,
+.admin-table .admin-btn-secondary,
+.admin-table .admin-btn-danger,
+.admin-table button {
+    transform: none !important;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.admin-table .plan-badge:hover,
+.admin-table .role-badge:hover,
+.admin-table .status-badge:hover,
+.admin-table .admin-btn-primary:hover,
+.admin-table .admin-btn-secondary:hover,
+.admin-table .admin-btn-danger:hover,
+.admin-table button:hover {
+    transform: none !important;
+    margin: 0 !important;
+    line-height: inherit !important;
+}
+
+/* =========================================================
+   COMPREHENSIVE ADMIN DARK MODE CONTRAST AUDIT
+   ========================================================= */
+
+/* Action buttons in dark mode */
+body.dark-theme .admin-btn-danger {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+    color: #f87171 !important;
+    transform: none !important;
+}
+
+body.dark-theme .admin-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.25) !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    color: #fca5a5 !important;
+    transform: none !important;
+}
+
+body.dark-theme .admin-btn-secondary {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #f1f5f9 !important;
+    transform: none !important;
+}
+
+body.dark-theme .admin-btn-secondary:hover {
+    background: #334155 !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
+    color: #ffffff !important;
+    transform: none !important;
+}
+
+body.dark-theme .admin-btn-primary {
+    background: linear-gradient(135deg, #6366f1, #06b6d4) !important;
+    color: #ffffff !important;
+    transform: none !important;
+}
+
+body.dark-theme .admin-btn-primary:hover {
+    transform: none !important;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35) !important;
+}
+
+/* High-contrast Badges in Dark Mode */
+body.dark-theme .plan-badge {
+    background: rgba(99, 102, 241, 0.22) !important;
+    color: #c7d2fe !important;
+    border: 1px solid rgba(165, 180, 252, 0.35) !important;
+    font-weight: 700 !important;
+}
+
+body.dark-theme .role-badge.owner-role-badge {
+    background: linear-gradient(135deg, #6366f1, #06b6d4) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4) !important;
+    font-weight: 800 !important;
+}
+
+body.dark-theme .role-badge.user-role-badge {
+    background: rgba(148, 163, 184, 0.16) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    font-weight: 700 !important;
+}
+
+/* Entitlement Modal in Dark Mode */
+body.dark-theme .entitlement-modal-overlay {
+    background: rgba(0, 0, 0, 0.7) !important;
+}
+
+body.dark-theme .entitlement-modal {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark-theme .entitlement-modal-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-theme .entitlement-modal-header h3 {
+    color: #ffffff !important;
+}
+
+body.dark-theme .entitlement-modal-header p {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .modal-close-btn {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .modal-close-btn:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .entitlement-form label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-theme .entitlement-form select,
+body.dark-theme .entitlement-form input,
+body.dark-theme .entitlement-form textarea {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-theme .entitlement-form select:focus,
+body.dark-theme .entitlement-form input:focus,
+body.dark-theme .entitlement-form textarea:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
 }

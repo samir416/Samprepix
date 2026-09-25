@@ -14,13 +14,13 @@ createRoot(document.getElementById("root")).render(
 
     <ToastContainer
       position="bottom-center"
-      autoClose={100}
+      autoClose={3000}
       hideProgressBar={false}
       newestOnTop
       closeOnClick
       pauseOnHover={false}
-      draggable
-      closeButton={false}
+      draggable={false}
+      closeButton={true}
     />
 
   </BrowserRouter>

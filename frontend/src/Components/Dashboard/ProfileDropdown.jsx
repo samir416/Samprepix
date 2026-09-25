@@ -1,17 +1,18 @@
 import "../../styles/profileDropdown.css";
 import { useNavigate } from "react-router-dom";
-import { FiSettings, FiBarChart, FiCreditCard, FiShield } from "react-icons/fi";
+import { FiUser, FiSettings, FiBarChart2, FiCreditCard, FiAlertCircle, FiLogOut } from "react-icons/fi";
+import { openReportProblemModal } from "../../services/supportService";
 
 export default function ProfileDropdown({ user, onLogout, onClose, onOpenSettings }) {
     const navigate = useNavigate();
     const isAdmin = user?.role === "ADMIN";
 
     const menuItems = [
-        { icon: "👤", label: "Profile", path: "/profile" },
-        { icon: "⚙️", label: "Settings", isSettings: true },
-        { icon: "📊", label: "Analytics", path: "/performance" },
-        { icon: "💳", label: "Subscription", path: "/subscription" },
-        { icon: "💳", label: "Billing", path: "/billing" }
+        { icon: <FiUser />, label: "Profile", path: "/profile" },
+        { icon: <FiSettings />, label: "Settings", isSettings: true },
+        { icon: <FiBarChart2 />, label: "Analytics", path: "/performance" },
+        { icon: <FiCreditCard />, label: "Subscription", path: "/pricing" },
+        { icon: <FiAlertCircle />, label: "Report a Problem", isReportProblem: true }
     ];
 
     return (
@@ -32,7 +33,9 @@ export default function ProfileDropdown({ user, onLogout, onClose, onOpenSetting
                         className="profile-menu-btn"
                         onClick={() => {
                             if (onClose) onClose();
-                            if (item.isSettings) {
+                            if (item.isReportProblem) {
+                                openReportProblemModal({ feature: "General" });
+                            } else if (item.isSettings) {
                                 if (onOpenSettings) onOpenSettings();
                             } else if (item.path) {
                                 navigate(item.path);
@@ -46,7 +49,7 @@ export default function ProfileDropdown({ user, onLogout, onClose, onOpenSetting
             </div>
             <div className="profile-logout">
                 <button className="logout-btn" onClick={onLogout}>
-                    <span className="menu-emoji">🚪</span>
+                    <span className="menu-emoji"><FiLogOut /></span>
                     <span>Logout</span>
                 </button>
             </div>

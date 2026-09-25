@@ -20,7 +20,8 @@ public class PublicPlanController {
 
     @GetMapping({"", "/", "/active", "/active/"})
     public ResponseEntity<List<PlanResponse>> getActivePlans() {
-        List<Plan> plans = planRepository.findByActiveTrue();
+        List<Plan> plans = planRepository.findByActiveTrueOrderByIdAsc();
+
         return ResponseEntity.ok(
                 plans.stream()
                         .map(PlanResponse::fromEntity)

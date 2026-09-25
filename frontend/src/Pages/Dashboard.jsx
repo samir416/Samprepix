@@ -491,121 +491,103 @@ export default function Dashboard() {
 
                                                                     <div className="real-graph">
 
-                                                                        {codingStats?.timeline && codingStats.timeline.length > 0 ? (
+                                                                        <ResponsiveContainer
+                                                                            width="100%"
+                                                                            height={270}
+                                                                        >
 
-                                                                            <ResponsiveContainer
-                                                                                width="100%"
-                                                                                height={270}
+                                                                            <AreaChart
+                                                                                data={
+                                                                                    codingStats?.timeline && codingStats.timeline.length > 0
+                                                                                        ? codingStats.timeline
+                                                                                        : [
+                                                                                            { date: "Day 1", solved: 0 },
+                                                                                            { date: "Day 2", solved: 0 },
+                                                                                            { date: "Day 3", solved: 0 },
+                                                                                            { date: "Day 4", solved: 0 },
+                                                                                            { date: "Day 5", solved: 0 },
+                                                                                            { date: "Day 6", solved: 0 },
+                                                                                            { date: "Day 7", solved: 0 }
+                                                                                        ]
+                                                                                }
+                                                                                margin={{
+                                                                                    top: 10,
+                                                                                    right: 30,
+                                                                                    left: -15,
+                                                                                    bottom: 0
+                                                                                }}
                                                                             >
 
-                                                                                <AreaChart
-                                                                                    data={codingStats.timeline}
-                                                                                    margin={{
-                                                                                        top: 10,
-                                                                                        right: 30,
-                                                                                        left: -15,
-                                                                                        bottom: 0
+                                                                                <defs>
+
+                                                                                    <linearGradient
+                                                                                        id="colorProgress"
+                                                                                        x1="0"
+                                                                                        y1="0"
+                                                                                        x2="0"
+                                                                                        y2="1"
+                                                                                    >
+
+                                                                                        <stop
+                                                                                            offset="5%"
+                                                                                            stopColor="#6366f1"
+                                                                                            stopOpacity={0.32}
+                                                                                        />
+
+                                                                                        <stop
+                                                                                            offset="95%"
+                                                                                            stopColor="#00c2ff"
+                                                                                            stopOpacity={0.03}
+                                                                                        />
+
+                                                                                    </linearGradient>
+
+                                                                                </defs>
+
+                                                                                <CartesianGrid
+                                                                                    strokeDasharray="4 4"
+                                                                                    vertical={true}
+                                                                                    horizontal={true}
+                                                                                />
+
+                                                                                <XAxis
+                                                                                    dataKey="date"
+                                                                                    tickLine={false}
+                                                                                    axisLine={false}
+                                                                                />
+
+                                                                                <YAxis
+                                                                                    allowDecimals={false}
+                                                                                    tickLine={false}
+                                                                                    axisLine={false}
+                                                                                />
+
+                                                                                <Tooltip
+                                                                                    formatter={(value) => [`${value} Problems Solved`, "Cumulative Solved"]}
+                                                                                    labelFormatter={(label) => `Milestone: ${label}`}
+                                                                                />
+
+                                                                                <Area
+                                                                                    type="monotone"
+                                                                                    dataKey="solved"
+                                                                                    stroke="#6366f1"
+                                                                                    strokeWidth={3.5}
+                                                                                    fillOpacity={1}
+                                                                                    fill="url(#colorProgress)"
+                                                                                    dot={{
+                                                                                        r: 4,
+                                                                                        strokeWidth: 2,
+                                                                                        fill: "#6366f1",
+                                                                                        stroke: "#ffffff"
                                                                                     }}
-                                                                                >
+                                                                                    activeDot={{
+                                                                                        r: 6
+                                                                                    }}
+                                                                                />
 
-                                                                                    <defs>
+                                                                            </AreaChart>
 
-                                                                                        <linearGradient
-                                                                                            id="colorProgress"
-                                                                                            x1="0"
-                                                                                            y1="0"
-                                                                                            x2="0"
-                                                                                            y2="1"
-                                                                                        >
-
-                                                                                            <stop
-                                                                                                offset="5%"
-                                                                                                stopColor="#6366f1"
-                                                                                                stopOpacity={0.32}
-                                                                                            />
-
-                                                                                            <stop
-                                                                                                offset="95%"
-                                                                                                stopColor="#00c2ff"
-                                                                                                stopOpacity={0.03}
-                                                                                            />
-
-                                                                                        </linearGradient>
-
-                                                                                    </defs>
-
-                                                                                    <CartesianGrid
-                                                                                        strokeDasharray="4 4"
-                                                                                        vertical={true}
-                                                                                        horizontal={true}
-                                                                                    />
-
-                                                                                    <XAxis
-                                                                                        dataKey="date"
-                                                                                        tickLine={false}
-                                                                                        axisLine={false}
-                                                                                    />
-
-                                                                                    <YAxis
-                                                                                        allowDecimals={false}
-                                                                                        tickLine={false}
-                                                                                        axisLine={false}
-                                                                                    />
-
-                                                                                    <Tooltip
-                                                                                        formatter={(value) => [`${value} Problems Solved`, "Cumulative Solved"]}
-                                                                                        labelFormatter={(label) => `Milestone: ${label}`}
-                                                                                    />
-
-                                                                                    <Area
-                                                                                        type="monotone"
-                                                                                        dataKey="solved"
-                                                                                        stroke="#6366f1"
-                                                                                        strokeWidth={3.5}
-                                                                                        fillOpacity={1}
-                                                                                        fill="url(#colorProgress)"
-                                                                                        dot={{
-                                                                                            r: 4,
-                                                                                            strokeWidth: 2,
-                                                                                            fill: "#6366f1",
-                                                                                            stroke: "#ffffff"
-                                                                                        }}
-                                                                                        activeDot={{
-                                                                                            r: 6
-                                                                                        }}
-                                                                                    />
-
-                                                                                </AreaChart>
-
-                                                                            </ResponsiveContainer>
-
-                                                                        ) : (
-
-                                                                            <div className="coding-empty-graph">
-
-                                                                                <div className="coding-empty-icon">
-
-                                                                                    <FiCode />
-
-                                                                                </div>
-
-                                                                                <h4>No Solved Problems Yet</h4>
-
-                                                                                <p>
-                                                                                    Your coding progress chart will populate automatically as you pass test cases in Coding Arena.
-                                                                                </p>
-
-                                                                                <button
-                                                                                    type="button"
-                                                                                    className="coding-empty-cta"
-                                                                                    onClick={() => navigate("/coding-arena")}
-                                                                                >
-                                                                                    Jump into Coding Arena <FiArrowRight />
-                                                                                </button>
-
-                                                                            </div>
-
-                                                                        )}
+                                                                        </ResponsiveContainer>
 
                                                                     </div>
 

@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../Components/Dashboard/Sidebar";
 import Topbar from "../Components/Dashboard/Topbar";
 import ErrorBoundary from "../Components/Common/ErrorBoundary";
+import AIHelpBot from "../Components/Support/AIHelpBot";
 import "../styles/dashboard.css";
 
 export default function AppLayout() {
@@ -22,10 +23,15 @@ export default function AppLayout() {
                 {/* MAIN CONTENT AREA */}
                 <main className={`dashboard-content ${isCodingArena ? "coding-arena-shell" : ""}`}>
                     <ErrorBoundary>
-                        <Outlet />
+                        <div key={location.pathname} className="app-page-transition">
+                            <Outlet />
+                        </div>
                     </ErrorBoundary>
                 </main>
             </div>
+
+            {/* AUTHENTICATED WORKSPACE AI HELP BOT */}
+            <AIHelpBot />
         </div>
     );
 }

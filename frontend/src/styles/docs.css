@@ -406,3 +406,60 @@ body.dark-theme .docs-mobile-toggle {
         padding: 16px 4px 40px;
     }
 }
+
+/* ==========================================================================
+   FAQ ACCORDION & LIST STYLES
+   ========================================================================== */
+
+.docs-faq-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.faq-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 22px;
+    transition: all 0.2s ease;
+}
+
+.faq-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.faq-item h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+    line-height: 1.45;
+}
+
+.faq-item p {
+    font-size: 0.9rem;
+    color: #475569;
+    line-height: 1.65;
+    margin: 0;
+}
+
+body.dark-theme .faq-item {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-theme .faq-item:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-theme .faq-item h3 {
+    color: #ffffff;
+}
+
+body.dark-theme .faq-item p {
+    color: #cbd5e1;
+}

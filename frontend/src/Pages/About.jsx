@@ -33,6 +33,11 @@ export default function About() {
             description: "With 5,050 curated coding problems, 1,200 SQL challenges, and 22,060 aptitude assessments, candidates practice the exact difficulty patterns demanded by Tier-1 product and IT companies."
         },
         {
+            icon: <FaBrain style={{ color: "#4f46e5", fontSize: "1.5rem" }} />,
+            title: "GitHub Intelligence & Career Roadmaps",
+            description: "Deep public repository analysis, deterministic 0–100 code scoring, and milestone-driven AI career roadmaps across 8 software specializations."
+        },
+        {
             icon: <FaShieldAlt style={{ color: "#4f46e5", fontSize: "1.5rem" }} />,
             title: "Privacy & Data Ownership",
             description: "Candidate resumes, code submissions, and interview audio recordings remain private. We do not sell candidate data or use proprietary user submissions for third-party model training."

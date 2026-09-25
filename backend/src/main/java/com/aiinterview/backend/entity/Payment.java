@@ -65,8 +65,8 @@ public class Payment {
     @Column(nullable = true, length = 30)
     private String refundStatus;
 
-    @Column(nullable = true)
-    private double refundAmount;
+    @Column(nullable = false)
+    private Double refundAmount = 0.0;
 
     @Column(nullable = true, length = 1000)
     private String refundReason;
@@ -116,10 +116,18 @@ public class Payment {
         if (paymentStatus == null || paymentStatus.isBlank()) {
             paymentStatus = "CREATED";
         }
+
+        if (refundAmount == null) {
+            refundAmount = 0.0;
+        }
     }
 
     @PreUpdate
     public void onUpdate() {
         updatedAt = LocalDateTime.now();
+
+        if (refundAmount == null) {
+            refundAmount = 0.0;
+        }
     }
 }

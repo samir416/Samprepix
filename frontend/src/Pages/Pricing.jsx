@@ -16,10 +16,14 @@ import {
   FaGlobe,
   FaTag,
   FaLock,
-  FaSpinner
+  FaSpinner,
+  FaTimes,
+  FaDownload
 } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import axios from "axios";
+import { API_BASE_URL } from "../config";
 import { createTestOrder } from "../services/paymentService";
 
 const loadCashfree = () =>
@@ -95,7 +99,13 @@ export default function Pricing() {
   });
 
   const [discountApplied, setDiscountApplied] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("invoices") === "true" || searchParams.get("viewInvoices") === "true") {
+      navigate("/billing-history");
+    }
+  }, [searchParams, navigate]);
   const [referralInput, setReferralInput] = useState("");
   const [referralMessage, setReferralMessage] = useState("");
   const [referralError, setReferralError] = useState(false);
@@ -104,11 +114,13 @@ export default function Pricing() {
   const [checkoutError, setCheckoutError] = useState("");
   const [showCheckoutError, setShowCheckoutError] = useState(false);
 
+
+
   useEffect(() => {
     updatePageSEO({
       title: "Pricing & Plans | Samprepix",
       description:
-        "Transparent pricing for candidates and university placement teams. Choose between Starter, Pro, and Elite with AI interview practice, coding arena, aptitude training, and resume analysis.",
+        "Transparent monthly pricing for candidates and university placement teams. Choose between Starter, Pro, and Elite with AI interview practice, coding arena, aptitude training, and resume analysis.",
       canonicalPath: "/pricing"
     });
 
@@ -138,7 +150,7 @@ export default function Pricing() {
         currency === "INR" ? "₹100 OFF" : "$1 OFF";
 
       setReferralMessage(
-        `Referral applied successfully. ${discountLabel} unlocked on Pro and Elite lifetime access.`
+        `Referral applied successfully. ${discountLabel} unlocked on Pro and Elite monthly access.`
       );
 
       trackEvent("referral_applied", {
@@ -176,16 +188,16 @@ export default function Pricing() {
         discounted: "₹299",
         offAmount: "₹100",
         offLabel: "₹100 OFF",
-        unit: "Lifetime",
-        period: "/ Lifetime"
+        unit: "Month",
+        period: "/ Month"
       },
       elite: {
         regular: "₹799",
         discounted: "₹699",
         offAmount: "₹100",
         offLabel: "₹100 OFF",
-        unit: "Lifetime",
-        period: "/ Lifetime"
+        unit: "Month",
+        period: "/ Month"
       }
     },
     USD: {
@@ -200,16 +212,16 @@ export default function Pricing() {
         discounted: "$8",
         offAmount: "$1",
         offLabel: "$1 OFF",
-        unit: "Lifetime",
-        period: "/ Lifetime"
+        unit: "Month",
+        period: "/ Month"
       },
       elite: {
         regular: "$19",
         discounted: "$18",
         offAmount: "$1",
         offLabel: "$1 OFF",
-        unit: "Lifetime",
-        period: "/ Lifetime"
+        unit: "Month",
+        period: "/ Month"
       }
     }
   };
@@ -335,136 +347,13 @@ export default function Pricing() {
     }
   };
 
-  if (showHistory) {
-    return (
-      <div className="pricing-page">
-        <Navbar />
-
-        <div
-          className="history-wrapper"
-          style={{
-            maxWidth: "860px",
-            margin: "40px auto",
-            padding: "0 20px"
-          }}
-        >
-          <button
-            className="back-btn"
-            onClick={() => setShowHistory(false)}
-            aria-label="Back to Pricing Plans"
-          >
-            <FaArrowLeft /> Back to Plans
-          </button>
-
-          <div
-            className="history-header"
-            style={{
-              marginBottom: "24px",
-              marginTop: "16px"
-            }}
-          >
-            <h1
-              style={{
-                fontSize: "2rem",
-                fontWeight: "700"
-              }}
-            >
-              Payment History & Invoices
-            </h1>
-
-            <p
-              style={{
-                color: "var(--text-muted, #64748b)",
-                fontSize: "0.95rem"
-              }}
-            >
-              Review your billing records, receipts, and
-              subscription invoices.
-            </p>
-          </div>
-
-          <div
-            className="history-table"
-            style={{
-              background: "var(--card-bg, #ffffff)",
-              border:
-                "1px solid var(--border-color, #e2e8f0)",
-              borderRadius: "16px",
-              overflow: "hidden"
-            }}
-          >
-            <div
-              className="history-row history-head"
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "1.5fr 1fr 1fr 1.2fr",
-                padding: "14px 20px",
-                fontWeight: "600",
-                borderBottom:
-                  "1px solid var(--border-color, #e2e8f0)"
-              }}
-            >
-              <span>Plan</span>
-              <span>Status</span>
-              <span>Amount</span>
-              <span>Date</span>
-            </div>
-
-            <div
-              style={{
-                textAlign: "center",
-                padding: "48px 24px"
-              }}
-            >
-              <FaHistory
-                style={{
-                  fontSize: "2.5rem",
-                  color:
-                    "var(--text-muted, #94a3b8)",
-                  marginBottom: "12px"
-                }}
-              />
-
-              <h3
-                style={{
-                  fontSize: "1.1rem",
-                  fontWeight: "600",
-                  marginBottom: "6px"
-                }}
-              >
-                Billing Records
-              </h3>
-
-              <p
-                style={{
-                  fontSize: "0.9rem",
-                  color:
-                    "var(--text-muted, #64748b)",
-                  maxWidth: "480px",
-                  margin: "auto"
-                }}
-              >
-                Your completed Cashfree payments and
-                invoices will appear here after the
-                billing history API is connected.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <Footer />
-      </div>
-    );
-  }
-
   return (
     <div className="pricing-page">
       <Navbar />
 
       <section className="pricing-hero">
         <span className="pricing-badge">
-          ✦ Transparent Plans for Ambitious Engineers
+          ✦ Transparent Monthly Plans
         </span>
 
         <h1>
@@ -479,90 +368,39 @@ export default function Pricing() {
         </p>
 
         <div
-          className="currency-toggle-container"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            marginTop: "24px",
-            padding: "4px",
-            background:
-              "rgba(99, 102, 241, 0.08)",
-            borderRadius: "999px",
-            border:
-              "1px solid rgba(99, 102, 241, 0.18)"
-          }}
+          className="currency-toggle-wrapper"
           role="radiogroup"
           aria-label="Currency Selector"
         >
-          <span
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: "600",
-              color: "#4f46e5",
-              padding: "0 10px"
-            }}
-          >
-            <FaGlobe
-              style={{
-                display: "inline",
-                marginRight: "4px"
-              }}
-            />
+          <span className="currency-toggle-label">
+            <FaGlobe style={{ display: "inline", marginRight: "6px" }} />
             Region:
           </span>
 
-          <button
-            type="button"
-            onClick={() => setCurrency("INR")}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "999px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "700",
-              fontSize: "0.85rem",
-              transition: "all 0.2s ease",
-              background:
-                currency === "INR"
-                  ? "#4f46e5"
-                  : "transparent",
-              color:
-                currency === "INR"
-                  ? "#ffffff"
-                  : "#64748b"
-            }}
-            aria-checked={currency === "INR"}
-            role="radio"
-          >
-            ₹ INR (India)
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCurrency("USD")}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "999px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "700",
-              fontSize: "0.85rem",
-              transition: "all 0.2s ease",
-              background:
-                currency === "USD"
-                  ? "#4f46e5"
-                  : "transparent",
-              color:
-                currency === "USD"
-                  ? "#ffffff"
-                  : "#64748b"
-            }}
-            aria-checked={currency === "USD"}
-            role="radio"
-          >
-            $ USD (International)
-          </button>
+          <div className="currency-segmented-track">
+            <div
+              className={`currency-sliding-pill ${currency === "USD" ? "slide-usd" : "slide-inr"}`}
+              aria-hidden="true"
+            />
+            <button
+              type="button"
+              className={`currency-option-btn ${currency === "INR" ? "active" : ""}`}
+              onClick={() => setCurrency("INR")}
+              aria-checked={currency === "INR"}
+              role="radio"
+            >
+              ₹ INR (India)
+            </button>
+            <button
+              type="button"
+              className={`currency-option-btn ${currency === "USD" ? "active" : ""}`}
+              onClick={() => setCurrency("USD")}
+              aria-checked={currency === "USD"}
+              role="radio"
+            >
+              $ USD (International)
+            </button>
+          </div>
         </div>
       </section>
 
@@ -676,6 +514,10 @@ export default function Pricing() {
 
             <div>
               <FaCheck /> Aptitude practice modules
+            </div>
+
+            <div>
+              <FaCheck /> Preview GitHub Analyzer & AI Roadmap
             </div>
           </div>
 
@@ -799,13 +641,21 @@ export default function Pricing() {
               <FaBolt /> 22,060 aptitude questions
               with detailed explanations
             </div>
+
+            <div>
+              <FaBolt /> Complete GitHub Profile Analyzer & Recruiter Audit
+            </div>
+
+            <div>
+              <FaBolt /> Personalized AI Career Roadmap & Progression
+            </div>
           </div>
 
           <button
             className="plan-btn pro-btn"
             onClick={() => handlePlanCheckout("PRO")}
             disabled={checkoutLoading}
-            aria-label="Get Pro Lifetime Plan"
+            aria-label="Get Pro Monthly Plan"
           >
             {checkoutLoading &&
             checkoutPlan === "PRO" ? (
@@ -898,9 +748,8 @@ export default function Pricing() {
           </h2>
 
           <p className="card-subtitle">
-            Maximum placement acceleration with lifetime
-            company-focused preparation and priority AI
-            evaluation.
+            Maximum placement acceleration with company-focused
+            preparation and priority AI evaluation.
           </p>
 
           <div className="plan-features">
@@ -933,13 +782,21 @@ export default function Pricing() {
               <FaCrown /> Peer comparison benchmark
               analytics
             </div>
+
+            <div>
+              <FaCrown /> Priority AI Roadmap PDF Export & Milestone Verification
+            </div>
+
+            <div>
+              <FaCrown /> Full GitHub README Generator & Recruiter Deep Dive
+            </div>
           </div>
 
           <button
             className="plan-btn elite-btn"
             onClick={() => handlePlanCheckout("ELITE")}
             disabled={checkoutLoading}
-            aria-label="Get Elite Lifetime Plan"
+            aria-label="Get Elite Monthly Plan"
           >
             {checkoutLoading &&
             checkoutPlan === "ELITE" ? (
@@ -976,7 +833,7 @@ export default function Pricing() {
             {currency === "INR"
               ? "₹100 OFF"
               : "$1 OFF"}{" "}
-            on Pro and Elite lifetime access.
+            on Pro and Elite monthly access.
           </p>
         </div>
 
@@ -1048,36 +905,13 @@ export default function Pricing() {
           <button
             type="button"
             className="history-open-btn"
-            onClick={() => setShowHistory(true)}
+            onClick={() => navigate("/billing-history")}
             aria-label="View Invoices and Payment History"
           >
             View Invoices
           </button>
         </div>
       </section>
-
-      <div
-        style={{
-          maxWidth: "860px",
-          margin: "0 auto 32px",
-          padding: "14px 18px",
-          borderRadius: "12px",
-          background: "rgba(99, 102, 241, 0.06)",
-          border:
-            "1px solid rgba(99, 102, 241, 0.14)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-          textAlign: "center",
-          color: "var(--text-muted, #64748b)",
-          fontSize: "0.82rem"
-        }}
-      >
-        <FaInfoCircle />
-        Secure checkout powered by Cashfree. Payment
-        credentials are handled by the payment gateway.
-      </div>
 
       <Footer />
 

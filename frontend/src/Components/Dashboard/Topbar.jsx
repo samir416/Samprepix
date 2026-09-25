@@ -12,10 +12,11 @@ import {
     Bell,
     User,
     ArrowLeft,
-    BookOpen
+    BookOpen,
+    Compass
 } from "lucide-react";
 
-import { FiShield, FiCreditCard } from "react-icons/fi";
+import { FiShield, FiCreditCard, FiGithub } from "react-icons/fi";
 
 import {
     useEffect,
@@ -28,6 +29,23 @@ import ProfileDropdown from "./ProfileDropdown";
 import SettingsModal from "./SettingsModal";
 import { useNavigate } from "react-router-dom";
 import { getUnreadNotificationCount } from "../../services/notificationService";
+import { getCapabilities } from "../../services/subscriptionService";
+
+const SEARCH_CATALOG = [
+    { title: "Two Sum", category: "Coding Problem", link: "/coding-arena?problem=two-sum" },
+    { title: "Reverse Linked List", category: "Coding Problem", link: "/coding-arena?problem=reverse-linked-list" },
+    { title: "Valid Parentheses", category: "Coding Problem", link: "/coding-arena?problem=valid-parentheses" },
+    { title: "Binary Search", category: "Coding Problem", link: "/coding-arena?problem=binary-search" },
+    { title: "Merge Two Sorted Lists", category: "Coding Problem", link: "/coding-arena?problem=merge-two-sorted-lists" },
+    { title: "Longest Substring Without Repeating Characters", category: "Coding Problem", link: "/coding-arena?problem=longest-substring" },
+    { title: "AI Mock Interview", category: "Practice", link: "/mock-interview" },
+    { title: "Resume Analyzer", category: "Career Tool", link: "/resume-analyzer" },
+    { title: "Aptitude Assessments", category: "Practice", link: "/aptitude" },
+    { title: "Performance & Analytics", category: "Metrics", link: "/performance" },
+    { title: "GitHub Profile Analyzer", category: "Intelligence", link: "/github-analyzer" },
+    { title: "Personalized AI Roadmap", category: "Curriculum", link: "/ai-roadmap" },
+    { title: "Subscription Plans", category: "Membership", link: "/pricing" }
+];
 
 export default function Topbar() {
 
@@ -44,6 +62,8 @@ export default function Topbar() {
         useState(false);
 
     const [globalSearch, setGlobalSearch] = useState("");
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [searchActiveIndex, setSearchActiveIndex] = useState(-1);
 
     const [unreadCount, setUnreadCount] = useState(0);
 
@@ -63,6 +83,7 @@ export default function Topbar() {
         useState(false);
 
     const [user, setUser] = useState(null);
+    const [premiumBadge, setPremiumBadge] = useState(null);
 
     /* =========================
        REFS
@@ -75,6 +96,39 @@ export default function Topbar() {
     const mobileMenuRef = useRef(null);
 
     const settingsRef = useRef(null);
+
+    const searchInputRef = useRef(null);
+
+    const searchContainerRef = useRef(null);
+
+    const filteredSuggestions = globalSearch.trim()
+        ? SEARCH_CATALOG.filter(
+              (item) =>
+                  item.title.toLowerCase().includes(globalSearch.toLowerCase().trim()) ||
+                  item.category.toLowerCase().includes(globalSearch.toLowerCase().trim())
+          ).slice(0, 6)
+        : [];
+
+    /* =========================
+       GLOBAL CTRL+F SHORTCUT
+    ========================= */
+
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === "f" || e.key === "F")) {
+                const activeTag = document.activeElement?.tagName?.toLowerCase();
+                const isContentEditable = document.activeElement?.isContentEditable;
+                if (activeTag !== "input" && activeTag !== "textarea" && !isContentEditable) {
+                    e.preventDefault();
+                    searchInputRef.current?.focus();
+                    searchInputRef.current?.select();
+                    setShowSuggestions(true);
+                }
+            }
+        };
+        window.addEventListener("keydown", handleGlobalKeyDown);
+        return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+    }, []);
 
     /* =========================
        LOAD THEME
@@ -96,14 +150,37 @@ export default function Topbar() {
 
     }, []);
 
-    const handleGlobalSearch = (e) => {
-        if (e.key === "Enter" && globalSearch.trim()) {
-            navigate(`/coding-arena?search=${encodeURIComponent(globalSearch.trim())}`);
-            setGlobalSearch(""); // clear after search
+    const handleSearchKeyDown = (e) => {
+        if (e.key === "ArrowDown") {
+            if (filteredSuggestions.length > 0) {
+                e.preventDefault();
+                setSearchActiveIndex((prev) => (prev + 1) % filteredSuggestions.length);
+            }
+        } else if (e.key === "ArrowUp") {
+            if (filteredSuggestions.length > 0) {
+                e.preventDefault();
+                setSearchActiveIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
+            }
+        } else if (e.key === "Escape") {
+            e.preventDefault();
+            setShowSuggestions(false);
+            setSearchActiveIndex(-1);
+            searchInputRef.current?.blur();
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            if (searchActiveIndex >= 0 && filteredSuggestions[searchActiveIndex]) {
+                navigate(filteredSuggestions[searchActiveIndex].link);
+                setGlobalSearch("");
+                setShowSuggestions(false);
+                setSearchActiveIndex(-1);
+            } else if (globalSearch.trim()) {
+                navigate(`/coding-arena?search=${encodeURIComponent(globalSearch.trim())}`);
+                setGlobalSearch("");
+                setShowSuggestions(false);
+                setSearchActiveIndex(-1);
+            }
         }
     };
-
-
 
     /* =========================
        OUTSIDE CLICK
@@ -112,6 +189,14 @@ export default function Topbar() {
     useEffect(() => {
 
         function handleClickOutside(e) {
+
+            if (
+                searchContainerRef.current &&
+                !searchContainerRef.current.contains(e.target)
+            ) {
+                setShowSuggestions(false);
+                setSearchActiveIndex(-1);
+            }
 
             if (
                 profileRef.current &&
@@ -217,6 +302,15 @@ export default function Topbar() {
                 } catch (e) {
                     console.error("Failed to fetch initial unread notification count:", e);
                 }
+
+                try {
+                    const cap = await getCapabilities();
+                    if (cap?.premiumBadge && cap.premiumBadge !== "STARTER") {
+                        setPremiumBadge(cap.premiumBadge);
+                    }
+                } catch (e) {
+                    // Silently ignore capability fetch errors
+                }
             }
         };
 
@@ -311,6 +405,16 @@ export default function Topbar() {
                             Performance
                         </a>
 
+                        <a href="/github-analyzer">
+                            <FiGithub size={18} />
+                            GitHub Analyzer
+                        </a>
+
+                        <a href="/ai-roadmap">
+                            <Compass size={18} />
+                            AI Roadmap
+                        </a>
+
                         <a href="/subscription">
                             <FiCreditCard size={18} />
                             Subscription
@@ -336,7 +440,7 @@ export default function Topbar() {
                         placeholder="Search problems, topics..."
                         value={globalSearch}
                         onChange={(e) => setGlobalSearch(e.target.value)}
-                        onKeyDown={handleGlobalSearch}
+                        onKeyDown={handleSearchKeyDown}
                     />
 
                 </div>
@@ -558,15 +662,47 @@ export default function Topbar() {
 
                 {/* SEARCH */}
 
-                <div className="topbar-left">
+                <div className="topbar-left" ref={searchContainerRef}>
 
                     <input
+                        ref={searchInputRef}
                         type="text"
-                        placeholder="Search problems, topics..."
+                        placeholder="Search problems, topics... (Ctrl+F)"
                         value={globalSearch}
-                        onChange={(e) => setGlobalSearch(e.target.value)}
-                        onKeyDown={handleGlobalSearch}
+                        onChange={(e) => {
+                            setGlobalSearch(e.target.value);
+                            setShowSuggestions(true);
+                            setSearchActiveIndex(-1);
+                        }}
+                        onFocus={() => setShowSuggestions(true)}
+                        onKeyDown={handleSearchKeyDown}
+                        aria-label="Search problems, topics, and pages"
                     />
+
+                    <span className="search-shortcut-badge">Ctrl+F</span>
+
+                    {showSuggestions && filteredSuggestions.length > 0 && (
+                        <div className="search-suggestions-dropdown" role="listbox">
+                            {filteredSuggestions.map((item, idx) => (
+                                <div
+                                    key={idx}
+                                    className={`search-suggestion-item ${searchActiveIndex === idx ? "active" : ""}`}
+                                    onClick={() => {
+                                        navigate(item.link);
+                                        setGlobalSearch("");
+                                        setShowSuggestions(false);
+                                        setSearchActiveIndex(-1);
+                                    }}
+                                    onMouseEnter={() => setSearchActiveIndex(idx)}
+                                    role="option"
+                                    aria-selected={searchActiveIndex === idx}
+                                >
+                                    <span className="search-suggestion-title">{item.title}</span>
+                                    <span className="search-suggestion-category">{item.category}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                 </div>
 
@@ -679,6 +815,26 @@ export default function Topbar() {
                                         ||
                                         "User"
                                     }
+
+                                    {premiumBadge && (
+                                        <span
+                                            style={{
+                                                marginLeft: "6px",
+                                                padding: "2px 7px",
+                                                borderRadius: "999px",
+                                                fontSize: "10px",
+                                                fontWeight: "800",
+                                                letterSpacing: "0.5px",
+                                                background: premiumBadge === "ELITE" ? "linear-gradient(135deg, #f59e0b, #d97706)" : "linear-gradient(135deg, #6366f1, #4f46e5)",
+                                                color: "#ffffff",
+                                                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                                                display: "inline-flex",
+                                                alignItems: "center"
+                                            }}
+                                        >
+                                            {premiumBadge}
+                                        </span>
+                                    )}
 
                                 </h4>
 

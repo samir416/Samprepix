@@ -103,10 +103,19 @@ export default function MockInterview() {
                 .map((skill) => skill.trim())
                 .filter(Boolean)
             : [];
+    const isFromRoadmap = Boolean(location.state?.fromRoadmap);
+    const roadmapSkills = Array.isArray(location.state?.skills) ? location.state.skills : [];
+    const roadmapTopic = location.state?.roadmapTopic || "";
+    const roadmapTrack = location.state?.trackTitle || "";
+
+    const effectiveSkills = technicalSkills.length > 0
+        ? technicalSkills
+        : (isFromRoadmap && roadmapSkills.length > 0 ? roadmapSkills : (roadmapTopic ? [roadmapTopic] : []));
+
+    const effectiveRole = currentUser?.targetRole?.trim() || (isFromRoadmap ? (roadmapTrack || roadmapTopic || "Software Engineer") : "");
 
     const profileCompleted =
-        Boolean(currentUser?.targetRole?.trim()) &&
-        technicalSkills.length > 0;
+        (Boolean(effectiveRole) && effectiveSkills.length > 0) || isFromRoadmap;
 
     useEffect(() => {
 
@@ -685,7 +694,7 @@ export default function MockInterview() {
             toast.warning(
                 "Add at least one technical skill to unlock AI interviews.",
                 {
-                    autoClose: 100
+                    autoClose: 3000
                 }
             );
 
@@ -719,13 +728,13 @@ export default function MockInterview() {
                         "TECHNICAL",
 
                     targetRole:
-                        currentUser.targetRole,
+                        effectiveRole || currentUser?.targetRole || "Software Engineer",
 
                     experienceLevel:
                         selectedDifficulty,
 
                     skills:
-                        technicalSkills
+                        effectiveSkills.length > 0 ? effectiveSkills : ["General Software Engineering"]
 
                 });
 

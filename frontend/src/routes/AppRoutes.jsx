@@ -34,6 +34,9 @@ import AppLayout from "../Layout/AppLayout";
 import Admin from "../Pages/Admin";
 import SubscriptionPage from "../Pages/SubscriptionPage";
 import PaymentResult from "../Pages/PaymentResult";
+import GithubAnalyzer from "../Pages/GithubAnalyzer";
+import AIRoadmap from "../Pages/AIRoadmap";
+import BillingHistory from "../Pages/BillingHistory";
 
 function AdminRoute({ children }) {
     const storedUser = localStorage.getItem("user");
@@ -73,6 +76,7 @@ export default function AppRoutes() {
             <Route path="/accessibility" element={<Accessibility />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/legal" element={<Legal />} />
+            <Route path="/billing-history" element={<BillingHistory />} />
 
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -143,8 +147,23 @@ export default function AppRoutes() {
                 />
 
                 <Route
+                    path="/billing-history"
+                    element={<BillingHistory />}
+                />
+
+                <Route
                     path="/billing"
-                    element={<SubscriptionPage />}
+                    element={<Navigate to="/billing-history" replace />}
+                />
+
+                <Route
+                    path="/github-analyzer"
+                    element={<GithubAnalyzer />}
+                />
+
+                <Route
+                    path="/ai-roadmap"
+                    element={<AIRoadmap />}
                 />
 
                 <Route
@@ -154,7 +173,7 @@ export default function AppRoutes() {
 
                 <Route
                     path="/subscription"
-                    element={<SubscriptionPage />}
+                    element={<Navigate to="/pricing" replace />}
                 />
 
                 <Route

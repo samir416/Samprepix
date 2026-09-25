@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.aiinterview.backend.entity.JourneyType;
 import java.time.LocalDate;
 import java.util.List;
+import com.aiinterview.backend.service.coding.GithubUrlValidator;
 
 @Service
 public class UserProfileService {
@@ -150,8 +151,11 @@ public class UserProfileService {
                 profile.setGender(
                                 request.getGender());
 
-                profile.setGithubUrl(
-                                request.getGithubUrl());
+                if (request.getGithubUrl() != null && !request.getGithubUrl().trim().isEmpty()) {
+                    profile.setGithubUrl(GithubUrlValidator.validateProfileOrRepoUrl(request.getGithubUrl()));
+                } else {
+                    profile.setGithubUrl(null);
+                }
 
                 profile.setLinkedinUrl(
                                 request.getLinkedinUrl());

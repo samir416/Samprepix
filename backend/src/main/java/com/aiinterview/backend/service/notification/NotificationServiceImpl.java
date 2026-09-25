@@ -20,19 +20,28 @@ public class NotificationServiceImpl implements NotificationService {
     private final ResumeAnalysisRepository resumeAnalysisRepository;
     private final AptitudeAttemptRepository aptitudeAttemptRepository;
     private final UserRepository userRepository;
+    private final GithubAnalysisResultRepository githubAnalysisResultRepository;
+    private final UserRoadmapRepository userRoadmapRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
     public NotificationServiceImpl(
             CodingProblemCompletionRepository completionRepository,
             InterviewSessionRepository interviewSessionRepository,
             ResumeAnalysisRepository resumeAnalysisRepository,
             AptitudeAttemptRepository aptitudeAttemptRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            GithubAnalysisResultRepository githubAnalysisResultRepository,
+            UserRoadmapRepository userRoadmapRepository,
+            SubscriptionRepository subscriptionRepository
     ) {
         this.completionRepository = completionRepository;
         this.interviewSessionRepository = interviewSessionRepository;
         this.resumeAnalysisRepository = resumeAnalysisRepository;
         this.aptitudeAttemptRepository = aptitudeAttemptRepository;
         this.userRepository = userRepository;
+        this.githubAnalysisResultRepository = githubAnalysisResultRepository;
+        this.userRoadmapRepository = userRoadmapRepository;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     @Override
@@ -171,7 +180,83 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
 
-        // 5. Welcome notification if no events exist yet and user hasn't cleared notifications
+        // 5. GitHub Analysis notifications
+        if (githubAnalysisResultRepository != null) {
+            List<GithubAnalysisResult> ghResults = githubAnalysisResultRepository.findByUserOrderByAnalyzedAtDesc(user);
+            for (GithubAnalysisResult g : ghResults) {
+                LocalDateTime ts = g.getAnalyzedAt() != null ? g.getAnalyzedAt() : now;
+                String id = "github-" + g.getId();
+
+                if ((dismissedAllBefore != null && !ts.isAfter(dismissedAllBefore)) || dismissedIds.contains(id)) {
+                    continue;
+                }
+
+                boolean unread = lastRead == null || ts.isAfter(lastRead);
+                list.add(NotificationDto.builder()
+                        .id(id)
+                        .type("GITHUB")
+                        .title("GitHub Profile Score: " + g.getOverallScore() + "/100")
+                        .message("Audit completed for @" + g.getGithubUsername() + ". Review actionable recruiter recommendations.")
+                        .timestamp(formatRelativeTime(ts, now))
+                        .createdAt(ts)
+                        .unread(unread)
+                        .targetUrl("/github-analyzer")
+                        .build());
+            }
+        }
+
+        // 6. AI Roadmap notifications
+        if (userRoadmapRepository != null) {
+            List<UserRoadmap> roadmaps = userRoadmapRepository.findByUserOrderByUpdatedAtDesc(user);
+            for (UserRoadmap r : roadmaps) {
+                LocalDateTime ts = r.getUpdatedAt() != null ? r.getUpdatedAt() : now;
+                String id = "roadmap-" + r.getId();
+
+                if ((dismissedAllBefore != null && !ts.isAfter(dismissedAllBefore)) || dismissedIds.contains(id)) {
+                    continue;
+                }
+
+                boolean unread = lastRead == null || ts.isAfter(lastRead);
+                list.add(NotificationDto.builder()
+                        .id(id)
+                        .type("ROADMAP")
+                        .title("AI Roadmap Active: " + r.getTrackTitle())
+                        .message("Progression tracked: " + r.getCompletedMilestonesCount() + " of " + r.getTotalMilestones() + " milestones (" + r.getXpEarned() + " XP).")
+                        .timestamp(formatRelativeTime(ts, now))
+                        .createdAt(ts)
+                        .unread(unread)
+                        .targetUrl("/ai-roadmap")
+                        .build());
+            }
+        }
+
+        // 7. Active Subscription notification
+        if (subscriptionRepository != null) {
+            List<Subscription> subs = subscriptionRepository.findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE");
+            for (Subscription s : subs) {
+                LocalDateTime ts = s.getSubscribedAt() != null ? s.getSubscribedAt() : now;
+                String id = "sub-" + s.getId();
+
+                if ((dismissedAllBefore != null && !ts.isAfter(dismissedAllBefore)) || dismissedIds.contains(id)) {
+                    continue;
+                }
+
+                boolean unread = lastRead == null || ts.isAfter(lastRead);
+                String planName = s.getPlan() != null ? s.getPlan().getName() : "Pro";
+                list.add(NotificationDto.builder()
+                        .id(id)
+                        .type("SUBSCRIPTION")
+                        .title("Active Membership: " + planName + " Plan")
+                        .message("Your " + planName + " access is active with full platform features unlocked.")
+                        .timestamp(formatRelativeTime(ts, now))
+                        .createdAt(ts)
+                        .unread(unread)
+                        .targetUrl("/billing")
+                        .build());
+            }
+        }
+
+        // 8. Welcome notification if no events exist yet and user hasn't cleared notifications
         if (list.isEmpty() && !dismissedIds.contains("sys-welcome") && dismissedAllBefore == null) {
             boolean unread = lastRead == null;
             list.add(NotificationDto.builder()

@@ -18,6 +18,7 @@ import {
 } from "react-icons/fi";
 import { API_BASE_URL } from "../config";
 import { verifyPayment } from "../services/paymentService";
+import { getActiveSubscription } from "../services/subscriptionService";
 import Logo from "../assets/Logo.png";
 
 export default function PaymentResult() {
@@ -32,6 +33,7 @@ export default function PaymentResult() {
     const [downloading, setDownloading] = useState(false);
     const [showCongratulations, setShowCongratulations] = useState(false);
     const [congratulationStep, setCongratulationStep] = useState(1);
+    const [activePlan, setActivePlan] = useState("PRO");
 
     const orderId = useMemo(
         () =>
@@ -141,6 +143,15 @@ export default function PaymentResult() {
             "Your payment has been securely verified and your premium access is active."
         );
 
+        try {
+            const sub = await getActiveSubscription();
+            if (sub?.plan?.name) {
+                setActivePlan(sub.plan.name.toUpperCase());
+            }
+        } catch {
+            // keep default plan
+        }
+
         let invoiceData = null;
 
         try {
@@ -236,7 +247,7 @@ export default function PaymentResult() {
                 if (verificationStatus === "pending") {
                     setState("verification-pending");
                     setMessage(
-                        "Your payment is being confirmed by Cashfree. We are checking the final payment status securely."
+                        "Your payment is being confirmed. We are checking the final payment status securely."
                     );
 
                     attempts += 1;
@@ -613,6 +624,46 @@ export default function PaymentResult() {
                         animation: paymentModalIn .35s ease;
                     }
 
+                    .payment-confetti-container {
+                        position: relative;
+                        width: 100%;
+                        display: flex;
+                        justify-content: center;
+                        margin-bottom: 18px;
+                    }
+
+                    .payment-unlock-badge {
+                        position: relative;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 8px 18px;
+                        border-radius: 9999px;
+                        font-size: 13px;
+                        font-weight: 800;
+                        letter-spacing: .5px;
+                        animation: badgePulse 2s infinite ease-in-out;
+                    }
+
+                    .payment-unlock-badge.pro {
+                        background: linear-gradient(135deg, rgba(79,70,229,.22), rgba(99,102,241,.18));
+                        border: 1.5px solid rgba(129,140,248,.6);
+                        color: #c7d2fe;
+                        box-shadow: 0 0 24px rgba(99,102,241,.4);
+                    }
+
+                    .payment-unlock-badge.elite {
+                        background: linear-gradient(135deg, rgba(217,70,239,.22), rgba(168,85,247,.18));
+                        border: 1.5px solid rgba(192,132,252,.6);
+                        color: #f3e8ff;
+                        box-shadow: 0 0 24px rgba(168,85,247,.4);
+                    }
+
+                    @keyframes badgePulse {
+                        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(99,102,241,.4)); }
+                        50% { transform: scale(1.04); filter: drop-shadow(0 0 18px rgba(168,85,247,.6)); }
+                    }
+
                     .payment-modal-icon {
                         width: 78px;
                         height: 78px;
@@ -981,7 +1032,7 @@ export default function PaymentResult() {
                                 marginRight: "5px"
                             }}
                         />
-                        Secure payment verification by Samprepix and Cashfree.
+                        Secure 256-bit encrypted payment verification by Samprepix.
                     </div>
                 </div>
             </div>
@@ -999,32 +1050,36 @@ export default function PaymentResult() {
 
                         {congratulationStep === 1 ? (
                             <>
+                                <div className="payment-confetti-container">
+                                    <div className={`payment-unlock-badge ${activePlan === "ELITE" ? "elite" : "pro"}`}>
+                                        <span>{activePlan === "ELITE" ? "⚡ ELITE MEMBER UNLOCKED" : "⭐ PRO MEMBER UNLOCKED"}</span>
+                                    </div>
+                                </div>
+
                                 <div className="payment-modal-kicker">
-                                    ACCESS UNLOCKED
+                                    MEMBERSHIP ACTIVATED
                                 </div>
 
                                 <h2 className="payment-modal-title">
-                                    Congratulations! 🎉
+                                    Welcome to {activePlan}! 🎉
                                 </h2>
 
                                 <p className="payment-modal-text">
-                                    Your payment has been verified successfully.
-                                    Your Samprepix premium access is now active.
+                                    Your payment was verified securely. Your account now has unrestricted access to premium platform intelligence, unlimited tests, and personalized analytics.
                                 </p>
                             </>
                         ) : (
                             <>
                                 <div className="payment-modal-kicker">
-                                    YOUR PREMIUM ACCESS
+                                    INCLUDED WITH YOUR {activePlan} PLAN
                                 </div>
 
                                 <h2 className="payment-modal-title">
-                                    You're Ready to Go
+                                    Everything You Need to Get Placed
                                 </h2>
 
                                 <p className="payment-modal-text">
-                                    Your account now has access to the premium
-                                    capabilities included with your plan.
+                                    All advanced modules are unlocked on your account with authoritative server-side entitlement.
                                 </p>
 
                                 <div className="payment-benefits">
@@ -1033,9 +1088,9 @@ export default function PaymentResult() {
                                             <FiCode size={17} />
                                         </div>
                                         <div>
-                                            <strong>Coding Practice</strong>
+                                            <strong>GitHub Profile Analyzer</strong>
                                             <span>
-                                                Premium coding preparation access
+                                                0–100 scoring, tailored README generator & recruiter view
                                             </span>
                                         </div>
                                     </div>
@@ -1045,9 +1100,9 @@ export default function PaymentResult() {
                                             <FiZap size={17} />
                                         </div>
                                         <div>
-                                            <strong>AI Preparation</strong>
+                                            <strong>AI Personalized Roadmap</strong>
                                             <span>
-                                                Enhanced interview preparation tools
+                                                8 curated tracks, progressive milestones & PDF exports
                                             </span>
                                         </div>
                                     </div>
@@ -1057,9 +1112,9 @@ export default function PaymentResult() {
                                             <FiBarChart2 size={17} />
                                         </div>
                                         <div>
-                                            <strong>Performance Insights</strong>
+                                            <strong>Coding Arena & Piston Sandboxes</strong>
                                             <span>
-                                                Advanced progress and performance tracking
+                                                5,050+ DSA problems, multi-tiered hints & GitHub auto-sync
                                             </span>
                                         </div>
                                     </div>
@@ -1069,9 +1124,9 @@ export default function PaymentResult() {
                                             <FiLock size={17} />
                                         </div>
                                         <div>
-                                            <strong>Premium Features</strong>
+                                            <strong>AI Voice Mock Interviews & ATS Resume</strong>
                                             <span>
-                                                Access controlled securely by your account plan
+                                                Priority AI evaluation, tone feedback & keyword auditing
                                             </span>
                                         </div>
                                     </div>

@@ -143,7 +143,10 @@ public class SecurityConfig {
                                 "/api/feedback/approve",
                                 "/api/feedback/reject",
                                 "/api/aptitude/**",
-                                "/api/payment/webhook"
+                                "/api/payment/webhook",
+                                "/api/support/**",
+                                "/api/ai-roadmap/**",
+                                "/api/github-analyzer/**"
                         )
                         .permitAll()
 

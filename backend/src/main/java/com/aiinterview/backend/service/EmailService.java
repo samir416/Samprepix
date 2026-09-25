@@ -25,4 +25,14 @@ public interface EmailService {
             String subject,
             String body
     );
+
+    void sendProblemReportEmail(
+            String to,
+            String reporterEmail,
+            String username,
+            String feature,
+            String description,
+            String actionAttempted,
+            String pageUrl
+    );
 }

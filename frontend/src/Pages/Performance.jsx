@@ -189,6 +189,49 @@ export default function Performance() {
         </div>
       )}
 
+      {/* COMPACT REAL-DATA PERFORMANCE INSIGHT SECTION */}
+      <div className="performance-insight-summary glass-card">
+        <div className="insight-summary-header">
+          <div className="insight-summary-title">
+            <MdOutlineInsights className="insight-summary-icon" />
+            <h3>Performance Insight</h3>
+          </div>
+          <span className="insight-summary-badge">Live Evaluation</span>
+        </div>
+        <div className="insight-summary-grid">
+          <div className="insight-summary-item">
+            <span className="insight-item-label">Coding</span>
+            <span className={`insight-item-val ${problemsSolved > 0 ? "val-active" : "val-empty"}`}>
+              {problemsSolved > 0 ? `↑ Improving (${problemsSolved} solved)` : "Not enough data"}
+            </span>
+          </div>
+          <div className="insight-summary-item">
+            <span className="insight-item-label">Mock Interview</span>
+            <span className={`insight-item-val ${hasInterviewData ? "val-active" : "val-empty"}`}>
+              {hasInterviewData ? `→ Stable (${avgInterviewScore}% avg)` : "Not enough data"}
+            </span>
+          </div>
+          <div className="insight-summary-item">
+            <span className="insight-item-label">Resume</span>
+            <span className={`insight-item-val ${hasResumeData ? "val-active" : "val-empty"}`}>
+              {hasResumeData ? `✓ Completed (${latestResumeScore}% ATS)` : "Not enough data"}
+            </span>
+          </div>
+          <div className="insight-summary-item insight-rec-item">
+            <span className="insight-item-label">Next Recommendation</span>
+            <span className="insight-item-val val-rec">
+              {problemsSolved === 0
+                ? "Not enough data — Solve your first problem in Coding Arena."
+                : !hasInterviewData
+                ? "Practice an AI mock interview to establish communication metrics."
+                : !hasResumeData
+                ? "Upload your resume in Resume Analyzer to score ATS match."
+                : "Maintain daily coding streak and target Hard algorithmic challenges."}
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* TOP STATS GRID */}
       <div className="performance-top-grid">
         {topStats.map((item, index) => (

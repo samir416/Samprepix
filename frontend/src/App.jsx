@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
 import AppLoader from "./Components/Common/AppLoader";
 import ErrorBoundary from "./Components/Common/ErrorBoundary";
+import ReportProblemModal from "./Components/Support/ReportProblemModal";
 import { initGA, trackPageView } from "./utils/analytics";
 import { updatePageSEO } from "./utils/seo";
 import "./styles/mobile.css";
@@ -10,6 +11,18 @@ import "./styles/mobile.css";
 function App() {
     const location = useLocation();
     const [loading, setLoading] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportModalData, setReportModalData] = useState({});
+
+    // Listen for global open-report-problem events
+    useEffect(() => {
+        const handleOpenReport = (e) => {
+            setReportModalData(e.detail || {});
+            setIsReportModalOpen(true);
+        };
+        window.addEventListener("open-report-problem", handleOpenReport);
+        return () => window.removeEventListener("open-report-problem", handleOpenReport);
+    }, []);
 
     // Initialize Analytics
     useEffect(() => {
@@ -97,7 +110,13 @@ function App() {
             document.body.classList.remove("reduce-motion");
         }
 
+        // Enable smooth theme transitions after initial hydration without load flicker
+        const transitionTimer = setTimeout(() => {
+            document.body.classList.add("theme-transition-ready");
+        }, 50);
+
         return () => {
+            clearTimeout(transitionTimer);
             window.removeEventListener("storage", applyTheme);
             window.removeEventListener("themeChanged", applyTheme);
         };
@@ -115,8 +134,12 @@ function App() {
                 <AppRoutes />
             </ErrorBoundary>
 
+            <ReportProblemModal
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                initialData={reportModalData}
+            />
         </>
-
     );
 
 }

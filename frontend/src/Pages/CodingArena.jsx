@@ -1,6 +1,7 @@
 import "../styles/codingarena.css";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import Editor from "@monaco-editor/react";
 
@@ -44,6 +45,15 @@ import { getGitHubRepository } from "../services/profileService";
 import audioService from "../services/audioService";
 
 export default function CodingArena() {
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const isFromRoadmap = Boolean(location.state?.fromRoadmap);
+    const roadmapTopic = location.state?.roadmapTopic || "";
+    const roadmapMilestoneId = location.state?.milestoneId || "";
+    const roadmapSkills = Array.isArray(location.state?.skills) ? location.state.skills : [];
+    const roadmapTrack = location.state?.trackTitle || "";
+
     const [language, setLanguage] = useState("");
     const [searchLanguage, setSearchLanguage] = useState("");
     const [showLanguages, setShowLanguages] = useState(false);
@@ -1091,6 +1101,15 @@ export default function CodingArena() {
 
             if (Array.isArray(tagsResponse?.data)) {
                 setAvailableTopics(tagsResponse.data);
+                if (isFromRoadmap) {
+                    const allKeywords = [roadmapTopic, ...roadmapSkills].filter(Boolean).map(s => s.toLowerCase());
+                    const matchedTag = tagsResponse.data.find(tag =>
+                        allKeywords.some(k => k.includes(tag.toLowerCase()) || tag.toLowerCase().includes(k))
+                    );
+                    if (matchedTag) {
+                        setTopicFilter(matchedTag);
+                    }
+                }
             }
 
             let loadedLanguages = registeredLanguages;
@@ -1099,11 +1118,34 @@ export default function CodingArena() {
                 setRegisteredLanguages(loadedLanguages);
             }
 
-            const backendProblems = Array.isArray(
+            let backendProblems = Array.isArray(
                 problemsResponse.data?.content
             )
-                ? problemsResponse.data.content
+                ? [...problemsResponse.data.content]
                 : [];
+
+            if (isFromRoadmap && (roadmapTopic || roadmapSkills.length > 0)) {
+                const keywords = [
+                    roadmapTopic.toLowerCase(),
+                    ...roadmapSkills.map(s => s.toLowerCase())
+                ].filter(Boolean);
+
+                backendProblems.sort((a, b) => {
+                    const aMatches = keywords.some(k =>
+                        a.title?.toLowerCase().includes(k) ||
+                        a.description?.toLowerCase().includes(k) ||
+                        (Array.isArray(a.tags) && a.tags.some(t => t.toLowerCase().includes(k)))
+                    );
+                    const bMatches = keywords.some(k =>
+                        b.title?.toLowerCase().includes(k) ||
+                        b.description?.toLowerCase().includes(k) ||
+                        (Array.isArray(b.tags) && b.tags.some(t => t.toLowerCase().includes(k)))
+                    );
+                    if (aMatches && !bMatches) return -1;
+                    if (!aMatches && bMatches) return 1;
+                    return 0;
+                });
+            }
 
             const backendProgress =
                 progressResponse.data || null;
@@ -2412,6 +2454,24 @@ export default function CodingArena() {
                         )}
                     </div>
                 )}
+
+                {isFromRoadmap && passed && (
+                    <div className="coding-roadmap-complete-card">
+                        <div className="coding-roadmap-complete-left">
+                            <span className="complete-badge">✓ Topic Milestone Practice Passed</span>
+                            <p className="complete-sub">
+                                {roadmapTopic ? `Great job! You've verified skills for: ${roadmapTopic}` : "Topic verified in Coding Arena!"}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            className="coding-roadmap-next-step-btn"
+                            onClick={() => navigate("/ai-roadmap")}
+                        >
+                            Next Roadmap Step <FiArrowRight size={14} />
+                        </button>
+                    </div>
+                )}
             </div>
         );
     };
@@ -2421,6 +2481,23 @@ export default function CodingArena() {
 
     return (
         <section className="coding-page">
+            {isFromRoadmap && (
+                <div className="coding-roadmap-bar">
+                    <div className="coding-roadmap-info">
+                        <span className="coding-roadmap-badge">AI Roadmap Curriculum</span>
+                        <span className="coding-roadmap-title">
+                            {roadmapTrack ? `${roadmapTrack} › ` : ""}{roadmapTopic}
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        className="coding-roadmap-back-btn"
+                        onClick={() => navigate("/ai-roadmap")}
+                    >
+                        <FiArrowLeft size={13} /> Return to Roadmap
+                    </button>
+                </div>
+            )}
             <div className="coding-topbar">
                 <div
                     className="problem-head"

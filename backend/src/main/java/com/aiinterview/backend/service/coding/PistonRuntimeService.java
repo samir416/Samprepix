@@ -1,5 +1,6 @@
 package com.aiinterview.backend.service.coding;
 
+import com.aiinterview.backend.config.CentralLanguageRegistry;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,10 @@ public class PistonRuntimeService {
     @Value("${app.piston.url}")
     private String pistonExecuteUrl;
 
+    private volatile List<PistonRuntime> cachedRuntimes = null;
+    private volatile long lastCacheTime = 0L;
+    private static final long CACHE_TTL_MS = 5 * 60 * 1000L;
+
     public PistonRuntimeService(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper
@@ -43,6 +48,10 @@ public class PistonRuntimeService {
     }
 
     public List<PistonRuntime> getRuntimes() {
+        long now = System.currentTimeMillis();
+        if (cachedRuntimes != null && (now - lastCacheTime < CACHE_TTL_MS)) {
+            return cachedRuntimes;
+        }
 
         String baseUrl =
                 getBaseUrl();
@@ -63,12 +72,16 @@ public class PistonRuntimeService {
                                     REQUEST_TIMEOUT
                             );
         } catch (Exception exception) {
-            logger.error("Unable to retrieve Piston runtimes from {}", baseUrl, exception);
-            throw new IllegalStateException(
-                    "Unable to retrieve Piston runtimes. Verify that Piston is running at " +
-                            baseUrl + ".",
-                    exception
-            );
+            logger.warn("Unable to retrieve live Piston runtimes from {} ({}). Using language registry fallback.", baseUrl, exception.getMessage());
+            if (cachedRuntimes != null && !cachedRuntimes.isEmpty()) {
+                return cachedRuntimes;
+            }
+            List<PistonRuntime> fallbackList = CentralLanguageRegistry.getProgrammingLanguages().stream()
+                    .map(spec -> new PistonRuntime(spec.runtimeLanguage(), spec.runtimeVersion(), List.of(spec.key())))
+                    .toList();
+            this.cachedRuntimes = fallbackList;
+            this.lastCacheTime = now;
+            return fallbackList;
         }
 
         if (
@@ -150,9 +163,10 @@ public class PistonRuntimeService {
                 );
             }
 
-            return new ArrayList<>(
-                    uniqueRuntimes.values()
-            );
+            List<PistonRuntime> runtimes = new ArrayList<>(uniqueRuntimes.values());
+            this.cachedRuntimes = runtimes;
+            this.lastCacheTime = now;
+            return runtimes;
 
         } catch (Exception exception) {
 
@@ -277,6 +291,11 @@ public class PistonRuntimeService {
             ) {
                 return runtime;
             }
+        }
+
+        CentralLanguageRegistry.LanguageSpec spec = CentralLanguageRegistry.get(language);
+        if (spec != null) {
+            return new PistonRuntime(spec.runtimeLanguage(), spec.runtimeVersion(), List.of(spec.key()));
         }
 
         throw new IllegalArgumentException(

@@ -929,6 +929,24 @@ export default function SubscriptionPage() {
                                                 </li>
                                             )}
 
+                                            {plan.name !== "STARTER" ? (
+                                                <>
+                                                    <li>
+                                                        <FaCheck />
+                                                        {" "}Complete GitHub Analyzer & README
+                                                    </li>
+                                                    <li>
+                                                        <FaCheck />
+                                                        {" "}AI Roadmap & Progression Tracking
+                                                    </li>
+                                                </>
+                                            ) : (
+                                                <li>
+                                                    <FaCheck />
+                                                    {" "}Preview GitHub Analyzer & AI Roadmap
+                                                </li>
+                                            )}
+
                                         </ul>
 
                                         <button
@@ -971,22 +989,12 @@ export default function SubscriptionPage() {
                 )}
 
                 <div className="pricing-note">
-
                     <p>
-                        Test Mode pricing:
-                        Pro ₹1, Elite ₹2
-                        (Production: Pro ₹399, Elite ₹799)
+                        Test Mode pricing: Pro ₹1, Elite ₹2 (Production: Pro ₹399, Elite ₹799)
                     </p>
-
                     <p>
-                        All payments processed securely
-                        via Cashfree Test Mode.
+                        All transactions are processed over encrypted 256-bit SSL connections.
                     </p>
-
-                    <p>
-                        Cashfree Sandbox payment testing is enabled.
-                    </p>
-
                 </div>
 
             </div>

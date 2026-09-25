@@ -45,6 +45,7 @@ import { getCurrentUser } from "../services/authService";
 import "../styles/profile.css";
 import ConfirmationModal from "../Components/ConfirmationModal";
 import ImageCropModal from "../Components/Common/ImageCropModal";
+import { getActiveSubscription } from "../services/subscriptionService";
 
 export default function Profile() {
 
@@ -54,6 +55,7 @@ export default function Profile() {
     const [resumeHistory, setResumeHistory] = useState([]);
     const [aptitudeAttempts, setAptitudeAttempts] = useState([]);
     const [showAchievementsModal, setShowAchievementsModal] = useState(false);
+    const [membershipInfo, setMembershipInfo] = useState(null);
 
     const [githubRepository, setGithubRepository] = useState({
         connected: false,
@@ -732,6 +734,11 @@ export default function Profile() {
         loadCodingStats();
         loadResume();
         loadAptitude();
+        getActiveSubscription().then(sub => {
+            if (sub && sub.active && sub.effectivePlan !== "STARTER") {
+                setMembershipInfo(sub);
+            }
+        }).catch(() => {});
 
         return () => {
             isMounted = false;
@@ -2211,10 +2218,9 @@ export default function Profile() {
 
                                         <img
                                             src={
-                                                (user.profilePicture.startsWith("http")
+                                                user.profilePicture.startsWith("http")
                                                     ? user.profilePicture
-                                                    : `${API_BASE_URL}${user.profilePicture}`) +
-                                                `?t=${Date.now()}`
+                                                    : `${API_BASE_URL}${user.profilePicture}`
                                             }
                                             alt="Profile"
                                             className="profile-page-avatar-large"
@@ -2279,6 +2285,64 @@ export default function Profile() {
                             {formData.name || "Your Name"}
 
                         </h2>
+
+                        <div className="profile-hero-badges-row">
+                            {(() => {
+                                const currentPlan = (membershipInfo?.effectivePlan || user?.plan || "FREE").toUpperCase();
+                                if (currentPlan === "PRO" || currentPlan === "ELITE") {
+                                    return (
+                                        <span
+                                            style={{
+                                                padding: "4px 12px",
+                                                borderRadius: "999px",
+                                                fontSize: "11px",
+                                                fontWeight: "800",
+                                                letterSpacing: "0.6px",
+                                                background: currentPlan === "ELITE"
+                                                    ? "linear-gradient(135deg, #f59e0b, #d97706)"
+                                                    : "linear-gradient(135deg, #6366f1, #4f46e5)",
+                                                color: "#ffffff",
+                                                boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                                                textTransform: "uppercase",
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                gap: "5px"
+                                            }}
+                                        >
+                                            <FiZap size={11} /> {currentPlan} MEMBER
+                                        </span>
+                                    );
+                                }
+                                return null;
+                            })()}
+
+                            {(user?.role === "ADMIN" || user?.role === "ROLE_ADMIN") && (
+                                <span
+                                    style={{
+                                        padding: "4px 12px",
+                                        borderRadius: "999px",
+                                        fontSize: "11px",
+                                        fontWeight: "800",
+                                        letterSpacing: "0.6px",
+                                        background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                                        color: "#ffffff",
+                                        boxShadow: "0 2px 8px rgba(239, 68, 68, 0.25)",
+                                        textTransform: "uppercase",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "5px"
+                                    }}
+                                >
+                                    <FiLock size={11} /> ADMIN
+                                </span>
+                            )}
+
+                            {membershipInfo?.expiresAt && (membershipInfo?.effectivePlan === "PRO" || membershipInfo?.effectivePlan === "ELITE") && (
+                                <span className="profile-hero-expiry">
+                                    Valid until {new Date(membershipInfo.expiresAt).toLocaleDateString()}
+                                </span>
+                            )}
+                        </div>
 
 
                     </div>
@@ -3181,8 +3245,8 @@ export default function Profile() {
                                                 </div>
                                                 <span className="profile-social-brand-title">GitHub Profile</span>
                                             </div>
-                                            <span className={`profile-social-status-badge ${githubRepository.repositoryUrl || githubRepository.connected ? "connected" : "unlinked"}`}>
-                                                {githubRepository.repositoryUrl || githubRepository.connected ? "Connected" : "Not Connected"}
+                                            <span className={`profile-social-status-badge ${(formData.githubUrl || githubRepository.repositoryUrl || githubRepository.connected) ? "connected" : "unlinked"}`}>
+                                                {(formData.githubUrl || githubRepository.repositoryUrl || githubRepository.connected) ? "Connected" : "Not Connected"}
                                             </span>
                                         </div>
 
@@ -3217,63 +3281,47 @@ export default function Profile() {
                                                                 if (el) el.focus();
                                                             }}
                                                         >
-                                                            {githubRepositoryInput || githubRepository.repositoryUrl ? "Change" : "Connect GitHub"}
+                                                            {githubRepositoryInput || formData.githubUrl || githubRepository.repositoryUrl ? "Change" : "Connect GitHub"}
                                                         </button>
                                                     </div>
                                                     {githubRepository.error && (
                                                         <small className="profile-page-error">{githubRepository.error}</small>
                                                     )}
                                                 </div>
-                                            ) : (githubRepository.repositoryUrl || githubRepository.connected) ? (
+                                            ) : (formData.githubUrl || githubRepository.repositoryUrl) ? (
                                                 <div className="profile-social-populated-state">
                                                     <p className="profile-social-description">
-                                                        Your GitHub repository is connected for automated solution syncing.
+                                                        Your verified GitHub developer profile is linked to your account for solution tracking.
                                                     </p>
                                                     <div className="profile-social-url-box">
                                                         <a
-                                                            href={githubRepository.repositoryUrl}
+                                                            href={formData.githubUrl || githubRepository.repositoryUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="profile-social-link-truncated"
-                                                            title={githubRepository.repositoryUrl}
+                                                            title={formData.githubUrl || githubRepository.repositoryUrl}
                                                         >
-                                                            <FiGithub className="profile-social-link-icon" />
-                                                            <span className="profile-social-link-text">{githubRepository.repositoryUrl}</span>
+                                                            <FiGithub className="profile-social-link-icon github" />
+                                                            <span className="profile-social-link-text">{formData.githubUrl || githubRepository.repositoryUrl}</span>
                                                             <FiExternalLink className="profile-social-ext-icon" />
                                                         </a>
                                                     </div>
                                                     <div className="profile-social-card-actions">
                                                         <a
-                                                            href={githubRepository.repositoryUrl}
+                                                            href={formData.githubUrl || githubRepository.repositoryUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="profile-social-action-btn"
                                                         >
-                                                            Open Repository <FiExternalLink />
+                                                            Open GitHub <FiExternalLink />
                                                         </a>
-                                                        <button
-                                                            type="button"
-                                                            disabled={true}
-                                                            className="profile-social-sub-btn disabled-btn"
-                                                            title="Click 'Edit Profile' to change repository"
-                                                        >
-                                                            Change
-                                                        </button>
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <div className="profile-social-empty-state">
                                                     <p className="profile-social-description">
-                                                        Link your GitHub repository or profile to automatically track and sync your solutions.
+                                                        No GitHub profile linked yet. Link your profile to track your code and solutions.
                                                     </p>
-                                                    <button
-                                                        type="button"
-                                                        disabled={true}
-                                                        className="profile-social-sub-btn disabled-btn"
-                                                        title="Click 'Edit Profile' to link repository"
-                                                    >
-                                                        <FiPlus /> Connect GitHub
-                                                    </button>
                                                 </div>
                                             )}
                                         </div>
@@ -3351,14 +3399,6 @@ export default function Profile() {
                                                         >
                                                             Open Profile <FiExternalLink />
                                                         </a>
-                                                        <button
-                                                            type="button"
-                                                            disabled={true}
-                                                            className="profile-social-sub-btn disabled-btn"
-                                                            title="Click 'Edit Profile' to change LinkedIn"
-                                                        >
-                                                            Change
-                                                        </button>
                                                     </div>
                                                 </div>
                                             ) : (
@@ -3366,14 +3406,6 @@ export default function Profile() {
                                                     <p className="profile-social-description">
                                                         Add your LinkedIn profile to showcase your experience, connections, and credentials to recruiters.
                                                     </p>
-                                                    <button
-                                                        type="button"
-                                                        disabled={true}
-                                                        className="profile-social-sub-btn disabled-btn"
-                                                        title="Click 'Edit Profile' to link LinkedIn"
-                                                    >
-                                                        <FiPlus /> Link LinkedIn
-                                                    </button>
                                                 </div>
                                             )}
                                         </div>
@@ -3452,14 +3484,6 @@ export default function Profile() {
                                                         >
                                                             Open Portfolio <FiExternalLink />
                                                         </a>
-                                                        <button
-                                                            type="button"
-                                                            disabled={true}
-                                                            className="profile-social-sub-btn disabled-btn"
-                                                            title="Click 'Edit Profile' to change portfolio"
-                                                        >
-                                                            Change
-                                                        </button>
                                                     </div>
                                                 </div>
                                             ) : (
@@ -3467,14 +3491,6 @@ export default function Profile() {
                                                     <p className="profile-social-description compact">
                                                         Showcase your personal projects, live demos, and case studies.
                                                     </p>
-                                                    <button
-                                                        type="button"
-                                                        disabled={true}
-                                                        className="profile-social-sub-btn disabled-btn"
-                                                        title="Click 'Edit Profile' to add portfolio"
-                                                    >
-                                                        <FiPlus /> Add Portfolio
-                                                    </button>
                                                 </div>
                                             )}
                                         </div>
@@ -3550,14 +3566,6 @@ export default function Profile() {
                                                         >
                                                             Open Website <FiExternalLink />
                                                         </a>
-                                                        <button
-                                                            type="button"
-                                                            disabled={true}
-                                                            className="profile-social-sub-btn disabled-btn"
-                                                            title="Click 'Edit Profile' to change website"
-                                                        >
-                                                            Change
-                                                        </button>
                                                     </div>
                                                 </div>
                                             ) : (
@@ -3565,14 +3573,6 @@ export default function Profile() {
                                                     <p className="profile-social-description compact">
                                                         Link your technical blog, writing, or personal homepage.
                                                     </p>
-                                                    <button
-                                                        type="button"
-                                                        disabled={true}
-                                                        className="profile-social-sub-btn disabled-btn"
-                                                        title="Click 'Edit Profile' to add website"
-                                                    >
-                                                        <FiPlus /> Add Website
-                                                    </button>
                                                 </div>
                                             )}
                                         </div>

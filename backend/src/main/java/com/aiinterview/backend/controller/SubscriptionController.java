@@ -581,6 +581,18 @@ public class SubscriptionController {
         );
 
         capabilities.put(
+                "hasGithubAnalyzerAccess",
+                entitlementService
+                        .hasGithubAnalyzerAccess(user)
+        );
+
+        capabilities.put(
+                "hasAiRoadmapAccess",
+                entitlementService
+                        .hasAiRoadmapAccess(user)
+        );
+
+        capabilities.put(
                 "isAdmin",
                 user.getRole() == Role.ADMIN
         );

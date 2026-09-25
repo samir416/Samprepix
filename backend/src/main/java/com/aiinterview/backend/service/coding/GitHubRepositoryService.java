@@ -685,62 +685,10 @@ public class GitHubRepositoryService {
     private RepositoryReference parseRepositoryUrl(
             String repositoryUrl
     ) {
-
-        if (
-                repositoryUrl == null ||
-                repositoryUrl.isBlank()
-        ) {
-
-            throw new IllegalArgumentException(
-                    "GitHub repository URL is required."
-            );
-        }
-
-        String normalized =
-                repositoryUrl
-                        .trim()
-                        .replaceAll(
-                                "/+$",
-                                ""
-                        );
-
-        Matcher matcher =
-                REPOSITORY_PATTERN.matcher(
-                        normalized
-                );
-
-        if (!matcher.matches()) {
-
-            throw new IllegalArgumentException(
-                    "Invalid GitHub repository URL."
-            );
-        }
-
-        String owner =
-                matcher.group(1)
-                        .trim();
-
-        String repository =
-                matcher.group(2)
-                        .trim()
-                        .replaceAll(
-                                "\\.git$",
-                                ""
-                        );
-
-        if (
-                owner.isBlank() ||
-                repository.isBlank()
-        ) {
-
-            throw new IllegalArgumentException(
-                    "Invalid GitHub repository URL."
-            );
-        }
-
+        GithubUrlValidator.RepoInfo info = GithubUrlValidator.validateRepositoryUrl(repositoryUrl);
         return new RepositoryReference(
-                owner,
-                repository
+                info.owner(),
+                info.repo()
         );
     }
 

@@ -25,6 +25,17 @@ export const getMySubscription = () =>
 export const getActiveSubscription = () =>
     API.get("/my/active").then((res) => res.data);
 
+export const getCurrentSubscription = () =>
+    API.get("/current").then((res) => res.data);
+
+export const getCapabilities = () =>
+    API.get("/capabilities").then((res) => res.data);
+
+export const setAutoRenew = (subscriptionId, autoRenew) =>
+    API.patch(`/my/${subscriptionId}/auto-renew`, {
+        autoRenew
+    }).then((res) => res.data);
+
 export const checkout = (
     planId,
     currency = "INR",
@@ -44,7 +55,3 @@ export const subscribe = () =>
             "Direct subscription activation is disabled. Complete the payment first."
         )
     );
-
-export const getCapabilities = () =>
-    API.get("/capabilities")
-        .then((res) => res.data);

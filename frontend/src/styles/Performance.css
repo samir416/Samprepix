@@ -294,6 +294,54 @@
   color: #0f172a;
 }
 
+.skill-name {
+  font-weight: 600;
+  color: inherit;
+}
+
+.skill-stats {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.skill-stats strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.report-preview {
+  margin-top: 10px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.report-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.report-line:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.report-line span {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.report-line strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
 .performance-progress-bar {
   width: 100%;
   height: 10px;
@@ -1492,4 +1540,256 @@ body.dark-theme .clear-focus-btn {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
   color: #cbd5e1;
+}
+
+/* ========================================
+   COMPACT PERFORMANCE INSIGHT SECTION
+======================================== */
+
+.performance-insight-summary {
+  padding: 16px 22px;
+  margin-bottom: 18px;
+  border-radius: 20px;
+}
+
+.insight-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.insight-summary-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.insight-summary-icon {
+  font-size: 20px;
+  color: #6366f1;
+}
+
+.insight-summary-title h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.insight-summary-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.insight-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 2fr;
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .insight-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .insight-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.insight-summary-item {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.insight-item-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.insight-item-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.insight-item-val.val-active {
+  color: #059669;
+}
+
+.insight-item-val.val-empty {
+  color: #94a3b8;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.insight-item-val.val-rec {
+  color: #4338ca;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+body.dark-theme .performance-insight-summary {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-theme .insight-summary-title h3 {
+  color: #ffffff;
+}
+
+body.dark-theme .insight-summary-badge {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+body.dark-theme .insight-summary-item {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-theme .insight-item-label {
+  color: #94a3b8;
+}
+
+body.dark-theme .insight-item-val {
+  color: #f1f5f9;
+}
+
+body.dark-theme .insight-item-val.val-active {
+  color: #34d399;
+}
+
+body.dark-theme .insight-item-val.val-empty {
+  color: #64748b;
+}
+
+body.dark-theme .insight-item-val.val-rec {
+  color: #c7d2fe;
+}
+
+
+/* ========================================
+   ENHANCED DARK MODE READABILITY & CONTRAST
+======================================== */
+
+body.dark-theme .performance-score-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.85)) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-theme .score-ring-inner h2 {
+  color: #ffffff !important;
+}
+
+body.dark-theme .score-ring-inner span {
+  color: #cbd5e1 !important;
+  font-weight: 600 !important;
+}
+
+body.dark-theme .performance-score-content h3 {
+  color: #ffffff !important;
+}
+
+body.dark-theme .performance-score-content p {
+  color: #e2e8f0 !important;
+}
+
+body.dark-theme .skill-name {
+  color: #f8fafc !important;
+}
+
+body.dark-theme .skill-stats {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme .skill-stats strong {
+  color: #ffffff !important;
+}
+
+body.dark-theme .report-preview {
+  background: rgba(15, 23, 42, 0.92) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-theme .report-line {
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-theme .report-line span {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme .report-line strong {
+  color: #38bdf8 !important;
+}
+
+body.dark-theme .performance-stat-card p {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme .performance-card-header p {
+  color: #cbd5e1 !important;
+}
+
+body.dark-theme .activity-timestamp {
+  color: #94a3b8 !important;
+}
+
+/* High-contrast status badges in dark mode */
+body.dark-theme .status-analyzed {
+  background: rgba(20, 184, 166, 0.22) !important;
+  color: #2dd4bf !important;
+  border: 1px solid rgba(45, 212, 191, 0.4) !important;
+  font-weight: 800 !important;
+}
+
+body.dark-theme .status-accepted {
+  background: rgba(34, 197, 94, 0.18) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(74, 222, 128, 0.3) !important;
+  font-weight: 700 !important;
+}
+
+body.dark-theme .status-attempted {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(251, 191, 36, 0.3) !important;
+  font-weight: 700 !important;
+}
+
+body.dark-theme .status-passed {
+  background: rgba(99, 102, 241, 0.18) !important;
+  color: #818cf8 !important;
+  border: 1px solid rgba(129, 140, 248, 0.3) !important;
+  font-weight: 700 !important;
+}
+
+body.dark-theme .status-completed {
+  background: rgba(148, 163, 184, 0.18) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(203, 213, 225, 0.3) !important;
+  font-weight: 700 !important;
+}
+
+body.dark-theme .performance-heading,
+body.dark-theme .performance-header h1,
+body.dark-theme .performance-section-title {
+  color: #ffffff !important;
 }

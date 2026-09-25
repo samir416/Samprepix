@@ -243,10 +243,10 @@ body.dark-theme{
 .profile-page-hero{
     position:relative;
     margin-top:-85px;
-    padding:0 45px 35px;
+    padding:0 45px 30px;
     display:flex;
-    align-items:flex-end;
-    gap:25px;
+    align-items:flex-start;
+    gap:28px;
     z-index:2;
 }
 
@@ -330,18 +330,35 @@ body.dark-theme{
     flex:1;
     display:flex;
     flex-direction:column;
-    justify-content:flex-end;
-    gap:12px;
-    padding-bottom:18px;
+    justify-content:flex-start;
+    gap:8px;
+    padding-top:20px;
+    margin:0;
 }
 
 .profile-page-hero-content h2{
-    font-size:38px;
+    font-size:34px;
     font-weight:800;
     color:#ffffff;
     line-height:1.2;
     word-break:break-word;
-    margin-bottom: 72px;
+    margin:0;
+    text-shadow:0 2px 8px rgba(0,0,0,.28);
+}
+
+.profile-hero-badges-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin:0;
+}
+
+.profile-hero-expiry{
+    font-size:12px;
+    font-weight:500;
+    color:rgba(255,255,255,.9);
+    text-shadow:0 1px 3px rgba(0,0,0,.35);
 }
 
 .profile-page-hero-content p{
@@ -971,16 +988,31 @@ body.dark-theme .profile-page-select{
         align-items:center;
         text-align:center;
         margin-top:-70px;
-        padding:0 30px 30px;
+        padding:0 30px 24px;
+        gap:16px;
     }
 
     .profile-page-hero-content{
         align-items:center;
+        padding-top:0;
         padding-bottom:0;
+        gap:8px;
     }
 
     .profile-page-hero-content h2{
-        font-size:32px;
+        font-size:30px;
+        color:var(--profile-text);
+        text-shadow:none;
+        margin:0;
+    }
+
+    .profile-hero-badges-row{
+        justify-content:center;
+    }
+
+    .profile-hero-expiry{
+        color:var(--profile-text-light);
+        text-shadow:none;
     }
 
     .profile-page-card-header,
@@ -1148,6 +1180,13 @@ body.dark-theme .profile-page-select{
 
     .profile-page-hero-content h2{
         font-size:24px;
+        color:var(--profile-text);
+        text-shadow:none;
+        margin:0;
+    }
+
+    .profile-hero-badges-row{
+        justify-content:center;
     }
 
     .profile-page-card-header h2{
@@ -2313,4 +2352,11 @@ body.dark-theme .profile-social-url-box {
     .profile-social-input-btn-row {
         flex-wrap: wrap;
     }
+}
+
+.profile-social-readonly-state {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8px 0;
 }
