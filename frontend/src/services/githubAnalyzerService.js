@@ -22,6 +22,3 @@ export const analyzeGithubProfile = (profileUrl) =>
 
 export const getLatestGithubAnalysis = () =>
     API.get("/latest").then((res) => res.data);
-
-export const applyReadmeToGithub = (username, readmeContent) =>
-    API.post("/apply-readme", { username, readmeContent }).then((res) => res.data);

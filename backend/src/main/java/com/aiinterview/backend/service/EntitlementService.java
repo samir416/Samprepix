@@ -72,8 +72,9 @@ public class EntitlementService {
         for (Subscription subscription : activeSubscriptions) {
 
             if (subscription.getPlan() != null
-                    && subscription.getExpiresAt() != null
-                    && subscription.getExpiresAt().isAfter(now)) {
+                    && (subscription.isLifetime()
+                            || subscription.getExpiresAt() == null
+                            || subscription.getExpiresAt().isAfter(now))) {
 
                 return normalizePlan(
                         subscription.getPlan().getName()

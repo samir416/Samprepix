@@ -341,22 +341,30 @@ export default function ResumeAnalyzer() {
                     </h3>
 
                     {
-                        analysis?.suggestions?.length > 0 ? (
-                            analysis.suggestions.map((suggestion, index) => (
-                                <div
-                                    className="skill-item"
-                                    key={index}
-                                >
-                                    <div className="skill-top">
-                                        <span>{suggestion}</span>
+                        (() => {
+                            const suggestionsList = Array.isArray(analysis?.suggestions)
+                                ? analysis.suggestions
+                                : typeof analysis?.suggestions === "string"
+                                    ? analysis.suggestions.split(/\r?\n|•|;/).map(s => s.trim()).filter(Boolean)
+                                    : [];
+
+                            return suggestionsList.length > 0 ? (
+                                suggestionsList.map((suggestion, index) => (
+                                    <div
+                                        className="skill-item"
+                                        key={index}
+                                    >
+                                        <div className="skill-top">
+                                            <span>{suggestion}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="no-suggestions-text" style={{ color: "#6b7280", fontSize: "14px", margin: "8px 0" }}>
-                                Upload your resume above to generate comprehensive ATS scores and AI-powered recommendations.
-                            </p>
-                        )
+                                ))
+                            ) : (
+                                <p className="no-suggestions-text" style={{ color: "#6b7280", fontSize: "14px", margin: "8px 0" }}>
+                                    Upload your resume above to generate comprehensive ATS scores and AI-powered recommendations.
+                                </p>
+                            );
+                        })()
                     }
                 </div>
 

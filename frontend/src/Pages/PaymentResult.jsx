@@ -1090,7 +1090,7 @@ export default function PaymentResult() {
                                         <div>
                                             <strong>GitHub Profile Analyzer</strong>
                                             <span>
-                                                0–100 scoring, tailored README generator & recruiter view
+                                                0–100 scoring, repository health checks & recruiter view
                                             </span>
                                         </div>
                                     </div>

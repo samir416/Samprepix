@@ -1788,35 +1788,29 @@ body.dark-theme .mini-card {
 ========================================= */
 
 body.dark-theme {
-
-    background:
-        linear-gradient(
-            90deg,
-            #020617 0%,
-            #071129 50%,
-            #020617 100%
-        );
-
+    background: #090d16 !important;
     color: #ffffff;
 }
 
 /* MAIN SECTIONS */
-
+body.dark-theme .home-page,
+body.dark-theme .home-page-wrapper,
 body.dark-theme .hero-section,
 body.dark-theme .ai-section,
 body.dark-theme .features-section,
 body.dark-theme .testimonial-section,
 body.dark-theme .cta-section,
+body.dark-theme .cta-box-wrapper,
 body.dark-theme .footer-section,
 body.dark-theme .trusted-section {
-
     background: transparent !important;
-
     border: none !important;
-
     outline: none !important;
-
     box-shadow: none !important;
+}
+
+body.dark-theme .footer-container::before {
+    display: none !important;
 }
 
 /* NAVBAR */
@@ -1968,6 +1962,10 @@ body.dark-theme .footer-column a,
 body.dark-theme .footer-bottom {
 
     color: #cbd5e1;
+}
+
+body.dark-theme .footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 /* SCROLLBAR SUPPRESSION */

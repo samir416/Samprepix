@@ -53,11 +53,7 @@ const DOC_SECTIONS = [
                         </div>
                         <div className="faq-item">
                             <h3>5. What is the GitHub Profile Analyzer and how is the score computed?</h3>
-                            <p>The GitHub Profile Analyzer inspects your public GitHub profile and repository metrics to compute an objective 0–100 engineering readiness score based on 5 pillars: Repository Quality (0–25), Documentation &amp; READMEs (0–20), Consistency &amp; Activity (0–20), Tech Stack Diversity (0–20), and Project Impact (0–15).</p>
-                        </div>
-                        <div className="faq-item">
-                            <h3>6. What is the Tailored Profile README generator?</h3>
-                            <p>Inside the GitHub Analyzer, the README generator synthesizes your verified repositories, highlighted technologies, and contact links into a modern, recruiter-ready markdown template that you can copy directly to your special GitHub profile repository (e.g. <code>username/username</code>).</p>
+                            <p>The GitHub Profile Analyzer inspects your public GitHub profile and repository metrics to compute an objective 0–100 engineering readiness score based on 4 pillars: Profile Completeness (0–25), Repository Quality &amp; Diversity (0–30), Documentation &amp; Setup (0–20), and Recruiter Readability (0–25).</p>
                         </div>
                         <div className="faq-item">
                             <h3>7. How does the AI Personalized Roadmap work?</h3>
@@ -113,20 +109,15 @@ const DOC_SECTIONS = [
                     <>
                         <h2>Overview</h2>
                         <p>
-                            The GitHub Profile Analyzer scans your public GitHub profile and repositories to provide an objective 0–100 engineering score, granular deduction breakdowns, repository health checks, and a recruiter-ready profile README generator.
+                            The GitHub Profile Analyzer scans your public GitHub profile and repositories to provide an objective 0–100 engineering score, granular deduction breakdowns, repository health checks, and a 30-second recruiter perspective audit.
                         </p>
-                        <h2>5 Core Scoring Pillars</h2>
+                        <h2>4 Core Scoring Pillars</h2>
                         <ul>
-                            <li><strong>Repository Quality (0–25):</strong> Evaluates commit depth, descriptive titles, license presence, and clean project structure.</li>
-                            <li><strong>Documentation & README (0–20):</strong> Audits project READMEs for clear installation steps, architecture diagrams, and usage examples.</li>
-                            <li><strong>Consistency & Activity (0–20):</strong> Analyzes commit regularity and active contribution cadences over time.</li>
-                            <li><strong>Technology Diversity (0–20):</strong> Rewards multi-stack versatility across languages, frameworks, and tools.</li>
-                            <li><strong>Project Impact (0–15):</strong> Measures community stars, forks, and deployment links.</li>
+                            <li><strong>Profile Completeness (0–25):</strong> Assesses bio clarity, profile picture, location, and professional portfolio links.</li>
+                            <li><strong>Repository Quality &amp; Diversity (0–30):</strong> Evaluates original projects, language breadth, and repository descriptions.</li>
+                            <li><strong>Documentation &amp; Setup (0–20):</strong> Audits project descriptions, setup instructions, and architecture clarity across repositories.</li>
+                            <li><strong>Recruiter Readability (0–25):</strong> Measures immediate technical impressions, verified skills, and flagship showcase projects.</li>
                         </ul>
-                        <h2>Tailored README Generator</h2>
-                        <p>
-                            Generates an optimized, recruiter-friendly markdown profile README synthesizing your best repositories, verified skills, and contact details with one-click clipboard copy.
-                        </p>
                     </>
                 )
             },

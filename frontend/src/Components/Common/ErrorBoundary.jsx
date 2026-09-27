@@ -126,9 +126,9 @@ export class ErrorBoundary extends React.Component {
                                 onClick={() => {
                                     window.dispatchEvent(new CustomEvent("open-report-problem", {
                                         detail: {
-                                            feature: "Application Crash / Error",
-                                            description: `An unhandled error occurred: ${this.state.error?.message || "Unknown error"}`,
-                                            actionAttempted: "Viewing section: " + window.location.pathname
+                                            feature: "General / Other",
+                                            actionAttempted: "Viewing section: " + window.location.pathname,
+                                            technicalDiagnostic: this.state.error?.message || ""
                                         }
                                     }));
                                 }}

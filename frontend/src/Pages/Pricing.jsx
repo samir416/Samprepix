@@ -25,6 +25,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
 import { createTestOrder } from "../services/paymentService";
+import { toast } from "react-toastify";
 
 const loadCashfree = () =>
   new Promise((resolve, reject) => {
@@ -254,6 +255,15 @@ export default function Pricing() {
     }
   };
 
+  const storedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch (_) {
+      return {};
+    }
+  })();
+  const isAdmin = storedUser?.role === "ADMIN" || storedUser?.role === "ROLE_ADMIN";
+
   const handlePlanCheckout = async (planId) => {
     const token = localStorage.getItem("token");
 
@@ -264,6 +274,11 @@ export default function Pricing() {
           selectedPlan: planId
         }
       });
+      return;
+    }
+
+    if (isAdmin) {
+      toast.info("Admin accounts already have full Pro and Elite access.");
       return;
     }
 
@@ -404,6 +419,34 @@ export default function Pricing() {
         </div>
       </section>
 
+      {isAdmin && (
+        <div
+          role="status"
+          style={{
+            maxWidth: "860px",
+            margin: "0 auto 28px",
+            padding: "16px 20px",
+            borderRadius: "14px",
+            background: "rgba(99, 102, 241, 0.08)",
+            border: "1px solid rgba(99, 102, 241, 0.25)",
+            display: "flex",
+            alignItems: "center",
+            gap: "14px",
+            color: "var(--text-color, #4338ca)"
+          }}
+        >
+          <FaCrown style={{ color: "#6366f1", fontSize: "1.3rem", flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <strong style={{ display: "block", fontSize: "0.95rem" }}>
+              Admin Account Active
+            </strong>
+            <span style={{ fontSize: "0.88rem", opacity: 0.85 }}>
+              Your account has unrestricted full access to all Pro and Elite features. Payment checkout is bypassed for administrators.
+            </span>
+          </div>
+        </div>
+      )}
+
       {showCheckoutError && (
         <div
           role="alert"
@@ -517,7 +560,7 @@ export default function Pricing() {
             </div>
 
             <div>
-              <FaCheck /> Preview GitHub Analyzer & AI Roadmap
+              <FaCheck /> Basic GitHub profile analysis & repository health checks
             </div>
           </div>
 
@@ -643,7 +686,7 @@ export default function Pricing() {
             </div>
 
             <div>
-              <FaBolt /> Complete GitHub Profile Analyzer & Recruiter Audit
+              <FaBolt /> Comprehensive GitHub Profile Analyzer & recruiter view
             </div>
 
             <div>
@@ -666,6 +709,11 @@ export default function Pricing() {
                   }}
                 />
                 Opening Checkout...
+              </>
+            ) : isAdmin ? (
+              <>
+                <FaCrown />
+                Admin Access Active
               </>
             ) : (
               <>
@@ -788,7 +836,7 @@ export default function Pricing() {
             </div>
 
             <div>
-              <FaCrown /> Full GitHub README Generator & Recruiter Deep Dive
+              <FaCrown /> Deepest GitHub analysis & advanced recruiter presentation
             </div>
           </div>
 
@@ -807,6 +855,11 @@ export default function Pricing() {
                   }}
                 />
                 Opening Checkout...
+              </>
+            ) : isAdmin ? (
+              <>
+                <FaCrown />
+                Admin Access Active
               </>
             ) : (
               <>

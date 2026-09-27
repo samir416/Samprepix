@@ -504,7 +504,8 @@
     color: #6ee7b7;
 }
 
-/* README GENERATOR SECTION */
+/* SECTION / AUDIT CARD */
+.ga-section-card,
 .ga-readme-card {
     background: var(--card-bg, #ffffff);
     border: 1px solid var(--border-color, #e2e8f0);
@@ -512,6 +513,7 @@
     padding: 32px;
 }
 
+.dark-theme .ga-section-card,
 .dark-theme .ga-readme-card {
     background: #111827;
     border-color: rgba(255, 255, 255, 0.08);

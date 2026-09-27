@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import DifficultyModal from "./DifficultyModal";
@@ -77,7 +77,7 @@ export default function MockInterview() {
 
     const [showDifficultyModal, setShowDifficultyModal] = useState(false);
 
-    const [selectedDifficulty, setSelectedDifficulty] = useState("");
+    const [selectedDifficulty, setSelectedDifficulty] = useState("medium");
 
     const [showCountdown, setShowCountdown] = useState(false);
 
@@ -103,19 +103,38 @@ export default function MockInterview() {
                 .map((skill) => skill.trim())
                 .filter(Boolean)
             : [];
-    const isFromRoadmap = Boolean(location.state?.fromRoadmap);
-    const roadmapSkills = Array.isArray(location.state?.skills) ? location.state.skills : [];
-    const roadmapTopic = location.state?.roadmapTopic || "";
-    const roadmapTrack = location.state?.trackTitle || "";
 
-    const effectiveSkills = technicalSkills.length > 0
-        ? technicalSkills
-        : (isFromRoadmap && roadmapSkills.length > 0 ? roadmapSkills : (roadmapTopic ? [roadmapTopic] : []));
+    const roadmapContext = useMemo(() => {
+        if (location.state?.fromRoadmap) {
+            return {
+                fromRoadmap: true,
+                roadmapTopic: location.state.roadmapTopic || "",
+                milestoneId: location.state.milestoneId || "",
+                skills: Array.isArray(location.state.skills) ? location.state.skills : [],
+                trackTitle: location.state.trackTitle || ""
+            };
+        }
+        try {
+            sessionStorage.removeItem("roadmap_interview_context");
+        } catch (e) {}
+        return null;
+    }, [location.state]);
 
-    const effectiveRole = currentUser?.targetRole?.trim() || (isFromRoadmap ? (roadmapTrack || roadmapTopic || "Software Engineer") : "");
+    const isFromRoadmap = Boolean(roadmapContext?.fromRoadmap);
+    const roadmapSkills = roadmapContext?.skills || [];
+    const roadmapTopic = roadmapContext?.roadmapTopic || "";
+    const roadmapTrack = roadmapContext?.trackTitle || "";
 
-    const profileCompleted =
-        (Boolean(effectiveRole) && effectiveSkills.length > 0) || isFromRoadmap;
+    // For Roadmap-originated interviews: Topic must come strictly from the roadmap milestone
+    const effectiveSkills = isFromRoadmap
+        ? (roadmapSkills.length > 0 ? roadmapSkills : [roadmapTopic || "General Engineering"])
+        : technicalSkills;
+
+    const effectiveRole = isFromRoadmap
+        ? (roadmapTrack || roadmapTopic || "Software Engineer")
+        : (currentUser?.targetRole?.trim() || "");
+
+    const profileCompleted = isFromRoadmap || (Boolean(effectiveRole) && effectiveSkills.length > 0);
 
     useEffect(() => {
 
@@ -148,6 +167,12 @@ export default function MockInterview() {
         location.pathname,
         navigate
     ]);
+
+    useEffect(() => {
+        if (location.state?.fromRoadmap && !started && !showCountdown) {
+            setShowDifficultyModal(true);
+        }
+    }, [location.state?.fromRoadmap, started, showCountdown]);
 
     const toggleSpeaker = () => {
 
@@ -692,10 +717,7 @@ export default function MockInterview() {
         if (!profileCompleted) {
 
             toast.warning(
-                "Add at least one technical skill to unlock AI interviews.",
-                {
-                    autoClose: 3000
-                }
+                "Add at least one technical skill to unlock AI interviews."
             );
 
             return;
@@ -887,7 +909,10 @@ export default function MockInterview() {
                     replace: true,
                     state: {
                         fromInterview: true,
-                        sessionId: sessionId
+                        sessionId: sessionId,
+                        fromRoadmap: isFromRoadmap,
+                        roadmapTopic: roadmapTopic,
+                        trackTitle: roadmapTrack
                     }
                 }
             );
@@ -897,10 +922,7 @@ export default function MockInterview() {
             console.error(error);
 
             toast.error(
-                "Unable to end the interview. Please try again.",
-                {
-                    autoClose: 1500
-                }
+                "Unable to end the interview. Please try again."
             );
 
         } finally {
@@ -991,7 +1013,10 @@ export default function MockInterview() {
                         replace: true,
                         state: {
                             fromInterview: true,
-                            sessionId: sessionId
+                            sessionId: sessionId,
+                            fromRoadmap: isFromRoadmap,
+                            roadmapTopic: roadmapTopic,
+                            trackTitle: roadmapTrack
                         }
                     }
                 );
@@ -1046,22 +1071,34 @@ export default function MockInterview() {
 
                         <h1>
                             {
-                                currentUser?.targetRole ||
-                                "AI Mock Interview"
+                                isFromRoadmap
+                                    ? (roadmapTopic || effectiveRole)
+                                    : (currentUser?.targetRole || "AI Mock Interview")
                             }
                         </h1>
 
                         <p>
+                            {isFromRoadmap && (
+                                <span style={{
+                                    marginRight: "8px",
+                                    padding: "2px 8px",
+                                    background: "rgba(99, 102, 241, 0.2)",
+                                    color: "#a5b4fc",
+                                    borderRadius: "4px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    letterSpacing: "0.5px",
+                                    textTransform: "uppercase"
+                                }}>
+                                    Roadmap Topic
+                                </span>
+                            )}
                             {
-                                Array.isArray(
-                                    currentUser?.skills
-                                )
-                                    ? currentUser.skills.join(
-                                        " • "
-                                    )
-                                    : technicalSkills.join(
-                                        " • "
-                                    )
+                                isFromRoadmap
+                                    ? (effectiveSkills.length > 0 ? effectiveSkills.join(" • ") : "General Engineering")
+                                    : (Array.isArray(currentUser?.skills)
+                                        ? currentUser.skills.join(" • ")
+                                        : (technicalSkills.length > 0 ? technicalSkills.join(" • ") : "Add skills in Profile"))
                             }
                         </p>
 
@@ -1504,6 +1541,13 @@ export default function MockInterview() {
 
                     resetInterview();
 
+                    if (isFromRoadmap) {
+                        try {
+                            sessionStorage.removeItem("roadmap_interview_context");
+                        } catch (e) {}
+                        navigate("/ai-roadmap");
+                    }
+
                 }}
 
                 onSubmit={
@@ -1536,6 +1580,13 @@ export default function MockInterview() {
                             );
 
                             resetInterview();
+
+                            if (isFromRoadmap) {
+                                try {
+                                    sessionStorage.removeItem("roadmap_interview_context");
+                                } catch (e) {}
+                                navigate("/ai-roadmap");
+                            }
 
                         }
 

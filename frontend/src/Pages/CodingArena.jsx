@@ -48,11 +48,27 @@ export default function CodingArena() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const isFromRoadmap = Boolean(location.state?.fromRoadmap);
-    const roadmapTopic = location.state?.roadmapTopic || "";
-    const roadmapMilestoneId = location.state?.milestoneId || "";
-    const roadmapSkills = Array.isArray(location.state?.skills) ? location.state.skills : [];
-    const roadmapTrack = location.state?.trackTitle || "";
+    const roadmapContext = useMemo(() => {
+        if (location.state?.fromRoadmap) {
+            return {
+                fromRoadmap: true,
+                roadmapTopic: location.state.roadmapTopic || "",
+                milestoneId: location.state.milestoneId || "",
+                skills: Array.isArray(location.state.skills) ? location.state.skills : [],
+                trackTitle: location.state.trackTitle || ""
+            };
+        }
+        try {
+            sessionStorage.removeItem("roadmap_coding_context");
+        } catch (e) {}
+        return null;
+    }, [location.state]);
+
+    const isFromRoadmap = Boolean(roadmapContext?.fromRoadmap);
+    const roadmapTopic = roadmapContext?.roadmapTopic || "";
+    const roadmapMilestoneId = roadmapContext?.milestoneId || "";
+    const roadmapSkills = Array.isArray(roadmapContext?.skills) ? roadmapContext.skills : [];
+    const roadmapTrack = roadmapContext?.trackTitle || "";
 
     const [language, setLanguage] = useState("");
     const [searchLanguage, setSearchLanguage] = useState("");
@@ -581,7 +597,35 @@ export default function CodingArena() {
             }
         }
 
-        // 2. Saved user preference from Settings (setting_default_language)
+        // 2. Roadmap Milestone targeted language (if entered from AI Roadmap)
+        if (isFromRoadmap) {
+            const combined = [roadmapTrack, roadmapTopic, ...roadmapSkills].join(" ").toLowerCase();
+            let targetLang = "";
+            if (combined.includes("sql") || combined.includes("database") || combined.includes("mysql") || combined.includes("dbms")) {
+                targetLang = "mysql";
+            } else if (combined.includes("python") || combined.includes("django") || combined.includes("flask") || combined.includes("fastapi")) {
+                targetLang = "python";
+            } else if (combined.includes("java") || combined.includes("spring")) {
+                targetLang = "java";
+            } else if (combined.includes("cpp") || combined.includes("c++")) {
+                targetLang = "cpp";
+            } else if (combined.includes("c#") || combined.includes("csharp") || combined.includes(".net")) {
+                targetLang = "csharp";
+            } else if (combined.includes("javascript") || combined.includes("react") || combined.includes("node") || combined.includes("express") || combined.includes("frontend")) {
+                targetLang = "javascript";
+            }
+
+            if (targetLang) {
+                const targetMatch = langs.find(
+                    (item) => normalizeLanguageValue(item.value) === normalizeLanguageValue(targetLang)
+                );
+                if (targetMatch) {
+                    return targetMatch.value;
+                }
+            }
+        }
+
+        // 3. Saved user preference from Settings (setting_default_language)
         // NON-NEGOTIABLE PRODUCT RULE: Saved preference ALWAYS beats backend history, lastLanguage, etc.
         const savedPref = localStorage.getItem("setting_default_language");
         if (savedPref && savedPref !== "mysql") {
@@ -1504,6 +1548,62 @@ export default function CodingArena() {
     const handleNextProblem = async () => {
         const currentIndex =
             getFilteredSelectedIndex();
+
+        if (isFromRoadmap) {
+            const keywords = [roadmapTopic, ...roadmapSkills].filter(Boolean).map(s => s.toLowerCase());
+
+            // 1. Try to find a subsequent matching problem in filteredProblems
+            let nextIndex = -1;
+            for (let i = currentIndex + 1; i < filteredProblems.length; i++) {
+                const p = filteredProblems[i];
+                const matches = keywords.some(k =>
+                    p.title?.toLowerCase().includes(k) ||
+                    p.description?.toLowerCase().includes(k) ||
+                    (Array.isArray(p.tags) && p.tags.some(t => t.toLowerCase().includes(k)))
+                );
+                if (matches) {
+                    nextIndex = i;
+                    break;
+                }
+            }
+
+            // 2. If no subsequent matches, check any other matching problem in filteredProblems
+            if (nextIndex === -1) {
+                for (let i = 0; i < filteredProblems.length; i++) {
+                    if (i === currentIndex) continue;
+                    const p = filteredProblems[i];
+                    const matches = keywords.some(k =>
+                        p.title?.toLowerCase().includes(k) ||
+                        p.description?.toLowerCase().includes(k) ||
+                        (Array.isArray(p.tags) && p.tags.some(t => t.toLowerCase().includes(k)))
+                    );
+                    if (matches) {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            // 3. If found matching problem, select it
+            if (nextIndex !== -1) {
+                await selectProblemById(filteredProblems[nextIndex].id);
+                return;
+            }
+
+            // 4. Progressively relax: if subsequent problem exists in list, proceed to it
+            if (currentIndex !== -1 && currentIndex < filteredProblems.length - 1) {
+                await selectProblemById(filteredProblems[currentIndex + 1].id);
+                return;
+            }
+
+            // 5. Topic exhausted: show toast and prompt/return to roadmap
+            toast.info("Roadmap practice milestone completed! Returning to your AI Roadmap...");
+            try {
+                sessionStorage.removeItem("roadmap_coding_context");
+            } catch (e) {}
+            navigate("/ai-roadmap");
+            return;
+        }
 
         if (
             currentIndex === -1 ||
@@ -2466,7 +2566,12 @@ export default function CodingArena() {
                         <button
                             type="button"
                             className="coding-roadmap-next-step-btn"
-                            onClick={() => navigate("/ai-roadmap")}
+                            onClick={() => {
+                                try {
+                                    sessionStorage.removeItem("roadmap_coding_context");
+                                } catch (e) {}
+                                navigate("/ai-roadmap");
+                            }}
                         >
                             Next Roadmap Step <FiArrowRight size={14} />
                         </button>
@@ -2492,7 +2597,12 @@ export default function CodingArena() {
                     <button
                         type="button"
                         className="coding-roadmap-back-btn"
-                        onClick={() => navigate("/ai-roadmap")}
+                        onClick={() => {
+                            try {
+                                sessionStorage.removeItem("roadmap_coding_context");
+                            } catch (e) {}
+                            navigate("/ai-roadmap");
+                        }}
                     >
                         <FiArrowLeft size={13} /> Return to Roadmap
                     </button>

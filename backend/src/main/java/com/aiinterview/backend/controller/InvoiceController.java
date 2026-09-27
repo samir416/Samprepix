@@ -28,10 +28,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @RestController
 @RequestMapping("/api/invoices")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
+@Transactional(readOnly = true)
 public class InvoiceController {
 
     private final InvoiceRepository invoiceRepository;
@@ -66,7 +69,7 @@ public class InvoiceController {
         User user = getAuthenticatedUser(authentication);
         validateInvoiceId(invoiceId);
 
-        Invoice invoice = invoiceRepository.findById(invoiceId)
+        Invoice invoice = invoiceRepository.findByIdWithDetails(invoiceId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Invoice not found"));
 
@@ -83,7 +86,7 @@ public class InvoiceController {
         User user = getAuthenticatedUser(authentication);
         validateInvoiceId(invoiceId);
 
-        Invoice invoice = invoiceRepository.findById(invoiceId)
+        Invoice invoice = invoiceRepository.findByIdWithDetails(invoiceId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Invoice not found"));
 
@@ -121,16 +124,21 @@ public class InvoiceController {
     private Map<String, Object> buildInvoiceResponse(Invoice invoice) {
         Map<String, Object> response = new LinkedHashMap<>();
 
-        Payment payment = invoice.getPayment();
+        Payment payment = null;
+        try {
+            payment = invoice.getPayment();
+        } catch (Exception ignored) {}
+
+        String planName = "N/A";
+        try {
+            if (invoice.getPlan() != null) {
+                planName = safe(invoice.getPlan().getName());
+            }
+        } catch (Exception ignored) {}
 
         response.put("id", invoice.getId());
         response.put("invoiceNumber", invoice.getInvoiceNumber());
-        response.put(
-                "plan",
-                invoice.getPlan() != null
-                        ? safe(invoice.getPlan().getName())
-                        : "N/A"
-        );
+        response.put("plan", planName);
         response.put("amount", invoice.getAmount());
         response.put("currency", safe(invoice.getCurrency()));
         response.put("status", safe(invoice.getStatus()));

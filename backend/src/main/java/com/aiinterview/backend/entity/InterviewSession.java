@@ -55,6 +55,14 @@ public class InterviewSession {
     @Column
     private Integer overallScore;
 
+    @Column(name = "score")
+    @Builder.Default
+    private Integer score = 0;
+
+    @Column(name = "total_questions")
+    @Builder.Default
+    private Integer totalQuestions = 5;
+
     @Column
     private Integer technicalAccuracy;
 
@@ -95,6 +103,14 @@ public class InterviewSession {
 
         if (overallScore == null) {
             overallScore = 0;
+        }
+
+        if (score == null) {
+            score = 0;
+        }
+
+        if (totalQuestions == null) {
+            totalQuestions = 5;
         }
 
         if (technicalAccuracy == null) {

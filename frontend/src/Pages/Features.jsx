@@ -48,8 +48,8 @@ export default function Features() {
 
         {
             icon: <FiZap />,
-            title: "Adaptive Plans",
-            desc: "AI roadmap that adapts according to weak preparation areas.",
+            title: "AI Placement Roadmap",
+            desc: "Customized multi-phase curriculum tailored to your target engineering role with milestone tracking.",
         },
 
         {
@@ -66,8 +66,8 @@ export default function Features() {
 
         {
             icon: <FiCode />,
-            title: "GitHub Sync",
-            desc: "Automatic synchronization of passing solutions to your personal repository.",
+            title: "GitHub Profile Analyzer",
+            desc: "Recruiter perspective audit, deterministic scoring, and repository health checks.",
         },
 
         {

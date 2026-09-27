@@ -242,10 +242,10 @@ body.dark-theme{
 
 .profile-page-hero{
     position:relative;
-    margin-top:-85px;
+    margin-top:-65px;
     padding:0 45px 30px;
     display:flex;
-    align-items:flex-start;
+    align-items:center;
     gap:28px;
     z-index:2;
 }
@@ -259,7 +259,9 @@ body.dark-theme{
     width:170px;
     height:170px;
 
-    display:block;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 
     border-radius:50%;
 
@@ -268,7 +270,10 @@ body.dark-theme{
 
     border:6px solid var(--profile-surface);
 
-    background:#fff;
+    background:linear-gradient(135deg, #6366f1, #4f46e5);
+    color:#ffffff;
+    font-size:64px;
+    font-weight:800;
 
     overflow:hidden;
 
@@ -287,6 +292,7 @@ body.dark-theme{
     -webkit-transform:translateZ(0);
 
     aspect-ratio:1/1;
+    user-select:none;
 }
 
 
@@ -334,6 +340,13 @@ body.dark-theme{
     gap:8px;
     padding-top:20px;
     margin:0;
+}
+
+.profile-hero-name-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
 }
 
 .profile-page-hero-content h2{
@@ -1006,6 +1019,7 @@ body.dark-theme .profile-page-select{
         margin:0;
     }
 
+    .profile-hero-name-row,
     .profile-hero-badges-row{
         justify-content:center;
     }
@@ -1185,6 +1199,7 @@ body.dark-theme .profile-page-select{
         margin:0;
     }
 
+    .profile-hero-name-row,
     .profile-hero-badges-row{
         justify-content:center;
     }

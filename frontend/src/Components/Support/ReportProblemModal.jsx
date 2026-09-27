@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { FiAlertTriangle, FiX, FiCheckCircle, FiSend } from "react-icons/fi";
+import { FiAlertTriangle, FiX, FiCheckCircle, FiSend, FiLock } from "react-icons/fi";
+import { toast } from "react-toastify";
 import { submitProblemReport } from "../../services/supportService";
 import "../../styles/reportProblemModal.css";
 
@@ -20,13 +21,13 @@ export default function ReportProblemModal({ isOpen, onClose, initialData = {} }
     const [feature, setFeature] = useState("General / Other");
     const [actionAttempted, setActionAttempted] = useState("");
     const [description, setDescription] = useState("");
-    const [reporterEmail, setReporterEmail] = useState("");
+    const [internalDiagnostic, setInternalDiagnostic] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [statusMessage, setStatusMessage] = useState(null); // { type: 'success'|'error', text: '' }
 
     useEffect(() => {
         if (isOpen) {
-            // Populate pre-filled data
+            // Populate feature category if provided
             if (initialData.feature) {
                 const matched = FEATURES.find(f => f.toLowerCase().includes(initialData.feature.toLowerCase()));
                 setFeature(matched || initialData.feature || "General / Other");
@@ -34,20 +35,11 @@ export default function ReportProblemModal({ isOpen, onClose, initialData = {} }
             if (initialData.actionAttempted) {
                 setActionAttempted(initialData.actionAttempted);
             }
-            if (initialData.description) {
-                setDescription(initialData.description);
-            }
-
-            // Populate user email if logged in
-            try {
-                const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-                if (storedUser.email) {
-                    setReporterEmail(storedUser.email);
-                }
-            } catch (e) {
-                // Ignore parse errors
-            }
-
+            // Technical diagnostic kept strictly internal for backend logs, never auto-filled in description
+            setInternalDiagnostic(initialData.technicalDiagnostic || "");
+            
+            // Description always starts empty for the user to describe what happened
+            setDescription("");
             setStatusMessage(null);
         }
     }, [isOpen, initialData]);
@@ -56,40 +48,46 @@ export default function ReportProblemModal({ isOpen, onClose, initialData = {} }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!description.trim()) {
-            setStatusMessage({ type: "error", text: "Please provide a brief description of the issue." });
+        const trimmed = description.trim();
+        if (!trimmed) {
+            setStatusMessage({ type: "error", text: "Please describe what went wrong." });
+            return;
+        }
+        if (trimmed.length < 10) {
+            setStatusMessage({ type: "error", text: "Please provide at least 10 characters describing the issue." });
             return;
         }
 
         setIsSubmitting(true);
         setStatusMessage(null);
 
+        let userEmail = "";
+        try {
+            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+            userEmail = storedUser.email || "";
+        } catch (err) {}
+
         try {
             await submitProblemReport({
                 feature,
                 actionAttempted: actionAttempted.trim(),
-                description: description.trim(),
-                reporterEmail: reporterEmail.trim(),
-                pageUrl: initialData.pageUrl || window.location.pathname
+                description: trimmed,
+                reporterEmail: userEmail || "support-reporter@samprepix.com",
+                pageUrl: initialData.pageUrl || window.location.pathname,
+                timestamp: new Date().toISOString(),
+                errorDiagnostic: internalDiagnostic || null
             });
 
-            setStatusMessage({
-                type: "success",
-                text: "Thank you! Your report has been dispatched to our engineering team."
-            });
-
-            // Auto-close after 2 seconds
-            setTimeout(() => {
-                setDescription("");
-                setActionAttempted("");
-                setStatusMessage(null);
-                onClose();
-            }, 2000);
+            toast.success("Thank you! Your report has been dispatched to our engineering team.");
+            setDescription("");
+            setActionAttempted("");
+            setStatusMessage(null);
+            onClose();
         } catch (error) {
-            console.error("Failed to submit problem report:", error);
+            console.error("Problem report submission error:", error);
             setStatusMessage({
                 type: "error",
-                text: error?.response?.data?.message || "Failed to submit report. Please try again later."
+                text: "Unable to submit your report at this time. Please try again later."
             });
         } finally {
             setIsSubmitting(false);
@@ -159,31 +157,38 @@ export default function ReportProblemModal({ isOpen, onClose, initialData = {} }
                             id="problem-desc"
                             className="problem-textarea"
                             rows={4}
-                            placeholder="Explain the error or unexpected behavior in detail..."
+                            placeholder="Describe what went wrong..."
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             disabled={isSubmitting}
+                            minLength={10}
                             maxLength={3000}
                             required
                         />
-                        <div className="problem-char-count">{description.length} / 3000</div>
+                        <div className="problem-char-count">{description.length} / 3000 (min 10 characters)</div>
                     </div>
 
                     <div className="problem-form-group">
-                        <label htmlFor="problem-email" className="problem-label">Your Email (for updates)</label>
+                        <label htmlFor="problem-user-email" className="problem-label" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            Your Email (for updates) <FiLock size={12} style={{ color: "var(--text-secondary, #94a3b8)" }} />
+                        </label>
                         <input
-                            id="problem-email"
+                            id="problem-user-email"
                             type="email"
                             className="problem-input"
-                            placeholder="your.email@example.com"
-                            value={reporterEmail}
-                            onChange={(e) => setReporterEmail(e.target.value)}
-                            disabled={isSubmitting}
+                            value={(() => {
+                                try {
+                                    const u = JSON.parse(localStorage.getItem("user") || "{}");
+                                    return u.email || "";
+                                } catch (_) {
+                                    return "";
+                                }
+                            })()}
+                            placeholder="user@samprepix.com"
+                            readOnly
+                            disabled
+                            style={{ opacity: 0.85, cursor: "not-allowed" }}
                         />
-                    </div>
-
-                    <div className="problem-page-hint">
-                        <span>Current Route:</span> <code>{window.location.pathname}</code>
                     </div>
 
                     <div className="problem-modal-actions">

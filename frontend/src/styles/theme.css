@@ -762,7 +762,7 @@ body.theme-transition-ready select {
 /* REDUCED MOTION PREFERENCE OVERRIDE */
 @media (prefers-reduced-motion: reduce) {
     body.theme-transition-ready,
-    body.theme-transition-ready * {
+    body.theme-transition-ready *:not([class*="Toastify"]) {
         transition: none !important;
         animation: none !important;
     }
@@ -772,7 +772,7 @@ body.theme-transition-ready select {
 }
 
 body.reduce-motion,
-body.reduce-motion * {
+body.reduce-motion *:not([class*="Toastify"]) {
     transition: none !important;
     animation: none !important;
 }

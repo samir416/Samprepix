@@ -933,7 +933,7 @@ export default function SubscriptionPage() {
                                                 <>
                                                     <li>
                                                         <FaCheck />
-                                                        {" "}Complete GitHub Analyzer & README
+                                                        {" "}Complete GitHub Analyzer & Recruiter Audit
                                                     </li>
                                                     <li>
                                                         <FaCheck />

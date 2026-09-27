@@ -161,11 +161,64 @@ public class SupportServiceImpl implements SupportService {
             );
         }
 
-        return new SupportQuestionResponse(
-                "Samprepix is your comprehensive AI Placement & Interview Preparation Platform. "
-                        + "You can explore the **Dashboard**, practice in the **Coding Arena**, simulate **Mock Interviews**, inspect your **GitHub Profile**, and generate your **AI Roadmap**. "
-                        + "Need to report a bug? Click 'Report an Issue' in the assistant header.",
-                "general_guidance"
-        );
+        if (q.startsWith("hi") || q.startsWith("hello") || q.startsWith("hey") || q.contains("greetings") || q.equals("hi") || q.equals("hello")) {
+            return new SupportQuestionResponse(
+                    "Hello! 👋 I'm your Samprepix AI Assistant. I can help guide you through your AI Placement Roadmap, Coding Arena, Mock Interviews, GitHub Profile Analyzer, and Resume Feedback. What would you like to prepare for today?",
+                    "greeting"
+            );
+        }
+
+        if (q.contains("who are you") || q.contains("what can you do") || q.contains("what do you do") || q.contains("features")) {
+            return new SupportQuestionResponse(
+                    "I am the **Samprepix AI Assistant**! Here is how I can assist your placement journey:\n"
+                            + "• **AI Roadmap**: Create personalized step-by-step career milestones.\n"
+                            + "• **Coding Arena**: Solve DSA problems in 8 languages with live compiler & hints.\n"
+                            + "• **Mock Interviews**: Practice technical & HR speech-enabled simulations.\n"
+                            + "• **GitHub Analyzer**: Get an objective 0–100 recruiter readiness score & repository audit.\n"
+                            + "• **Resume Analyzer**: Optimize your resume for ATS screening.\n"
+                            + "• **Support**: Help troubleshoot or submit issue reports directly to our engineers.",
+                    "overview"
+            );
+        }
+
+        if (q.contains("performance") || q.contains("analytics") || q.contains("stats") || q.contains("history") || q.contains("score")) {
+            return new SupportQuestionResponse(
+                    "Your **Performance Hub** tracks your progress across all preparation modules: interview evaluation scores, coding submission stats, aptitude accuracy percentages, and milestone completion velocity. You can view it directly from the Sidebar.",
+                    "knowledge_base"
+            );
+        }
+
+        if (q.contains("profile") || q.contains("account") || q.contains("settings") || q.contains("password") || q.contains("skills")) {
+            return new SupportQuestionResponse(
+                    "You can update your **Target Role**, **Technical Skills**, and **Portfolio URLs** in your Profile page. Keeping your skills updated helps customize your AI Mock Interviews, Roadmap suggestions, and Coding Arena recommendations.",
+                    "knowledge_base"
+            );
+        }
+
+        if (q.contains("bug") || q.contains("issue") || q.contains("problem") || q.contains("error") || q.contains("contact") || q.contains("support")) {
+            return new SupportQuestionResponse(
+                    "If you encountered an unexpected bug or layout issue, click the **'Report an Issue or Bug to Team'** button right below our chat. It automatically records the context so our team can resolve it promptly.",
+                    "support_action"
+            );
+        }
+
+        // Varied guidance for unmapped questions
+        int hash = Math.abs(q.hashCode()) % 3;
+        if (hash == 0) {
+            return new SupportQuestionResponse(
+                    "I want to make sure I give you the most accurate answer! You can ask about our **AI Roadmap**, **Coding Arena**, **Mock Interviews**, **GitHub Analyzer**, or **Resume Scanner**. If you need help with a technical issue, feel free to use the 'Report an Issue' button below.",
+                    "general_guidance"
+            );
+        } else if (hash == 1) {
+            return new SupportQuestionResponse(
+                    "Regarding your question: you can explore key platform tools from the sidebar—such as practicing coding problems, generating career milestones in AI Roadmap, or testing your skills in Mock Interviews. What specific area would you like more details on?",
+                    "general_guidance"
+            );
+        } else {
+            return new SupportQuestionResponse(
+                    "Samprepix offers full end-to-end placement prep. Whether you need guidance on coding languages, interview scoring criteria, or ATS resume matching, let me know which module you're focusing on and I'll walk you through it!",
+                    "general_guidance"
+            );
+        }
     }
 }

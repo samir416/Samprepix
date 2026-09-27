@@ -17,6 +17,7 @@ import {
 import Navbar from "../Components/Common/Navbar";
 import Footer from "../Components/Common/Footer";
 import { API_BASE_URL } from "../config";
+import { getCleanToken } from "../services/profileService";
 import "../styles/billingHistory.css";
 
 export default function BillingHistory() {
@@ -26,11 +27,14 @@ export default function BillingHistory() {
     const [error, setError] = useState(null);
     const [downloadingId, setDownloadingId] = useState(null);
     const [activePlan, setActivePlan] = useState("STARTER");
+    const [billingStatus, setBillingStatus] = useState("Active");
+    const [nextRenewal, setNextRenewal] = useState(null);
 
-    const token = localStorage.getItem("token");
+    const token = getCleanToken();
 
     const fetchInvoices = async () => {
-        if (!token) {
+        const cleanToken = getCleanToken();
+        if (!cleanToken) {
             setLoading(false);
             return;
         }
@@ -39,25 +43,37 @@ export default function BillingHistory() {
         setError(null);
         try {
             const res = await axios.get(`${API_BASE_URL}/api/invoices`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${cleanToken}` }
             });
             const data = Array.isArray(res.data) ? res.data : [];
             setInvoices(data);
 
-            // Fetch current subscription plan
+            // Fetch current subscription status & plan
             try {
                 const subRes = await axios.get(`${API_BASE_URL}/api/subscription/current`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${cleanToken}` }
                 });
-                if (subRes.data && subRes.data.planName) {
-                    setActivePlan(subRes.data.planName);
+                if (subRes.data) {
+                    const plan = subRes.data.effectivePlan || subRes.data.plan || subRes.data.planName || "STARTER";
+                    setActivePlan(plan);
+                    setBillingStatus(subRes.data.subscriptionStatus || subRes.data.status || (plan === "STARTER" ? "Free Tier" : "Active"));
+                    if (subRes.data.expiresAt) {
+                        setNextRenewal(subRes.data.expiresAt);
+                    }
                 }
             } catch (_) {
                 // Ignore sub fetch fallback
             }
         } catch (err) {
             console.error("Failed to fetch billing history:", err);
-            setError(err?.response?.data?.error || err?.response?.data?.message || "Unable to retrieve your invoice history. Please check your connection.");
+            if (err?.response?.status === 401) {
+                // Token expired or invalid: remove stale token cleanly
+                localStorage.removeItem("token");
+                setInvoices([]);
+                setError(null);
+            } else {
+                setError(err?.response?.data?.error || err?.response?.data?.message || "Unable to retrieve your invoice history. Please check your connection.");
+            }
         } finally {
             setLoading(false);
         }
@@ -68,13 +84,14 @@ export default function BillingHistory() {
     }, [token]);
 
     const handleDownloadInvoice = async (invoiceId, invoiceNumber) => {
-        if (!token) return;
+        const cleanToken = getCleanToken();
+        if (!cleanToken) return;
         setDownloadingId(invoiceId);
         try {
             const response = await axios.get(
                 `${API_BASE_URL}/api/invoices/${invoiceId}/pdf`,
                 {
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: { Authorization: `Bearer ${cleanToken}` },
                     responseType: "blob"
                 }
             );
@@ -182,13 +199,13 @@ export default function BillingHistory() {
                     </div>
 
                     <div className="bh-stat-card">
-                        <div className="bh-stat-icon">
+                        <div className="bh-stat-icon blue">
                             <FaCreditCard />
                         </div>
                         <div className="bh-stat-info">
-                            <h3>Payment Security</h3>
+                            <h3>Billing Status</h3>
                             <div className="bh-stat-val">
-                                256-Bit Encrypted
+                                {activePlan.toUpperCase() === "STARTER" ? "Free Tier" : (billingStatus || "Active")}
                             </div>
                         </div>
                     </div>
@@ -254,10 +271,10 @@ export default function BillingHistory() {
                         /* EMPTY STATE */
                         <div className="bh-empty-state">
                             <FaReceipt className="bh-empty-icon" />
-                            <h3>No Billing Records Found</h3>
+                            <h3>No Invoices Yet</h3>
                             <p>
-                                You haven't made any purchases yet. When you upgrade to Pro (₹1) or Elite (₹2),
-                                all tax receipts and downloadable PDF invoices will be available here.
+                                You don't have any billing records yet. When you upgrade to Pro (₹1) or Elite (₹2),
+                                all verified tax receipts and downloadable PDF invoices will appear here.
                             </p>
                             <button
                                 type="button"

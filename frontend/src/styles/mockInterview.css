@@ -1648,9 +1648,9 @@
 
     @media (prefers-reduced-motion: reduce) {
 
-        *,
-        *::before,
-        *::after {
+        *:not([class*="Toastify"]),
+        *:not([class*="Toastify"])::before,
+        *:not([class*="Toastify"])::after {
 
             animation: none !important;
 

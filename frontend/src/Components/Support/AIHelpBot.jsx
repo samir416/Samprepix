@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     FiMessageSquare,
     FiX,
@@ -10,7 +10,8 @@ import {
     FiCompass,
     FiCode,
     FiAward,
-    FiLayers
+    FiLayers,
+    FiCornerDownRight
 } from "react-icons/fi";
 import { askSupportQuestion, openReportProblemModal } from "../../services/supportService";
 import "../../styles/aiHelpBot.css";
@@ -21,13 +22,13 @@ const PREDEFINED_QUESTIONS = [
         id: "roadmap",
         icon: <FiCompass />,
         title: "How does the AI Roadmap work?",
-        answer: "The **Samprepix AI Roadmap** generates a step-by-step personalized placement preparation curriculum based on your target role, current skills, and timeline. You can view milestones, mark topics as completed, track overall progress percentages, and access targeted study materials for each phase."
+        answer: "The **Samprepix AI Roadmap** generates a step-by-step personalized placement curriculum based on your target role, current skills, and timeline. You can view milestones, mark topics as completed, track overall progress percentages, and launch targeted interview or coding practice for each milestone."
     },
     {
         id: "github",
         icon: <FiLayers />,
         title: "How to use the GitHub Profile Analyzer?",
-        answer: "The **GitHub Profile Analyzer** connects with your public repositories, languages, commit patterns, and code contributions. It generates an industry readiness score, identifies your top technical skills, and recommends enhancements to strengthen your engineering portfolio for recruiters."
+        answer: "The **GitHub Profile Analyzer** evaluates your public repositories, languages, commit patterns, and code contributions. It generates an objective 0–100 recruiter readiness score, audits your repositories, and generates a tailored profile README to strengthen your engineering portfolio."
     },
     {
         id: "arena",
@@ -36,18 +37,54 @@ const PREDEFINED_QUESTIONS = [
         answer: "The **Coding Arena** supports 8 industry programming languages: Java, Python, C++, C, JavaScript, TypeScript, Go, and Rust. You can write code with syntax highlighting, run code against custom inputs or hidden test cases, get real-time compiler diagnostics, and request AI hints when stuck."
     },
     {
-        id: "tiers",
-        icon: <FiAward />,
-        title: "What are the PRO vs ELITE differences?",
-        answer: "**Samprepix Membership Tiers**:\n• **PRO (₹1 test price)**: Unlocks full Coding Arena access, AI Roadmap generator, Resume Analyzer, and core aptitude practice.\n• **ELITE (₹2 test price)**: Everything in Pro plus unlimited AI Mock Interviews with video/audio feedback, advanced performance telemetry, and priority AI hints."
-    },
-    {
         id: "interviews",
         icon: <FiHelpCircle />,
-        title: "How do AI Mock Interviews work?",
-        answer: "**AI Mock Interviews** simulate real technical and HR interviews with speech-to-text recognition, real-time AI follow-up questions, and comprehensive scoring on clarity, accuracy, and depth. Detailed evaluation reports are stored in your Performance Hub."
+        title: "How do I practice Mock Interviews?",
+        answer: "To practice **AI Mock Interviews**, select your engineering track (such as Java Full Stack, Frontend, or Core CS) and difficulty level. You can answer using voice speech-to-text recognition or text. The AI provides real-time follow-ups and delivers an instant performance scorecard with improvement tips."
+    },
+    {
+        id: "metrics",
+        icon: <FiAward />,
+        title: "Where can I see my performance metrics?",
+        answer: "You can track your comprehensive placement analytics in the **Performance Hub** and **Analytics** dashboard. It monitors your coding accuracy, mock interview scores over time, topic breakdowns, streak metrics, and placement readiness index."
     }
 ];
+
+const CONTEXTUAL_QUESTIONS = {
+    roadmap: [
+        { id: "ctx-rm1", title: "Can I customize the roadmap target role or timeline?" },
+        { id: "ctx-rm2", title: "Where can I see my performance metrics?" }
+    ],
+    github: [
+        { id: "ctx-gh1", title: "How does the README generator customize for Java Full Stack?" },
+        { id: "ctx-gh2", title: "What factors reduce my GitHub recruiter score?" }
+    ],
+    arena: [
+        { id: "ctx-ar1", title: "How do AI hints work in the Coding Arena?" },
+        { id: "ctx-ar2", title: "Can I run custom test inputs before submitting code?" }
+    ],
+    interviews: [
+        { id: "ctx-in1", title: "What evaluation criteria are scored in mock interviews?" },
+        { id: "ctx-in2", title: "Where can I see my performance metrics?" }
+    ],
+    metrics: [
+        { id: "ctx-me1", title: "How is the placement readiness score calculated?" },
+        { id: "ctx-me2", title: "How do I practice Mock Interviews?" }
+    ]
+};
+
+const CONTEXTUAL_ANSWERS = {
+    "ctx-rm1": "Yes! In the **AI Roadmap**, you can customize your target role, track (Java Full Stack, Frontend, Core CS), and target preparation timeline (30, 60, or 90 days) to automatically balance weekly milestones.",
+    "ctx-rm2": "You can view your detailed analytics in the **Performance Hub** and **Analytics** dashboard. It monitors your coding accuracy, mock interview scores over time, topic breakdowns, streak metrics, and placement readiness index.",
+    "ctx-gh1": "The **GitHub Profile Analyzer** automatically detects public repositories, verifies Java/Spring Boot frameworks and MySQL/REST APIs, and enriches your README with recruiter-friendly metrics and technical highlights.",
+    "ctx-gh2": "Factors that reduce your GitHub recruiter score include missing repository descriptions, absence of a profile README (`username/username`), unpinned projects, and lack of recent commit activity.",
+    "ctx-ar1": "In **Coding Arena**, clicking 'Ask AI Hint' analyzes your current code logic and algorithmic complexity to provide progressive architectural guidance without spoiling the full solution.",
+    "ctx-ar2": "Yes! The Coding Arena test console includes a 'Custom Input' tab where you can enter custom edge cases and inspect execution output and memory diagnostics before submitting.",
+    "ctx-in1": "AI Mock Interviews evaluate candidates on 4 core dimensions: Technical Accuracy, Architectural Depth, Communication Clarity, and Problem-Solving Strategy, accompanied by an instant scorecard.",
+    "ctx-in2": "Detailed scorecards with question-by-question transcripts, audio confidence analysis, and suggested improvements are saved directly in your **Performance Hub**.",
+    "ctx-me1": "The placement readiness index is calculated deterministically from your Coding Arena problem completion, AI Mock Interview scores, ATS resume rating, and roadmap milestones.",
+    "ctx-me2": "To practice **AI Mock Interviews**, select your engineering track (such as Java Full Stack, Frontend, or Core CS) and difficulty level. You can answer using voice speech-to-text recognition or text."
+};
 
 export default function AIHelpBot() {
     const [isOpen, setIsOpen] = useState(false);
@@ -58,12 +95,15 @@ export default function AIHelpBot() {
     const [messages, setMessages] = useState([
         {
             sender: "bot",
-            text: "Hi! 👋 I'm your Samprepix AI Assistant. How can I help you?"
+            text: "Hi! 👋 I'm your Samprepix AI Assistant. How can I help you with your placement preparation today?"
         }
     ]);
     const [inputVal, setInputVal] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
+    const [activeFollowups, setActiveFollowups] = useState(null);
     const messagesEndRef = useRef(null);
+    const typingTimerRef = useRef(null);
 
     // Welcome greeting for first-time visitor or new login
     useEffect(() => {
@@ -74,6 +114,15 @@ export default function AIHelpBot() {
             }, 3000);
             return () => clearTimeout(timer);
         }
+    }, []);
+
+    // Cleanup timer on unmount
+    useEffect(() => {
+        return () => {
+            if (typingTimerRef.current) {
+                clearInterval(typingTimerRef.current);
+            }
+        };
     }, []);
 
     const dismissGreeting = () => {
@@ -96,71 +145,158 @@ export default function AIHelpBot() {
         }
     };
 
-    const scrollToBottom = () => {
+    const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
             scrollToBottom();
         }
-    }, [messages, isOpen]);
+    }, [messages, isTyping, isOpen, scrollToBottom]);
 
-    const handlePredefinedClick = (q) => {
-        // Zero-cost instant local response
-        setMessages((prev) => [
-            ...prev,
-            { sender: "user", text: q.title },
-            { sender: "bot", text: q.answer, isPredefined: true }
-        ]);
+    // Natural word-by-word streaming effect
+    const streamBotResponse = useCallback((fullText) => {
+        return new Promise((resolve) => {
+            // 1. Show animated typing indicator first (thinking state)
+            setIsTyping(true);
+
+            setTimeout(() => {
+                setIsTyping(false);
+
+                // 2. Add new empty bot message bubble
+                setMessages((prev) => [...prev, { sender: "bot", text: "" }]);
+
+                // 3. Tokenize by words and spaces
+                const tokens = fullText.split(/(\s+)/);
+                let currentAccumulated = "";
+                let tokenIdx = 0;
+
+                if (typingTimerRef.current) {
+                    clearInterval(typingTimerRef.current);
+                }
+
+                typingTimerRef.current = setInterval(() => {
+                    if (tokenIdx < tokens.length) {
+                        currentAccumulated += tokens[tokenIdx];
+                        tokenIdx++;
+
+                        setMessages((prev) => {
+                            const copy = [...prev];
+                            copy[copy.length - 1] = {
+                                sender: "bot",
+                                text: currentAccumulated
+                            };
+                            return copy;
+                        });
+                        scrollToBottom();
+                    } else {
+                        clearInterval(typingTimerRef.current);
+                        typingTimerRef.current = null;
+                        resolve();
+                    }
+                }, 16);
+            }, 180);
+        });
+    }, [scrollToBottom]);
+
+    const handlePredefinedClick = async (q) => {
+        if (loading || isTyping) return;
+
+        // Immediately append user question
+        setMessages((prev) => [...prev, { sender: "user", text: q.title }]);
+        setLoading(true);
+
+        try {
+            await streamBotResponse(q.answer);
+            if (CONTEXTUAL_QUESTIONS[q.id]) {
+                setActiveFollowups(CONTEXTUAL_QUESTIONS[q.id]);
+            }
+        } finally {
+            setLoading(false);
+            setIsTyping(false);
+        }
+    };
+
+    const handleContextualClick = async (q) => {
+        if (loading || isTyping) return;
+
+        setMessages((prev) => [...prev, { sender: "user", text: q.title }]);
+        setLoading(true);
+
+        const answerText = CONTEXTUAL_ANSWERS[q.id] || "You can explore this directly in the relevant module or ask me any question about your placement preparation!";
+        try {
+            await streamBotResponse(answerText);
+        } finally {
+            setLoading(false);
+            setIsTyping(false);
+        }
+    };
+
+    const handleAsk5QuestionsAgain = () => {
+        if (loading || isTyping) return;
+        // Clean non-recursive reset back to starter questions
+        setActiveFollowups(null);
+        scrollToBottom();
     };
 
     const handleSendMessage = async (e) => {
         e?.preventDefault();
         const text = inputVal.trim();
-        if (!text || loading) return;
+        if (!text || loading || isTyping) return;
 
+        // Show user message immediately and clear input
         setInputVal("");
         setMessages((prev) => [...prev, { sender: "user", text }]);
         setLoading(true);
+        setIsTyping(true);
 
         try {
             const data = await askSupportQuestion(text);
-            setMessages((prev) => [
-                ...prev,
-                { sender: "bot", text: data?.answer || "I could not find an answer to that question. Please try asking about our platform features or reporting an issue." }
-            ]);
+            const answerText = data?.answer || "I'm here to assist with all Samprepix placement features — including your AI Roadmap, Coding Arena, Mock Interviews, Resume Analyzer, and GitHub Profiler. How can I guide you?";
+            await streamBotResponse(answerText);
         } catch (error) {
             console.error("AI Help Bot query failed:", error);
-            setMessages((prev) => [
-                ...prev,
-                {
-                    sender: "bot",
-                    text: "I'm having trouble reaching the assistant service right now. You can check the quick questions above or report an issue directly to our team!"
-                }
-            ]);
+            await streamBotResponse("I'm having trouble connecting to the assistant service right now. You can check the quick questions above or report an issue directly to our team!");
         } finally {
             setLoading(false);
+            setIsTyping(false);
         }
     };
 
-    // Edge-collapsed view: Sleek vertical dock on right viewport edge
+    // Edge-collapsed view: Sleek vertical dock on right viewport edge (Desktop) / compact circular trigger (Mobile)
     if (isEdgeCollapsed) {
         return (
-            <div
-                className="ai-bot-edge-handle"
-                onClick={() => {
-                    setIsEdgeCollapsed(false);
-                    localStorage.setItem("samprepix_bot_collapsed", "false");
-                    setIsOpen(true);
-                }}
-                title="Expand Samprepix Support Assistant"
-            >
-                <span className="edge-dot">•</span>
-                <span className="edge-dot">•</span>
-                <span className="edge-dot">•</span>
-                <span className="edge-label">HELP</span>
-            </div>
+            <>
+                <div
+                    className="ai-bot-edge-handle"
+                    onClick={() => {
+                        setIsEdgeCollapsed(false);
+                        localStorage.setItem("samprepix_bot_collapsed", "false");
+                        setIsOpen(true);
+                    }}
+                    title="Expand Samprepix Support Assistant"
+                >
+                    <span className="edge-dot">•</span>
+                    <span className="edge-dot">•</span>
+                    <span className="edge-dot">•</span>
+                    <span className="edge-label">HELP</span>
+                </div>
+                <div className="ai-bot-mobile-collapsed-trigger">
+                    <button
+                        className="ai-bot-trigger-btn"
+                        onClick={() => {
+                            setIsEdgeCollapsed(false);
+                            localStorage.setItem("samprepix_bot_collapsed", "false");
+                            setIsOpen(true);
+                        }}
+                        aria-label="Open AI Product Assistant"
+                        title="Samprepix Product Assistant"
+                    >
+                        <span className="trigger-icon">🤖</span>
+                    </button>
+                </div>
+            </>
         );
     }
 
@@ -223,7 +359,7 @@ export default function AIHelpBot() {
 
                     {/* MESSAGES VIEW */}
                     <div className="ai-bot-body">
-                        {/* QUICK QUESTIONS PILL LIST */}
+                        {/* QUICK QUESTIONS SECTION (COLLAPSIBLE / CLEAN) */}
                         <div className="ai-bot-quick-section">
                             <span className="quick-section-title">Quick Platform Answers:</span>
                             <div className="ai-bot-quick-list">
@@ -232,6 +368,7 @@ export default function AIHelpBot() {
                                         key={q.id}
                                         className="ai-bot-quick-chip"
                                         onClick={() => handlePredefinedClick(q)}
+                                        disabled={loading || isTyping}
                                     >
                                         <span className="quick-chip-icon">{q.icon}</span>
                                         <span>{q.title}</span>
@@ -257,7 +394,9 @@ export default function AIHelpBot() {
                                     </div>
                                 </div>
                             ))}
-                            {loading && (
+
+                            {/* ANIMATED TYPING INDICATOR (AI THINKING STATE) */}
+                            {isTyping && (
                                 <div className="ai-bot-msg-row bot">
                                     <div className="msg-bot-icon">🤖</div>
                                     <div className="ai-bot-bubble bot typing">
@@ -269,6 +408,50 @@ export default function AIHelpBot() {
                             )}
                             <div ref={messagesEndRef} />
                         </div>
+
+                        {/* RE-SUGGESTION CHIPS AFTER MESSAGES (WHEN NOT STREAMING) */}
+                        {!loading && !isTyping && messages.length > 1 && (
+                            <div className="ai-bot-followup-suggestions">
+                                <span className="followup-title">
+                                    <FiCornerDownRight size={12} /> {activeFollowups ? "Related follow-ups:" : "Platform starter questions:"}
+                                </span>
+                                <div className="followup-chips-row">
+                                    {activeFollowups ? (
+                                        <>
+                                            <button
+                                                type="button"
+                                                className="ai-bot-followup-chip reset-questions-chip"
+                                                onClick={handleAsk5QuestionsAgain}
+                                                title="Reset back to the 5 starter questions"
+                                            >
+                                                🔄 Ask the 5 starter questions again
+                                            </button>
+                                            {activeFollowups.map((q) => (
+                                                <button
+                                                    key={q.id}
+                                                    type="button"
+                                                    className="ai-bot-followup-chip"
+                                                    onClick={() => handleContextualClick(q)}
+                                                >
+                                                    {q.title}
+                                                </button>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        PREDEFINED_QUESTIONS.map((q) => (
+                                            <button
+                                                key={`follow-${q.id}`}
+                                                type="button"
+                                                className="ai-bot-followup-chip"
+                                                onClick={() => handlePredefinedClick(q)}
+                                            >
+                                                {q.title}
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* REPORT ISSUE FOOTER BAR */}
@@ -290,15 +473,15 @@ export default function AIHelpBot() {
                         <input
                             type="text"
                             className="ai-bot-input"
-                            placeholder="Ask a question about Samprepix..."
+                            placeholder={loading || isTyping ? "AI is responding..." : "Ask a question about Samprepix..."}
                             value={inputVal}
                             onChange={(e) => setInputVal(e.target.value)}
-                            disabled={loading}
+                            disabled={loading || isTyping}
                         />
                         <button
                             type="submit"
                             className="ai-bot-send-btn"
-                            disabled={!inputVal.trim() || loading}
+                            disabled={!inputVal.trim() || loading || isTyping}
                             aria-label="Send query"
                         >
                             <FiSend />

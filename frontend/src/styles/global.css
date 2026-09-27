@@ -252,32 +252,32 @@ body.density-compact .custom-track-card {
 /* =========================================================
    ACCESSIBILITY: REDUCED MOTION
 ========================================================= */
-body.reduce-motion *,
-body.reduce-motion *::before,
-body.reduce-motion *::after {
+body.reduce-motion *:not([class*="Toastify"]),
+body.reduce-motion *:not([class*="Toastify"])::before,
+body.reduce-motion *:not([class*="Toastify"])::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
 }
 
-body.reduce-motion *:hover:not(.custom-navbar),
-body.reduce-motion *:focus:not(.custom-navbar) {
+body.reduce-motion *:not([class*="Toastify"]):hover:not(.custom-navbar),
+body.reduce-motion *:not([class*="Toastify"]):focus:not(.custom-navbar) {
     transform: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *:not([class*="Toastify"]),
+    *:not([class*="Toastify"])::before,
+    *:not([class*="Toastify"])::after {
         animation-duration: 0.001ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.001ms !important;
         scroll-behavior: auto !important;
     }
 
-    *:hover:not(.custom-navbar),
-    *:focus:not(.custom-navbar) {
+    *:not([class*="Toastify"]):hover:not(.custom-navbar),
+    *:not([class*="Toastify"]):focus:not(.custom-navbar) {
         transform: none !important;
     }
 }

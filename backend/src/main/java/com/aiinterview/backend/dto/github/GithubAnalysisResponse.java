@@ -31,11 +31,6 @@ public class GithubAnalysisResponse {
     private List<String> deductions;
     private List<String> improvements;
     private List<Map<String, Object>> topLanguages;
-
-    private String currentReadme;
-    private String recommendedReadme;
-    private Map<String, List<String>> readmeSuggestions; // keep, improve, remove, add
-
     private List<RepoAnalysisDto> repoAnalyses;
     private RecruiterViewDto recruiterView;
 

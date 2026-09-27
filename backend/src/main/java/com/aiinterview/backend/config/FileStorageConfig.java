@@ -30,7 +30,14 @@ public class FileStorageConfig implements WebMvcConfigurer {
         if (!uploadAbsolutePath.endsWith("/")) {
             uploadAbsolutePath += "/";
         }
+
+        Path backendPath = Paths.get("backend", uploadDir).toAbsolutePath().normalize();
+        String backendAbsolutePath = backendPath.toUri().toString();
+        if (!backendAbsolutePath.endsWith("/")) {
+            backendAbsolutePath += "/";
+        }
+
         registry.addResourceHandler("/" + uploadDir + "/**")
-                .addResourceLocations(uploadAbsolutePath);
+                .addResourceLocations(uploadAbsolutePath, backendAbsolutePath);
     }
 }

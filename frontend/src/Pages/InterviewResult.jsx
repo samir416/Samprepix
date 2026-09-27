@@ -14,7 +14,7 @@ import {
     FiTrendingUp,
     FiXCircle
 } from "react-icons/fi";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import { getResult } from "../services/interviewService";
 import "../styles/InterviewResult.css";
@@ -22,6 +22,7 @@ import "../styles/InterviewResult.css";
 const InterviewResult = () => {
 
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
 
     const [result, setResult] = useState(null);
@@ -29,6 +30,21 @@ const InterviewResult = () => {
     const [error, setError] = useState("");
     const [expandedQuestion, setExpandedQuestion] = useState(null);
     const [isExporting, setIsExporting] = useState(false);
+
+    const roadmapContext = useMemo(() => {
+        if (location.state?.fromRoadmap) {
+            return location.state;
+        }
+        try {
+            const raw = sessionStorage.getItem("roadmap_interview_context");
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return null;
+    }, [location.state]);
+
+    const isFromRoadmap = Boolean(roadmapContext?.fromRoadmap);
+    const roadmapTopic = roadmapContext?.roadmapTopic || "";
+    const trackTitle = roadmapContext?.trackTitle || "";
 
     const sessionId =
         searchParams.get("sessionId") ||
@@ -923,7 +939,10 @@ const InterviewResult = () => {
                 state: {
                     openFeedback: true,
                     fromResult: true,
-                    sessionId
+                    sessionId,
+                    fromRoadmap: isFromRoadmap,
+                    roadmapTopic: roadmapTopic,
+                    trackTitle: trackTitle
                 }
             }
         );
@@ -1858,6 +1877,31 @@ const InterviewResult = () => {
                 </button>
 
             </section>
+
+            {isFromRoadmap && (
+                <section className="result-roadmap-card">
+                    <div>
+                        <FiCheckCircle className="result-roadmap-icon" />
+                        <div>
+                            <span className="result-roadmap-badge">ROADMAP MILESTONE COMPLETED</span>
+                            <h3>Milestone Preparation: {roadmapTopic || "Mock Interview"}</h3>
+                            <p>
+                                {trackTitle ? `Track: ${trackTitle}. ` : ""}You have fulfilled this milestone's interview requirement. Return to your AI Roadmap to continue your progress.
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        className="result-roadmap-btn"
+                        onClick={() => {
+                            sessionStorage.removeItem("roadmap_interview_context");
+                            navigate("/ai-roadmap");
+                        }}
+                    >
+                        Continue to AI Roadmap &rarr;
+                    </button>
+                </section>
+            )}
 
             <section className="result-finish-card">
 

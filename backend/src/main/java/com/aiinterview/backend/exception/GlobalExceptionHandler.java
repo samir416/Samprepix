@@ -73,6 +73,31 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<java.util.Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(java.util.Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Invalid request parameters."));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<java.util.Map<String, Object>> handleIllegalStateException(IllegalStateException ex) {
+        boolean isAuth = ex.getMessage() != null && (ex.getMessage().contains("connect") || ex.getMessage().contains("permission") || ex.getMessage().contains("token"));
+        return ResponseEntity
+                .badRequest()
+                .body(java.util.Map.of(
+                        "error", ex.getMessage() != null ? ex.getMessage() : "Action cannot be performed in current state.",
+                        "requireGitHubAuth", isAuth
+                ));
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<java.util.Map<String, String>> handleMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(java.util.Map.of("error", "Malformed request body or invalid JSON."));
+    }
+
     /**
      * Fallback Exception
      */

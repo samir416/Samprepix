@@ -195,6 +195,16 @@ export default function AIRoadmap() {
     const [notice, setNotice] = useState("");
     const [activePhaseIndex, setActivePhaseIndex] = useState(0);
 
+    const storedUser = (() => {
+        try {
+            return JSON.parse(localStorage.getItem("user") || "{}");
+        } catch (_) {
+            return {};
+        }
+    })();
+    const isAdmin = storedUser?.role === "ADMIN" || storedUser?.role === "ROLE_ADMIN";
+    const isPremiumUser = isAdmin || Boolean(roadmap?.premium) || roadmap?.effectivePlan === "ADMIN" || roadmap?.effectivePlan === "PRO" || roadmap?.effectivePlan === "ELITE";
+
     const handleRefreshRoadmap = async () => {
         if (refreshing || loading) return;
         try {
@@ -309,7 +319,7 @@ export default function AIRoadmap() {
     };
 
     const handleToggleMilestone = async (phaseLocked, milestoneId) => {
-        if (phaseLocked || !roadmap || togglingMilestoneId) return;
+        if ((phaseLocked && !isPremiumUser) || !roadmap || togglingMilestoneId) return;
         try {
             setTogglingMilestoneId(milestoneId);
             const updated = await toggleRoadmapMilestone(roadmap.trackId, milestoneId);
@@ -421,7 +431,7 @@ export default function AIRoadmap() {
                     doc.setFont("helvetica", "bold");
                     doc.setFontSize(12);
                     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-                    doc.text(`PHASE ${phase.phaseNumber}: ${phase.title.toUpperCase()} ${phase.locked ? "[PRO ONLY]" : ""}`, 40, y);
+                    doc.text(`PHASE ${phase.phaseNumber}: ${phase.title.toUpperCase()} ${(!isPremiumUser && phase.locked) ? "[PRO ONLY]" : ""}`, 40, y);
 
                     y += 15;
                     doc.setFont("helvetica", "italic");
@@ -500,7 +510,7 @@ export default function AIRoadmap() {
     const isNotStarted = progressValue === 0 && (!roadmap?.completedMilestonesCount || roadmap.completedMilestonesCount === 0);
 
     // Compute active step coordinates
-    const currentPhase = roadmap?.phases?.find(p => !p.locked && p.milestones?.some(m => !m.completed)) || roadmap?.phases?.[0];
+    const currentPhase = roadmap?.phases?.find(p => (!p.locked || isPremiumUser) && p.milestones?.some(m => !m.completed)) || roadmap?.phases?.[0];
     const nextMilestone = currentPhase?.milestones?.find(m => !m.completed) || currentPhase?.milestones?.[0];
     const nextSkill = nextMilestone?.skills?.[0] || "Core Placement Patterns";
     const recommendedProject = nextMilestone?.recommendedProject || currentPhase?.milestones?.[0]?.recommendedProject || "Enterprise Project";
@@ -669,7 +679,7 @@ export default function AIRoadmap() {
                 <span className="air-stepper-title">Curriculum Phases:</span>
                 <div className="air-stepper-scroll">
                     {roadmap?.phases?.map((p, idx) => {
-                        const isLocked = p.locked;
+                        const isLocked = !isPremiumUser && Boolean(p.locked);
                         const isDone = !isLocked && p.milestones?.every(m => m.completed);
                         const isCurrent = activePhaseIndex === idx;
 
@@ -697,163 +707,166 @@ export default function AIRoadmap() {
 
             {/* ROADMAP PHASES TIMELINE STAGE */}
             <div className="air-phases-stage">
-                {roadmap?.phases?.map((phase, pIdx) => (
-                    <div
-                        key={phase.phaseId}
-                        ref={(el) => (phaseRefs.current[pIdx] = el)}
-                        className={`air-phase-deck ${phase.locked ? "deck-locked" : ""}`}
-                    >
-                        <div className="air-deck-header">
-                            <div className="air-deck-title-cluster">
-                                <div className="air-phase-indexer">
-                                    <span>{String(phase.phaseNumber).padStart(2, "0")}</span>
+                {roadmap?.phases?.map((phase, pIdx) => {
+                    const isPhaseLocked = !isPremiumUser && Boolean(phase.locked);
+                    return (
+                        <div
+                            key={phase.phaseId}
+                            ref={(el) => (phaseRefs.current[pIdx] = el)}
+                            className={`air-phase-deck ${isPhaseLocked ? "deck-locked" : ""}`}
+                        >
+                            <div className="air-deck-header">
+                                <div className="air-deck-title-cluster">
+                                    <div className="air-phase-indexer">
+                                        <span>{String(phase.phaseNumber).padStart(2, "0")}</span>
+                                    </div>
+                                    <div>
+                                        <h2 className="air-phase-main-title">{phase.title}</h2>
+                                        <p className="air-phase-sub-title">{phase.subtitle}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h2 className="air-phase-main-title">{phase.title}</h2>
-                                    <p className="air-phase-sub-title">{phase.subtitle}</p>
-                                </div>
+
+                                {isPhaseLocked ? (
+                                    <div className="air-badge-lock">
+                                        <FiLock /> Pro Exclusive
+                                    </div>
+                                ) : (
+                                    <div className="air-badge-available">
+                                        <FiCpu /> Phase Active
+                                    </div>
+                                )}
                             </div>
 
-                            {phase.locked ? (
-                                <div className="air-badge-lock">
-                                    <FiLock /> Pro Exclusive
+                            {isPhaseLocked ? (
+                                <div className="air-locked-curtain">
+                                    <div className="air-locked-content">
+                                        <div className="air-lock-icon-wrap">
+                                            <FiLock size={28} />
+                                        </div>
+                                        <h3>Phase {phase.phaseNumber} is Locked in Starter Preview</h3>
+                                        <p>
+                                            Unlock deep architecture modules, comprehensive system design blueprints, and verified
+                                            placement credentials with Pro or Elite.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            className="air-deck-btn primary-btn"
+                                            onClick={() => navigate("/pricing")}
+                                        >
+                                            <FiAward /> Upgrade to Unlock Full Curriculum
+                                        </button>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="air-badge-available">
-                                    <FiCpu /> Phase Active
+                                <div className="air-milestone-deck-grid">
+                                    {phase.milestones?.map((m) => {
+                                        const isDone = m.completed;
+                                        const statusClass = isDone ? "completed" : "available";
+
+                                        return (
+                                            <div
+                                                key={m.id}
+                                                className={`air-milestone-card ${statusClass}`}
+                                            >
+                                                <div className="air-card-top-bar">
+                                                    <div className="air-card-status-chip">
+                                                        {isDone ? (
+                                                            <span className="air-chip done">
+                                                                <FiCheck size={11} /> Completed
+                                                            </span>
+                                                        ) : (
+                                                            <span className="air-chip in-progress">
+                                                                <FiZap size={10} /> Available
+                                                            </span>
+                                                        )}
+                                                        <span className="air-time-pill">
+                                                            <FiClock size={11} /> {m.estimatedTime || "6 hours"}
+                                                        </span>
+                                                    </div>
+
+                                                    <span className="air-xp-reward">
+                                                        +{m.xp} XP
+                                                    </span>
+                                                </div>
+
+                                                <h3 className="air-m-card-title">{m.title}</h3>
+                                                <p className="air-m-card-desc">{m.description}</p>
+
+                                                <div className="air-skills-tags-tray">
+                                                    {m.skills?.map((skill, sIdx) => (
+                                                        <span key={sIdx} className="air-skill-tag">
+                                                            {skill}
+                                                        </span>
+                                                    ))}
+                                                </div>
+
+                                                {m.recommendedProject && (
+                                                    <div className="air-project-brief-box">
+                                                        <div className="air-project-label">
+                                                            <FiFolder size={12} /> Flagship Project Benchmark
+                                                        </div>
+                                                        <div className="air-project-name">
+                                                            {m.recommendedProject}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="air-card-footer-action">
+                                                    <div className="air-card-action-row">
+                                                        {!isPhaseLocked && !isDone && (() => {
+                                                            const actionMeta = getMilestoneFeatureAction(m);
+                                                            return (
+                                                                <button
+                                                                    type="button"
+                                                                    className="air-action-link-btn"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        navigate(actionMeta.route, {
+                                                                            state: {
+                                                                                fromRoadmap: true,
+                                                                                roadmapTopic: m.title,
+                                                                                milestoneId: m.id,
+                                                                                skills: m.skills || [],
+                                                                                trackTitle: roadmap?.trackTitle || ""
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                    title={actionMeta.label}
+                                                                >
+                                                                    {actionMeta.icon}
+                                                                    <span>{actionMeta.label}</span>
+                                                                </button>
+                                                            );
+                                                        })()}
+
+                                                        <button
+                                                            type="button"
+                                                            className={`air-interactive-toggle-btn ${isDone ? "btn-undo" : "btn-complete"}`}
+                                                            onClick={() => handleToggleMilestone(isPhaseLocked, m.id)}
+                                                            disabled={togglingMilestoneId === m.id}
+                                                        >
+                                                            {togglingMilestoneId === m.id ? (
+                                                                <span>Updating XP...</span>
+                                                            ) : isDone ? (
+                                                                <>
+                                                                    <FiRotateCcw size={12} /> Mark Milestone Incomplete
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <FiCheckCircle size={13} /> Mark Completed (+{m.xp} XP)
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
-
-                        {phase.locked ? (
-                            <div className="air-locked-curtain">
-                                <div className="air-locked-content">
-                                    <div className="air-lock-icon-wrap">
-                                        <FiLock size={28} />
-                                    </div>
-                                    <h3>Phase {phase.phaseNumber} is Locked in Starter Preview</h3>
-                                    <p>
-                                        Unlock deep architecture modules, comprehensive system design blueprints, and verified
-                                        placement credentials with Pro or Elite.
-                                    </p>
-                                    <button
-                                        type="button"
-                                        className="air-deck-btn primary-btn"
-                                        onClick={() => navigate("/pricing")}
-                                    >
-                                        <FiAward /> Upgrade to Unlock Full Curriculum
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="air-milestone-deck-grid">
-                                {phase.milestones?.map((m) => {
-                                    const isDone = m.completed;
-                                    const statusClass = isDone ? "completed" : "available";
-
-                                    return (
-                                        <div
-                                            key={m.id}
-                                            className={`air-milestone-card ${statusClass}`}
-                                        >
-                                            <div className="air-card-top-bar">
-                                                <div className="air-card-status-chip">
-                                                    {isDone ? (
-                                                        <span className="air-chip done">
-                                                            <FiCheck size={11} /> Completed
-                                                        </span>
-                                                    ) : (
-                                                        <span className="air-chip in-progress">
-                                                            <FiZap size={10} /> Available
-                                                        </span>
-                                                    )}
-                                                    <span className="air-time-pill">
-                                                        <FiClock size={11} /> {m.estimatedTime || "6 hours"}
-                                                    </span>
-                                                </div>
-
-                                                <span className="air-xp-reward">
-                                                    +{m.xp} XP
-                                                </span>
-                                            </div>
-
-                                            <h3 className="air-m-card-title">{m.title}</h3>
-                                            <p className="air-m-card-desc">{m.description}</p>
-
-                                            <div className="air-skills-tags-tray">
-                                                {m.skills?.map((skill, sIdx) => (
-                                                    <span key={sIdx} className="air-skill-tag">
-                                                        {skill}
-                                                    </span>
-                                                ))}
-                                            </div>
-
-                                            {m.recommendedProject && (
-                                                <div className="air-project-brief-box">
-                                                    <div className="air-project-label">
-                                                        <FiFolder size={12} /> Flagship Project Benchmark
-                                                    </div>
-                                                    <div className="air-project-name">
-                                                        {m.recommendedProject}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <div className="air-card-footer-action">
-                                                <div className="air-card-action-row">
-                                                    {!phase.locked && !isDone && (() => {
-                                                        const actionMeta = getMilestoneFeatureAction(m);
-                                                        return (
-                                                            <button
-                                                                type="button"
-                                                                className="air-action-link-btn"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    navigate(actionMeta.route, {
-                                                                        state: {
-                                                                            fromRoadmap: true,
-                                                                            roadmapTopic: m.title,
-                                                                            milestoneId: m.id,
-                                                                            skills: m.skills || [],
-                                                                            trackTitle: roadmap?.trackTitle || ""
-                                                                        }
-                                                                    });
-                                                                }}
-                                                                title={actionMeta.label}
-                                                            >
-                                                                {actionMeta.icon}
-                                                                <span>{actionMeta.label}</span>
-                                                            </button>
-                                                        );
-                                                    })()}
-
-                                                    <button
-                                                        type="button"
-                                                        className={`air-interactive-toggle-btn ${isDone ? "btn-undo" : "btn-complete"}`}
-                                                        onClick={() => handleToggleMilestone(phase.locked, m.id)}
-                                                        disabled={togglingMilestoneId === m.id}
-                                                    >
-                                                        {togglingMilestoneId === m.id ? (
-                                                            <span>Updating XP...</span>
-                                                        ) : isDone ? (
-                                                            <>
-                                                                <FiRotateCcw size={12} /> Mark Milestone Incomplete
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <FiCheckCircle size={13} /> Mark Completed (+{m.xp} XP)
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* TRACK SWITCHER MODAL WITH DYNAMIC SUGGESTIONS */}

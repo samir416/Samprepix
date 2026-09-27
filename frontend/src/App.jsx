@@ -4,6 +4,7 @@ import AppRoutes from "./routes/AppRoutes";
 import AppLoader from "./Components/Common/AppLoader";
 import ErrorBoundary from "./Components/Common/ErrorBoundary";
 import ReportProblemModal from "./Components/Support/ReportProblemModal";
+import AIHelpBot from "./Components/Support/AIHelpBot";
 import { initGA, trackPageView } from "./utils/analytics";
 import { updatePageSEO } from "./utils/seo";
 import "./styles/mobile.css";
@@ -139,6 +140,8 @@ function App() {
                 onClose={() => setIsReportModalOpen(false)}
                 initialData={reportModalData}
             />
+
+            <AIHelpBot />
         </>
     );
 

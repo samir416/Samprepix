@@ -5,8 +5,6 @@ import {
     FiSearch,
     FiCheckCircle,
     FiAlertTriangle,
-    FiCopy,
-    FiCheck,
     FiLock,
     FiExternalLink,
     FiStar,
@@ -14,11 +12,9 @@ import {
     FiArrowRight,
     FiLayers,
     FiAward,
-    FiUserCheck,
-    FiUploadCloud,
-    FiX
+    FiUserCheck
 } from "react-icons/fi";
-import { analyzeGithubProfile, getLatestGithubAnalysis, applyReadmeToGithub } from "../services/githubAnalyzerService";
+import { analyzeGithubProfile, getLatestGithubAnalysis } from "../services/githubAnalyzerService";
 import "../styles/githubAnalyzer.css";
 
 export default function GithubAnalyzer() {
@@ -27,12 +23,16 @@ export default function GithubAnalyzer() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [analysis, setAnalysis] = useState(null);
-    const [copiedReadme, setCopiedReadme] = useState(false);
-    const [readmeTab, setReadmeTab] = useState("recommended"); // 'recommended' | 'current'
-    const [showApplyModal, setShowApplyModal] = useState(false);
-    const [applying, setApplying] = useState(false);
-    const [applySuccess, setApplySuccess] = useState("");
-    const [applyError, setApplyError] = useState("");
+
+    const storedUser = (() => {
+        try {
+            return JSON.parse(localStorage.getItem("user") || "{}");
+        } catch (_) {
+            return {};
+        }
+    })();
+    const isAdmin = storedUser?.role === "ADMIN" || storedUser?.role === "ROLE_ADMIN";
+    const hasPremiumAccess = isAdmin || Boolean(analysis?.premium) || analysis?.effectivePlan === "ADMIN" || analysis?.effectivePlan === "PRO" || analysis?.effectivePlan === "ELITE";
 
     useEffect(() => {
         const fetchLatest = async () => {
@@ -70,36 +70,6 @@ export default function GithubAnalyzer() {
         }
     };
 
-    const handleCopyReadme = () => {
-        if (!analysis?.recommendedReadme) return;
-        navigator.clipboard.writeText(analysis.recommendedReadme);
-        setCopiedReadme(true);
-        setTimeout(() => setCopiedReadme(false), 2500);
-    };
-
-    const handleApplyReadme = async () => {
-        if (!analysis || !analysis.recommendedReadme) return;
-        setApplying(true);
-        setApplyError("");
-        setApplySuccess("");
-        try {
-            const res = await applyReadmeToGithub(analysis.username, analysis.recommendedReadme);
-            setApplySuccess(res.message || "README successfully committed to your GitHub profile repository!");
-            if (res.analysis) {
-                setAnalysis(res.analysis);
-            }
-            setTimeout(() => {
-                setShowApplyModal(false);
-                setApplySuccess("");
-            }, 2500);
-        } catch (err) {
-            const msg = err?.response?.data?.error || err?.response?.data?.message || err?.message || "Failed to commit README to GitHub.";
-            setApplyError(msg);
-        } finally {
-            setApplying(false);
-        }
-    };
-
     return (
         <div className="github-analyzer-page">
             {/* HEADER */}
@@ -111,8 +81,8 @@ export default function GithubAnalyzer() {
                     <FiGithub /> GitHub Profile Analyzer
                 </h1>
                 <p>
-                    Recruiters evaluate candidate GitHub profiles within 30 seconds. Scan your public repositories,
-                    profile README, and commit health to receive an objective 0–100 score and a tailored README.
+                    Recruiters evaluate candidate GitHub profiles within 30 seconds. Scan your public repositories
+                    and commit health to receive an objective 0–100 score and actionable recruiter feedback.
                 </p>
             </div>
 
@@ -279,7 +249,7 @@ export default function GithubAnalyzer() {
                     </div>
 
                     {/* RECRUITER VIEW SECTION */}
-                    {analysis.premium ? (
+                    {hasPremiumAccess ? (
                         <div className="ga-recruiter-card">
                             <div className="ga-recruiter-badge">
                                 <FiUserCheck /> Recruiter Perspective
@@ -336,85 +306,11 @@ export default function GithubAnalyzer() {
                         </div>
                     )}
 
-                    {/* PROFILE README GENERATOR SECTION */}
-                    {analysis.premium ? (
-                        <div className="ga-readme-card">
-                            <div className="ga-card-header-flex">
-                                <div>
-                                    <h3 style={{ margin: 0, fontSize: "20px", fontWeight: "700" }}>
-                                        Tailored Profile README Generator
-                                    </h3>
-                                    <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#64748b" }}>
-                                        Based on your actual technical stack and verified Samprepix achievements.
-                                    </p>
-                                </div>
 
-                                <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-                                    <div className="ga-readme-tab-track">
-                                        <button
-                                            className={`ga-readme-tab-btn ${readmeTab === "recommended" ? "active" : ""}`}
-                                            onClick={() => setReadmeTab("recommended")}
-                                        >
-                                            Recommended
-                                        </button>
-                                        <button
-                                            className={`ga-readme-tab-btn ${readmeTab === "current" ? "active" : ""}`}
-                                            onClick={() => setReadmeTab("current")}
-                                        >
-                                            Current
-                                        </button>
-                                    </div>
-
-                                    <button className="ga-copy-btn" onClick={handleCopyReadme}>
-                                        {copiedReadme ? (
-                                            <>
-                                                <FiCheck style={{ color: "#10b981" }} /> Copied!
-                                            </>
-                                        ) : (
-                                             <>
-                                                 <FiCopy /> Copy Markdown
-                                             </>
-                                        )}
-                                    </button>
-
-                                    <button
-                                        className="ga-apply-btn"
-                                        onClick={() => {
-                                            setApplyError("");
-                                            setApplySuccess("");
-                                            setShowApplyModal(true);
-                                        }}
-                                    >
-                                        <FiUploadCloud /> Apply to GitHub Profile
-                                    </button>
-                                </div>
-                            </div>
-
-                            <pre className="ga-readme-box">
-                                {readmeTab === "recommended"
-                                    ? analysis.recommendedReadme
-                                    : (analysis.currentReadme || "No custom profile README currently exists on GitHub.")}
-                            </pre>
-                        </div>
-                    ) : (
-                        <div className="ga-locked-card">
-                            <div className="ga-lock-badge">
-                                <FiLock /> PREMIUM FEATURE
-                            </div>
-                            <h3>Unlock Custom Profile README Generator</h3>
-                            <p>
-                                Get a copy-pasteable GitHub Profile README built strictly from your verified technical
-                                stack, flagship repositories, and career targets.
-                            </p>
-                            <button className="ga-upgrade-btn" onClick={() => navigate("/pricing")}>
-                                <FiAward /> Upgrade to Pro to Unlock
-                            </button>
-                        </div>
-                    )}
 
                     {/* REPOSITORY IMPROVEMENT SUGGESTIONS */}
                     {analysis.repoAnalyses?.length > 0 && (
-                        <div className="ga-readme-card">
+                        <div className="ga-section-card">
                             <h3 style={{ margin: "0 0 16px 0", fontSize: "20px", fontWeight: "700" }}>
                                 Repository Optimization Audit
                             </h3>
@@ -458,56 +354,6 @@ export default function GithubAnalyzer() {
                                         </div>
                                     </div>
                                 ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CONFIRMATION MODAL FOR APPLYING README */}
-                    {showApplyModal && (
-                        <div className="ga-modal-backdrop" onClick={() => !applying && setShowApplyModal(false)}>
-                            <div className="ga-modal-card" onClick={(e) => e.stopPropagation()}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                                    <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <FiGithub /> Apply README to GitHub Profile
-                                    </h3>
-                                    {!applying && (
-                                        <button
-                                            onClick={() => setShowApplyModal(false)}
-                                            style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", padding: "4px" }}
-                                        >
-                                            <FiX size={20} />
-                                        </button>
-                                    )}
-                                </div>
-                                <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-secondary, #64748b)", margin: "0 0 16px 0" }}>
-                                    This will automatically commit the generated README.md to your personal GitHub repository <strong>{analysis.username}/{analysis.username}</strong> on the main branch using your connected GitHub account.
-                                </p>
-                                {applyError && (
-                                    <div style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px", color: "#ef4444", fontSize: "13px", marginBottom: "16px" }}>
-                                        {applyError}
-                                    </div>
-                                )}
-                                {applySuccess && (
-                                    <div style={{ padding: "12px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "8px", color: "#10b981", fontSize: "13px", marginBottom: "16px" }}>
-                                        {applySuccess}
-                                    </div>
-                                )}
-                                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
-                                    <button
-                                        onClick={() => setShowApplyModal(false)}
-                                        disabled={applying}
-                                        style={{ padding: "10px 18px", borderRadius: "10px", border: "1px solid #cbd5e1", background: "transparent", color: "inherit", cursor: "pointer", fontWeight: "600" }}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleApplyReadme}
-                                        disabled={applying}
-                                        className="ga-apply-btn"
-                                    >
-                                        {applying ? "Committing..." : "Confirm & Commit"}
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     )}

@@ -59,23 +59,20 @@ public class InterviewServiceImpl implements InterviewService {
 
                 List<String> strongAreas = new ArrayList<>();
 
-                String firstQuestion = geminiService.generateQuestion(
-
-                                request.getTargetRole(),
-
-                                skills,
-
-                                request.getExperienceLevel(),
-
-                                List.of(),
-
-                                List.of(),
-
-                                weakAreas,
-
-                                strongAreas
-
-                );
+                String firstQuestion;
+                try {
+                    firstQuestion = geminiService.generateQuestion(
+                                    request.getTargetRole(),
+                                    skills,
+                                    request.getExperienceLevel(),
+                                    List.of(),
+                                    List.of(),
+                                    weakAreas,
+                                    strongAreas
+                    );
+                } catch (Exception e) {
+                    firstQuestion = generateFallbackQuestion(request.getTargetRole(), skills, request.getExperienceLevel(), 0);
+                }
 
                 InterviewSession session = InterviewSession.builder()
 
@@ -284,28 +281,23 @@ public class InterviewServiceImpl implements InterviewService {
 
                 }
 
-                String nextQuestion = geminiService.generateQuestion(
-
-                                session.getTargetRole(),
-
-                                skills,
-
-                                session.getExperienceLevel(),
-
-                                previousQuestions,
-
-                                previousAnswers,
-
-                                weakAreas,
-
-                                strongAreas
-
-                );
+                String nextQuestion;
+                try {
+                    nextQuestion = geminiService.generateQuestion(
+                                    session.getTargetRole(),
+                                    skills,
+                                    session.getExperienceLevel(),
+                                    previousQuestions,
+                                    previousAnswers,
+                                    weakAreas,
+                                    strongAreas
+                    );
+                } catch (Exception e) {
+                    nextQuestion = generateFallbackQuestion(session.getTargetRole(), skills, session.getExperienceLevel(), session.getQuestionsAnswered() + 1);
+                }
 
                 session.setQuestionsAnswered(
-
                                 session.getQuestionsAnswered() + 1
-
                 );
 
                 session.setCurrentQuestion(
@@ -1241,7 +1233,16 @@ public long getCompletedInterviewCount(
                         );
 
                 }
-
         }
 
+        private String generateFallbackQuestion(String role, List<String> skills, String level, int questionIndex) {
+                String skill = (skills != null && !skills.isEmpty()) ? skills.get(questionIndex % skills.size()) : (role != null ? role : "Engineering");
+                if ("hard".equalsIgnoreCase(level)) {
+                        return "How would you architect and optimize a high-throughput, fault-tolerant system utilizing " + skill + " in a production " + (role != null ? role : "software") + " environment, and what concurrency or consistency trade-offs would you evaluate?";
+                } else if ("medium".equalsIgnoreCase(level)) {
+                        return "In " + (role != null ? role : "software engineering") + ", how do you design and implement robust error-handling, state management, and scalability patterns when working with " + skill + "?";
+                } else {
+                        return "Can you explain the core fundamentals of " + skill + ", its primary use cases in " + (role != null ? role : "software engineering") + ", and how it differs from traditional alternatives?";
+                }
+        }
 }

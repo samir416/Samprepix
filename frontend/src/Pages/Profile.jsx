@@ -2220,7 +2220,7 @@ export default function Profile() {
                                             src={
                                                 user.profilePicture.startsWith("http")
                                                     ? user.profilePicture
-                                                    : `${API_BASE_URL}${user.profilePicture}`
+                                                    : `${API_BASE_URL.replace(/\/$/, "")}/${user.profilePicture.replace(/^\//, "")}`
                                             }
                                             alt="Profile"
                                             className="profile-page-avatar-large"
@@ -2280,18 +2280,41 @@ export default function Profile() {
 
                     <div className="profile-page-hero-content">
 
-                        <h2>
-
-                            {formData.name || "Your Name"}
-
-                        </h2>
+                        <div className="profile-hero-name-row">
+                            <h2>
+                                {formData.name || user?.name || "Your Name"}
+                            </h2>
+                        </div>
 
                         <div className="profile-hero-badges-row">
+                            {(user?.role === "ADMIN" || user?.role === "ROLE_ADMIN") && (
+                                <span
+                                    className="profile-admin-badge"
+                                    style={{
+                                        padding: "4px 12px",
+                                        borderRadius: "999px",
+                                        fontSize: "11px",
+                                        fontWeight: "800",
+                                        letterSpacing: "0.6px",
+                                        background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                                        color: "#ffffff",
+                                        boxShadow: "0 2px 8px rgba(239, 68, 68, 0.25)",
+                                        textTransform: "uppercase",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "5px"
+                                    }}
+                                >
+                                    <FiLock size={11} /> ADMIN
+                                </span>
+                            )}
+
                             {(() => {
-                                const currentPlan = (membershipInfo?.effectivePlan || user?.plan || "FREE").toUpperCase();
+                                const currentPlan = (membershipInfo?.effectivePlan || user?.plan || "").toUpperCase();
                                 if (currentPlan === "PRO" || currentPlan === "ELITE") {
                                     return (
                                         <span
+                                            className="profile-tier-badge"
                                             style={{
                                                 padding: "4px 12px",
                                                 borderRadius: "999px",
@@ -2316,34 +2339,12 @@ export default function Profile() {
                                 return null;
                             })()}
 
-                            {(user?.role === "ADMIN" || user?.role === "ROLE_ADMIN") && (
-                                <span
-                                    style={{
-                                        padding: "4px 12px",
-                                        borderRadius: "999px",
-                                        fontSize: "11px",
-                                        fontWeight: "800",
-                                        letterSpacing: "0.6px",
-                                        background: "linear-gradient(135deg, #ef4444, #dc2626)",
-                                        color: "#ffffff",
-                                        boxShadow: "0 2px 8px rgba(239, 68, 68, 0.25)",
-                                        textTransform: "uppercase",
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        gap: "5px"
-                                    }}
-                                >
-                                    <FiLock size={11} /> ADMIN
-                                </span>
-                            )}
-
                             {membershipInfo?.expiresAt && (membershipInfo?.effectivePlan === "PRO" || membershipInfo?.effectivePlan === "ELITE") && (
                                 <span className="profile-hero-expiry">
                                     Valid until {new Date(membershipInfo.expiresAt).toLocaleDateString()}
                                 </span>
                             )}
                         </div>
-
 
                     </div>
 
