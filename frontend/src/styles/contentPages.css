@@ -14,7 +14,7 @@
 }
 
 body.dark-theme .content-page {
-    background: #090d16;
+    background: #020617;
     color: #f8fafc;
 }
 
@@ -117,7 +117,7 @@ body.dark-theme .content-page-hero p {
 
 body.dark-theme .content-card {
     background: #0f172a;
-    border-color: #1e293b;
+    border-color: rgba(255, 255, 255, 0.06);
 }
 
 body.dark-theme .content-card:hover {
@@ -232,8 +232,8 @@ body.dark-theme .timeline-date {
 }
 
 body.dark-theme .timeline-content {
-    background: #111827;
-    border-color: #1e293b;
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.06);
 }
 
 .timeline-content ul {

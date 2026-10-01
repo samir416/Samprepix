@@ -76,6 +76,19 @@ public class GroqService implements AIService {
                 choice.getMessage()
                         .getContent();
 
+        if (aiContent != null) {
+            aiContent = aiContent.trim();
+            if (aiContent.startsWith("```json")) {
+                aiContent = aiContent.substring(7);
+            } else if (aiContent.startsWith("```")) {
+                aiContent = aiContent.substring(3);
+            }
+            if (aiContent.endsWith("```")) {
+                aiContent = aiContent.substring(0, aiContent.length() - 3);
+            }
+            aiContent = aiContent.trim();
+        }
+
         try {
 
             AIResponse aiResponse =
@@ -190,6 +203,10 @@ public class GroqService implements AIService {
                     .header(
                             HttpHeaders.AUTHORIZATION,
                             "Bearer " + apiKey
+                    )
+                    .header(
+                            HttpHeaders.USER_AGENT,
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                     )
                     .contentType(
                             MediaType.APPLICATION_JSON

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import {
     FiMessageSquare,
     FiX,
@@ -14,7 +15,25 @@ import {
     FiCornerDownRight
 } from "react-icons/fi";
 import { askSupportQuestion, openReportProblemModal } from "../../services/supportService";
+import { getCleanToken } from "../../services/authService";
 import "../../styles/aiHelpBot.css";
+
+// Internal application routes where the AI Assistant is allowed to appear
+const LOGGED_IN_APP_ROUTES = [
+    "/dashboard",
+    "/resume-analyzer",
+    "/mock-interview",
+    "/interview-result",
+    "/coding-arena",
+    "/aptitude",
+    "/performance",
+    "/analytics",
+    "/billing-history",
+    "/github-analyzer",
+    "/ai-roadmap",
+    "/profile",
+    "/admin"
+];
 
 // 5 Predefined questions with zero-cost instant offline answers
 const PREDEFINED_QUESTIONS = [
@@ -87,6 +106,7 @@ const CONTEXTUAL_ANSWERS = {
 };
 
 export default function AIHelpBot() {
+    const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
     const [isEdgeCollapsed, setIsEdgeCollapsed] = useState(() => {
         return localStorage.getItem("samprepix_bot_collapsed") === "true";
@@ -263,6 +283,16 @@ export default function AIHelpBot() {
             setIsTyping(false);
         }
     };
+
+    const token = getCleanToken();
+    const isAllowedRoute = LOGGED_IN_APP_ROUTES.some(
+        (route) => location.pathname === route || location.pathname.startsWith(`${route}/`)
+    );
+
+    // Strictly render nothing on public pages or unauthenticated sessions
+    if (!token || !isAllowedRoute) {
+        return null;
+    }
 
     // Edge-collapsed view: Sleek vertical dock on right viewport edge (Desktop) / compact circular trigger (Mobile)
     if (isEdgeCollapsed) {

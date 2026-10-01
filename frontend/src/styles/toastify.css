@@ -8,7 +8,6 @@
        0% - 50%: slow, smooth, subtle movement
        50% - 80%: noticeably faster
        80% - 100%: fast final exit offscreen
-   - Instant manual dismissal on close button (X)
    - Pure Dual-Theme Styling (Light & Dark)
    ========================================================= */
 
@@ -39,7 +38,7 @@
     width: 100% !important;
     min-height: 54px !important;
     margin: 0 0 12px 0 !important;
-    padding: 14px 48px 14px 18px !important;
+    padding: 14px 20px !important;
     border-radius: 14px !important;
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
@@ -56,7 +55,7 @@
 .Toastify__toast:focus,
 .Toastify__toast:active {
     margin: 0 0 12px 0 !important;
-    padding: 14px 48px 14px 18px !important;
+    padding: 14px 20px !important;
 }
 
 .Toastify__toast-body {
@@ -90,39 +89,9 @@
     flex-shrink: 0 !important;
 }
 
-/* RELIABLE, INSTANTLY CLICKABLE CLOSE BUTTON */
-.toast-close-btn,
+/* Close button completely disabled & hidden */
 .Toastify__close-button {
-    position: absolute !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    right: 12px !important;
-    width: 28px !important;
-    height: 28px !important;
-    padding: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 6px !important;
-    opacity: 0.75 !important;
-    color: currentColor !important;
-    cursor: pointer !important;
-    pointer-events: auto !important;
-    z-index: 10000000 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: background-color 0.15s ease, opacity 0.15s ease !important;
-}
-
-.toast-close-btn:hover,
-.Toastify__close-button:hover {
-    opacity: 1 !important;
-    background: rgba(148, 163, 184, 0.2) !important;
-}
-
-.toast-close-btn svg,
-.toast-close-btn svg * {
-    pointer-events: none !important;
+    display: none !important;
 }
 
 /* PROGRESS BAR */
@@ -206,17 +175,6 @@ body.light-theme .Toastify__toast {
     box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.04) !important;
 }
 
-body:not(.dark-theme) .toast-close-btn,
-body.light-theme .toast-close-btn {
-    color: #475569 !important;
-}
-
-body:not(.dark-theme) .toast-close-btn:hover,
-body.light-theme .toast-close-btn:hover {
-    background: rgba(148, 163, 184, 0.2) !important;
-    color: #0f172a !important;
-}
-
 body:not(.dark-theme) .Toastify__progress-bar,
 body.light-theme .Toastify__progress-bar {
     background: linear-gradient(90deg, #6366f1, #3b82f6) !important;
@@ -228,15 +186,6 @@ body.dark-theme .Toastify__toast {
     color: #f8fafc !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-}
-
-body.dark-theme .toast-close-btn {
-    color: #94a3b8 !important;
-}
-
-body.dark-theme .toast-close-btn:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    color: #ffffff !important;
 }
 
 body.dark-theme .Toastify__progress-bar {
@@ -274,7 +223,7 @@ body.dark-theme .Toastify__progress-bar {
 
     .Toastify__toast {
         min-height: 50px !important;
-        padding: 12px 44px 12px 14px !important;
+        padding: 12px 16px !important;
         font-size: 13px !important;
         margin: 0 0 8px 0 !important;
     }

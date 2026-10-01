@@ -34,6 +34,11 @@ public class TestController {
     private final UserService userService;
     private final EntitlementService entitlementService;
 
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("OK");
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(
             @Valid @RequestBody LoginRequest loginRequest) {

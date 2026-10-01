@@ -66,7 +66,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || authHeader.isBlank()) {
+        boolean authHeaderPresent = (authHeader != null && !authHeader.isBlank());
+        log.info("JWT_DEBUG: authorization header present = {}", authHeaderPresent);
+
+        if (!authHeaderPresent) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -78,11 +81,14 @@ public class JwtFilter extends OncePerRequestFilter {
                 0,
                 7
         )) {
+            log.info("JWT_DEBUG: Authorization header does not start with Bearer");
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = authHeader.substring(7).trim();
+        boolean tokenPresent = (token != null && !token.isBlank());
+        log.info("JWT_DEBUG: token present = {}", tokenPresent);
 
         if (token.isBlank()
                 || token.length() > 4096
@@ -90,6 +96,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 || token.indexOf('\r') >= 0
                 || token.indexOf('\n') >= 0) {
 
+            log.info("JWT_DEBUG: token format rejected (length={}, hasQuotes={})", token.length(), token.indexOf('"') >= 0);
             SecurityContextHolder.clearContext();
             filterChain.doFilter(request, response);
             return;
@@ -105,37 +112,23 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             Claims claims = JwtUtil.parseClaims(token);
             email = claims.getSubject();
+            log.info("JWT_DEBUG: JWT parsed = true, JWT subject/email = {}", email);
 
         } catch (ExpiredJwtException exception) {
             SecurityContextHolder.clearContext();
-
-            log.debug(
-                    "Expired JWT rejected for URI [{}]",
-                    request.getRequestURI()
-            );
-
+            log.info("JWT_DEBUG: JWT parsed = false (expired)");
             filterChain.doFilter(request, response);
             return;
 
         } catch (JwtException | IllegalArgumentException exception) {
             SecurityContextHolder.clearContext();
-
-            log.debug(
-                    "Invalid JWT rejected for URI [{}]",
-                    request.getRequestURI()
-            );
-
+            log.info("JWT_DEBUG: JWT parsed = false (invalid: {})", exception.getMessage());
             filterChain.doFilter(request, response);
             return;
 
         } catch (Exception exception) {
             SecurityContextHolder.clearContext();
-
-            log.debug(
-                    "JWT processing failed for URI [{}]",
-                    request.getRequestURI()
-            );
-
+            log.info("JWT_DEBUG: JWT parsed = false (error: {})", exception.getMessage());
             filterChain.doFilter(request, response);
             return;
         }
@@ -157,10 +150,18 @@ public class JwtFilter extends OncePerRequestFilter {
                     customUserDetailsService
                             .loadUserByUsername(email.trim());
 
+            boolean userFound = (userDetails != null);
+            log.info("JWT_DEBUG: user found = {}", userFound);
+
             if (userDetails == null
                     || !userDetails.isEnabled()
                     || !userDetails.isAccountNonLocked()
                     || !userDetails.isAccountNonExpired()) {
+
+                log.info("JWT_DEBUG: user isEnabled={}, isAccountNonLocked={}, isAccountNonExpired={}",
+                        (userDetails != null && userDetails.isEnabled()),
+                        (userDetails != null && userDetails.isAccountNonLocked()),
+                        (userDetails != null && userDetails.isAccountNonExpired()));
 
                 SecurityContextHolder.clearContext();
                 filterChain.doFilter(request, response);
@@ -184,15 +185,12 @@ public class JwtFilter extends OncePerRequestFilter {
                     .setAuthentication(authentication);
 
             request.setAttribute("email", email.trim());
+            log.info("JWT_DEBUG: authentication created = true");
 
         } catch (Exception exception) {
 
             SecurityContextHolder.clearContext();
-
-            log.debug(
-                    "JWT user authentication failed for URI [{}]",
-                    request.getRequestURI()
-            );
+            log.info("JWT_DEBUG: user authentication failed: {}", exception.getMessage());
         }
 
         filterChain.doFilter(request, response);

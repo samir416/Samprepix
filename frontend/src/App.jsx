@@ -5,9 +5,27 @@ import AppLoader from "./Components/Common/AppLoader";
 import ErrorBoundary from "./Components/Common/ErrorBoundary";
 import ReportProblemModal from "./Components/Support/ReportProblemModal";
 import AIHelpBot from "./Components/Support/AIHelpBot";
+import { getCleanToken } from "./services/authService";
 import { initGA, trackPageView } from "./utils/analytics";
 import { updatePageSEO } from "./utils/seo";
 import "./styles/mobile.css";
+
+// Internal application routes where the AI Assistant is allowed to appear
+const LOGGED_IN_APP_ROUTES = [
+    "/dashboard",
+    "/resume-analyzer",
+    "/mock-interview",
+    "/interview-result",
+    "/coding-arena",
+    "/aptitude",
+    "/performance",
+    "/analytics",
+    "/billing-history",
+    "/github-analyzer",
+    "/ai-roadmap",
+    "/profile",
+    "/admin"
+];
 
 function App() {
     const location = useLocation();
@@ -123,6 +141,13 @@ function App() {
         };
     }, []);
 
+    // Render AI Assistant ONLY when user is authenticated AND inside logged-in application area
+    const isAuthAppRoute = LOGGED_IN_APP_ROUTES.some((route) =>
+        location.pathname === route || location.pathname.startsWith(`${route}/`)
+    );
+    const isAuthenticated = Boolean(getCleanToken());
+    const shouldRenderAssistant = isAuthenticated && isAuthAppRoute;
+
     return (
 
         <>
@@ -141,7 +166,7 @@ function App() {
                 initialData={reportModalData}
             />
 
-            <AIHelpBot />
+            {shouldRenderAssistant && <AIHelpBot />}
         </>
     );
 

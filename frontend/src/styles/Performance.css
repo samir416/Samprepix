@@ -1208,18 +1208,135 @@ body.dark-theme .score-ring-inner {
 ======================================== */
 
 body.dark-theme .performance-page {
-
-  background:
-    radial-gradient(circle at top left, rgba(99,102,241,0.12), transparent 22%),
-    radial-gradient(circle at top right, rgba(6,182,212,0.08), transparent 24%),
-    linear-gradient(135deg, #020617, #071226);
+  background: transparent !important;
 }
 
-/* HEADER */
+body.dark-theme .performance-page::after {
+  display: none !important;
+}
 
+/* REMOVE ALL TEXTURE, NOISE, GRAIN, METALLIC EFFECTS, AND ROUGH OVERLAYS */
+body.dark-theme .glass-card::before,
+body.dark-theme .glass-card::after,
+body.dark-theme .performance-stat-card::before,
+body.dark-theme .performance-stat-card::after,
+body.dark-theme .daily-box::before,
+body.dark-theme .daily-box::after,
+body.dark-theme .ai-recommend-card::before,
+body.dark-theme .ai-recommend-card::after,
+body.dark-theme .active-stat-card::before,
+body.dark-theme .active-stat-card::after,
+body.dark-theme .selected-activity-box::before,
+body.dark-theme .selected-activity-box::after,
+body.dark-theme .report-preview::before,
+body.dark-theme .report-preview::after,
+body.dark-theme .daily-preview-box::before,
+body.dark-theme .daily-preview-box::after,
+body.dark-theme .performance-insight-summary::before,
+body.dark-theme .performance-insight-summary::after,
+body.dark-theme .performance-chart-card::before,
+body.dark-theme .performance-chart-card::after,
+body.dark-theme .performance-score-card::before,
+body.dark-theme .performance-score-card::after,
+body.dark-theme .performance-recent-section::before,
+body.dark-theme .performance-recent-section::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* UNIFIED SMOOTH GLASS CARDS */
+body.dark-theme .glass-card,
+body.dark-theme .performance-stat-card,
+body.dark-theme .performance-chart-card,
+body.dark-theme .performance-score-card,
+body.dark-theme .performance-rank-card,
+body.dark-theme .performance-activity-card,
+body.dark-theme .performance-side-card,
+body.dark-theme .ai-insight-panel,
+body.dark-theme .performance-insight-summary,
+body.dark-theme .selected-activity-box,
+body.dark-theme .report-preview,
+body.dark-theme .daily-preview-box,
+body.dark-theme .performance-recent-section {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(8, 15, 30, 0.98)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+body.dark-theme .glass-card:hover,
+body.dark-theme .performance-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* ACTIVE STAT CARD */
+body.dark-theme .active-stat-card,
+body.dark-theme .daily-box-active {
+  border: 1px solid rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.15) !important;
+  transform: translateY(-2px);
+}
+
+/* SECONDARY SURFACES / INNER CONTAINERS */
+body.dark-theme .performance-activity-item,
+body.dark-theme .daily-box,
+body.dark-theme .ai-recommend-card,
+body.dark-theme .insight-summary-item {
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+body.dark-theme .performance-activity-item:hover,
+body.dark-theme .ai-recommend-card:hover {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* INNER CUTOUT & ICONS */
+body.dark-theme .score-ring-inner {
+  background: #0f172a !important;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-theme .performance-stat-icon,
+body.dark-theme .rank-icon,
+body.dark-theme .activity-icon {
+  background: rgba(99, 102, 241, 0.1) !important;
+}
+
+/* BADGES & PROGRESS */
+body.dark-theme .performance-mini-badge,
+body.dark-theme .view-all-btn {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #93c5fd !important;
+}
+
+body.dark-theme .insight-summary-badge {
+  background: rgba(99, 102, 241, 0.18) !important;
+  color: #a5b4fc !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+
+body.dark-theme .performance-progress-bar {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-theme .report-line {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* TYPOGRAPHY */
 body.dark-theme .performance-header h1,
 body.dark-theme .performance-stat-card h2,
 body.dark-theme .performance-card-header h3,
+body.dark-theme .insight-summary-title h3,
 body.dark-theme .performance-skill-top,
 body.dark-theme .performance-rank-card h3,
 body.dark-theme .activity-left h4,
@@ -1230,128 +1347,30 @@ body.dark-theme .ai-insight-top h3,
 body.dark-theme .ai-recommend-card h4,
 body.dark-theme .selected-activity-box h3,
 body.dark-theme .daily-preview-box h4,
-body.dark-theme .report-line strong {
-
-  color: white;
+body.dark-theme .report-line strong,
+body.dark-theme .skill-stats strong {
+  color: #ffffff !important;
 }
-
-/* SUB TEXT */
 
 body.dark-theme .performance-header p,
 body.dark-theme .performance-stat-card p,
 body.dark-theme .performance-card-header p,
 body.dark-theme .activity-left span,
+body.dark-theme .activity-timestamp,
 body.dark-theme .daily-box p,
 body.dark-theme .score-ring-inner span,
 body.dark-theme .performance-score-content p,
 body.dark-theme .ai-recommend-card p,
 body.dark-theme .selected-activity-box p,
 body.dark-theme .daily-preview-box p,
+body.dark-theme .insight-item-label,
+body.dark-theme .skill-stats,
 body.dark-theme .report-line span {
-
-  color: #94a3b8;
+  color: #94a3b8 !important;
 }
 
-/* GLASS CARDS */
-
-body.dark-theme .glass-card,
-body.dark-theme .performance-stat-card,
-body.dark-theme .performance-chart-card,
-body.dark-theme .performance-score-card,
-body.dark-theme .performance-rank-card,
-body.dark-theme .performance-activity-card,
-body.dark-theme .performance-side-card,
-body.dark-theme .ai-insight-panel,
-body.dark-theme .selected-activity-box,
-body.dark-theme .report-preview,
-body.dark-theme .daily-preview-box {
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(9,15,35,0.84),
-      rgba(9,15,35,0.72)
-    );
-
-  border:
-    1px solid rgba(255,255,255,0.06);
-
-  box-shadow:
-    0 14px 40px rgba(0,0,0,0.28);
-}
-
-/* SMALL BOXES */
-
-body.dark-theme .performance-activity-item,
-body.dark-theme .daily-box,
-body.dark-theme .ai-recommend-card {
-
-  background:
-    rgba(255,255,255,0.04);
-
-  border:
-    1px solid rgba(255,255,255,0.06);
-}
-
-/* SCORE RING */
-
-body.dark-theme .score-ring-inner {
-
-  background:
-    linear-gradient(
-      135deg,
-      #111827,
-      #0f172a
-    );
-}
-
-/* MINI BADGE */
-
-body.dark-theme .performance-mini-badge,
-body.dark-theme .view-all-btn {
-
-  background:
-    rgba(255,255,255,0.06);
-
-  color: #93c5fd;
-}
-
-/* PROGRESS */
-
-body.dark-theme .performance-progress-bar {
-
-  background:
-    rgba(255,255,255,0.08);
-}
-
-/* ICONS */
-
-body.dark-theme .performance-stat-icon,
-body.dark-theme .rank-icon,
-body.dark-theme .activity-icon {
-
-  background:
-    rgba(255,255,255,0.06);
-}
-
-/* REPORT LINE */
-
-body.dark-theme .report-line {
-
-  border-bottom:
-    1px solid rgba(255,255,255,0.06);
-}
-
-/* ACTIVE STATES */
-
-body.dark-theme .active-stat-card,
-body.dark-theme .daily-box-active {
-
-  border:
-    1px solid rgba(99,102,241,0.32) !important;
-
-  box-shadow:
-    0 18px 40px rgba(99,102,241,0.18);
+body.dark-theme .skill-name {
+  color: #f8fafc !important;
 }
 
 /* ========================================
@@ -1645,111 +1664,16 @@ body.dark-theme .clear-focus-btn {
   line-height: 1.4;
 }
 
-body.dark-theme .performance-insight-summary {
-  background: rgba(15, 23, 42, 0.7);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-body.dark-theme .insight-summary-title h3 {
-  color: #ffffff;
-}
-
-body.dark-theme .insight-summary-badge {
-  background: rgba(99, 102, 241, 0.2);
-  color: #a5b4fc;
-}
-
-body.dark-theme .insight-summary-item {
-  background: rgba(30, 41, 59, 0.6);
-  border-color: rgba(255, 255, 255, 0.06);
-}
-
-body.dark-theme .insight-item-label {
-  color: #94a3b8;
-}
-
-body.dark-theme .insight-item-val {
-  color: #f1f5f9;
-}
-
 body.dark-theme .insight-item-val.val-active {
-  color: #34d399;
+  color: #10b981 !important;
 }
 
 body.dark-theme .insight-item-val.val-empty {
-  color: #64748b;
+  color: #64748b !important;
 }
 
 body.dark-theme .insight-item-val.val-rec {
-  color: #c7d2fe;
-}
-
-
-/* ========================================
-   ENHANCED DARK MODE READABILITY & CONTRAST
-======================================== */
-
-body.dark-theme .performance-score-card {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.85)) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-body.dark-theme .score-ring-inner h2 {
-  color: #ffffff !important;
-}
-
-body.dark-theme .score-ring-inner span {
-  color: #cbd5e1 !important;
-  font-weight: 600 !important;
-}
-
-body.dark-theme .performance-score-content h3 {
-  color: #ffffff !important;
-}
-
-body.dark-theme .performance-score-content p {
-  color: #e2e8f0 !important;
-}
-
-body.dark-theme .skill-name {
-  color: #f8fafc !important;
-}
-
-body.dark-theme .skill-stats {
-  color: #cbd5e1 !important;
-}
-
-body.dark-theme .skill-stats strong {
-  color: #ffffff !important;
-}
-
-body.dark-theme .report-preview {
-  background: rgba(15, 23, 42, 0.92) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-body.dark-theme .report-line {
-  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-body.dark-theme .report-line span {
-  color: #cbd5e1 !important;
-}
-
-body.dark-theme .report-line strong {
-  color: #38bdf8 !important;
-}
-
-body.dark-theme .performance-stat-card p {
-  color: #cbd5e1 !important;
-}
-
-body.dark-theme .performance-card-header p {
-  color: #cbd5e1 !important;
-}
-
-body.dark-theme .activity-timestamp {
-  color: #94a3b8 !important;
+  color: #a5b4fc !important;
 }
 
 /* High-contrast status badges in dark mode */

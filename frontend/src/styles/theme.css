@@ -7,10 +7,56 @@
 ========================================================= */
 
 body.dark-theme {
-
+    /* Unified Dark Theme Backgrounds */
     background: #020617;
-
     color: #f8fafc;
+    --bg-primary: #020617;
+    --bg-main: #020617;
+    --bg-page: #020617;
+    --bg-shell: linear-gradient(90deg, #020617 0%, #071133 45%, #021024 100%);
+
+    /* Unified Card & Surface System */
+    --card-bg: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(8, 15, 30, 0.98));
+    --card-bg-solid: #0f172a;
+    --surface-primary: #0f172a;
+    --surface-secondary: #1e293b;
+    --surface-elevated: #1e293b;
+    --surface-hover: rgba(255, 255, 255, 0.05);
+    --bg-card: #0f172a;
+    --bg-input: #1e293b;
+
+    /* Unified Border System */
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-medium: rgba(255, 255, 255, 0.12);
+    --border-hover: rgba(99, 102, 241, 0.4);
+    --border-focus: #6366f1;
+
+    /* Unified Typography Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-color: #f8fafc;
+
+    /* Profile Page Unified Tokens */
+    --profile-bg: transparent;
+    --profile-surface: #0f172a;
+    --profile-surface-2: #1e293b;
+    --profile-border: rgba(255, 255, 255, 0.08);
+    --profile-text: #ffffff;
+    --profile-text-light: #94a3b8;
+    --profile-text-muted: #94a3b8;
+
+    /* Interview Result Unified Tokens */
+    --result-bg: transparent;
+    --result-surface: #0f172a;
+    --result-surface-strong: #1e293b;
+    --result-surface-2: #1e293b;
+    --result-border: rgba(255, 255, 255, 0.08);
+    --result-border-strong: rgba(99, 102, 241, 0.3);
+    --result-text: #ffffff;
+    --result-text-soft: #94a3b8;
+    --result-muted: #64748b;
 }
 
 /* =========================================================
@@ -137,7 +183,63 @@ body.dark-theme .stat-card,
 body.dark-theme .graph-card,
 body.dark-theme .progress-card,
 body.dark-theme .action-card,
-body.dark-theme .activity-card {
+body.dark-theme .activity-card,
+body.dark-theme .admin-stat-card,
+body.dark-theme .admin-table-wrapper,
+body.dark-theme .admin-plan-form,
+body.dark-theme .bh-stat-card,
+body.dark-theme .bh-card,
+body.dark-theme .ga-input-card,
+body.dark-theme .ga-profile-banner,
+body.dark-theme .ga-score-card,
+body.dark-theme .ga-audit-card,
+body.dark-theme .ga-section-card,
+body.dark-theme .ga-readme-card,
+body.dark-theme .ga-repo-card,
+body.dark-theme .settings-modal-card,
+body.dark-theme .syllabus-card,
+body.dark-theme .sandbox-card,
+body.dark-theme .assessment-main-card,
+body.dark-theme .assessment-palette-card,
+body.dark-theme .breakdown-card,
+body.dark-theme .question-review-section,
+body.dark-theme .history-table-container,
+body.dark-theme .empty-history-card,
+body.dark-theme .submit-modal-card,
+body.dark-theme .aptitude-hub-attempts-section,
+body.dark-theme .profile-page-stat-card,
+body.dark-theme .profile-page-info-item,
+body.dark-theme .result-quick-stat,
+body.dark-theme .result-profile-card,
+body.dark-theme .result-skills-card,
+body.dark-theme .result-focus-card,
+body.dark-theme .result-answer-card,
+body.dark-theme .result-finish-card,
+body.dark-theme .content-card,
+body.dark-theme .forgot-password-card,
+body.dark-theme .reset-password-card,
+body.dark-theme .upload-card,
+body.dark-theme .ats-card,
+body.dark-theme .skills-card,
+body.dark-theme .editor-card,
+body.dark-theme .testcase-card,
+body.dark-theme .run-result-card,
+body.dark-theme .ai-hint-panel,
+body.dark-theme .performance-card,
+body.dark-theme .performance-stat-card,
+body.dark-theme .performance-chart-card,
+body.dark-theme .performance-score-card,
+body.dark-theme .performance-insight-summary,
+body.dark-theme .ai-insight-panel,
+body.dark-theme .selected-activity-box,
+body.dark-theme .report-preview,
+body.dark-theme .daily-preview-box,
+body.dark-theme .performance-recent-section,
+body.dark-theme .report-preview-card,
+body.dark-theme .problem-modal-content,
+body.dark-theme .air-milestone-card,
+body.dark-theme .air-phase-deck,
+body.dark-theme .air-progression-pipeline-box {
 
     background:
         linear-gradient(
@@ -159,6 +261,89 @@ body.dark-theme .activity-card {
         box-shadow 0.35s ease,
         border 0.35s ease,
         background 0.35s ease;
+}
+
+/* =========================================================
+   UNIFIED NESTED SUB-SURFACES & DROPDOWNS
+========================================================= */
+
+body.dark-theme .profile-dropdown,
+body.dark-theme .notification-dropdown,
+body.dark-theme .search-suggestions-dropdown,
+body.dark-theme .language-dropdown {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* UNIFIED SECONDARY SUB-SURFACES (OPTIONS / CHIPS / NESTED ROWS) */
+body.dark-theme .theme-option-card:not(.selected),
+body.dark-theme .settings-toggle-row,
+body.dark-theme .account-card,
+body.dark-theme .account-action-card,
+body.dark-theme .custom-track-card:not(.selected),
+body.dark-theme .font-size-btn:not(.active),
+body.dark-theme .practice-timer-card,
+body.dark-theme .question-prompt-box,
+body.dark-theme .score-stat-box,
+body.dark-theme .hub-attempts-empty,
+body.dark-theme .assessment-topbar,
+body.dark-theme .review-opt,
+body.dark-theme .review-explanation-box,
+body.dark-theme .air-track-selector-card {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-theme .theme-option-card.selected {
+    background: #312e81 !important;
+    border: 1px solid #6366f1 !important;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.5), 0 8px 24px rgba(99, 102, 241, 0.35) !important;
+}
+
+body.dark-theme .custom-track-card.selected {
+    background: #312e81 !important;
+    border: 1px solid #6366f1 !important;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.5), 0 4px 16px rgba(99, 102, 241, 0.3) !important;
+}
+
+body.dark-theme .font-size-btn.active {
+    background: #6366f1 !important;
+    border: 1px solid #6366f1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35) !important;
+}
+
+/* UNIFIED CONTAINER SEAMLESS CONTINUITY INSIDE APP SHELL */
+body.dark-theme .dashboard-content,
+body.dark-theme .billing-history-page,
+body.dark-theme .ai-roadmap-page,
+body.dark-theme .github-analyzer-page,
+body.dark-theme .aptitude-page,
+body.dark-theme .performance-container,
+body.dark-theme .profile-page,
+body.dark-theme .interview-result-page,
+body.dark-theme .resume-page,
+body.dark-theme .coding-page {
+    background: transparent !important;
+}
+
+/* UNIFIED TABLES */
+body.dark-theme .admin-table th,
+body.dark-theme .bh-table th,
+body.dark-theme .history-table th,
+body.dark-theme .hub-attempts-table th {
+    background: #1e293b !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .admin-table td,
+body.dark-theme .bh-table td,
+body.dark-theme .history-table td,
+body.dark-theme .hub-attempts-table td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: #e2e8f0 !important;
 }
 
 /* =========================================================
@@ -527,7 +712,7 @@ body.dark-theme .action-card h3 {
 
 body.dark-theme .donut-inner {
 
-    background: #111827;
+    background: #0f172a;
 }
 
 body.dark-theme .donut-inner span {

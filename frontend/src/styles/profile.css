@@ -25,11 +25,11 @@
 }
 
 body.dark-theme{
-    --profile-bg:#08111d;
-    --profile-surface:#101b2c;
-    --profile-surface-2:#17263c;
+    --profile-bg:transparent;
+    --profile-surface:#0f172a;
+    --profile-surface-2:#1e293b;
 
-    --profile-text:#f8fafc;
+    --profile-text:#ffffff;
     --profile-text-light:#94a3b8;
 
     --profile-border:rgba(255,255,255,.06);
@@ -925,7 +925,7 @@ body.dark-theme .profile-page-skill-suggestion{
 }
 
 body.dark-theme .profile-page-select option{
-    background:#17263c;
+    background:#1e293b;
     color:#f8fafc;
 }
 
@@ -1969,7 +1969,7 @@ body.dark-theme .profile-page-select option{
 
     color:#ffffff;
 
-    background:#1f2937;
+    background:#1e293b;
 
 }
 

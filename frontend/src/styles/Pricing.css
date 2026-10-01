@@ -1218,9 +1218,7 @@ body.dark-theme .pricing-section {
 body.dark-theme .pricing-card {
 
     background:
-        linear-gradient(145deg,
-            #0f172a,
-            #111827) !important;
+        linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(8, 15, 30, 0.98)) !important;
 
     border:
         1px solid rgba(255, 255, 255, 0.06) !important;
@@ -1295,11 +1293,7 @@ body.dark-theme .pricing-badge {
 body.dark-theme .pricing-card {
 
     background:
-        linear-gradient(
-            145deg,
-            #0f172a,
-            #111827
-        ) !important;
+        linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(8, 15, 30, 0.98)) !important;
 
     border:
         1px solid rgba(255,255,255,0.05) !important;
@@ -1546,8 +1540,8 @@ body.dark-theme .elite-tag {
 }
 
 body.dark-theme .pricing-card:not(.pro-card):not(.elite-card) {
-    background: #111827 !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(8, 15, 30, 0.98)) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 body.dark-theme .pricing-card:not(.pro-card):not(.elite-card) .plan-name,

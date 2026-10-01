@@ -40,10 +40,11 @@
 }
 
 .settings-modal-card {
-    width: min(700, calc(100vw - 48px));
-    max-width: 1000px;
+    width: 820px;
+    max-width: calc(100vw - 48px);
     height: min(700px, calc(100vh - 64px));
     max-height: calc(100vh - 64px);
+    box-sizing: border-box;
     background: #ffffff;
     border-radius: 20px;
     box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.06);
@@ -118,12 +119,17 @@
     display: flex;
     flex: 1;
     min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
     overflow: hidden;
 }
 
 /* TABS */
 .settings-tabs {
     width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+    box-sizing: border-box;
     border-right: 1px solid rgba(15, 23, 42, 0.08);
     background: #f8fafc;
     padding: 18px 12px;
@@ -166,11 +172,19 @@
 /* CONTENT */
 .settings-content {
     flex: 1;
+    min-width: 0;
     min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
     padding: 24px 32px;
     overflow-y: auto;
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE / Edge */
+}
+
+.settings-section {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .settings-content::-webkit-scrollbar {
@@ -279,6 +293,8 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .settings-toggle-row {
@@ -289,6 +305,8 @@
     background: #f8fafc;
     border-radius: 12px;
     border: 1px solid rgba(15, 23, 42, 0.05);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .toggle-info {
@@ -464,6 +482,8 @@ input:checked + .settings-slider:before {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .app-pref-label {
@@ -475,10 +495,14 @@ input:checked + .settings-slider:before {
 .font-size-selector {
     display: flex;
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .font-size-btn {
     flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
     padding: 8px 12px;
     border-radius: 8px;
     border: 1px solid rgba(15, 23, 42, 0.1);
@@ -510,6 +534,8 @@ input:checked + .settings-slider:before {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .custom-track-card {
@@ -524,6 +550,8 @@ input:checked + .settings-slider:before {
     text-align: left;
     transition: all 0.2s ease;
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .custom-track-card:hover {
@@ -734,7 +762,8 @@ input:checked + .settings-slider:before {
    DARK THEME SETTINGS
 ========================================================= */
 body.dark-theme .settings-modal-card {
-    background: #0b132b;
+    background: linear-gradient(145deg, rgba(15,23,42,0.98), rgba(8,15,30,0.99)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
     color: #f1f5f9;
 }
@@ -752,7 +781,7 @@ body.dark-theme .settings-header p {
 }
 
 body.dark-theme .settings-tabs {
-    background: #080e21;
+    background: rgba(15, 23, 42, 0.95);
     border-right-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -761,7 +790,7 @@ body.dark-theme .settings-tab-btn {
 }
 
 body.dark-theme .settings-tab-btn.active {
-    background: #0f1c3f;
+    background: rgba(99, 102, 241, 0.16);
     color: #818cf8;
 }
 
@@ -773,9 +802,20 @@ body.dark-theme .settings-section-title p {
     color: #94a3b8;
 }
 
-body.dark-theme .theme-option-card {
-    background: #0d1736;
-    border-color: rgba(255, 255, 255, 0.08);
+body.dark-theme .theme-option-card:not(.selected) {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-theme .theme-option-card:not(.selected):hover {
+    border-color: rgba(99, 102, 241, 0.45) !important;
+    transform: translateY(-2px);
+}
+
+body.dark-theme .theme-option-card.selected {
+    background: #312e81 !important;
+    border: 1px solid #6366f1 !important;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.5), 0 8px 24px rgba(99, 102, 241, 0.35) !important;
 }
 
 body.dark-theme .theme-card-info h4 {
@@ -786,8 +826,26 @@ body.dark-theme .theme-card-info p {
     color: #94a3b8;
 }
 
+body.dark-theme .theme-option-card.selected .theme-card-info h4 {
+    color: #ffffff !important;
+}
+
+body.dark-theme .theme-option-card.selected .theme-card-info p {
+    color: #e0e7ff !important;
+}
+
+body.dark-theme .theme-option-card.selected .theme-check {
+    color: #a5b4fc !important;
+}
+
+body.dark-theme .theme-option-card.selected .dark-preview {
+    background: #1e1b4b !important;
+    border: 1px solid rgba(99, 102, 241, 0.45) !important;
+    color: #c7d2fe !important;
+}
+
 body.dark-theme .settings-toggle-row {
-    background: #0d1736;
+    background: #1e293b;
     border-color: rgba(255, 255, 255, 0.06);
 }
 
@@ -800,7 +858,7 @@ body.dark-theme .toggle-info p {
 }
 
 body.dark-theme .account-card {
-    background: #0d1736;
+    background: #1e293b;
     border-color: rgba(255, 255, 255, 0.06);
 }
 
@@ -813,50 +871,96 @@ body.dark-theme .account-meta p {
 }
 
 body.dark-theme .account-action-card {
-    background: #0d1736;
+    background: #1e293b;
     border-color: rgba(255, 255, 255, 0.06);
 }
 
 body.dark-theme .app-pref-label {
-    color: #cbd5e1;
-}
-
-body.dark-theme .font-size-btn {
-    background: #0d1736;
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #cbd5e1;
+    color: #f8fafc !important;
 }
 
 body.dark-theme .app-pref-hint {
-    color: #94a3b8;
+    color: #94a3b8 !important;
 }
 
-body.dark-theme .custom-track-card {
-    background: #0d1736;
-    border-color: rgba(255, 255, 255, 0.08);
+/* FONT SIZE & LANGUAGE BUTTONS IN DARK THEME */
+body.dark-theme .font-size-btn:not(.active) {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
 }
 
-body.dark-theme .custom-track-card:hover {
-    border-color: #818cf8;
-    background: rgba(99, 102, 241, 0.12);
+body.dark-theme .font-size-btn:not(.active):hover {
+    border-color: rgba(99, 102, 241, 0.45) !important;
+    color: #ffffff !important;
+    background: rgba(30, 41, 59, 0.9) !important;
+}
+
+body.dark-theme .font-size-btn.active {
+    background: #6366f1 !important;
+    border: 1px solid #6366f1 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35) !important;
+}
+
+/* APTITUDE TRACK CARDS IN DARK THEME */
+body.dark-theme .custom-track-card:not(.selected) {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark-theme .custom-track-card:not(.selected):hover {
+    border-color: rgba(99, 102, 241, 0.45) !important;
+    background: rgba(30, 41, 59, 0.9) !important;
+    transform: translateY(-1px);
 }
 
 body.dark-theme .custom-track-card.selected {
-    border-color: #818cf8;
-    background: rgba(99, 102, 241, 0.2);
-    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.25);
+    background: #312e81 !important;
+    border: 1px solid #6366f1 !important;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.5), 0 4px 16px rgba(99, 102, 241, 0.3) !important;
 }
 
 body.dark-theme .custom-track-card .track-name {
-    color: #f8fafc;
+    color: #f8fafc !important;
+}
+
+body.dark-theme .custom-track-card.selected .track-name {
+    color: #ffffff !important;
+    font-weight: 700 !important;
 }
 
 body.dark-theme .custom-track-card .track-sub {
-    color: #94a3b8;
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .custom-track-card.selected .track-sub {
+    color: #e0e7ff !important;
+}
+
+body.dark-theme .custom-track-card:not(.selected) .track-icon-badge {
+    background: rgba(99, 102, 241, 0.12) !important;
+    color: #818cf8 !important;
+}
+
+body.dark-theme .custom-track-card.selected .track-icon-badge {
+    background: #6366f1 !important;
+    color: #ffffff !important;
+}
+
+body.dark-theme .custom-track-card.selected .track-count-badge {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.18) !important;
+}
+
+body.dark-theme .track-check-pill {
+    background: #6366f1 !important;
+    color: #ffffff !important;
 }
 
 body.dark-theme .settings-footer {
-    background: #080e21;
+    background: rgba(15, 23, 42, 0.98);
     border-top-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -918,8 +1022,8 @@ body.dark-theme .track-count-badge {
 
 @media (max-width: 1024px) {
     .settings-modal-card {
-        width: min(920px, calc(100vw - 36px));
-        max-width: 920px;
+        width: 820px;
+        max-width: calc(100vw - 36px);
         border-radius: 20px;
     }
     .settings-tabs {

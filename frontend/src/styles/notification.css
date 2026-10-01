@@ -427,7 +427,7 @@
 }
 
 /* =========================================================
-   DARK THEME: 100% OPAQUE (#0d1736) - ZERO BLEED
+   DARK THEME: 100% OPAQUE (#0f172a) - ZERO BLEED
 ========================================================= */
 body.dark-theme .notification-btn {
     background: rgba(255, 255, 255, 0.08);
@@ -440,19 +440,19 @@ body.dark-theme .notification-btn:hover {
 }
 
 body.dark-theme .notification-badge {
-    border-color: #0d1736;
+    border-color: #0f172a;
 }
 
 body.dark-theme .notification-dropdown {
-    background: #0d1736 !important;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
 
 body.dark-theme .notification-top {
-    background: #0d1736;
+    background: #0f172a;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -477,11 +477,11 @@ body.dark-theme .mark-all-read-btn:hover:not(:disabled) {
 }
 
 body.dark-theme .notification-list {
-    background: #0d1736;
+    background: #0f172a;
 }
 
 body.dark-theme .notification-item {
-    background: #0d1736;
+    background: #0f172a;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -502,7 +502,7 @@ body.dark-theme .notif-icon-circle {
 }
 
 body.dark-theme .notification-dot {
-    border-color: #0d1736;
+    border-color: #0f172a;
 }
 
 body.dark-theme .notif-content-header h4 {
@@ -527,7 +527,7 @@ body.dark-theme .notif-delete-btn:hover {
 }
 
 body.dark-theme .notification-footer {
-    background: #080f24;
+    background: #1e293b;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 

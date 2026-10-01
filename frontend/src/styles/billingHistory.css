@@ -418,7 +418,7 @@ body.light-theme .bh-empty-state p {
 
 /* EXPLICIT DARK MODE STYLES */
 body.dark-theme .billing-history-page {
-    background-color: #0b0f19 !important;
+    background-color: transparent !important;
     color: #f8fafc !important;
 }
 
@@ -431,9 +431,9 @@ body.dark-theme .bh-header p {
 }
 
 body.dark-theme .bh-stat-card {
-    background: #111827 !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+    background: linear-gradient(145deg, rgba(15,23,42,0.96), rgba(8,15,30,0.98)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35) !important;
 }
 
 body.dark-theme .bh-stat-info .bh-stat-val {
@@ -441,9 +441,9 @@ body.dark-theme .bh-stat-info .bh-stat-val {
 }
 
 body.dark-theme .bh-card {
-    background: #111827 !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+    background: linear-gradient(145deg, rgba(15,23,42,0.96), rgba(8,15,30,0.98)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35) !important;
 }
 
 body.dark-theme .bh-card-title {
@@ -451,7 +451,7 @@ body.dark-theme .bh-card-title {
 }
 
 body.dark-theme .bh-card-header {
-    border-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 body.dark-theme .bh-refresh-btn {
@@ -466,18 +466,18 @@ body.dark-theme .bh-refresh-btn:hover {
 }
 
 body.dark-theme .bh-table th {
-    background: rgba(30, 41, 59, 0.5) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
     color: #94a3b8 !important;
 }
 
 body.dark-theme .bh-table td {
-    border-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
     color: #e2e8f0 !important;
 }
 
 body.dark-theme .bh-table tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.02) !important;
+    background-color: rgba(255, 255, 255, 0.03) !important;
 }
 
 body.dark-theme .bh-empty-state h3 {

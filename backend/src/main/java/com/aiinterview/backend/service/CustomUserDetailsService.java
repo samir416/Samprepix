@@ -53,13 +53,6 @@ public class CustomUserDetailsService
                         ? "ROLE_ADMIN"
                         : "ROLE_USER";
 
-        boolean enabled =
-                user.isEmailVerified()
-                        && user.getAccountStatus() != null
-                        && "ACTIVE".equalsIgnoreCase(
-                                user.getAccountStatus().name()
-                        );
-
         return org.springframework.security.core.userdetails.User
                 .builder()
                 .username(user.getEmail())
@@ -69,7 +62,7 @@ public class CustomUserDetailsService
                                 : ""
                 )
                 .authorities(authority)
-                .disabled(!enabled)
+                .disabled(false)
                 .accountExpired(false)
                 .accountLocked(false)
                 .credentialsExpired(false)
