@@ -181,6 +181,8 @@ public class SecurityConfig {
         allowedOrigins.add("http://localhost:5173");
         allowedOrigins.add("http://127.0.0.1:5173");
         allowedOrigins.add("http://[::1]:5173");
+        allowedOrigins.add("https://samprepix.com");
+        allowedOrigins.add("https://www.samprepix.com");
 
         if (frontendUrl != null && !frontendUrl.isBlank()) {
             String normalizedFrontendUrl = frontendUrl.trim();

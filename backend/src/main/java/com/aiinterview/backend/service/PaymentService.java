@@ -8,10 +8,12 @@ import com.aiinterview.backend.entity.RefundStatus;
 import com.aiinterview.backend.entity.Role;
 import com.aiinterview.backend.entity.Subscription;
 import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.entity.UserProfile;
 import com.aiinterview.backend.repository.PaymentRepository;
 import com.aiinterview.backend.repository.PlanRepository;
 import com.aiinterview.backend.repository.RefundRepository;
 import com.aiinterview.backend.repository.SubscriptionRepository;
+import com.aiinterview.backend.repository.UserProfileRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
@@ -31,6 +33,7 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -40,13 +43,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PaymentService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PaymentService.class);
+
     private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
     private final PlanRepository planRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentRepository paymentRepository;
     private final RefundRepository refundRepository;
     private final InvoiceService invoiceService;
     private final PlanService planService;
+    private final EmailService emailService;
 
     @Value("${cashfree.client.id}")
     private String cashfreeClientId;
@@ -54,10 +61,10 @@ public class PaymentService {
     @Value("${cashfree.client.secret}")
     private String cashfreeClientSecret;
 
-    @Value("${cashfree.environment:TEST}")
+    @Value("${cashfree.environment:PRODUCTION}")
     private String cashfreeEnvironment;
 
-    @Value("${cashfree.return.url:http://localhost:5173/payment/verify}")
+    @Value("${cashfree.return.url:https://samprepix.com/payment/verify}")
     private String cashfreeReturnUrl;
 
     @Value("${cashfree.webhook.url:}")
@@ -100,22 +107,44 @@ public class PaymentService {
             throw new SecurityException("Authenticated user is required");
         }
 
+        if (cashfreeClientId == null || cashfreeClientId.isBlank() || "TEST_CLIENT_ID".equals(cashfreeClientId)) {
+            throw new IllegalStateException("PRODUCTION CREDENTIALS: MISSING - Cashfree credentials are not configured. CASHFREE_CLIENT_ID and CASHFREE_CLIENT_SECRET are required in environment variables.");
+        }
+
+        if ("PRODUCTION".equalsIgnoreCase(cashfreeEnvironment)) {
+            if (cashfreeClientId.toUpperCase(Locale.ROOT).startsWith("TEST")) {
+                throw new IllegalStateException("PRODUCTION CREDENTIALS: MISSING - Cashfree is configured for PRODUCTION, but test/sandbox credentials were provided. Production credentials and merchant account activation required.");
+            }
+            if (isTestMode) {
+                throw new IllegalStateException("Test mode orders are disabled in PRODUCTION mode.");
+            }
+        }
+
         if (request == null
                 || request.getPlanId() == null
                 || request.getPlanId().isBlank()) {
             throw new IllegalArgumentException("Plan is required");
         }
 
-        Plan plan;
+        Plan plan = null;
+        String rawPlanId = request.getPlanId().trim();
 
         try {
-            plan = planRepository.findById(
-                    Long.parseLong(request.getPlanId())
-            ).orElseThrow(() ->
-                    new IllegalArgumentException("Plan not found")
-            );
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("Invalid plan ID");
+            Long numericId = Long.parseLong(rawPlanId);
+            plan = planRepository.findById(numericId).orElse(null);
+        } catch (NumberFormatException ignored) {
+        }
+
+        if (plan == null) {
+            plan = planRepository.findByNameIgnoreCaseAndActiveTrue(rawPlanId).orElse(null);
+        }
+
+        if (plan == null) {
+            plan = planRepository.findByNameIgnoreCase(rawPlanId).orElse(null);
+        }
+
+        if (plan == null) {
+            throw new IllegalArgumentException("Plan not found");
         }
 
         String planName = plan.getName();
@@ -224,9 +253,31 @@ public class PaymentService {
                 user.getEmail()
         );
 
+        String validPhone = null;
+        try {
+            Optional<UserProfile> profileOpt = userProfileRepository.findByUser(user);
+            if (profileOpt.isPresent() && profileOpt.get().getPhone() != null) {
+                String rawPhone = profileOpt.get().getPhone().replaceAll("[^0-9]", "");
+                if (rawPhone.length() == 12 && rawPhone.startsWith("91")) {
+                    rawPhone = rawPhone.substring(2);
+                } else if (rawPhone.length() > 10) {
+                    rawPhone = rawPhone.substring(rawPhone.length() - 10);
+                }
+                if (rawPhone.matches("^[6-9][0-9]{9}$")) {
+                    validPhone = rawPhone;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        if (validPhone == null || validPhone.isBlank()) {
+            throw new IllegalArgumentException(
+                    "A valid 10-digit mobile number is required by the payment gateway. Please ensure your mobile number is entered in your profile before checking out."
+            );
+        }
+
         customerDetails.put(
                 "customer_phone",
-                "9999999999"
+                validPhone
         );
 
         JSONObject orderRequest = new JSONObject();
@@ -251,11 +302,26 @@ public class PaymentService {
                 customerDetails
         );
 
+        orderRequest.put(
+                "order_note",
+                "SamPrepIX - " + planName + " Plan"
+        );
+
         JSONObject orderMeta = new JSONObject();
 
         String returnUrl =
                 cashfreeReturnUrl
                         + "?order_id={order_id}";
+
+        if (request.getReturnUrl() != null && !request.getReturnUrl().isBlank()) {
+            String customReturn = request.getReturnUrl().trim();
+            if (customReturn.startsWith("http://") || customReturn.startsWith("https://")) {
+                if ("PRODUCTION".equalsIgnoreCase(cashfreeEnvironment) && (customReturn.contains("localhost") || customReturn.contains("127.0.0.1"))) {
+                    customReturn = cashfreeReturnUrl;
+                }
+                returnUrl = customReturn + (customReturn.contains("?") ? "&order_id={order_id}" : "?order_id={order_id}");
+            }
+        }
 
         orderMeta.put(
                 "return_url",
@@ -396,13 +462,15 @@ public class PaymentService {
         response.put("displayAmount", displayAmount);
         response.put("currency", currency);
         response.put("environment", cashfreeEnvironment);
+        response.put("mode", "PRODUCTION".equalsIgnoreCase(cashfreeEnvironment) ? "production" : "sandbox");
         response.put("status", "CREATED");
         response.put("planId", plan.getId());
         response.put("planName", plan.getName());
         response.put("testMode", isTestMode);
         response.put("lifetime", false);
         response.put("subscriptionPeriod", "MONTH");
-        response.put("autoRenew", true);
+        response.put("autoRenew", false);
+        response.put("renewalType", "ONE_TIME_MANUAL");
         response.put("referralApplied", referralApplied);
 
         if (referralApplied) {
@@ -621,28 +689,69 @@ public class PaymentService {
                             ""
                     );
 
-            if ("PAID".equalsIgnoreCase(orderStatus)) {
+            String detectedPaymentId = extractPaymentId(responseJson);
+            boolean hasSuccessfulPayment = false;
+            boolean hasFailedPayment = false;
+
+            try {
+                HttpRequest paymentsReq =
+                        cashfreeRequestBuilder(
+                                getCashfreeBaseUrl()
+                                        + "/orders/"
+                                        + orderId
+                                        + "/payments"
+                        )
+                                .GET()
+                                .build();
+
+                HttpResponse<String> paymentsResp =
+                        getHttpClient().send(
+                                paymentsReq,
+                                HttpResponse.BodyHandlers.ofString()
+                        );
+
+                if (paymentsResp.statusCode() >= 200 && paymentsResp.statusCode() < 300) {
+                    org.json.JSONArray paymentsArray = new org.json.JSONArray(paymentsResp.body());
+                    for (int i = 0; i < paymentsArray.length(); i++) {
+                        JSONObject pObj = paymentsArray.getJSONObject(i);
+                        String pStatus = pObj.optString("payment_status", "");
+                        if ("SUCCESS".equalsIgnoreCase(pStatus)) {
+                            hasSuccessfulPayment = true;
+                            if (pObj.has("cf_payment_id")) {
+                                detectedPaymentId = String.valueOf(pObj.get("cf_payment_id"));
+                            }
+                            break;
+                        } else if ("FAILED".equalsIgnoreCase(pStatus) || "USER_DROPPED".equalsIgnoreCase(pStatus)) {
+                            hasFailedPayment = true;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+
+            if ("PAID".equalsIgnoreCase(orderStatus) || hasSuccessfulPayment) {
                 return new CashfreeOrderStatus(
                         true,
                         false,
-                        extractPaymentId(responseJson)
+                        detectedPaymentId
                 );
             }
 
             if ("EXPIRED".equalsIgnoreCase(orderStatus)
-                    || "TERMINATED".equalsIgnoreCase(orderStatus)) {
+                    || "TERMINATED".equalsIgnoreCase(orderStatus)
+                    || (hasFailedPayment && !"ACTIVE".equalsIgnoreCase(orderStatus))) {
 
                 return new CashfreeOrderStatus(
                         false,
                         true,
-                        extractPaymentId(responseJson)
+                        detectedPaymentId
                 );
             }
 
             return new CashfreeOrderStatus(
                     false,
                     false,
-                    extractPaymentId(responseJson)
+                    detectedPaymentId
             );
 
         } catch (InterruptedException exception) {
@@ -785,7 +894,7 @@ public class PaymentService {
                             .lifetime(false)
                             .subscribedAt(subscribedAt)
                             .expiresAt(expiresAt)
-                            .autoRenew(true)
+                            .autoRenew(false)
                             .refundEligible(true)
                             .refundInitiated(false)
                             .build();
@@ -801,6 +910,26 @@ public class PaymentService {
                     payment.getAmount(),
                     payment.getCurrency()
             );
+
+            try {
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    String customerName = user.getName() != null && !user.getName().isBlank()
+                            ? user.getName()
+                            : (user.getUsername() != null ? user.getUsername() : "Valued Member");
+                    emailService.sendPaymentConfirmationEmail(
+                            user.getEmail(),
+                            customerName,
+                            plan.getName(),
+                            payment.getAmount(),
+                            payment.getCurrency(),
+                            payment.getCashfreeOrderId(),
+                            null
+                    );
+                }
+            } catch (Exception mailEx) {
+                org.slf4j.LoggerFactory.getLogger(PaymentService.class)
+                        .warn("Payment confirmation email dispatch to {} failed: {}", user.getEmail(), mailEx.getMessage());
+            }
         }
 
         Map<String, Object> response =
@@ -1250,24 +1379,60 @@ public class PaymentService {
     }
 
     @Transactional
+    public Map<String, Object> cancelAndRefundSubscriptionByAdmin(
+            Long subscriptionId,
+            Long adminUserId,
+            String reason
+    ) {
+        User admin = null;
+        if (adminUserId != null) {
+            admin = userRepository.findById(adminUserId).orElse(null);
+            if (admin != null && admin.getRole() != Role.ADMIN) {
+                throw new SecurityException("Admin access required");
+            }
+        }
+        return cancelAndRefundSubscriptionInternal(subscriptionId, admin, true, reason);
+    }
+
+    @Transactional
     public Map<String, Object> cancelAndRefundSubscription(
             Long subscriptionId,
             Long adminUserId,
             String reason
     ) {
         User admin = getAdminUser(adminUserId);
+        return cancelAndRefundSubscriptionInternal(subscriptionId, admin, true, reason);
+    }
 
+    @Transactional
+    public Map<String, Object> userCancelAndRefundSubscription(
+            Long subscriptionId,
+            Long userId,
+            String reason
+    ) {
+        if (userId == null) {
+            throw new SecurityException("Authentication required");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new SecurityException("User not found"));
+        return cancelAndRefundSubscriptionInternal(subscriptionId, user, false, reason);
+    }
+
+    private Map<String, Object> cancelAndRefundSubscriptionInternal(
+            Long subscriptionId,
+            User actor,
+            boolean isAdmin,
+            String reason
+    ) {
         if (subscriptionId == null) {
             throw new IllegalArgumentException(
                     "Subscription ID is required"
             );
         }
 
-        if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Cancellation reason is required"
-            );
-        }
+        String safeReason = (reason != null && !reason.isBlank())
+                ? reason.trim()
+                : (isAdmin ? "Admin initiated premium cancellation refund" : "User cancelled subscription");
 
         Subscription subscription =
                 subscriptionRepository
@@ -1281,6 +1446,12 @@ public class PaymentService {
         if (subscription.getUser() == null) {
             throw new RuntimeException(
                     "Subscription user not found"
+            );
+        }
+
+        if (!isAdmin && !subscription.getUser().getId().equals(actor.getId())) {
+            throw new SecurityException(
+                    "Subscription does not belong to authenticated user"
             );
         }
 
@@ -1337,6 +1508,10 @@ public class PaymentService {
                         + "_"
                         + System.currentTimeMillis();
 
+        String actorIdentity = (actor != null && actor.getEmail() != null)
+                ? actor.getEmail()
+                : (actor != null ? String.valueOf(actor.getId()) : "ADMIN_REVOKE");
+
         Refund refund =
                 Refund.builder()
                         .user(subscription.getUser())
@@ -1355,14 +1530,12 @@ public class PaymentService {
                                 RefundStatus.PENDING.name()
                         )
                         .refundSpeed("STANDARD")
-                        .initiatedBy(
-                                admin.getEmail() != null
-                                        ? admin.getEmail()
-                                        : String.valueOf(admin.getId())
-                        )
-                        .reason(reason.trim())
+                        .initiatedBy(actorIdentity)
+                        .reason(safeReason)
                         .refundNote(
-                                "Admin initiated premium cancellation refund"
+                                isAdmin
+                                        ? "Admin initiated premium cancellation refund"
+                                        : "User requested cancellation refund"
                         )
                         .initiatedAt(LocalDateTime.now())
                         .createdAt(LocalDateTime.now())
@@ -1375,12 +1548,12 @@ public class PaymentService {
         subscription.setAutoRenew(false);
         subscription.setExpiresAt(LocalDateTime.now());
         subscription.setCancelledBy(
-                admin.getEmail() != null
-                        ? admin.getEmail()
-                        : String.valueOf(admin.getId())
+                isAdmin
+                        ? "ADMIN (" + actorIdentity + ")"
+                        : "USER"
         );
         subscription.setCancellationReason(
-                reason.trim()
+                safeReason
         );
         subscription.setRefundInitiated(true);
         subscription.setRefundId(refundId);
@@ -1391,7 +1564,7 @@ public class PaymentService {
                 LocalDateTime.now()
         );
         subscription.setRefundReason(
-                reason.trim()
+                safeReason
         );
 
         payment.setRefundId(refundId);
@@ -1400,18 +1573,18 @@ public class PaymentService {
         );
         payment.setRefundAmount(refundAmount);
         payment.setRefundReason(
-                reason.trim()
+                safeReason
         );
         payment.setRefundInitiatedAt(
                 LocalDateTime.now()
         );
         payment.setCancelledBy(
-                admin.getEmail() != null
-                        ? admin.getEmail()
-                        : String.valueOf(admin.getId())
+                isAdmin
+                        ? "ADMIN (" + actorIdentity + ")"
+                        : "USER"
         );
         payment.setCancellationReason(
-                reason.trim()
+                safeReason
         );
         payment.setPaymentStatus("REFUND_PENDING");
 
@@ -1434,7 +1607,7 @@ public class PaymentService {
 
             refundRequest.put(
                     "refund_note",
-                    reason.trim()
+                    safeReason
             );
 
             refundRequest.put(
@@ -1498,11 +1671,33 @@ public class PaymentService {
 
                 paymentRepository.save(payment);
 
-                throw new RuntimeException(
-                        "Cashfree refund initiation failed. HTTP "
-                                + response.statusCode()
-                                + ": "
-                                + response.body()
+                log.warn("Cashfree refund initiation returned HTTP {}: {}", response.statusCode(), response.body());
+                try {
+                    if (subscription.getUser() != null && subscription.getUser().getEmail() != null) {
+                        String userEmail = subscription.getUser().getEmail();
+                        String customerName = subscription.getUser().getName() != null && !subscription.getUser().getName().isBlank()
+                                ? subscription.getUser().getName()
+                                : (subscription.getUser().getUsername() != null ? subscription.getUser().getUsername() : "Valued Member");
+                        String planName = subscription.getPlan() != null ? subscription.getPlan().getName() : "Premium";
+
+                        emailService.sendSubscriptionRevokedEmail(
+                                userEmail,
+                                customerName,
+                                planName,
+                                refund.getRefundAmount(),
+                                refund.getRefundId(),
+                                "Typically 5–7 business days depending on your bank and payment method"
+                        );
+                    }
+                } catch (Exception mailEx) {
+                    org.slf4j.LoggerFactory.getLogger(PaymentService.class)
+                            .warn("Subscription revocation email dispatch encountered an issue: {}", mailEx.getMessage());
+                }
+
+                return buildRefundResponse(
+                        refund,
+                        subscription,
+                        payment
                 );
             }
 
@@ -1594,6 +1789,28 @@ public class PaymentService {
             refundRepository.save(refund);
             subscriptionRepository.save(subscription);
             paymentRepository.save(payment);
+
+            try {
+                if (subscription.getUser() != null && subscription.getUser().getEmail() != null) {
+                    String userEmail = subscription.getUser().getEmail();
+                    String customerName = subscription.getUser().getName() != null && !subscription.getUser().getName().isBlank()
+                            ? subscription.getUser().getName()
+                            : (subscription.getUser().getUsername() != null ? subscription.getUser().getUsername() : "Valued Member");
+                    String planName = subscription.getPlan() != null ? subscription.getPlan().getName() : "Premium";
+
+                    emailService.sendSubscriptionRevokedEmail(
+                            userEmail,
+                            customerName,
+                            planName,
+                            refund.getRefundAmount(),
+                            refund.getRefundId(),
+                            "Typically 5–7 business days depending on your bank and payment method"
+                    );
+                }
+            } catch (Exception mailEx) {
+                org.slf4j.LoggerFactory.getLogger(PaymentService.class)
+                        .warn("Subscription revocation email dispatch encountered an issue: {}", mailEx.getMessage());
+            }
 
             return buildRefundResponse(
                     refund,

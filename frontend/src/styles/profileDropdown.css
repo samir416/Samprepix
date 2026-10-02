@@ -16,15 +16,15 @@ body{
 
 .profile-dropdown{
     position: absolute;
-    top: 72px;
+    top: 60px;
     right: 0;
-    width: 340px;
-    max-width: min(340px, 90vw);
-    max-height: calc(100vh - 85px);
-    max-height: calc(100dvh - 85px);
+    width: 270px;
+    max-width: min(270px, 92vw);
+    max-height: calc(100vh - 75px);
+    max-height: calc(100dvh - 75px);
     display: flex;
     flex-direction: column;
-    border-radius: 28px;
+    border-radius: 18px;
     overflow: hidden;
     z-index: 10000;
 
@@ -66,7 +66,7 @@ body.dark-theme .profile-dropdown{
     border: 1px solid rgba(255,255,255,0.08);
 
     box-shadow:
-    0 30px 90px rgba(0,0,0,0.65);
+    0 20px 60px rgba(0,0,0,0.65);
 }
 
 /* =========================
@@ -79,7 +79,7 @@ body:not(.dark-theme) .profile-dropdown{
     border: 1px solid rgba(0,0,0,0.08);
 
     box-shadow:
-    0 20px 60px rgba(15,23,42,0.18);
+    0 15px 45px rgba(15,23,42,0.14);
 }
 
 /* =========================
@@ -89,8 +89,8 @@ body:not(.dark-theme) .profile-dropdown{
 .profile-dropdown-top{
     display: flex;
     align-items: center;
-    gap: 18px;
-    padding: 15px;
+    gap: 12px;
+    padding: 12px 14px;
 }
 
 /* DARK */
@@ -112,11 +112,11 @@ body:not(.dark-theme) .profile-dropdown-top{
 ========================= */
 
 .profile-avatar{
-    width: 72px;
-    height: 72px;
-    min-width: 72px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
 
-    border-radius: 22px;
+    border-radius: 12px;
 
     display: flex;
     align-items: center;
@@ -131,7 +131,7 @@ body:not(.dark-theme) .profile-dropdown-top{
 
     color: white;
 
-    font-size: 28px;
+    font-size: 18px;
     font-weight: 700;
 }
 
@@ -139,10 +139,19 @@ body:not(.dark-theme) .profile-dropdown-top{
    USER INFO
 ========================= */
 
+.profile-user-info{
+    min-width: 0;
+    overflow: hidden;
+}
+
 .profile-user-info h3{
     margin: 0;
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* DARK */
@@ -158,8 +167,13 @@ body:not(.dark-theme) .profile-user-info h3{
 }
 
 .profile-user-info p{
-    margin-top: 6px;
-    font-size: 14px;
+    margin-top: 2px;
+    margin-bottom: 0;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* DARK */
@@ -179,11 +193,11 @@ body:not(.dark-theme) .profile-user-info p{
 ========================= */
 
 .profile-menu{
-    padding: 16px;
+    padding: 6px 8px;
 
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 2px;
 }
 
 /* =========================
@@ -196,17 +210,17 @@ body:not(.dark-theme) .profile-user-info p{
     border: none;
     background: transparent;
 
-    border-radius: 18px;
+    border-radius: 10px;
 
-    padding: 14px 18px;
+    padding: 8px 12px;
 
     cursor: pointer;
 
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
 
-    transition: 0.22s ease;
+    transition: 0.18s ease;
 }
 
 /* DARK */
@@ -225,10 +239,10 @@ body:not(.dark-theme) .profile-menu-btn{
 
 body.dark-theme .profile-menu-btn:hover{
     background:
-    rgba(255,255,255,0.05);
+    rgba(255,255,255,0.06);
 
     transform:
-    translateX(4px);
+    translateX(3px);
 }
 
 /* HOVER LIGHT */
@@ -238,24 +252,24 @@ body:not(.dark-theme) .profile-menu-btn:hover{
     rgba(99,102,241,0.08);
 
     transform:
-    translateX(4px);
+    translateX(3px);
 }
 
 /* =========================
-   EMOJI
+   EMOJI / ICON
 ========================= */
 
 .menu-emoji{
-    font-size: 20px;
+    font-size: 16px;
 
-    width: 24px;
-    min-width: 24px;
+    width: 18px;
+    min-width: 18px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    margin-right: 15px;
+    margin-right: 0;
 }
 
 /* =========================
@@ -263,16 +277,19 @@ body:not(.dark-theme) .profile-menu-btn:hover{
 ========================= */
 
 .profile-menu-text{
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 13.5px;
+    font-weight: 500;
 }
 
 /* =========================
-   LOGOUT
+   LOGOUT & DANGER ACTIONS
 ========================= */
 
 .profile-logout{
-    padding: 16px;
+    padding: 6px 8px 8px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 /* DARK */
@@ -289,35 +306,95 @@ body:not(.dark-theme) .profile-logout{
     1px solid rgba(0,0,0,0.06);
 }
 
-.logout-btn{
+.logout-btn,
+.delete-account-btn{
     width: 100%;
 
     border: none;
 
-    border-radius: 18px;
+    border-radius: 10px;
 
-    padding: 14px 18px;
+    padding: 8px 12px;
 
     cursor: pointer;
 
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
 
-    background:
-    rgba(239,68,68,0.1);
+    font-size: 13.5px;
+    font-weight: 600;
 
-    color: #ef4444;
-
-    font-size: 18px;
-    font-weight: 700;
-
-    transition: 0.22s ease;
+    transition: 0.18s ease;
 }
 
-.logout-btn:hover{
-    background:
-    rgba(239,68,68,0.16);
+/* Light mode - Logout (Neutral / Subtle) */
+body:not(.dark-theme) .logout-btn{
+    background: rgba(100,116,139,0.08);
+    color: #475569;
+}
+
+body:not(.dark-theme) .logout-btn:hover{
+    background: rgba(100,116,139,0.16);
+    color: #0f172a;
+}
+
+/* Light mode - Delete Account (Subtle Danger) */
+body:not(.dark-theme) .delete-account-btn{
+    background: rgba(239,68,68,0.06);
+    color: #dc2626;
+}
+
+body:not(.dark-theme) .delete-account-btn:hover{
+    background: rgba(239,68,68,0.12);
+    color: #b91c1c;
+}
+
+/* Dark mode - Logout (Neutral / Subtle) */
+body.dark-theme .logout-btn{
+    background: rgba(255,255,255,0.05);
+    color: #cbd5e1;
+}
+
+body.dark-theme .logout-btn:hover{
+    background: rgba(255,255,255,0.10);
+    color: #f8fafc;
+}
+
+/* Dark mode - Delete Account (Subtle Danger) */
+body.dark-theme .delete-account-btn{
+    background: rgba(239,68,68,0.08);
+    color: #f87171;
+}
+
+body.dark-theme .delete-account-btn:hover{
+    background: rgba(239,68,68,0.16);
+    color: #fca5a5;
+}
+
+/* Explicit guard: Neither button ever inherits active item background */
+.logout-btn.active,
+.profile-menu-btn.logout-btn{
+    background: rgba(100,116,139,0.08) !important;
+    color: #475569 !important;
+}
+
+body.dark-theme .logout-btn.active,
+body.dark-theme .profile-menu-btn.logout-btn{
+    background: rgba(255,255,255,0.05) !important;
+    color: #cbd5e1 !important;
+}
+
+.delete-account-btn.active,
+.profile-menu-btn.delete-account-btn{
+    background: rgba(239,68,68,0.06) !important;
+    color: #dc2626 !important;
+}
+
+body.dark-theme .delete-account-btn.active,
+body.dark-theme .profile-menu-btn.delete-account-btn{
+    background: rgba(239,68,68,0.08) !important;
+    color: #f87171 !important;
 }
 
 /* =========================
@@ -330,8 +407,8 @@ body:not(.dark-theme) .profile-logout{
         opacity: 0;
 
         transform:
-        translateY(-10px)
-        scale(0.96);
+        translateY(-8px)
+        scale(0.97);
     }
 
     to{
@@ -366,5 +443,133 @@ body:not(.dark-theme) .profile-logout{
     cursor: pointer;
     height: 31px;
     width: 31px;
+}
+
+.delete-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.delete-modal-card {
+    background: #0f172a;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 24px;
+    max-width: 440px;
+    width: 100%;
+    padding: 30px 24px;
+    text-align: center;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    color: #f1f5f9;
+}
+
+body:not(.dark-theme) .delete-modal-card {
+    background: #ffffff;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #0f172a;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2);
+}
+
+.delete-modal-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px auto;
+}
+
+.delete-modal-card h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+}
+
+.delete-modal-description {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #94a3b8;
+    margin: 0 0 10px 0;
+}
+
+body:not(.dark-theme) .delete-modal-description {
+    color: #64748b;
+}
+
+.delete-modal-warning {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ef4444;
+    margin: 0 0 20px 0;
+}
+
+.delete-modal-error {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.delete-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.delete-cancel-btn {
+    flex: 1;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: transparent;
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+.delete-cancel-btn:hover:not(:disabled) {
+    background: rgba(148, 163, 184, 0.1);
+    color: #f1f5f9;
+}
+
+body:not(.dark-theme) .delete-cancel-btn:hover:not(:disabled) {
+    color: #0f172a;
+}
+
+.delete-confirm-btn {
+    flex: 1;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: none;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+.delete-confirm-btn:hover:not(:disabled) {
+    background: #dc2626;
+}
+
+.delete-confirm-btn:disabled,
+.delete-cancel-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 

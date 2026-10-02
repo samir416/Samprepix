@@ -30,8 +30,8 @@ export const submitProblemReport = async (data) => {
  * Ask a platform question to the AI Support Assistant
  * @param {string} question
  */
-export const askSupportQuestion = async (question) => {
-    const response = await API.post("/ask", { question });
+export const askSupportQuestion = async (question, history = []) => {
+    const response = await API.post("/ask", { question, history });
     return response.data;
 };
 

@@ -502,6 +502,17 @@ public class SubscriptionController {
         }
     }
 
+    @PostMapping("/{subscriptionId}/cancel")
+    public ResponseEntity<?> cancelMySubscription(
+            Authentication authentication,
+            @PathVariable Long subscriptionId,
+            @RequestBody(required = false) CancellationRequest request) {
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                Map.of("error", "User-initiated cancellations are disabled. Subscription cancellations and refunds can only be processed by platform administration in accordance with our terms of service.")
+        );
+    }
+
     @GetMapping("/capabilities")
     public ResponseEntity<?> getCapabilities(
             Authentication authentication) {

@@ -121,3 +121,17 @@ export const getCurrentUser = async () => {
 
     return response.data;
 };
+
+export const clearAuthSession = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("onboardingCompleted");
+    try {
+        Object.keys(localStorage).forEach((key) => {
+            if (key.startsWith("resume_") || key.startsWith("interview_") || key.startsWith("mock_")) {
+                localStorage.removeItem(key);
+            }
+        });
+        sessionStorage.clear();
+    } catch (_) {}
+};

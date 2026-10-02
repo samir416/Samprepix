@@ -2,11 +2,17 @@ package com.aiinterview.backend.model;
 
 import com.aiinterview.backend.entity.CareerGoal;
 import com.aiinterview.backend.entity.JourneyType;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserProfileRequest {
 
     private String name;
@@ -44,6 +50,8 @@ public class UserProfileRequest {
     private String university;
 
     private String designation;
+
+    private String currentRole;
 
     private String employmentType;
 

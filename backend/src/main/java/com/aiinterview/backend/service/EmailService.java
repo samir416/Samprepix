@@ -20,6 +20,25 @@ public interface EmailService {
             String planName
     );
 
+    void sendPaymentConfirmationEmail(
+            String to,
+            String customerName,
+            String planName,
+            Double amount,
+            String currency,
+            String orderReference,
+            String paymentDate
+    );
+
+    void sendSubscriptionRevokedEmail(
+            String to,
+            String customerName,
+            String planName,
+            Double refundAmount,
+            String refundReference,
+            String expectedTimeframe
+    );
+
     void sendManualPremiumAccessEmail(
             String to,
             String subject,

@@ -58,6 +58,8 @@ public class CustomOidcUserService extends OidcUserService {
             if (user.getProvider() == AuthenticationProvider.EMAIL) {
                 user.setProvider(AuthenticationProvider.GOOGLE);
             }
+            user.setEmailVerified(true);
+            user.setAccountStatus(AccountStatus.ACTIVE);
             userRepository.saveAndFlush(user);
         } else {
             user = createNewUser(email, name, picture);

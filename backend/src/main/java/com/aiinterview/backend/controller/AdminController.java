@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +28,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
-
-    public static final String OWNER_EMAIL = "samirprajapat5@gmail.com";
 
     private final UserRepository userRepository;
     private final UserService userService;
@@ -58,7 +57,7 @@ public class AdminController {
                 subscriptions.stream()
                         .filter(subscription ->
                                 subscription.getSubscriptionStatus() != null
-                                        && SubscriptionStatus.ACTIVE.equals(
+                                        && "ACTIVE".equalsIgnoreCase(
                                         subscription.getSubscriptionStatus()
                         )
                         )
@@ -258,12 +257,12 @@ public class AdminController {
                                 )
                         );
 
-        if (OWNER_EMAIL.equalsIgnoreCase(user.getEmail())) {
+        if (user.getRole() == Role.ADMIN) {
             return ResponseEntity.badRequest()
                     .body(
                             Map.of(
                                     "message",
-                                    "Owner account role cannot be modified"
+                                    "Admin account role cannot be modified."
                             )
                     );
         }
@@ -273,7 +272,7 @@ public class AdminController {
                     .body(
                             Map.of(
                                     "message",
-                                    "Assigning ADMIN role is prohibited. Only the single owner account has ADMIN privileges."
+                                    "Promoting users to ADMIN is not allowed through the application."
                             )
                     );
         }
@@ -302,12 +301,12 @@ public class AdminController {
                                 )
                         );
 
-        if (OWNER_EMAIL.equalsIgnoreCase(user.getEmail())) {
+        if (user.getRole() == Role.ADMIN) {
             return ResponseEntity.badRequest()
                     .body(
                             Map.of(
                                     "message",
-                                    "Owner account status cannot be modified"
+                                    "Admin account status cannot be modified."
                             )
                     );
         }
@@ -342,7 +341,8 @@ public class AdminController {
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            org.springframework.security.core.Authentication authentication) {
 
         User user =
                 userRepository.findById(id)
@@ -352,12 +352,22 @@ public class AdminController {
                                 )
                         );
 
-        if (OWNER_EMAIL.equalsIgnoreCase(user.getEmail())) {
+        if (user.getRole() == Role.ADMIN) {
             return ResponseEntity.badRequest()
                     .body(
                             Map.of(
                                     "message",
-                                    "Owner account cannot be deleted"
+                                    "Admin accounts cannot be deleted."
+                            )
+                    );
+        }
+
+        if (authentication != null && user.getEmail().equalsIgnoreCase(authentication.getName())) {
+            return ResponseEntity.badRequest()
+                    .body(
+                            Map.of(
+                                    "message",
+                                    "Administrators cannot delete their own account."
                             )
                     );
         }
@@ -693,7 +703,8 @@ public class AdminController {
     @DeleteMapping("/users/{id}/entitlements/{entitlementId}")
     public ResponseEntity<?> revokeEntitlement(
             @PathVariable Long id,
-            @PathVariable Long entitlementId) {
+            @PathVariable Long entitlementId,
+            Principal principal) {
 
         userRepository.findById(id)
                 .orElseThrow(() ->
@@ -702,9 +713,13 @@ public class AdminController {
                         )
                 );
 
+        String adminName = (principal != null && principal.getName() != null)
+                ? principal.getName()
+                : "ADMIN";
+
         entitlementService.revokeEntitlement(
                 entitlementId,
-                "ADMIN"
+                adminName
         );
 
         return ResponseEntity.ok(
@@ -717,7 +732,8 @@ public class AdminController {
 
     @DeleteMapping("/users/{id}/entitlements")
     public ResponseEntity<?> revokeAllEntitlements(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            Principal principal) {
 
         userRepository.findById(id)
                 .orElseThrow(() ->
@@ -726,7 +742,15 @@ public class AdminController {
                         )
                 );
 
-        entitlementService.revokeAllEntitlementsForUser(id);
+        Long adminId = null;
+        if (principal != null && principal.getName() != null) {
+            User admin = userRepository.findByEmail(principal.getName()).orElse(null);
+            if (admin != null) {
+                adminId = admin.getId();
+            }
+        }
+
+        entitlementService.revokeAllEntitlementsForUser(id, adminId);
 
         return ResponseEntity.ok(
                 Map.of(

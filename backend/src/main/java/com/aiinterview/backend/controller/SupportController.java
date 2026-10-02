@@ -39,7 +39,8 @@ public class SupportController {
             @RequestBody SupportQuestionRequest request
     ) {
         String question = request != null ? request.getQuestion() : "";
-        SupportQuestionResponse response = supportService.answerQuestion(question);
+        java.util.List<java.util.Map<String, String>> history = request != null ? request.getHistory() : null;
+        SupportQuestionResponse response = supportService.answerQuestion(question, history);
         return ResponseEntity.ok(response);
     }
 }

@@ -167,3 +167,12 @@ export const saveGitHubRepository =
 
         return response.data;
     };
+
+export const deleteAccount = async () => {
+    const config = getAuthConfig();
+    const response = await axios.delete(
+        `${API}/account`,
+        config
+    );
+    return response.data;
+};

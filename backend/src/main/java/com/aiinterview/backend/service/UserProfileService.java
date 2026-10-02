@@ -1,5 +1,6 @@
 package com.aiinterview.backend.service;
 
+import com.aiinterview.backend.entity.AccountStatus;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.entity.UserProfile;
 import com.aiinterview.backend.repository.UserProfileRepository;
@@ -37,8 +38,9 @@ public class UserProfileService {
 
         public UserProfileResponse getProfile(String email) {
 
+                String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
                 User user = userRepository
-                                .findByEmail(email)
+                                .findByEmail(normalizedEmail)
                                 .orElse(null);
 
                 if (user == null) {
@@ -103,12 +105,15 @@ public class UserProfileService {
                         String email,
                         UserProfileRequest request) {
 
+                String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
                 User user = userRepository
-                                .findByEmail(email)
-                                .orElseThrow();
+                                .findByEmail(normalizedEmail)
+                                .orElseThrow(() -> new IllegalArgumentException("User not found: " + email));
                 if (request.getName() != null && !request.getName().isBlank()) {
-                        user.setName(request.getName());
+                        user.setName(request.getName().trim());
                 }
+                user.setEmailVerified(true);
+                user.setAccountStatus(AccountStatus.ACTIVE);
 
                 UserProfile profile = userProfileRepository
                                 .findByUser(user)
@@ -169,8 +174,10 @@ public class UserProfileService {
                 profile.setUniversity(
                                 request.getUniversity());
 
-                profile.setDesignation(
-                                request.getDesignation());
+                String designation = request.getDesignation() != null && !request.getDesignation().isBlank()
+                                ? request.getDesignation().trim()
+                                : (request.getCurrentRole() != null ? request.getCurrentRole().trim() : null);
+                profile.setDesignation(designation);
 
                 profile.setEmploymentType(
                                 request.getEmploymentType());
@@ -191,6 +198,12 @@ public class UserProfileService {
 
                         profile.setDob(null);
 
+                }
+
+                if (profile.getJourneyType() != null
+                                && profile.getTargetRole() != null && !profile.getTargetRole().isBlank()
+                                && profile.getCareerGoal() != null) {
+                        profile.setProfileCompleted(true);
                 }
 
                 user.setProfile(profile);

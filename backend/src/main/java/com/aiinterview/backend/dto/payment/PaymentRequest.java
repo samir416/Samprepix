@@ -41,4 +41,7 @@ public class PaymentRequest {
             message = "Invalid referral code"
     )
     private String referralCode;
+
+    @Size(max = 500, message = "Return URL is invalid")
+    private String returnUrl;
 }

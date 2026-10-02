@@ -1,17 +1,23 @@
 package com.aiinterview.backend.service.impl;
 
+import com.aiinterview.backend.dto.groq.Message;
 import com.aiinterview.backend.dto.support.ReportProblemRequest;
 import com.aiinterview.backend.dto.support.SupportQuestionResponse;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.service.EmailService;
 import com.aiinterview.backend.service.SupportService;
+import com.aiinterview.backend.service.ai.GroqService;
+import com.aiinterview.backend.service.gemini.GeminiService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -21,13 +27,22 @@ public class SupportServiceImpl implements SupportService {
 
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final GroqService groqService;
+    private final GeminiService geminiService;
 
     @Value("${feedback.moderation.owner-email:support@samprepix.com}")
     private String adminOwnerEmail;
 
-    public SupportServiceImpl(EmailService emailService, UserRepository userRepository) {
+    public SupportServiceImpl(
+            EmailService emailService,
+            UserRepository userRepository,
+            GroqService groqService,
+            GeminiService geminiService
+    ) {
         this.emailService = emailService;
         this.userRepository = userRepository;
+        this.groqService = groqService;
+        this.geminiService = geminiService;
     }
 
     @Override
@@ -98,127 +113,101 @@ public class SupportServiceImpl implements SupportService {
 
     @Override
     public SupportQuestionResponse answerQuestion(String question) {
+        return answerQuestion(question, null);
+    }
+
+    @Override
+    public SupportQuestionResponse answerQuestion(String question, List<Map<String, String>> history) {
         if (question == null || question.trim().isBlank()) {
             return new SupportQuestionResponse(
-                    "Hello! I am your Samprepix Support Assistant. You can ask me how to use the AI Roadmap, GitHub Profile Analyzer, Coding Arena, Mock Interviews, or subscription plans.",
-                    "platform_kb"
-            );
-        }
-
-        String q = question.toLowerCase(Locale.ROOT);
-
-        if (q.contains("roadmap") || q.contains("ai roadmap") || q.contains("path") || q.contains("milestone")) {
-            return new SupportQuestionResponse(
-                    "**Samprepix AI Roadmap** generates a step-by-step personalized placement preparation curriculum based on your target role, current skills, and timeline. "
-                            + "You can view milestones, mark topics as completed, track overall progress percentages, and access targeted study materials for each phase.",
-                    "knowledge_base"
-            );
-        }
-
-        if (q.contains("github") || q.contains("analyzer") || q.contains("profile") || q.contains("repo")) {
-            return new SupportQuestionResponse(
-                    "The **GitHub Profile Analyzer** evaluates your public repositories, languages, commit patterns, and code contributions. "
-                            + "It generates an industry readiness score, identifies your top technical skills, and recommends enhancements to strengthen your engineering portfolio for recruiters.",
-                    "knowledge_base"
-            );
-        }
-
-        if (q.contains("coding") || q.contains("arena") || q.contains("language") || q.contains("compiler") || q.contains("piston") || q.contains("run")) {
-            return new SupportQuestionResponse(
-                    "The **Coding Arena** supports 8 industry programming languages: Java, Python, C++, C, JavaScript, TypeScript, Go, and Rust. "
-                            + "You can write code with syntax highlighting, run code against custom inputs or hidden test cases, get real-time compiler diagnostics, and request AI hints when stuck.",
-                    "knowledge_base"
-            );
-        }
-
-        if (q.contains("pro") || q.contains("elite") || q.contains("price") || q.contains("pricing") || q.contains("subscription") || q.contains("plan")) {
-            return new SupportQuestionResponse(
-                    "**Samprepix Plans**:\n"
-                            + "- **PRO (₹1 test price)**: Unlocks full Coding Arena access, AI Roadmap generator, Resume Analyzer, and core aptitude practice.\n"
-                            + "- **ELITE (₹2 test price)**: Everything in Pro plus unlimited AI Mock Interviews with video/audio feedback, advanced performance telemetry, and priority AI hints.",
-                    "knowledge_base"
-            );
-        }
-
-        if (q.contains("mock") || q.contains("interview") || q.contains("voice") || q.contains("speech")) {
-            return new SupportQuestionResponse(
-                    "**AI Mock Interviews** simulate real technical and HR interviews with speech-to-text recognition, real-time AI follow-up questions, and comprehensive scoring on clarity, accuracy, and depth. Detailed evaluation reports are stored in your Performance Hub.",
-                    "knowledge_base"
-            );
-        }
-
-        if (q.contains("aptitude") || q.contains("mcq") || q.contains("test")) {
-            return new SupportQuestionResponse(
-                    "The **Aptitude Hub** contains curated placement MCQs covering Quantitative, Logical Reasoning, and Verbal ability with timed quizzes, detailed solutions, and accuracy metrics.",
-                    "knowledge_base"
-            );
-        }
-
-        if (q.contains("resume") || q.contains("ats")) {
-            return new SupportQuestionResponse(
-                    "The **Resume Analyzer** scans your PDF/DOCX resume against ATS algorithms, scoring structure, keywords, and relevance for software engineering roles with specific improvement suggestions.",
-                    "knowledge_base"
-            );
-        }
-
-        if (q.startsWith("hi") || q.startsWith("hello") || q.startsWith("hey") || q.contains("greetings") || q.equals("hi") || q.equals("hello")) {
-            return new SupportQuestionResponse(
-                    "Hello! 👋 I'm your Samprepix AI Assistant. I can help guide you through your AI Placement Roadmap, Coding Arena, Mock Interviews, GitHub Profile Analyzer, and Resume Feedback. What would you like to prepare for today?",
+                    "Hello! 👋 I'm your SamPrepIX AI Assistant. I can help guide you through technical interview prep, coding challenges, Spring Boot, Java, React, DSA, and your SamPrepIX placement tools. What would you like to prepare for today?",
                     "greeting"
             );
         }
 
-        if (q.contains("who are you") || q.contains("what can you do") || q.contains("what do you do") || q.contains("features")) {
-            return new SupportQuestionResponse(
-                    "I am the **Samprepix AI Assistant**! Here is how I can assist your placement journey:\n"
-                            + "• **AI Roadmap**: Create personalized step-by-step career milestones.\n"
-                            + "• **Coding Arena**: Solve DSA problems in 8 languages with live compiler & hints.\n"
-                            + "• **Mock Interviews**: Practice technical & HR speech-enabled simulations.\n"
-                            + "• **GitHub Analyzer**: Get an objective 0–100 recruiter readiness score & repository audit.\n"
-                            + "• **Resume Analyzer**: Optimize your resume for ATS screening.\n"
-                            + "• **Support**: Help troubleshoot or submit issue reports directly to our engineers.",
-                    "overview"
-            );
+        String trimmedQuestion = question.trim();
+
+        // 1. Primary AI inference: Groq (openai/gpt-oss-120b) with multi-turn conversation context
+        try {
+            List<Message> groqMessages = new ArrayList<>();
+            groqMessages.add(new Message("system",
+                    "You are SamPrepIX AI Assistant, the official AI mentor, tutor, and platform guide for the SamPrepIX placement platform. "
+                    + "You assist students and candidates with: "
+                    + "1. Technical interview concepts and explanations across Java, Spring Boot, React, Python, C++, DSA, System Design, SQL, and Full Stack development. "
+                    + "2. Writing clean code solutions, debugging, algorithms, and step-by-step explanations. "
+                    + "3. Conducting technical and HR mock interviews when requested to act as an interviewer (ask exactly one focused question at a time and wait for the user's answer). "
+                    + "4. Guidance on SamPrepIX features (AI Roadmap, Coding Arena, Mock Interviews, Aptitude Hub, Resume Analyzer, GitHub Profiler). "
+                    + "Maintain conversational context across multi-turn interactions. Format all responses clearly and professionally using Markdown."
+            ));
+
+            if (history != null && !history.isEmpty()) {
+                int startIdx = Math.max(0, history.size() - 8);
+                for (int i = startIdx; i < history.size(); i++) {
+                    Map<String, String> item = history.get(i);
+                    if (item == null) continue;
+                    String sender = item.get("sender");
+                    if (sender == null) sender = item.get("role");
+                    String text = item.get("text");
+                    if (text == null) text = item.get("content");
+                    if (text == null || text.isBlank()) continue;
+
+                    String role = ("bot".equalsIgnoreCase(sender) || "assistant".equalsIgnoreCase(sender))
+                            ? "assistant"
+                            : "user";
+                    groqMessages.add(new Message(role, text.trim()));
+                }
+            }
+
+            groqMessages.add(new Message("user", trimmedQuestion));
+
+            String aiResponse = groqService.generateChatResponse(groqMessages);
+            if (aiResponse != null && !aiResponse.isBlank()) {
+                return new SupportQuestionResponse(aiResponse, "ai_assistant");
+            }
+        } catch (Exception groqEx) {
+            log.warn("Groq AI chat invocation failed, attempting Gemini fallback: {}", groqEx.getMessage());
         }
 
-        if (q.contains("performance") || q.contains("analytics") || q.contains("stats") || q.contains("history") || q.contains("score")) {
-            return new SupportQuestionResponse(
-                    "Your **Performance Hub** tracks your progress across all preparation modules: interview evaluation scores, coding submission stats, aptitude accuracy percentages, and milestone completion velocity. You can view it directly from the Sidebar.",
-                    "knowledge_base"
-            );
+        // 2. Secondary AI fallback: Gemini (gemini-flash-latest)
+        try {
+            StringBuilder geminiPrompt = new StringBuilder();
+            geminiPrompt.append("You are SamPrepIX AI Assistant, the official technical mentor and placement tutor for the SamPrepIX platform.\n");
+            geminiPrompt.append("Provide a clear, accurate, professional response in Markdown.\n\n");
+
+            if (history != null && !history.isEmpty()) {
+                geminiPrompt.append("--- Conversation Context ---\n");
+                int startIdx = Math.max(0, history.size() - 6);
+                for (int i = startIdx; i < history.size(); i++) {
+                    Map<String, String> item = history.get(i);
+                    if (item == null) continue;
+                    String sender = item.get("sender");
+                    if (sender == null) sender = item.get("role");
+                    String text = item.get("text");
+                    if (text == null) text = item.get("content");
+                    if (text == null || text.isBlank()) continue;
+
+                    String role = ("bot".equalsIgnoreCase(sender) || "assistant".equalsIgnoreCase(sender))
+                            ? "Assistant"
+                            : "User";
+                    geminiPrompt.append(role).append(": ").append(text.trim()).append("\n");
+                }
+                geminiPrompt.append("----------------------------\n\n");
+            }
+
+            geminiPrompt.append("User: ").append(trimmedQuestion).append("\nAssistant:");
+
+            String geminiResponse = geminiService.generateChatResponse(geminiPrompt.toString());
+            if (geminiResponse != null && !geminiResponse.isBlank()) {
+                return new SupportQuestionResponse(geminiResponse, "ai_assistant");
+            }
+        } catch (Exception geminiEx) {
+            log.error("Gemini AI chat fallback also failed: {}", geminiEx.getMessage());
         }
 
-        if (q.contains("profile") || q.contains("account") || q.contains("settings") || q.contains("password") || q.contains("skills")) {
-            return new SupportQuestionResponse(
-                    "You can update your **Target Role**, **Technical Skills**, and **Portfolio URLs** in your Profile page. Keeping your skills updated helps customize your AI Mock Interviews, Roadmap suggestions, and Coding Arena recommendations.",
-                    "knowledge_base"
-            );
-        }
-
-        if (q.contains("bug") || q.contains("issue") || q.contains("problem") || q.contains("error") || q.contains("contact") || q.contains("support")) {
-            return new SupportQuestionResponse(
-                    "If you encountered an unexpected bug or layout issue, click the **'Report an Issue or Bug to Team'** button right below our chat. It automatically records the context so our team can resolve it promptly.",
-                    "support_action"
-            );
-        }
-
-        // Varied guidance for unmapped questions
-        int hash = Math.abs(q.hashCode()) % 3;
-        if (hash == 0) {
-            return new SupportQuestionResponse(
-                    "I want to make sure I give you the most accurate answer! You can ask about our **AI Roadmap**, **Coding Arena**, **Mock Interviews**, **GitHub Analyzer**, or **Resume Scanner**. If you need help with a technical issue, feel free to use the 'Report an Issue' button below.",
-                    "general_guidance"
-            );
-        } else if (hash == 1) {
-            return new SupportQuestionResponse(
-                    "Regarding your question: you can explore key platform tools from the sidebar—such as practicing coding problems, generating career milestones in AI Roadmap, or testing your skills in Mock Interviews. What specific area would you like more details on?",
-                    "general_guidance"
-            );
-        } else {
-            return new SupportQuestionResponse(
-                    "Samprepix offers full end-to-end placement prep. Whether you need guidance on coding languages, interview scoring criteria, or ATS resume matching, let me know which module you're focusing on and I'll walk you through it!",
-                    "general_guidance"
-            );
-        }
+        // 3. User-friendly notice if network connection fails (NEVER expose raw exceptions or keys)
+        return new SupportQuestionResponse(
+                "I'm temporarily experiencing connectivity issues reaching the AI inference engine. Please retry in a few moments, or explore your preparation modules directly from the sidebar.",
+                "service_notice"
+        );
     }
 }

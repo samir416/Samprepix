@@ -214,6 +214,8 @@ public class CustomOAuth2UserService
                 }
             }
 
+            user.setEmailVerified(true);
+            user.setAccountStatus(AccountStatus.ACTIVE);
             userRepository.save(user);
 
         } else {

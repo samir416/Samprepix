@@ -8,4 +8,6 @@ public interface SupportService {
     void submitProblemReport(ReportProblemRequest request, String authenticatedUsername);
 
     SupportQuestionResponse answerQuestion(String question);
+
+    SupportQuestionResponse answerQuestion(String question, java.util.List<java.util.Map<String, String>> history);
 }

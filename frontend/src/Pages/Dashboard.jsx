@@ -19,6 +19,7 @@ import {
 import {
     getAptitudeAttempts
 } from "../services/aptitudeService";
+import { getMySubscription } from "../services/subscriptionService";
 
 import {
     FiTrendingUp,
@@ -67,6 +68,7 @@ export default function Dashboard() {
     const [aptitudeAttempts, setAptitudeAttempts] = useState([]);
 
     const [loadingStats, setLoadingStats] = useState(true);
+    const [revocationNotice, setRevocationNotice] = useState(null);
     useEffect(() => {
 
         const verifyUser = async () => {
@@ -174,6 +176,26 @@ export default function Dashboard() {
 
         loadAptitude();
 
+        const checkRevocationNotice = async () => {
+            try {
+                const subData = await getMySubscription();
+                const subs = subData?.subscriptions || [];
+                const cancelledSub = subs.find(
+                    (s) => (s.subscriptionStatus === "CANCELLED" || s.subscriptionStatus === "REVOKED")
+                );
+                if (cancelledSub) {
+                    const dismissedKey = "dismissed_sub_notice_" + cancelledSub.id;
+                    if (!localStorage.getItem(dismissedKey)) {
+                        setRevocationNotice(cancelledSub);
+                    }
+                }
+            } catch {
+                // Ignore fallback
+            }
+        };
+
+        checkRevocationNotice();
+
     }, [navigate]);
 
     const bestAptitudeScore = aptitudeAttempts.length > 0
@@ -234,6 +256,53 @@ export default function Dashboard() {
                                                                 </p>
 
                                                             </div>
+
+            {/* SUBSCRIPTION CANCELLATION & REFUND BANNER */}
+            {revocationNotice && (
+                <div className="subscription-notice-card" role="region" aria-label="Subscription Notice">
+                    <div className="sub-notice-content">
+                        <div className="sub-notice-badge">
+                            <span className="sub-notice-badge-dot" />
+                            SUBSCRIPTION NOTICE
+                        </div>
+                        <h3 className="sub-notice-title">
+                            Your {revocationNotice.planName || "PRO"} Plan Has Been Cancelled
+                        </h3>
+                        <p className="sub-notice-description">
+                            Your SamPrepIX premium plan has been cancelled by the platform.
+                            A refund for your eligible payment has been initiated.
+                            The refund will be processed through the original payment method
+                            within the provider's supported processing timeframe.
+                        </p>
+                    </div>
+                    <div className="sub-notice-actions">
+                        <button
+                            type="button"
+                            className="sub-notice-btn sub-notice-btn-details"
+                            onClick={() => navigate("/subscription/policy")}
+                        >
+                            Read Details
+                        </button>
+                        <button
+                            type="button"
+                            className="sub-notice-btn sub-notice-btn-ok"
+                            onClick={() => {
+                                localStorage.setItem("dismissed_sub_notice_" + revocationNotice.id, "true");
+                                setRevocationNotice(null);
+                            }}
+                        >
+                            OK
+                        </button>
+                        <button
+                            type="button"
+                            className="sub-notice-btn sub-notice-btn-pricing"
+                            onClick={() => navigate("/pricing")}
+                        >
+                            View Pricing Plans
+                        </button>
+                    </div>
+                </div>
+            )}
 
                                                             {/* STATS */}
 

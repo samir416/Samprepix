@@ -10,7 +10,7 @@ import {
 import { getActivePlans } from "../services/planService";
 
 import {
-    createTestOrder,
+    createOrder,
     verifyPayment,
     markPaymentFailed
 } from "../services/paymentService";
@@ -281,11 +281,12 @@ export default function SubscriptionPage() {
             const referralCode =
                 localStorage.getItem("referralCode") || null;
 
-            const order = await createTestOrder(
+            const order = await createOrder(
                 plan.id,
                 currency,
                 "cashfree",
-                referralCode
+                referralCode,
+                window.location.origin + "/payment/verify"
             );
 
             if (!order?.cashfreeOrderId) {
@@ -334,7 +335,7 @@ export default function SubscriptionPage() {
 
             const cashfree =
                 Cashfree({
-                    mode: "sandbox"
+                    mode: "production"
                 });
 
             const result =

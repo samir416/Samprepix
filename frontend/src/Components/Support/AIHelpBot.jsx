@@ -265,6 +265,11 @@ export default function AIHelpBot() {
         const text = inputVal.trim();
         if (!text || loading || isTyping) return;
 
+        const currentHistory = messages.map((m) => ({
+            sender: m.sender,
+            text: m.text
+        }));
+
         // Show user message immediately and clear input
         setInputVal("");
         setMessages((prev) => [...prev, { sender: "user", text }]);
@@ -272,12 +277,12 @@ export default function AIHelpBot() {
         setIsTyping(true);
 
         try {
-            const data = await askSupportQuestion(text);
-            const answerText = data?.answer || "I'm here to assist with all Samprepix placement features — including your AI Roadmap, Coding Arena, Mock Interviews, Resume Analyzer, and GitHub Profiler. How can I guide you?";
+            const data = await askSupportQuestion(text, currentHistory);
+            const answerText = data?.answer || "I'm here to assist with all SamPrepIX placement features and interview preparation. How can I guide you?";
             await streamBotResponse(answerText);
         } catch (error) {
             console.error("AI Help Bot query failed:", error);
-            await streamBotResponse("I'm having trouble connecting to the assistant service right now. You can check the quick questions above or report an issue directly to our team!");
+            await streamBotResponse("I'm having trouble connecting to the assistant service right now. Please check your connection or retry in a moment.");
         } finally {
             setLoading(false);
             setIsTyping(false);

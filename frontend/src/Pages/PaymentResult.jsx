@@ -255,7 +255,7 @@ export default function PaymentResult() {
                     if (attempts < 12) {
                         retryTimer = setTimeout(
                             processPayment,
-                            5000
+                            2500
                         );
                     } else {
                         setMessage(
@@ -288,7 +288,7 @@ export default function PaymentResult() {
                 if (attempts < 12) {
                     retryTimer = setTimeout(
                         processPayment,
-                        5000
+                        2500
                     );
                 }
             } catch (error) {
@@ -322,7 +322,7 @@ export default function PaymentResult() {
                     if (attempts < 12) {
                         retryTimer = setTimeout(
                             processPayment,
-                            5000
+                            2500
                         );
                     }
 
@@ -353,7 +353,7 @@ export default function PaymentResult() {
                     if (attempts < 12) {
                         retryTimer = setTimeout(
                             processPayment,
-                            5000
+                            2500
                         );
                     }
 
@@ -490,18 +490,32 @@ export default function PaymentResult() {
                         text-align: center;
                         box-shadow: 0 30px 80px rgba(0,0,0,.42);
                         backdrop-filter: blur(24px);
+                        animation: paymentCardIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+                    }
+
+                    @keyframes paymentCardIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(22px) scale(0.98);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0) scale(1);
+                        }
                     }
 
                     .payment-result-brand {
                         display: inline-flex;
+                        flex-direction: column;
                         align-items: center;
                         gap: 10px;
-                        margin-bottom: 30px;
+                        margin-bottom: 24px;
                     }
 
                     .payment-result-brand img {
-                        width: 42px;
-                        height: 42px;
+                        height: 56px;
+                        width: auto;
+                        max-width: 180px;
                         object-fit: contain;
                     }
 
@@ -511,14 +525,61 @@ export default function PaymentResult() {
                         letter-spacing: -.4px;
                     }
 
+                    .payment-result-summary-grid {
+                        margin-top: 24px;
+                        padding: 18px 20px;
+                        border-radius: 16px;
+                        background: rgba(255, 255, 255, 0.035);
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 14px 16px;
+                        text-align: left;
+                    }
+
+                    .payment-summary-item {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 3px;
+                    }
+
+                    .payment-summary-item.full-width {
+                        grid-column: 1 / -1;
+                    }
+
+                    .payment-summary-label {
+                        font-size: 11px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 0.7px;
+                        color: #7e8ba1;
+                    }
+
+                    .payment-summary-val {
+                        font-size: 13px;
+                        color: #f1f5f9;
+                        word-break: break-all;
+                    }
+
+                    .payment-summary-val.font-semibold {
+                        font-weight: 700;
+                        color: #38bdf8;
+                    }
+
+                    .payment-summary-val.font-mono {
+                        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                        font-size: 12px;
+                        color: #cbd5e1;
+                    }
+
                     .payment-result-icon {
                         display: inline-flex;
                         align-items: center;
                         justify-content: center;
-                        width: 92px;
-                        height: 92px;
+                        width: 84px;
+                        height: 84px;
                         border-radius: 50%;
-                        margin-bottom: 22px;
+                        margin-bottom: 18px;
                     }
 
                     .payment-result-button {
@@ -816,6 +877,81 @@ export default function PaymentResult() {
                             border-radius: 24px;
                         }
                     }
+
+                    body:not(.dark-theme) .payment-result-page {
+                        background: radial-gradient(circle at 15% 15%, rgba(99,102,241,.08), transparent 35%),
+                                    radial-gradient(circle at 85% 85%, rgba(168,85,247,.07), transparent 35%),
+                                    #f8fafc;
+                        color: #0f172a;
+                    }
+                    body:not(.dark-theme) .payment-result-card {
+                        background: #ffffff;
+                        border: 1px solid rgba(0,0,0,0.08);
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.07);
+                        color: #0f172a;
+                    }
+                    body:not(.dark-theme) .payment-result-brand span {
+                        color: #0f172a;
+                    }
+                    body:not(.dark-theme) .payment-result-card h1 {
+                        color: #0f172a !important;
+                    }
+                    body:not(.dark-theme) .payment-result-card p {
+                        color: #475569 !important;
+                    }
+                    body:not(.dark-theme) .payment-result-secondary {
+                        background: rgba(0,0,0,0.04);
+                        color: #334155;
+                        border: 1px solid rgba(0,0,0,0.1);
+                    }
+                    body:not(.dark-theme) .payment-result-modal {
+                        background: #ffffff;
+                        border: 1px solid rgba(0,0,0,0.08);
+                        box-shadow: 0 30px 80px rgba(0,0,0,0.15);
+                        color: #0f172a;
+                    }
+                    body:not(.dark-theme) .payment-modal-title {
+                        color: #0f172a !important;
+                    }
+                    body:not(.dark-theme) .payment-modal-text {
+                        color: #475569 !important;
+                    }
+                    body:not(.dark-theme) .payment-benefit {
+                        background: rgba(0,0,0,0.03);
+                        border: 1px solid rgba(0,0,0,0.06);
+                    }
+                    body:not(.dark-theme) .payment-benefit strong {
+                        color: #0f172a;
+                    }
+                    body:not(.dark-theme) .payment-benefit span {
+                        color: #64748b;
+                    }
+                    body:not(.dark-theme) .payment-result-summary-grid {
+                        background: #f8fafc;
+                        border: 1px solid #e2e8f0;
+                    }
+                    body:not(.dark-theme) .payment-summary-label {
+                        color: #64748b;
+                    }
+                    body:not(.dark-theme) .payment-summary-val {
+                        color: #0f172a;
+                    }
+                    body:not(.dark-theme) .payment-summary-val.font-semibold {
+                        color: #0284c7;
+                    }
+                    body:not(.dark-theme) .payment-summary-val.font-mono {
+                        color: #334155;
+                    }
+                    body:not(.dark-theme) .payment-result-invoice {
+                        background: rgba(34,197,94,0.08);
+                        border: 1px solid rgba(34,197,94,0.25);
+                    }
+                    body:not(.dark-theme) .payment-result-invoice-title {
+                        color: #166534 !important;
+                    }
+                    body:not(.dark-theme) .payment-result-invoice-number {
+                        color: #475569 !important;
+                    }
                 `}
             </style>
 
@@ -887,133 +1023,179 @@ export default function PaymentResult() {
                         {message}
                     </p>
 
-                    {orderId && (
-                        <div
-                            style={{
-                                marginTop: "22px",
-                                padding: "12px 14px",
-                                borderRadius: "12px",
-                                background: "rgba(255,255,255,.035)",
-                                border: "1px solid rgba(255,255,255,.07)",
-                                textAlign: "left"
-                            }}
-                        >
-                            <div
-                                style={{
-                                    fontSize: "10px",
-                                    color: "#77839a",
-                                    fontWeight: 700,
-                                    textTransform: "uppercase",
-                                    letterSpacing: ".8px"
-                                }}
-                            >
-                                Payment Reference
-                            </div>
-
-                            <div
-                                style={{
-                                    marginTop: "5px",
-                                    fontSize: "12px",
-                                    color: "#dce3ef",
-                                    wordBreak: "break-all",
-                                    fontFamily: "monospace"
-                                }}
-                            >
-                                {orderId}
-                            </div>
-                        </div>
-                    )}
-
-                    {state === "success" && invoice && (
-                        <div className="payment-result-invoice">
-                            <FiFileText size={24} color="#4ade80" />
-
-                            <div className="payment-result-invoice-info">
-                                <div className="payment-result-invoice-title">
-                                    Invoice Ready
+                    {state === "success" ? (
+                        <>
+                            <div className="payment-result-summary-grid">
+                                <div className="payment-summary-item">
+                                    <span className="payment-summary-label">Plan Name</span>
+                                    <span className="payment-summary-val font-semibold">
+                                        {invoice?.plan || `${activePlan} Plan`}
+                                    </span>
                                 </div>
 
-                                <div className="payment-result-invoice-number">
-                                    {invoice.invoiceNumber}
+                                <div className="payment-summary-item">
+                                    <span className="payment-summary-label">Amount Paid</span>
+                                    <span className="payment-summary-val font-semibold">
+                                        {invoice?.amount
+                                            ? `₹${Number(invoice.amount).toFixed(2)}`
+                                            : (activePlan === "ELITE" ? "₹999.00" : "₹499.00")}
+                                    </span>
+                                </div>
+
+                                <div className="payment-summary-item">
+                                    <span className="payment-summary-label">Payment Date</span>
+                                    <span className="payment-summary-val">
+                                        {invoice?.createdAt
+                                            ? new Date(invoice.createdAt).toLocaleDateString('en-IN', {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            })
+                                            : new Date().toLocaleDateString('en-IN', {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            })}
+                                    </span>
+                                </div>
+
+                                <div className="payment-summary-item">
+                                    <span className="payment-summary-label">Invoice Number</span>
+                                    <span className="payment-summary-val">
+                                        {invoice?.invoiceNumber || (orderId ? `INV-${orderId.substring(0, 8).toUpperCase()}` : "GENERATING...")}
+                                    </span>
+                                </div>
+
+                                <div className="payment-summary-item full-width">
+                                    <span className="payment-summary-label">Payment Reference</span>
+                                    <span className="payment-summary-val font-mono">
+                                        {orderId || "N/A"}
+                                    </span>
                                 </div>
                             </div>
 
-                            <button
-                                type="button"
-                                className="payment-result-button payment-result-secondary"
-                                style={{
-                                    minHeight: "38px",
-                                    padding: "0 12px"
-                                }}
-                                onClick={() =>
-                                    downloadInvoice(
-                                        invoice.id,
-                                        invoice.invoiceNumber
-                                    )
-                                }
-                                disabled={downloading}
-                                aria-label="Download invoice"
-                            >
-                                {downloading ? (
-                                    <FiLoader className="payment-result-spin" />
-                                ) : (
-                                    <FiDownload />
-                                )}
-                            </button>
-                        </div>
-                    )}
+                            <div className="payment-result-actions" style={{ flexWrap: "wrap" }}>
+                                <button
+                                    type="button"
+                                    className="payment-result-button payment-result-primary"
+                                    onClick={() => navigate("/dashboard")}
+                                >
+                                    Continue to SamPrepIX
+                                    <FiArrowRight />
+                                </button>
 
-                    <div className="payment-result-actions">
-                        {state === "success" && (
-                            <button
-                                type="button"
-                                className="payment-result-button payment-result-primary"
-                                onClick={() => navigate("/dashboard")}
-                            >
-                                Continue to Samprepix
-                                <FiArrowRight />
-                            </button>
-                        )}
-
-                        {(state === "login-required" ||
-                            state === "verification-pending") && (
-                            <button
-                                type="button"
-                                className="payment-result-button payment-result-primary"
-                                onClick={() =>
-                                    navigate("/login", {
-                                        state: {
-                                            from: "/payment/verify",
-                                            orderId
+                                {invoice && (
+                                    <button
+                                        type="button"
+                                        className="payment-result-button payment-result-secondary"
+                                        onClick={() =>
+                                            downloadInvoice(
+                                                invoice.id,
+                                                invoice.invoiceNumber
+                                            )
                                         }
-                                    })
-                                }
-                            >
-                                <FiLogIn />
-                                Sign In & Continue
-                            </button>
-                        )}
+                                        disabled={downloading}
+                                    >
+                                        {downloading ? (
+                                            <FiLoader className="payment-result-spin" />
+                                        ) : (
+                                            <FiDownload />
+                                        )}
+                                        Download Invoice
+                                    </button>
+                                )}
 
-                        {state === "failed" && (
-                            <button
-                                type="button"
-                                className="payment-result-button payment-result-primary"
-                                onClick={() => navigate("/pricing")}
-                            >
-                                Try Again
-                                <FiArrowRight />
-                            </button>
-                        )}
+                                <button
+                                    type="button"
+                                    className="payment-result-button payment-result-secondary"
+                                    onClick={() => navigate("/")}
+                                >
+                                    <FiHome />
+                                    Home
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {orderId && (
+                                <div
+                                    style={{
+                                        marginTop: "22px",
+                                        padding: "12px 14px",
+                                        borderRadius: "12px",
+                                        background: "rgba(255,255,255,.035)",
+                                        border: "1px solid rgba(255,255,255,.07)",
+                                        textAlign: "left"
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            fontSize: "10px",
+                                            color: "#77839a",
+                                            fontWeight: 700,
+                                            textTransform: "uppercase",
+                                            letterSpacing: ".8px"
+                                        }}
+                                    >
+                                        Payment Reference
+                                    </div>
 
-                        <button
-                            type="button"
-                            className="payment-result-button payment-result-secondary"
-                            onClick={() => navigate("/")}
-                        >
-                            <FiHome />
-                            Home
-                        </button>
-                    </div>
+                                    <div
+                                        style={{
+                                            marginTop: "5px",
+                                            fontSize: "12px",
+                                            color: "#dce3ef",
+                                            wordBreak: "break-all",
+                                            fontFamily: "monospace"
+                                        }}
+                                    >
+                                        {orderId}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="payment-result-actions">
+                                {(state === "login-required" ||
+                                    state === "verification-pending") && (
+                                    <button
+                                        type="button"
+                                        className="payment-result-button payment-result-primary"
+                                        onClick={() =>
+                                            navigate("/login", {
+                                                state: {
+                                                    from: "/payment/verify",
+                                                    orderId
+                                                }
+                                            })
+                                        }
+                                    >
+                                        <FiLogIn />
+                                        Sign In & Continue
+                                    </button>
+                                )}
+
+                                {state === "failed" && (
+                                    <button
+                                        type="button"
+                                        className="payment-result-button payment-result-primary"
+                                        onClick={() => navigate("/pricing")}
+                                    >
+                                        Try Again
+                                        <FiArrowRight />
+                                    </button>
+                                )}
+
+                                <button
+                                    type="button"
+                                    className="payment-result-button payment-result-secondary"
+                                    onClick={() => navigate("/")}
+                                >
+                                    <FiHome />
+                                    Home
+                                </button>
+                            </div>
+                        </>
+                    )}
 
                     <div
                         style={{

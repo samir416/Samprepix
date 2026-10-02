@@ -222,10 +222,6 @@ export default function ResetPasswordPage() {
                             onChange={(e) =>
                                 setConfirmPassword(e.target.value)
                             }
-                            onPaste={(e) => e.preventDefault()}
-                            onCopy={(e) => e.preventDefault()}
-                            onCut={(e) => e.preventDefault()}
-                            onDragStart={(e) => e.preventDefault()}
                             required
                         />
 

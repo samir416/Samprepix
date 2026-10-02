@@ -93,9 +93,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<java.util.Map<String, String>> handleMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        String detail = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
         return ResponseEntity
                 .badRequest()
-                .body(java.util.Map.of("error", "Malformed request body or invalid JSON."));
+                .body(java.util.Map.of("error", "Malformed request body or invalid JSON: " + (detail != null ? detail : "")));
     }
 
     /**

@@ -1596,7 +1596,7 @@ export default function Admin() {
                                             <th>Currency</th>
                                             <th>Subscribed</th>
                                             <th>Expires</th>
-                                            <th>Auto Renew</th>
+                                            <th>Renewal Type</th>
                                         </tr>
                                     </thead>
 
@@ -1677,8 +1677,8 @@ export default function Admin() {
 
                                                         <td>
                                                             {sub.autoRenew
-                                                                ? "Yes"
-                                                                : "No"}
+                                                                ? "Auto-Renew"
+                                                                : "One-Time (Manual)"}
                                                         </td>
 
                                                     </tr>

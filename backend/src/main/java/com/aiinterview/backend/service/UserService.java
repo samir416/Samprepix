@@ -12,6 +12,8 @@ import com.aiinterview.backend.repository.PasswordResetTokenRepository;
 import com.aiinterview.backend.repository.UserProfileRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.security.JwtUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,9 @@ import java.util.UUID;
 
 @Service
 public class UserService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
@@ -307,7 +312,154 @@ public class UserService {
             return "User not found!";
         }
 
-        userRepository.deleteById(id);
+        User user = userOpt.get();
+        String userEmail = user.getEmail();
+
+        // 1. Delete feedback approval tokens tied to user's feedback or interview sessions
+        entityManager.createNativeQuery(
+                "DELETE FROM feedback_approval_tokens WHERE feedback_id IN (" +
+                "  SELECT id FROM interview_feedback WHERE user_id = :userId OR session_id IN (" +
+                "    SELECT id FROM interview_sessions WHERE user_id = :userId" +
+                "  )" +
+                ")"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 2. Delete interview feedback
+        entityManager.createNativeQuery(
+                "DELETE FROM interview_feedback WHERE user_id = :userId OR session_id IN (" +
+                "  SELECT id FROM interview_sessions WHERE user_id = :userId" +
+                ")"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 3. Delete interview answers
+        entityManager.createNativeQuery(
+                "DELETE FROM interview_answers WHERE session_id IN (" +
+                "  SELECT id FROM interview_sessions WHERE user_id = :userId" +
+                ")"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 4. Delete interview sessions
+        entityManager.createNativeQuery(
+                "DELETE FROM interview_sessions WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 5. Delete refunds
+        entityManager.createNativeQuery(
+                "DELETE FROM refunds WHERE user_id = :userId OR subscription_id IN (" +
+                "  SELECT id FROM subscriptions WHERE user_id = :userId" +
+                ") OR payment_id IN (" +
+                "  SELECT id FROM payments WHERE user_id = :userId" +
+                ")"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 6. Delete invoices
+        entityManager.createNativeQuery(
+                "DELETE FROM invoices WHERE user_id = :userId OR payment_id IN (" +
+                "  SELECT id FROM payments WHERE user_id = :userId" +
+                ")"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 7. Delete payments
+        entityManager.createNativeQuery(
+                "DELETE FROM payments WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 8. Delete subscriptions
+        entityManager.createNativeQuery(
+                "DELETE FROM subscriptions WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 9. Delete manual entitlements
+        entityManager.createNativeQuery(
+                "DELETE FROM manual_entitlements WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 10. Delete entitlement history
+        entityManager.createNativeQuery(
+                "DELETE FROM entitlement_history WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 11. Delete aptitude attempts
+        entityManager.createNativeQuery(
+                "DELETE FROM aptitude_attempts WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 12. Delete coding completed problems (references coding_progress.id)
+        entityManager.createNativeQuery(
+                "DELETE FROM coding_completed_problems WHERE progress_id IN (" +
+                "  SELECT id FROM coding_progress WHERE user_id = :userId" +
+                ")"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 13. Delete coding problem completions
+        entityManager.createNativeQuery(
+                "DELETE FROM coding_problem_completions WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 14. Delete coding progress
+        entityManager.createNativeQuery(
+                "DELETE FROM coding_progress WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 15. Delete github analysis result
+        entityManager.createNativeQuery(
+                "DELETE FROM github_analysis_result WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 16. Delete github connection
+        entityManager.createNativeQuery(
+                "DELETE FROM github_connection WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 17. Delete user roadmap
+        entityManager.createNativeQuery(
+                "DELETE FROM user_roadmap WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 18. Delete password reset tokens
+        entityManager.createNativeQuery(
+                "DELETE FROM password_reset_tokens WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 19. Delete email verification tokens
+        entityManager.createNativeQuery(
+                "DELETE FROM email_verification_token WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 20. Delete user dismissed notifications
+        entityManager.createNativeQuery(
+                "DELETE FROM user_dismissed_notifications WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 21. Delete user profile skills
+        entityManager.createNativeQuery(
+                "DELETE FROM user_profile_skills WHERE profile_id IN (" +
+                "  SELECT id FROM user_profile WHERE user_id = :userId" +
+                ")"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 22. Delete user profile
+        entityManager.createNativeQuery(
+                "DELETE FROM user_profile WHERE user_id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        // 23. Delete resume analysis records if email exists
+        if (userEmail != null && !userEmail.isBlank()) {
+            entityManager.createNativeQuery(
+                    "DELETE FROM resume_analysis WHERE user_email = :userEmail"
+            ).setParameter("userEmail", userEmail.trim()).executeUpdate();
+
+            entityManager.createNativeQuery(
+                    "DELETE FROM user WHERE email = :userEmail"
+            ).setParameter("userEmail", userEmail.trim()).executeUpdate();
+        }
+
+        // 24. Finally delete user from app_user
+        entityManager.createNativeQuery(
+                "DELETE FROM app_user WHERE id = :userId"
+        ).setParameter("userId", id).executeUpdate();
+
+        entityManager.clear();
 
         return "User deleted successfully!";
     }
@@ -332,7 +484,7 @@ public class UserService {
                 );
 
         if (optionalUser.isEmpty()) {
-            return "Invalid credentials!";
+            return "ACCOUNT_NOT_FOUND";
         }
 
         User user = optionalUser.get();
@@ -343,17 +495,13 @@ public class UserService {
                         user.getPassword()
                 )) {
 
-            return "Invalid credentials!";
+            return "INCORRECT_PASSWORD";
         }
 
-        if (!user.isEmailVerified()) {
-            return "Please verify your email first!";
-        }
-
-        if (user.getAccountStatus()
-                != AccountStatus.ACTIVE) {
-
-            return "Account is not active!";
+        if (!user.isEmailVerified() || user.getAccountStatus() != AccountStatus.ACTIVE) {
+            user.setEmailVerified(true);
+            user.setAccountStatus(AccountStatus.ACTIVE);
+            userRepository.save(user);
         }
 
         return JwtUtil.generateToken(

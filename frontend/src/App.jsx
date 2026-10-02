@@ -48,6 +48,31 @@ function App() {
         initGA();
     }, []);
 
+    // Global theme toggle shortcut: Ctrl + Shift + L
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.ctrlKey && e.shiftKey && (e.key === "L" || e.key === "l")) {
+                const target = document.activeElement;
+                const tagName = target?.tagName?.toLowerCase();
+                const isContentEditable = target?.isContentEditable;
+                if (
+                    tagName === "input" ||
+                    tagName === "textarea" ||
+                    tagName === "select" ||
+                    isContentEditable
+                ) {
+                    return;
+                }
+                e.preventDefault();
+                const isDark = document.body.classList.toggle("dark-theme");
+                localStorage.setItem("theme", isDark ? "dark" : "light");
+                window.dispatchEvent(new Event("themechange"));
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
+
     // Track SPA route changes and manage private vs public indexing
     useEffect(() => {
         const fullPath = location.pathname + location.search;

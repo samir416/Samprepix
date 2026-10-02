@@ -7,19 +7,32 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { loginUser, getCurrentUser, getCleanToken } from "../services/authService";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
+import { updatePageSEO } from "../utils/seo";
 
 export default function Login() {
 
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const location = useLocation();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [errorTitle, setErrorTitle] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [showSplash, setShowSplash] = useState(false);
 
     useEffect(() => {
+        updatePageSEO({
+            title: "Sign In",
+            description: "Log in to your Samprepix account to continue your AI-powered placement and interview preparation.",
+            canonicalPath: "/login"
+        });
+
+        if (location?.state?.accountDeleted) {
+            setSuccessMessage("Your account has been permanently deleted.");
+        }
 
         setEmail("");
         setPassword("");
@@ -229,15 +242,18 @@ export default function Login() {
 
                             } catch (err) {
 
-                                setError(
+                                const data = err?.response?.data;
+                                const title = (typeof data === "object" && data?.title)
+                                    ? data.title
+                                    : "Unable to Sign In";
+                                const message = (typeof data === "object" && data?.message)
+                                    ? data.message
+                                    : (typeof data === "string" && data.trim())
+                                    ? data
+                                    : "Please check your credentials and try again.";
 
-                                    err?.response?.data?.message ||
-
-                                    err?.response?.data ||
-
-                                    "Please check your credentials and try again."
-
-                                );
+                                setErrorTitle(title);
+                                setError(message);
 
                             } finally {
 
@@ -306,6 +322,23 @@ export default function Login() {
 
                         </div>
                         {
+                            successMessage && (
+                                <div style={{
+                                    background: "rgba(16, 185, 129, 0.12)",
+                                    border: "1px solid rgba(16, 185, 129, 0.35)",
+                                    color: "#10b981",
+                                    padding: "12px 16px",
+                                    borderRadius: "12px",
+                                    fontSize: "14px",
+                                    fontWeight: 500,
+                                    marginBottom: "16px",
+                                    textAlign: "center"
+                                }}>
+                                    {successMessage}
+                                </div>
+                            )
+                        }
+                        {
                             error && (
                                 <div className="auth-error-alert">
 
@@ -316,7 +349,7 @@ export default function Login() {
                                     <div className="auth-error-content">
 
                                         <h6>
-                                            Unable to Sign In
+                                            {errorTitle || "Unable to Sign In"}
                                         </h6>
 
                                         <p>

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, AlertCircle } from "lucide-react";
 import { updateProfile, getCleanToken } from "../services/profileService";
-import { getCurrentUser } from "../services/authService";
+import { getCurrentUser, clearAuthSession } from "../services/authService";
 import AppLoader from "../Components/Common/AppLoader";
 import "../styles/onboarding.css";
 
@@ -148,7 +148,7 @@ export default function Onboarding() {
                 name: storedUser?.name || storedUser?.username || null
             };
 
-            await updateProfile(payload);
+            const savedProfile = await updateProfile(payload);
 
             let refreshedUser = null;
             try {
@@ -159,6 +159,8 @@ export default function Onboarding() {
 
             const finalUser = refreshedUser || {
                 ...storedUser,
+                name: savedProfile?.name || storedUser?.name,
+                email: savedProfile?.email || storedUser?.email,
                 profileCompleted: true
             };
             finalUser.profileCompleted = true;
@@ -169,21 +171,20 @@ export default function Onboarding() {
             setShowSplash(true);
             setTimeout(() => {
                 navigate("/dashboard", { replace: true });
-            }, 2000);
+            }, 1500);
 
         } catch (err) {
             console.error("Profile update failed:", err);
             const status = err?.response?.status;
             if (status === 401) {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                localStorage.removeItem("onboardingCompleted");
+                clearAuthSession();
                 setError("Your session has expired or is invalid. Please sign in again to complete onboarding.");
                 setTimeout(() => {
                     navigate("/login", { replace: true });
                 }, 1500);
             } else {
                 const serverMsg = err?.response?.data?.message
+                    || err?.response?.data?.error
                     || (typeof err?.response?.data === "string" ? err?.response?.data : null)
                     || err?.message;
                 setError(serverMsg || "Unable to save your profile. Please check your details and try again.");

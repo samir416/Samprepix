@@ -192,6 +192,17 @@ public class GroqService implements AIService {
                 .trim();
     }
 
+    public String generateChatResponse(List<Message> messages) {
+        validateConfiguration();
+        if (messages == null || messages.isEmpty()) {
+            throw new IllegalArgumentException("Messages cannot be empty.");
+        }
+        GroqRequest request = new GroqRequest(model, messages);
+        GroqResponse response = executeRequest(request);
+        Choice choice = extractChoice(response, "Groq returned an empty response.");
+        return choice.getMessage().getContent().trim();
+    }
+
     private GroqResponse executeRequest(
             GroqRequest request
     ) {

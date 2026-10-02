@@ -1,6 +1,7 @@
 package com.aiinterview.backend.controller;
 
 import com.aiinterview.backend.entity.AuthenticationProvider;
+import com.aiinterview.backend.entity.Role;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.model.ApiResponse;
 import com.aiinterview.backend.model.ForgotPasswordRequest;
@@ -48,14 +49,27 @@ public class TestController {
                 loginRequest.getPassword()
         );
 
-        if (response.equals("Invalid password!")
-                || response.equals("User not found!")
-                || response.equals("Please verify your email first!")
-                || response.equals("Account is not active!")) {
+        if (response == null || !JwtUtil.validateToken(response)) {
+            String errorCode = (response != null && !response.isBlank()) ? response : "INVALID_CREDENTIALS";
+            String title = "Invalid Credentials";
+            String message = "Invalid email or password.";
+            if ("ACCOUNT_NOT_FOUND".equals(errorCode)) {
+                title = "Account Not Found";
+                message = "No account exists with this email. Please create an account first.";
+            } else if ("INCORRECT_PASSWORD".equals(errorCode)) {
+                title = "Incorrect Password";
+                message = "The password you entered is incorrect. Please try again.";
+            } else if (response != null && !response.isBlank()) {
+                message = response;
+            }
 
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(response);
+                    .body(java.util.Map.of(
+                            "error", errorCode,
+                            "title", title,
+                            "message", message
+                    ));
         }
 
         return ResponseEntity.ok(
@@ -291,6 +305,10 @@ public class TestController {
         return userRepository.findById(id)
                 .map(user -> {
 
+                    if (user.getRole() == Role.ADMIN) {
+                        return null;
+                    }
+
                     if (updatedUser.getUsername() != null
                             && !updatedUser.getUsername().isBlank()) {
 
@@ -352,7 +370,8 @@ public class TestController {
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteUser(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            Authentication authentication) {
 
         if (id == null || id <= 0) {
             return ResponseEntity
@@ -360,14 +379,26 @@ public class TestController {
                     .body("Invalid user ID.");
         }
 
-        if (!userRepository.existsById(id)) {
-
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body("User not found!");
         }
 
-        userRepository.deleteById(id);
+        if (user.getRole() == Role.ADMIN) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Admin accounts cannot be deleted.");
+        }
+
+        if (authentication != null && user.getEmail().equalsIgnoreCase(authentication.getName())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Administrators cannot delete their own account.");
+        }
+
+        userService.deleteUser(id);
 
         return ResponseEntity.ok(
                 "User deleted successfully!"

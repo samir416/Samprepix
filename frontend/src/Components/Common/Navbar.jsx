@@ -40,6 +40,12 @@ function Navbar() {
             setDarkMode(true);
         }
 
+        const handleThemeChange = () => {
+            setDarkMode(document.body.classList.contains("dark-theme"));
+        };
+        window.addEventListener("themechange", handleThemeChange);
+        return () => window.removeEventListener("themechange", handleThemeChange);
+
     }, []);
 
     /* TOGGLE */
@@ -61,6 +67,8 @@ function Navbar() {
             "theme",
             isDark ? "dark" : "light"
         );
+
+        window.dispatchEvent(new Event("themechange"));
     };
 
     return (
@@ -144,6 +152,7 @@ function Navbar() {
                         className="theme-toggle"
                         onClick={toggleTheme}
                         aria-label="Toggle Theme"
+                        title="Toggle theme · Ctrl + Shift + L"
                     >
 
                         {

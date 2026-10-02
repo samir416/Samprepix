@@ -256,6 +256,42 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
 
+        // 7b. Cancelled / Revoked Subscription notification
+        if (subscriptionRepository != null) {
+            List<Subscription> userSubs = subscriptionRepository.findByUserIdOrderBySubscribedAtDesc(user.getId());
+            for (Subscription s : userSubs) {
+                if ("CANCELLED".equalsIgnoreCase(s.getSubscriptionStatus()) || "REVOKED".equalsIgnoreCase(s.getSubscriptionStatus())) {
+                    LocalDateTime ts = s.getCancelledAt() != null ? s.getCancelledAt() : (s.getRefundInitiatedAt() != null ? s.getRefundInitiatedAt() : now);
+                    String id = "sub-revoked-" + s.getId();
+
+                    if ((dismissedAllBefore != null && !ts.isAfter(dismissedAllBefore)) || dismissedIds.contains(id)) {
+                        continue;
+                    }
+
+                    boolean unread = lastRead == null || ts.isAfter(lastRead);
+                    String planName = s.getPlan() != null ? s.getPlan().getName() : "Premium";
+                    String refundStatus = s.getRefundStatus() != null ? s.getRefundStatus().toUpperCase() : (s.isRefundInitiated() ? "PENDING" : "NONE");
+                    String refundInfo = "A refund has been initiated.";
+                    if ("SUCCESS".equals(refundStatus)) {
+                        refundInfo = "Your refund has been completed.";
+                    } else if ("FAILED".equals(refundStatus)) {
+                        refundInfo = "Refund could not be completed automatically. Please contact support.";
+                    }
+
+                    list.add(NotificationDto.builder()
+                            .id(id)
+                            .type("SUBSCRIPTION_CANCELLED")
+                            .title("Subscription Cancelled: " + planName)
+                            .message("Your " + planName + " plan was cancelled. " + refundInfo + " Check details and timeline.")
+                            .timestamp(formatRelativeTime(ts, now))
+                            .createdAt(ts)
+                            .unread(unread)
+                            .targetUrl("/subscription/policy")
+                            .build());
+                }
+            }
+        }
+
         // 8. Welcome notification if no events exist yet and user hasn't cleared notifications
         if (list.isEmpty() && !dismissedIds.contains("sys-welcome") && dismissedAllBefore == null) {
             boolean unread = lastRead == null;

@@ -2,9 +2,11 @@ package com.aiinterview.backend.service;
 
 import com.aiinterview.backend.entity.EntitlementHistory;
 import com.aiinterview.backend.entity.ManualEntitlement;
+import com.aiinterview.backend.entity.Subscription;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.repository.EntitlementHistoryRepository;
 import com.aiinterview.backend.repository.ManualEntitlementRepository;
+import com.aiinterview.backend.repository.SubscriptionRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,14 +17,38 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
+
 @Service
-@RequiredArgsConstructor
 public class AdminEntitlementService {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminEntitlementService.class);
 
     private final ManualEntitlementRepository manualEntitlementRepository;
     private final EntitlementHistoryRepository entitlementHistoryRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
     private final PlanService planService;
+    private final PaymentService paymentService;
+    private final EmailService emailService;
+
+    public AdminEntitlementService(
+            ManualEntitlementRepository manualEntitlementRepository,
+            EntitlementHistoryRepository entitlementHistoryRepository,
+            SubscriptionRepository subscriptionRepository,
+            UserRepository userRepository,
+            PlanService planService,
+            @Lazy PaymentService paymentService,
+            EmailService emailService
+    ) {
+        this.manualEntitlementRepository = manualEntitlementRepository;
+        this.entitlementHistoryRepository = entitlementHistoryRepository;
+        this.subscriptionRepository = subscriptionRepository;
+        this.userRepository = userRepository;
+        this.planService = planService;
+        this.paymentService = paymentService;
+        this.emailService = emailService;
+    }
 
     @Transactional
     public ManualEntitlement grantTemporaryAccess(
@@ -301,6 +327,13 @@ public class AdminEntitlementService {
     @Transactional
     public void revokeAllEntitlementsForUser(
             Long userId) {
+        revokeAllEntitlementsForUser(userId, null);
+    }
+
+    @Transactional
+    public void revokeAllEntitlementsForUser(
+            Long userId,
+            Long adminUserId) {
 
         User user = getUser(userId);
 
@@ -326,7 +359,7 @@ public class AdminEntitlementService {
                                     entitlement.getPlanName()
                             )
                             .action("REVOKE_ALL")
-                            .grantedBy("SYSTEM")
+                            .grantedBy("ADMIN")
                             .reason(
                                     "All manual entitlements revoked"
                             )
@@ -335,6 +368,64 @@ public class AdminEntitlementService {
                             .build();
 
             entitlementHistoryRepository.save(history);
+        }
+
+        List<Subscription> allSubscriptions =
+                subscriptionRepository.findByUserId(userId);
+
+        for (Subscription subscription : allSubscriptions) {
+            if ("ACTIVE".equalsIgnoreCase(subscription.getSubscriptionStatus()) || subscription.isLifetime()) {
+                try {
+                    if (subscription.getCashfreeOrderId() != null && !subscription.getCashfreeOrderId().isBlank()) {
+                        paymentService.cancelAndRefundSubscriptionByAdmin(subscription.getId(), adminUserId, "Revoked by admin");
+                    } else {
+                        subscription.setSubscriptionStatus("CANCELLED");
+                        subscription.setCancelledAt(now);
+                        subscription.setCancelledBy("ADMIN");
+                        subscription.setCancellationReason("Revoked by admin");
+                        subscription.setAutoRenew(false);
+                        subscription.setLifetime(false);
+                        if (subscription.getExpiresAt() == null || subscription.getExpiresAt().isAfter(now)) {
+                            subscription.setExpiresAt(now);
+                        }
+                        subscription.setUpdatedAt(now);
+                        subscriptionRepository.save(subscription);
+
+                        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                            String customerName = user.getName() != null && !user.getName().isBlank()
+                                    ? user.getName()
+                                    : (user.getUsername() != null ? user.getUsername() : "Valued Member");
+                            emailService.sendSubscriptionRevokedEmail(
+                                    user.getEmail(),
+                                    customerName,
+                                    subscription.getPlan() != null ? subscription.getPlan().getName() : "Premium",
+                                    0.0,
+                                    "N/A",
+                                    "Platform access updated"
+                            );
+                        }
+                    }
+                } catch (Exception ex) {
+                    log.error("Failed to cancel/refund subscription id {} for user {}: {}", subscription.getId(), userId, ex.getMessage());
+                }
+
+                String planName = subscription.getPlan() != null
+                        ? subscription.getPlan().getName()
+                        : "UNKNOWN";
+
+                EntitlementHistory history =
+                        EntitlementHistory.builder()
+                                .user(user)
+                                .planName(planName)
+                                .action("REVOKE_SUBSCRIPTION")
+                                .grantedBy("ADMIN")
+                                .reason("Subscription revoked by admin")
+                                .effectiveAt(now)
+                                .createdAt(now)
+                                .build();
+
+                entitlementHistoryRepository.save(history);
+            }
         }
     }
 

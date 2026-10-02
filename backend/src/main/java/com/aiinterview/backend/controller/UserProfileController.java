@@ -1,34 +1,39 @@
 package com.aiinterview.backend.controller;
 
+import com.aiinterview.backend.entity.Role;
+import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.entity.UserProfile;
+import com.aiinterview.backend.repository.UserRepository;
 import com.aiinterview.backend.security.JwtUtil;
 import com.aiinterview.backend.service.UserProfileService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import com.aiinterview.backend.service.UserService;
 import com.aiinterview.backend.model.UserProfileRequest;
 import com.aiinterview.backend.model.UserProfileResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import java.util.List;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.bind.annotation.DeleteMapping;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/profile")
 public class UserProfileController {
 
     private final UserProfileService userProfileService;
+    private final UserRepository userRepository;
+    private final UserService userService;
 
     public UserProfileController(
-            UserProfileService userProfileService) {
+            UserProfileService userProfileService,
+            UserRepository userRepository,
+            UserService userService) {
 
         this.userProfileService = userProfileService;
+        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @GetMapping
@@ -65,7 +70,7 @@ public class UserProfileController {
 
     private String resolveEmail(Authentication authentication, String tokenHeader) {
         if (authentication != null && authentication.isAuthenticated() && authentication.getName() != null && !authentication.getName().isBlank()) {
-            return authentication.getName().trim();
+            return authentication.getName().trim().toLowerCase();
         }
         if (tokenHeader != null && tokenHeader.toLowerCase().startsWith("bearer ")) {
             String rawToken = tokenHeader.substring(7).trim();
@@ -76,7 +81,7 @@ public class UserProfileController {
             if (JwtUtil.validateToken(token)) {
                 String extracted = JwtUtil.extractEmail(token);
                 if (extracted != null && !extracted.isBlank()) {
-                    return extracted.trim();
+                    return extracted.trim().toLowerCase();
                 }
             }
         }
@@ -128,5 +133,32 @@ public ResponseEntity<List<String>> getSkillSuggestions(
     );
 
 }
+
+    @DeleteMapping(value = {"", "/account"})
+    public ResponseEntity<?> deleteMyAccount(
+            Authentication authentication,
+            @RequestHeader(value = "Authorization", required = false) String tokenHeader) {
+
+        String email = resolveEmail(authentication, tokenHeader);
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Unauthorized"));
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "User not found"));
+        }
+
+        if (user.getRole() == Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Admin accounts cannot be deleted."));
+        }
+
+        userService.deleteUser(user.getId());
+
+        return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
+    }
 
 }

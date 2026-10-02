@@ -22,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -36,6 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 @PreAuthorize("isAuthenticated()")
 @Transactional(readOnly = true)
 public class InvoiceController {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(InvoiceController.class);
 
     private final InvoiceRepository invoiceRepository;
     private final UserRepository userRepository;
@@ -115,9 +118,8 @@ public class InvoiceController {
                     .body(pdf);
 
         } catch (Exception ex) {
-            throw new RuntimeException(
-                    "Unable to generate invoice PDF"
-            );
+            log.error("Failed to generate invoice PDF for invoiceId {}: {}", invoiceId, ex.getMessage(), ex);
+            throw new RuntimeException("Unable to generate invoice PDF: " + ex.getMessage());
         }
     }
 
@@ -195,389 +197,230 @@ public class InvoiceController {
                             new PDPageContentStream(document, page)
             ) {
 
-                content.setNonStrokingColor(20, 28, 48);
+                setFillRgb(content, 20, 28, 48);
                 content.beginText();
-                content.setFont(bold, 25);
-                content.newLineAtOffset(
-                        margin,
-                        pageHeight - 68
-                );
+                content.setFont(bold, 24);
+                content.newLineAtOffset(margin, pageHeight - 65);
                 content.showText("SAMPREPIX");
                 content.endText();
 
-                content.setNonStrokingColor(100, 110, 125);
+                setFillRgb(content, 100, 110, 125);
                 content.beginText();
                 content.setFont(regular, 9);
-                content.newLineAtOffset(
-                        margin,
-                        pageHeight - 86
-                );
-                content.showText(
-                        "AI Placement & Interview Preparation Platform"
-                );
+                content.newLineAtOffset(margin, pageHeight - 81);
+                content.showText("AI Interview & Placement Preparation Platform");
                 content.endText();
 
-                content.setNonStrokingColor(40, 80, 180);
-                content.addRect(
-                        pageWidth - margin - 122,
-                        pageHeight - 92,
-                        122,
-                        44
-                );
+                setFillRgb(content, 37, 99, 235);
+                content.addRect(pageWidth - margin - 150, pageHeight - 88, 150, 40);
                 content.fill();
 
-                content.setNonStrokingColor(255, 255, 255);
+                setFillRgb(content, 255, 255, 255);
                 content.beginText();
-                content.setFont(bold, 15);
-                content.newLineAtOffset(
-                        pageWidth - margin - 94,
-                        pageHeight - 67
-                );
-                content.showText("INVOICE");
+                content.setFont(bold, 13);
+                content.newLineAtOffset(pageWidth - margin - 138, pageHeight - 65);
+                content.showText("TAX INVOICE / RECEIPT");
                 content.endText();
 
-                float y = pageHeight - 132;
+                float y = pageHeight - 118;
 
-                content.setStrokingColor(220, 225, 232);
+                setStrokeRgb(content, 220, 225, 232);
                 content.moveTo(margin, y);
                 content.lineTo(pageWidth - margin, y);
                 content.stroke();
 
-                y -= 34;
+                y -= 26;
 
-                drawLabelValue(
-                        content,
-                        bold,
-                        regular,
-                        "Invoice Number",
-                        safe(invoice.getInvoiceNumber()),
-                        margin,
-                        y,
-                        margin + 105
-                );
+                drawLabelValue(content, bold, regular, "Invoice Number:", safe(invoice.getInvoiceNumber()), margin, y, margin + 95);
+                drawLabelValue(content, bold, regular, "Payment Status:", safe(invoice.getStatus()).toUpperCase(), pageWidth / 2 + 10, y, pageWidth / 2 + 105);
 
-                drawLabelValue(
-                        content,
-                        bold,
-                        regular,
-                        "Issued",
-                        invoice.getIssuedAt() != null
-                                ? invoice.getIssuedAt()
-                                .format(DATE_FORMAT)
-                                : "N/A",
-                        pageWidth / 2,
-                        y,
-                        pageWidth / 2 + 45
-                );
+                y -= 18;
 
-                y -= 55;
+                drawLabelValue(content, bold, regular, "Issue Date:", invoice.getIssuedAt() != null ? invoice.getIssuedAt().format(DATE_FORMAT) : "N/A", margin, y, margin + 95);
+                drawLabelValue(content, bold, regular, "Payment Method:", "Cashfree PG", pageWidth / 2 + 10, y, pageWidth / 2 + 105);
 
-                content.setNonStrokingColor(40, 48, 65);
+                y -= 38;
+
+                setFillRgb(content, 30, 41, 59);
                 content.beginText();
-                content.setFont(bold, 12);
+                content.setFont(bold, 11);
                 content.newLineAtOffset(margin, y);
-                content.showText("Billed To");
+                content.showText("Billed To:");
                 content.endText();
 
-                y -= 20;
-
+                y -= 16;
                 content.beginText();
                 content.setFont(bold, 11);
                 content.newLineAtOffset(margin, y);
                 content.showText(safe(user.getName()));
                 content.endText();
 
-                y -= 16;
-
-                content.setFont(regular, 10);
+                y -= 15;
                 content.beginText();
+                content.setFont(regular, 10);
                 content.newLineAtOffset(margin, y);
                 content.showText(safe(user.getEmail()));
                 content.endText();
 
-                y -= 45;
+                String userPhone = null;
+                try {
+                    if (user.getProfile() != null && user.getProfile().getPhone() != null && !user.getProfile().getPhone().isBlank()) {
+                        userPhone = user.getProfile().getPhone().trim();
+                    }
+                } catch (Exception ignored) {}
 
-                content.setNonStrokingColor(246, 248, 252);
-                content.addRect(
-                        margin,
-                        y - 70,
-                        pageWidth - margin * 2,
-                        70
-                );
+                if (userPhone != null) {
+                    y -= 15;
+                    content.beginText();
+                    content.setFont(regular, 10);
+                    content.newLineAtOffset(margin, y);
+                    content.showText("Phone: +91 " + userPhone);
+                    content.endText();
+                }
+
+                y -= 32;
+
+                // Itemized Table Header
+                setFillRgb(content, 241, 245, 249);
+                content.addRect(margin, y - 24, pageWidth - margin * 2, 24);
                 content.fill();
 
-                content.setNonStrokingColor(45, 54, 72);
-
+                setFillRgb(content, 51, 65, 85);
                 content.beginText();
                 content.setFont(bold, 9);
-                content.newLineAtOffset(
-                        margin + 14,
-                        y - 19
-                );
-                content.showText("PLAN");
+                content.newLineAtOffset(margin + 10, y - 16);
+                content.showText("ITEM / DESCRIPTION");
                 content.endText();
 
                 content.beginText();
                 content.setFont(bold, 9);
-                content.newLineAtOffset(
-                        margin + 205,
-                        y - 19
-                );
-                content.showText("STATUS");
+                content.newLineAtOffset(margin + 200, y - 16);
+                content.showText("PERIOD");
                 content.endText();
 
                 content.beginText();
                 content.setFont(bold, 9);
-                content.newLineAtOffset(
-                        pageWidth - margin - 125,
-                        y - 19
-                );
-                content.showText("TOTAL");
+                content.newLineAtOffset(margin + 295, y - 16);
+                content.showText("QTY");
                 content.endText();
 
                 content.beginText();
-                content.setFont(bold, 11);
-                content.newLineAtOffset(
-                        margin + 14,
-                        y - 43
-                );
-                content.showText(
-                        invoice.getPlan() != null
-                                ? safe(invoice.getPlan().getName())
-                                : "N/A"
-                );
+                content.setFont(bold, 9);
+                content.newLineAtOffset(margin + 350, y - 16);
+                content.showText("RATE");
                 content.endText();
 
-                content.setNonStrokingColor(30, 130, 80);
+                content.beginText();
+                content.setFont(bold, 9);
+                content.newLineAtOffset(pageWidth - margin - 70, y - 16);
+                content.showText("AMOUNT");
+                content.endText();
+
+                y -= 32;
+
+                // Item Row
+                String planTitle = (invoice.getPlan() != null ? safe(invoice.getPlan().getName()) : "PRO") + " Plan - Monthly Access";
+                String priceFormatted = formatMoney(invoice.getAmount(), invoice.getCurrency());
+
+                setFillRgb(content, 15, 23, 42);
                 content.beginText();
                 content.setFont(bold, 10);
-                content.newLineAtOffset(
-                        margin + 205,
-                        y - 43
-                );
-                content.showText(safe(invoice.getStatus()));
+                content.newLineAtOffset(margin + 10, y);
+                content.showText(planTitle);
                 content.endText();
 
-                content.setNonStrokingColor(20, 28, 48);
                 content.beginText();
-                content.setFont(bold, 12);
-                content.newLineAtOffset(
-                        pageWidth - margin - 125,
-                        y - 43
-                );
-                content.showText(
-                        formatMoney(
-                                invoice.getAmount(),
-                                invoice.getCurrency()
-                        )
-                );
+                content.setFont(regular, 9);
+                content.newLineAtOffset(margin + 200, y);
+                content.showText("30 Days");
                 content.endText();
 
-                y -= 105;
-
-                content.setNonStrokingColor(40, 48, 65);
                 content.beginText();
-                content.setFont(bold, 11);
-                content.newLineAtOffset(margin, y);
-                content.showText("Payment Details");
+                content.setFont(regular, 9);
+                content.newLineAtOffset(margin + 302, y);
+                content.showText("1");
                 content.endText();
 
-                y -= 24;
+                content.beginText();
+                content.setFont(regular, 9);
+                content.newLineAtOffset(margin + 350, y);
+                content.showText(priceFormatted);
+                content.endText();
 
-                Payment payment = invoice.getPayment();
+                content.beginText();
+                content.setFont(bold, 10);
+                content.newLineAtOffset(pageWidth - margin - 70, y);
+                content.showText(priceFormatted);
+                content.endText();
 
-                drawDetail(
-                        content,
-                        regular,
-                        "Payment Gateway",
-                        "Cashfree",
-                        margin,
-                        y
-                );
-
-                y -= 18;
-
-                drawDetail(
-                        content,
-                        regular,
-                        "Payment Method",
-                        payment != null
-                                ? safe(payment.getPaymentMethod())
-                                : "N/A",
-                        margin,
-                        y
-                );
-
-                y -= 18;
-
-                drawDetail(
-                        content,
-                        regular,
-                        "Cashfree Order ID",
-                        safe(invoice.getCashfreeOrderId()),
-                        margin,
-                        y
-                );
-
-                y -= 18;
-
-                drawDetail(
-                        content,
-                        regular,
-                        "Payment Reference ID",
-                        payment != null
-                                ? safe(payment.getCashfreePaymentId())
-                                : "N/A",
-                        margin,
-                        y
-                );
-
-                y -= 18;
-
-                drawDetail(
-                        content,
-                        regular,
-                        "Currency",
-                        safe(invoice.getCurrency()),
-                        margin,
-                        y
-                );
-
-                y -= 18;
-
-                drawDetail(
-                        content,
-                        regular,
-                        "Payment Status",
-                        safe(invoice.getStatus()),
-                        margin,
-                        y
-                );
-
-                y -= 42;
-
-                content.setStrokingColor(220, 225, 232);
+                y -= 14;
+                setStrokeRgb(content, 226, 232, 240);
                 content.moveTo(margin, y);
                 content.lineTo(pageWidth - margin, y);
                 content.stroke();
 
                 y -= 30;
 
-                content.setNonStrokingColor(20, 28, 48);
-                content.beginText();
-                content.setFont(bold, 11);
-                content.newLineAtOffset(margin, y);
-                content.showText("Order Summary");
-                content.endText();
+                // Order Totals Summary
+                drawSummaryRow(content, regular, bold, "Subtotal", priceFormatted, pageWidth / 2 + 20, pageWidth - margin, y);
+                y -= 18;
+                drawSummaryRow(content, regular, bold, "Estimated Taxes", "Included (₹0.00)", pageWidth / 2 + 20, pageWidth - margin, y);
+                y -= 18;
+                drawSummaryRow(content, regular, bold, "Total Paid", priceFormatted, pageWidth / 2 + 20, pageWidth - margin, y);
 
-                y -= 23;
+                y -= 35;
 
-                drawSummaryRow(
-                        content,
-                        regular,
-                        bold,
-                        "Plan",
-                        invoice.getPlan() != null
-                                ? safe(invoice.getPlan().getName())
-                                : "N/A",
-                        margin,
-                        pageWidth - margin,
-                        y
-                );
-
-                y -= 20;
-
-                drawSummaryRow(
-                        content,
-                        regular,
-                        bold,
-                        "Subtotal",
-                        formatMoney(
-                                invoice.getAmount(),
-                                invoice.getCurrency()
-                        ),
-                        margin,
-                        pageWidth - margin,
-                        y
-                );
-
-                y -= 20;
-
-                drawSummaryRow(
-                        content,
-                        regular,
-                        bold,
-                        "Total Paid",
-                        formatMoney(
-                                invoice.getAmount(),
-                                invoice.getCurrency()
-                        ),
-                        margin,
-                        pageWidth - margin,
-                        y
-                );
-
-                y -= 45;
-
-                content.setNonStrokingColor(40, 80, 180);
-                content.addRect(
-                        margin,
-                        y - 46,
-                        pageWidth - margin * 2,
-                        46
-                );
+                // Payment and Subscription Details Box
+                setFillRgb(content, 248, 250, 252);
+                content.addRect(margin, y - 76, pageWidth - margin * 2, 76);
                 content.fill();
 
-                content.setNonStrokingColor(255, 255, 255);
+                setStrokeRgb(content, 226, 232, 240);
+                content.addRect(margin, y - 76, pageWidth - margin * 2, 76);
+                content.stroke();
+
+                setFillRgb(content, 30, 41, 59);
                 content.beginText();
                 content.setFont(bold, 10);
-                content.newLineAtOffset(
-                        margin + 15,
-                        y - 19
-                );
-                content.showText(
-                        "Payment processed securely through Cashfree"
-                );
+                content.newLineAtOffset(margin + 12, y - 18);
+                content.showText("Transaction & Subscription Details");
                 content.endText();
 
-                content.beginText();
-                content.setFont(regular, 8);
-                content.newLineAtOffset(
-                        margin + 15,
-                        y - 34
-                );
-                content.showText(
-                        "This invoice confirms the transaction recorded by Samprepix."
-                );
-                content.endText();
+                Payment payment = invoice.getPayment();
+                String paymentRef = (payment != null && payment.getCashfreePaymentId() != null)
+                        ? payment.getCashfreePaymentId()
+                        : "N/A";
 
-                y -= 82;
+                String validUntilStr = invoice.getDueDate() != null
+                        ? invoice.getDueDate().format(DATE_FORMAT)
+                        : (invoice.getIssuedAt() != null ? invoice.getIssuedAt().plusMonths(1).format(DATE_FORMAT) : "30 Days from issue");
 
-                content.setStrokingColor(220, 225, 232);
+                drawDetail(content, regular, "Cashfree Order ID", safe(invoice.getCashfreeOrderId()), margin + 12, y - 36);
+                drawDetail(content, regular, "Payment Reference", paymentRef, margin + 12, y - 52);
+                drawDetail(content, regular, "Subscription Valid Until", validUntilStr, margin + 12, y - 68);
+
+                y -= 110;
+
+                setStrokeRgb(content, 226, 232, 240);
                 content.moveTo(margin, y);
                 content.lineTo(pageWidth - margin, y);
                 content.stroke();
 
-                y -= 27;
+                y -= 22;
 
-                content.setNonStrokingColor(40, 48, 65);
+                setFillRgb(content, 71, 85, 105);
                 content.beginText();
-                content.setFont(bold, 10);
+                content.setFont(bold, 9);
                 content.newLineAtOffset(margin, y);
-                content.showText(
-                        "Thank you for choosing Samprepix."
-                );
+                content.showText("Support: support@samprepix.com  |  Website: https://samprepix.com");
                 content.endText();
 
-                y -= 17;
+                y -= 15;
 
-                content.setNonStrokingColor(105, 115, 130);
                 content.beginText();
                 content.setFont(regular, 8);
                 content.newLineAtOffset(margin, y);
-                content.showText(
-                        "This invoice is electronically generated and does not require a signature."
-                );
+                content.showText("This is an electronically generated tax invoice and does not require a physical signature.");
                 content.endText();
 
                 y -= 14;
@@ -585,15 +428,21 @@ public class InvoiceController {
                 content.beginText();
                 content.setFont(regular, 8);
                 content.newLineAtOffset(margin, y);
-                content.showText(
-                        "Samprepix • AI-powered placement preparation"
-                );
+                content.showText("Thank you for choosing SamPrepIX - Your AI Interview & Placement Preparation Partner.");
                 content.endText();
             }
 
             document.save(output);
             return output.toByteArray();
         }
+    }
+
+    private static void setFillRgb(PDPageContentStream stream, int r, int g, int b) throws IOException {
+        stream.setNonStrokingColor(r / 255.0f, g / 255.0f, b / 255.0f);
+    }
+
+    private static void setStrokeRgb(PDPageContentStream stream, int r, int g, int b) throws IOException {
+        stream.setStrokingColor(r / 255.0f, g / 255.0f, b / 255.0f);
     }
 
     private void drawLabelValue(
@@ -606,7 +455,7 @@ public class InvoiceController {
             float y,
             float valueX) throws Exception {
 
-        content.setNonStrokingColor(45, 54, 72);
+        setFillRgb(content, 45, 54, 72);
         content.beginText();
         content.setFont(bold, 9);
         content.newLineAtOffset(labelX, y);
@@ -628,7 +477,7 @@ public class InvoiceController {
             float x,
             float y) throws Exception {
 
-        content.setNonStrokingColor(80, 90, 105);
+        setFillRgb(content, 80, 90, 105);
         content.beginText();
         content.setFont(regular, 9);
         content.newLineAtOffset(x, y);
@@ -646,14 +495,14 @@ public class InvoiceController {
             float right,
             float y) throws Exception {
 
-        content.setNonStrokingColor(70, 80, 95);
+        setFillRgb(content, 70, 80, 95);
         content.beginText();
         content.setFont(regular, 9);
         content.newLineAtOffset(left, y);
         content.showText(label);
         content.endText();
 
-        content.setNonStrokingColor(30, 38, 52);
+        setFillRgb(content, 30, 38, 52);
         content.beginText();
         content.setFont(bold, 9);
         content.newLineAtOffset(right - 125, y);
@@ -720,7 +569,21 @@ public class InvoiceController {
                 .replace("\r", " ")
                 .replace("\n", " ")
                 .replace("\t", " ")
+                .replace("•", "-")
+                .replace("₹", "INR ")
                 .trim();
+
+        StringBuilder sb = new StringBuilder();
+        for (char c : sanitized.toCharArray()) {
+            if (c >= 32 && c <= 126) {
+                sb.append(c);
+            } else if (c == '•') {
+                sb.append('-');
+            } else {
+                sb.append(' ');
+            }
+        }
+        sanitized = sb.toString().trim();
 
         if (sanitized.isBlank()) {
             return "N/A";

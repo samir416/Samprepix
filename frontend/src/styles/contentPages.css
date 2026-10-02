@@ -22,8 +22,41 @@ body.dark-theme .content-page {
     width: 100%;
     max-width: 960px;
     margin: 0 auto;
-    padding: 72px 24px 36px;
+    padding: 120px 24px 36px;
     text-align: center;
+}
+
+.content-page-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #1e293b;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.content-page-nav-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+body.dark-theme .content-page-nav-btn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    color: #f8fafc;
+}
+
+body.dark-theme .content-page-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 .content-page-badge {

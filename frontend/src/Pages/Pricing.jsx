@@ -24,7 +24,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
-import { createTestOrder } from "../services/paymentService";
+import { createOrder } from "../services/paymentService";
 import { toast } from "react-toastify";
 
 const loadCashfree = () =>
@@ -298,13 +298,14 @@ export default function Pricing() {
     });
 
     try {
-      const order = await createTestOrder(
+      const order = await createOrder(
         planId,
         currency,
         "cashfree",
         discountApplied
           ? referralInput.trim().toUpperCase()
-          : null
+          : null,
+        window.location.origin + "/payment/verify"
       );
 
       if (!order?.paymentSessionId) {
@@ -316,7 +317,7 @@ export default function Pricing() {
       const Cashfree = await loadCashfree();
 
       const cashfree = Cashfree({
-        mode: "sandbox"
+        mode: "production"
       });
 
       const checkoutResult = await cashfree.checkout({
@@ -955,14 +956,29 @@ export default function Pricing() {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="history-open-btn"
-            onClick={() => navigate("/billing-history")}
-            aria-label="View Invoices and Payment History"
-          >
-            View Invoices
-          </button>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <button
+              type="button"
+              className="history-open-btn"
+              onClick={() => navigate("/subscription/policy")}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "inherit"
+              }}
+              aria-label="View Subscription and Refund Policy"
+            >
+              Subscription Policy
+            </button>
+            <button
+              type="button"
+              className="history-open-btn"
+              onClick={() => navigate("/billing-history")}
+              aria-label="View Invoices and Payment History"
+            >
+              View Invoices
+            </button>
+          </div>
         </div>
       </section>
 

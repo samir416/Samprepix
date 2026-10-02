@@ -364,6 +364,14 @@ public List<String> generateSkillSuggestions(
 
 }
 
+@Override
+public String generateChatResponse(String prompt) {
+    if (prompt == null || prompt.isBlank()) {
+        throw new IllegalArgumentException("Prompt cannot be empty.");
+    }
+    return callGemini(prompt);
+}
+
 private static final ObjectMapper OBJECT_MAPPER =
 
         new ObjectMapper();

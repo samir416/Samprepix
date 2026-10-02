@@ -77,7 +77,7 @@ const DOC_SECTIONS = [
                         </div>
                         <div className="faq-item">
                             <h3>12. What are the current subscription prices on the platform?</h3>
-                            <p>The platform currently uses sandbox test pricing: <strong>PRO is ₹1</strong> and <strong>ELITE is ₹2</strong>. This allows candidates to test and experience the full suite of premium features seamlessly.</p>
+                            <p>The platform offers transparent monthly pricing: <strong>PRO is ₹399/month</strong> ($9 USD) and <strong>ELITE is ₹799/month</strong> ($19 USD). Candidates can apply referral codes (e.g. SAMIR100) for instant discounts.</p>
                         </div>
                         <div className="faq-item">
                             <h3>13. What payment methods are supported for subscriptions?</h3>

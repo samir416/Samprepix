@@ -50,4 +50,6 @@ public interface GeminiService {
 
     );
 
+    String generateChatResponse(String prompt);
+
 }

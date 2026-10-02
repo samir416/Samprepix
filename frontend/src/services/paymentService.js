@@ -23,26 +23,30 @@ export const createOrder = (
     planId,
     currency = "INR",
     paymentMethod = "cashfree",
-    referralCode = null
+    referralCode = null,
+    returnUrl = null
 ) =>
     API.post("/create-order", {
         planId,
         currency,
         paymentMethod,
-        referralCode
+        referralCode,
+        returnUrl: returnUrl || (typeof window !== "undefined" ? window.location.origin + "/payment/verify" : null)
     }).then((res) => res.data);
 
 export const createTestOrder = (
     planId,
     currency = "INR",
     paymentMethod = "cashfree",
-    referralCode = null
+    referralCode = null,
+    returnUrl = null
 ) =>
     API.post("/create-test-order", {
         planId,
         currency,
         paymentMethod,
-        referralCode
+        referralCode,
+        returnUrl: returnUrl || (typeof window !== "undefined" ? window.location.origin + "/payment/verify" : null)
     }).then((res) => res.data);
 
 export const verifyPayment = (payload) =>

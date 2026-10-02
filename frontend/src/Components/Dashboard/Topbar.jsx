@@ -30,6 +30,7 @@ import SettingsModal from "./SettingsModal";
 import { useNavigate } from "react-router-dom";
 import { getUnreadNotificationCount } from "../../services/notificationService";
 import { getCapabilities } from "../../services/subscriptionService";
+import { clearAuthSession } from "../../services/authService";
 
 const SEARCH_CATALOG = [
     { title: "Two Sum", category: "Coding Problem", link: "/coding-arena?problem=two-sum" },
@@ -147,6 +148,12 @@ export default function Topbar() {
 
             setDarkMode(true);
         }
+
+        const handleThemeChange = () => {
+            setDarkMode(document.body.classList.contains("dark-theme"));
+        };
+        window.addEventListener("themechange", handleThemeChange);
+        return () => window.removeEventListener("themechange", handleThemeChange);
 
     }, []);
 
@@ -277,6 +284,8 @@ export default function Topbar() {
             "theme",
             isDark ? "dark" : "light"
         );
+
+        window.dispatchEvent(new Event("themechange"));
     };
 
     useEffect(() => {
@@ -321,9 +330,7 @@ export default function Topbar() {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("onboardingCompleted");
+        clearAuthSession();
         navigate("/login");
     };
 
@@ -493,6 +500,7 @@ export default function Topbar() {
                             <button
                                 className="mobile-setting-item"
                                 onClick={toggleTheme}
+                                title="Toggle theme · Ctrl + Shift + L"
                             >
 
                                 {
@@ -716,6 +724,7 @@ export default function Topbar() {
                         className="dashboard-theme-toggle"
                         onClick={toggleTheme}
                         aria-label="Toggle Theme"
+                        title="Toggle theme · Ctrl + Shift + L"
                     >
 
                         {

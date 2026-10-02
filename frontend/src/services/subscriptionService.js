@@ -49,6 +49,14 @@ export const checkout = (
         referralCode
     }).then((res) => res.data);
 
+export const cancelSubscription = (
+    subscriptionId,
+    reason = "User requested cancellation"
+) =>
+    API.post(`/${subscriptionId}/cancel`, {
+        reason
+    }).then((res) => res.data);
+
 export const subscribe = () =>
     Promise.reject(
         new Error(

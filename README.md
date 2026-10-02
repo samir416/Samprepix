@@ -496,6 +496,12 @@ Never commit real payment credentials.
 - html2canvas
 - Lottie React
 
+### UI Theme & Keyboard Shortcuts
+
+- **Theme Mode**: Dynamic Light / Dark mode with persistent `localStorage` synchronization.
+- **Global Theme Shortcut**: `Ctrl + Shift + L` toggles between light and dark themes anywhere in the application (disabled during active text input in `input`, `textarea`, `select`, or `contenteditable`).
+- **Theme Toggle Tooltip**: "Toggle theme · Ctrl + Shift + L".
+
 ## Backend
 
 - Java 17+
