@@ -47,7 +47,7 @@ function AdminRoute({ children }) {
     if (storedUser) {
         try {
             const user = JSON.parse(storedUser);
-            isAdmin = user?.role === "ADMIN";
+            isAdmin = user?.role === "ADMIN" || user?.role === "ROLE_ADMIN";
         } catch {
             isAdmin = false;
         }

@@ -451,7 +451,10 @@ public class SubscriptionController {
         );
     }
 
-    @PostMapping("/{subscriptionId}/auto-renew")
+    @RequestMapping(
+            value = {"/{subscriptionId}/auto-renew", "/my/{subscriptionId}/auto-renew"},
+            method = {RequestMethod.POST, RequestMethod.PATCH}
+    )
     public ResponseEntity<?> updateAutoRenew(
             Authentication authentication,
             @PathVariable Long subscriptionId,

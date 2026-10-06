@@ -146,12 +146,10 @@ public class SecurityConfig {
                                 "/api/payment/webhook",
                                 "/api/support/**",
                                 "/api/ai-roadmap/**",
-                                "/api/github-analyzer/**"
+                                "/api/github-analyzer/**",
+                                "/api/plans/**"
                         )
                         .permitAll()
-
-                        .requestMatchers("/api/plans/**")
-                        .authenticated()
 
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")

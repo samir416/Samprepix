@@ -32,7 +32,7 @@ export const getCapabilities = () =>
     API.get("/capabilities").then((res) => res.data);
 
 export const setAutoRenew = (subscriptionId, autoRenew) =>
-    API.patch(`/my/${subscriptionId}/auto-renew`, {
+    API.post(`/${subscriptionId}/auto-renew`, {
         autoRenew
     }).then((res) => res.data);
 

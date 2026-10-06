@@ -64,9 +64,18 @@ function App() {
                     return;
                 }
                 e.preventDefault();
-                const isDark = document.body.classList.toggle("dark-theme");
+                const isDark = !document.body.classList.contains("dark-theme");
+                if (isDark) {
+                    document.body.classList.add("dark-theme");
+                    document.body.classList.remove("light-theme");
+                } else {
+                    document.body.classList.remove("dark-theme");
+                    document.body.classList.add("light-theme");
+                }
                 localStorage.setItem("theme", isDark ? "dark" : "light");
+                localStorage.setItem("themePreference", isDark ? "dark" : "light");
                 window.dispatchEvent(new Event("themechange"));
+                window.dispatchEvent(new Event("themeChanged"));
             }
         };
         window.addEventListener("keydown", handleKeyDown);
@@ -137,6 +146,7 @@ function App() {
         applyTheme();
         window.addEventListener("storage", applyTheme);
         window.addEventListener("themeChanged", applyTheme);
+        window.addEventListener("themechange", applyTheme);
 
         // Hydrate Interface Density
         const density = localStorage.getItem("setting_interface_density") || "comfortable";
@@ -163,6 +173,7 @@ function App() {
             clearTimeout(transitionTimer);
             window.removeEventListener("storage", applyTheme);
             window.removeEventListener("themeChanged", applyTheme);
+            window.removeEventListener("themechange", applyTheme);
         };
     }, []);
 
