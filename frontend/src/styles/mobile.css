@@ -1069,20 +1069,7 @@
     }
 
 
-    /* =========================================
-   DESKTOP SAFETY FIX
-========================================= */
 
-    @media screen and (min-width:769px) {
-
-        .mobile-premium-topbar,
-        .mobile-slide-menu,
-        .mobile-overlay,
-        .mobile-settings-dropdown {
-
-            display: none !important;
-        }
-    }
 
     .mobile-settings-dropdown{
 
@@ -1335,4 +1322,16 @@
         }
     }
 
+}
+
+/* =========================================
+   DESKTOP SAFETY FIX
+========================================= */
+@media screen and (min-width: 769px) {
+    .mobile-premium-topbar,
+    .mobile-slide-menu,
+    .mobile-overlay,
+    .mobile-settings-dropdown {
+        display: none !important;
+    }
 }

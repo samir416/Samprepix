@@ -99,6 +99,20 @@ public class GlobalExceptionHandler {
                 .body(java.util.Map.of("error", "Malformed request body or invalid JSON: " + (detail != null ? detail : "")));
     }
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<java.util.Map<String, String>> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(java.util.Map.of("error", "Access denied. You do not have permission to perform this action."));
+    }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<java.util.Map<String, String>> handleSecurityException(SecurityException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(java.util.Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Access denied."));
+    }
+
     /**
      * Fallback Exception
      */
