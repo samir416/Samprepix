@@ -1077,4 +1077,4 @@ Before public deployment, review:
 
 This README documents the project's architecture and intended workflows. Production deployment should always be validated against the actual current source configuration.
 
-Last edit 8 November 2026
+Last edit 9 November 2026
