@@ -20,7 +20,7 @@ export default function TermsAndConditions() {
     }, []);
 
     return (
-        <div className="content-page">
+        <div className="content-page terms-page">
             <Navbar />
 
             <section className="content-page-hero">
@@ -39,7 +39,7 @@ export default function TermsAndConditions() {
                     </button>
                     <Link
                         to="/pricing"
-                        className="content-page-nav-btn"
+                        className="content-page-nav-btn primary"
                     >
                         View Pricing Plans (INR)
                     </Link>
@@ -55,7 +55,7 @@ export default function TermsAndConditions() {
             <main className="content-page-body" style={{ maxWidth: "880px", margin: "0 auto", padding: "0 24px 60px" }}>
                 {/* OPERATOR NOTICE */}
                 <div
-                    className="content-card"
+                    className="content-card terms-operator-card"
                     style={{
                         marginBottom: "28px",
                         padding: "24px 28px",
@@ -72,7 +72,7 @@ export default function TermsAndConditions() {
                     </p>
                 </div>
 
-                <article className="content-card" style={{ padding: "36px" }}>
+                <article className="content-card terms-article-card" style={{ padding: "36px" }}>
                     <div className="legal-section-block">
                         <h2 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "10px" }}>1. Acceptance of Terms</h2>
                         <p style={{ fontSize: "0.93rem", lineHeight: "1.7", color: "var(--text-muted, #475569)" }}>
@@ -110,9 +110,9 @@ export default function TermsAndConditions() {
                     </div>
 
                     <div className="legal-section-block">
-                        <h2 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "10px" }}>4. Cancellation & Refund Policy</h2>
+                        <h2 style={{ fontSize: "1.25rem", fontWeight: "700", marginBottom: "10px" }}>4. Strict Non-Refundable & Cancellation Policy</h2>
                         <p style={{ fontSize: "0.93rem", lineHeight: "1.7", color: "var(--text-muted, #475569)" }}>
-                            All subscription payments are one-time charges for 30 days of digital access. Subscriptions can be cancelled at any time prior to cycle renewal. Details regarding refund eligibility, duplicate transaction reimbursements, and 5 to 7 day banking settlement turnaround times are outlined in our dedicated <Link to="/refund-policy" style={{ color: "#4f46e5", fontWeight: "600" }}>Refund & Cancellation Policy</Link>.
+                            All subscription, renewal, and upgrade fees paid on SamPrepIX are strictly final and non-refundable upon successful payment completion. Due to immediate digital provisioning of computing environments, compilers, and proprietary interview content, refunds are not offered for change of mind, partial usage, or non-usage. Mid-cycle voluntary cancellations are not permitted; active subscriptions remain available for the full paid 30-day billing cycle. If AutoPay is active, users may disable automatic renewal at any time from Billing settings to prevent future charges without terminating or refunding current access. Detailed guidelines are set forth in our dedicated <Link to="/refund-policy" className="legal-inline-link" style={{ color: "#4f46e5", fontWeight: "600" }}>Refund & Cancellation Policy</Link>.
                         </p>
                     </div>
 
@@ -159,7 +159,7 @@ export default function TermsAndConditions() {
                         <p style={{ fontSize: "0.93rem", lineHeight: "1.7", color: "var(--text-muted, #475569)" }}>
                             <strong>Platform</strong>: SamPrepIX<br />
                             <strong>Legal Operator</strong>: SAMIR KUMAR<br />
-                            <strong>Official Email</strong>: <a href="mailto:samirprajapat5@gmail.com" style={{ color: "#4f46e5" }}>samirprajapat5@gmail.com</a>
+                            <strong>Official Email</strong>: <a href="mailto:samirprajapat5@gmail.com" className="legal-inline-link" style={{ color: "#4f46e5" }}>samirprajapat5@gmail.com</a>
                         </p>
                     </div>
                 </article>

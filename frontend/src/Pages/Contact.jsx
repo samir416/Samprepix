@@ -216,10 +216,10 @@ export default function Contact() {
                             <div className="content-card" style={{ gridColumn: "1 / -1" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                                     <FaPaperPlane style={{ color: "#2563eb", fontSize: "1.1rem" }} />
-                                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "600" }}>Payments, Invoices & Refunds</h4>
+                                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "600" }}>Payments, Invoices & Billing Support</h4>
                                 </div>
                                 <p style={{ fontSize: "0.88rem", lineHeight: "1.6", color: "var(--text-muted, #64748b)", margin: 0 }}>
-                                    For inquiries regarding Cashfree checkout payments, GST invoices, duplicate charge verifications, or refund requests, please email us directly with your Order ID.
+                                    For inquiries regarding Cashfree checkout payments, GST invoices, duplicate charge verifications, or billing questions, please email us directly with your Order ID.
                                 </p>
                             </div>
                         </div>

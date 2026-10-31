@@ -59,6 +59,27 @@ public class Payment {
     @Column(nullable = false, length = 30)
     private String paymentStatus;
 
+    @Column(nullable = true, length = 30)
+    private String paymentType = "PURCHASE";
+
+    @Column(nullable = true, length = 30)
+    private String upgradeFromPlan;
+
+    @Column(nullable = true, length = 30)
+    private String upgradeToPlan;
+
+    @Column(nullable = true)
+    private Double originalPaidAmount;
+
+    @Column(nullable = true)
+    private Double targetPlanPrice;
+
+    @Column(nullable = true)
+    private LocalDateTime originalExpiresAt;
+
+    @Column(nullable = true)
+    private Boolean autoRenew = true;
+
     @Column(nullable = true, length = 100)
     private String refundId;
 
@@ -115,6 +136,14 @@ public class Payment {
 
         if (paymentStatus == null || paymentStatus.isBlank()) {
             paymentStatus = "CREATED";
+        }
+
+        if (paymentType == null || paymentType.isBlank()) {
+            paymentType = "PURCHASE";
+        }
+
+        if (autoRenew == null) {
+            autoRenew = true;
         }
 
         if (refundAmount == null) {

@@ -505,6 +505,60 @@ public class SubscriptionController {
         }
     }
 
+    @GetMapping("/upgrade-quote")
+    public ResponseEntity<?> getUpgradeQuote(Authentication authentication) {
+        User user = getAuthenticatedUser(authentication);
+        return ResponseEntity.ok(subscriptionService.getUpgradeQuote(user.getId()));
+    }
+
+    @PostMapping("/upgrade-order")
+    public ResponseEntity<?> createUpgradeOrder(Authentication authentication) {
+        User user = getAuthenticatedUser(authentication);
+        try {
+            return ResponseEntity.ok(paymentService.createUpgradeOrder(user, false));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Unable to create upgrade order"));
+        }
+    }
+
+    @PostMapping("/upgrade-test-order")
+    public ResponseEntity<?> createUpgradeTestOrder(Authentication authentication) {
+        User user = getAuthenticatedUser(authentication);
+        try {
+            return ResponseEntity.ok(paymentService.createUpgradeOrder(user, true));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Unable to create test upgrade order"));
+        }
+    }
+
+    @PostMapping("/autopay/toggle")
+    public ResponseEntity<?> toggleAutoPay(
+            Authentication authentication,
+            @RequestBody AutoRenewRequest request) {
+        User user = getAuthenticatedUser(authentication);
+        Subscription activeSub = subscriptionService.getActiveSubscriptionEntity(user.getId());
+        if (activeSub == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "No active subscription found to configure AutoPay"));
+        }
+        Subscription updated = subscriptionService.setAutoRenew(activeSub.getId(), user.getId(), request.isAutoRenew());
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "subscriptionId", updated.getId(),
+                "autoRenew", updated.isAutoRenew(),
+                "expiresAt", updated.getExpiresAt(),
+                "nextRenewalDate", updated.getNextRenewalDate() != null ? updated.getNextRenewalDate() : "",
+                "message", updated.isAutoRenew()
+                        ? "AutoPay has been enabled for future renewals."
+                        : "AutoPay has been turned off. Your current plan remains active until " + updated.getExpiresAt() + ". No refund is issued."
+        ));
+    }
+
     @PostMapping("/{subscriptionId}/cancel")
     public ResponseEntity<?> cancelMySubscription(
             Authentication authentication,
@@ -512,7 +566,7 @@ public class SubscriptionController {
             @RequestBody(required = false) CancellationRequest request) {
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                Map.of("error", "User-initiated cancellations are disabled. Subscription cancellations and refunds can only be processed by platform administration in accordance with our terms of service.")
+                Map.of("error", "Paid subscriptions cannot be cancelled mid-cycle and are strictly non-refundable. All paid plans remain active until their expiry. You may turn off AutoPay at any time to prevent future automatic renewal.")
         );
     }
 

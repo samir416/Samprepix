@@ -94,6 +94,17 @@ public class Subscription {
     @Column(nullable = false)
     private boolean autoRenew = true;
 
+    private LocalDateTime nextRenewalDate;
+
+    @Column(nullable = true, length = 100)
+    private String mandateReference;
+
+    @Column(nullable = true, length = 100)
+    private String cashfreeSubscriptionId;
+
+    @Column(nullable = true)
+    private Integer upgradeCount = 0;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -125,9 +136,15 @@ public class Subscription {
             autoRenew = false;
         }
 
-        if (!refundEligible) {
-            refundEligible = true;
+        if (nextRenewalDate == null && autoRenew) {
+            nextRenewalDate = expiresAt;
         }
+
+        if (upgradeCount == null) {
+            upgradeCount = 0;
+        }
+
+        refundEligible = false;
     }
 
     @PreUpdate

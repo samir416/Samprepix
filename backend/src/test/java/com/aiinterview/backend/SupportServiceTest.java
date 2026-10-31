@@ -20,13 +20,17 @@ public class SupportServiceTest {
 
     private EmailService emailService;
     private UserRepository userRepository;
+    private com.aiinterview.backend.service.ai.GroqService groqService;
+    private com.aiinterview.backend.service.gemini.GeminiService geminiService;
     private SupportServiceImpl supportService;
 
     @BeforeEach
     void setUp() {
         emailService = mock(EmailService.class);
         userRepository = mock(UserRepository.class);
-        supportService = new SupportServiceImpl(emailService, userRepository);
+        groqService = mock(com.aiinterview.backend.service.ai.GroqService.class);
+        geminiService = mock(com.aiinterview.backend.service.gemini.GeminiService.class);
+        supportService = new SupportServiceImpl(emailService, userRepository, groqService, geminiService);
     }
 
     @Test

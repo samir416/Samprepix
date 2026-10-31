@@ -24,14 +24,16 @@ export const createOrder = (
     currency = "INR",
     paymentMethod = "cashfree",
     referralCode = null,
-    returnUrl = null
+    returnUrl = null,
+    enableAutoPay = true
 ) =>
     API.post("/create-order", {
         planId,
         currency,
         paymentMethod,
         referralCode,
-        returnUrl: returnUrl || (typeof window !== "undefined" ? window.location.origin + "/payment/verify" : null)
+        returnUrl: returnUrl || (typeof window !== "undefined" ? window.location.origin + "/payment/verify" : null),
+        enableAutoPay
     }).then((res) => res.data);
 
 export const createTestOrder = (
@@ -39,14 +41,16 @@ export const createTestOrder = (
     currency = "INR",
     paymentMethod = "cashfree",
     referralCode = null,
-    returnUrl = null
+    returnUrl = null,
+    enableAutoPay = true
 ) =>
     API.post("/create-test-order", {
         planId,
         currency,
         paymentMethod,
         referralCode,
-        returnUrl: returnUrl || (typeof window !== "undefined" ? window.location.origin + "/payment/verify" : null)
+        returnUrl: returnUrl || (typeof window !== "undefined" ? window.location.origin + "/payment/verify" : null),
+        enableAutoPay
     }).then((res) => res.data);
 
 export const verifyPayment = (payload) =>

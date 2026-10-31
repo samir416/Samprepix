@@ -32,6 +32,8 @@ public class SubscriptionResponse {
     private LocalDateTime refundedAt;
     private String refundReason;
     private boolean autoRenew;
+    private LocalDateTime nextRenewalDate;
+    private Integer upgradeCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -64,6 +66,8 @@ public class SubscriptionResponse {
                 .refundedAt(sub.getRefundedAt())
                 .refundReason(sub.getRefundReason())
                 .autoRenew(sub.isAutoRenew())
+                .nextRenewalDate(sub.getNextRenewalDate() != null ? sub.getNextRenewalDate() : (sub.isAutoRenew() ? sub.getExpiresAt() : null))
+                .upgradeCount(sub.getUpgradeCount() != null ? sub.getUpgradeCount() : 0)
                 .createdAt(sub.getCreatedAt())
                 .updatedAt(sub.getUpdatedAt())
                 .build();

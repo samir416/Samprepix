@@ -21,43 +21,43 @@ export default function SubscriptionPolicy() {
 
     useEffect(() => {
         updatePageSEO({
-            title: "Subscription & Refund Policy | SamPrepIX",
-            description: "Detailed policies on subscription lifecycle, user cancellations, platform revocations, refund processing timeframes, and renewal rules.",
+            title: "Subscription & Billing Policy | SamPrepIX",
+            description: "Detailed policies on subscription lifecycle, AutoPay management, upgrade rules, non-refundable terms, and official invoicing.",
             canonicalPath: "/subscription/policy"
         });
-        trackPageView("/subscription/policy", "Subscription & Refund Policy | SamPrepIX");
+        trackPageView("/subscription/policy", "Subscription & Billing Policy | SamPrepIX");
     }, []);
 
     const policySections = [
         {
+            icon: <FaShieldAlt style={{ color: "#e11d48", fontSize: "1.4rem" }} />,
+            title: "1. Non-Refundable Subscription Policy",
+            description: "All subscription, renewal, and tier upgrade payments on SamPrepIX are strictly final and non-refundable upon successful completion. Due to immediate provisioning of AI computing models, compiler sandboxes, and premium placement curriculum, refunds are not provided for change of mind, non-usage, or partial usage."
+        },
+        {
             icon: <FaUndoAlt style={{ color: "#4f46e5", fontSize: "1.4rem" }} />,
-            title: "Cancellation & Refund Initiation",
-            description: "When a premium subscription (Pro or Elite) is cancelled by either the user or by platform administration, an automated refund request is submitted through our payment gateway provider (Cashfree Payments). Your premium entitlements remain active only until cancellation confirmation, after which the account transitions back to the Starter plan."
-        },
-        {
-            icon: <FaClock style={{ color: "#059669", fontSize: "1.4rem" }} />,
-            title: "Refund Processing Timeframe",
-            description: "Once initiated, standard banking refunds typically settle within 5 to 7 business days back to your original payment instrument (UPI, Debit Card, Credit Card, or Net Banking). The exact timing depends on your issuing bank and Cashfree's settlement window. We do not invent guaranteed instant turnaround times."
-        },
-        {
-            icon: <FaShieldAlt style={{ color: "#7c3aed", fontSize: "1.4rem" }} />,
-            title: "Platform Administration Revocation",
-            description: "In the event platform administration cancels a premium tier for administrative, testing, or policy reconciliation reasons, an automatic refund is immediately dispatched for the eligible transaction. Affected users receive an immediate dashboard banner and email notification. Internal administration details are never exposed."
+            title: "2. No Mid-Cycle Cancellations",
+            description: "Once activated, paid plans cannot be cancelled mid-cycle. Your premium access remains 100% active and available until the exact conclusion of your 30-day billing cycle. No early cancellation refunds or credits are issued."
         },
         {
             icon: <FaCalendarCheck style={{ color: "#2563eb", fontSize: "1.4rem" }} />,
-            title: "Auto-Renewal & Plan Duration",
-            description: "All payments processed via Cashfree Payment Gateway are one-time charges valid for the full selected billing duration (30 days for monthly tiers). Automatic recurring debit or e-mandate billing is not active. When your plan cycle nears expiry, you can manually renew or choose another tier at your convenience."
+            title: "3. AutoPay & Renewal Control",
+            description: "You have full control over automatic renewals. You can turn off AutoPay at any time directly from your Billing settings. Turning off AutoPay ensures no future debits will occur, while your current paid plan remains fully active until its scheduled expiry date. Turning off AutoPay does not issue a refund."
         },
         {
-            icon: <FaCreditCard style={{ color: "#e11d48", fontSize: "1.4rem" }} />,
-            title: "Refund Status Tracking",
-            description: "Refund progress follows transparent, verifiable states: Refund Initiated (dispatched to Cashfree), Refund Processing (bank clearing), and Refund Completed (funds credited). If provider processing encounters an issue, status is marked Refund Failed and our support team reviews the transaction."
+            icon: <FaCreditCard style={{ color: "#7c3aed", fontSize: "1.4rem" }} />,
+            title: "4. Plan Upgrades (Pro to Elite)",
+            description: "Active Pro members can upgrade to Elite at any time by paying only the backend-calculated difference (₹799 - ₹399 = ₹400). Elite features unlock immediately upon payment verification and remain active for the remaining duration of your current billing period, preserving your original renewal date."
+        },
+        {
+            icon: <FaClock style={{ color: "#059669", fontSize: "1.4rem" }} />,
+            title: "5. Administrative Actions",
+            description: "In the rare event that platform administration modifies or reconciles a subscription for policy or administrative reasons, any authorized administrative refund is handled directly through Cashfree Payments. The user receives immediate confirmation via their registered email."
         },
         {
             icon: <FaUserCheck style={{ color: "#d97706", fontSize: "1.4rem" }} />,
-            title: "Purchasing Again After Cancellation",
-            description: "Once your cancellation and refund have reached final reconciliation, you are always welcome to upgrade to Pro or Elite whenever you are ready. Your historical interview records, ATS resume scans, and coding problem milestones are safely preserved on your account."
+            title: "6. Official Tax Invoices & Records",
+            description: "Every verified subscription, upgrade, or renewal transaction generates an official GST/Tax invoice receipt. You can inspect transaction records and download PDFs anytime from your Billing History."
         }
     ];
 
@@ -67,9 +67,9 @@ export default function SubscriptionPolicy() {
 
             <section className="content-page-hero">
                 <span className="content-page-badge">Billing & Terms</span>
-                <h1>Subscription & Refund Policy</h1>
+                <h1>Subscription & Billing Policy</h1>
                 <p>
-                    Clear, honest rules regarding your SamPrepIX membership, refund timelines, and account lifecycle.
+                    Clear, transparent rules regarding your SamPrepIX membership, AutoPay management, upgrade terms, and account lifecycle.
                 </p>
                 <div style={{ marginTop: "18px", display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
                     <button

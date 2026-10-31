@@ -4,13 +4,17 @@ import com.aiinterview.backend.dto.subscription.SubscriptionResponse;
 import com.aiinterview.backend.entity.Plan;
 import com.aiinterview.backend.entity.Subscription;
 import com.aiinterview.backend.entity.User;
+import com.aiinterview.backend.dto.subscription.UpgradeQuoteResponse;
+import com.aiinterview.backend.repository.PlanRepository;
 import com.aiinterview.backend.repository.SubscriptionRepository;
+import com.aiinterview.backend.repository.UpgradeTransactionRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -19,6 +23,8 @@ public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
+    private final PlanRepository planRepository;
+    private final UpgradeTransactionRepository upgradeTransactionRepository;
 
     @Transactional(readOnly = true)
     public List<SubscriptionResponse> getUserSubscriptions(Long userId) {
@@ -213,8 +219,102 @@ public class SubscriptionService {
         }
 
         subscription.setAutoRenew(autoRenew);
+        if (autoRenew) {
+            subscription.setNextRenewalDate(subscription.getExpiresAt());
+        } else {
+            subscription.setNextRenewalDate(null);
+        }
 
         return subscriptionRepository.save(subscription);
+    }
+
+    @Transactional(readOnly = true)
+    public UpgradeQuoteResponse getUpgradeQuote(Long userId) {
+        User user = getUser(userId);
+        Subscription activeSub = getLatestActiveSubscription(user);
+
+        if (activeSub == null) {
+            return UpgradeQuoteResponse.builder()
+                    .eligible(false)
+                    .reason("No active subscription found. Upgrade requires an active Pro subscription.")
+                    .build();
+        }
+
+        if (activeSub.getPlan() == null) {
+            return UpgradeQuoteResponse.builder()
+                    .eligible(false)
+                    .reason("Active subscription has no plan associated.")
+                    .build();
+        }
+
+        String currentPlanName = activeSub.getPlan().getName().toUpperCase();
+
+        if ("ELITE".equalsIgnoreCase(currentPlanName)) {
+            return UpgradeQuoteResponse.builder()
+                    .eligible(false)
+                    .reason("You are already on the highest tier (Elite).")
+                    .currentPlan("ELITE")
+                    .targetPlan("ELITE")
+                    .activeSubscriptionId(activeSub.getId())
+                    .originalExpiresAt(activeSub.getExpiresAt())
+                    .build();
+        }
+
+        if (!"PRO".equalsIgnoreCase(currentPlanName)) {
+            return UpgradeQuoteResponse.builder()
+                    .eligible(false)
+                    .reason("Upgrade is only available from Pro to Elite.")
+                    .currentPlan(currentPlanName)
+                    .build();
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (activeSub.getExpiresAt() != null && !activeSub.getExpiresAt().isAfter(now)) {
+            return UpgradeQuoteResponse.builder()
+                    .eligible(false)
+                    .reason("Your Pro subscription has expired. Please renew your plan.")
+                    .currentPlan("PRO")
+                    .build();
+        }
+
+        Plan elitePlan = planRepository.findByNameIgnoreCaseAndActiveTrue("ELITE")
+                .orElse(null);
+
+        if (elitePlan == null) {
+            elitePlan = planRepository.findByNameIgnoreCase("ELITE").orElse(null);
+        }
+
+        if (elitePlan == null) {
+            return UpgradeQuoteResponse.builder()
+                    .eligible(false)
+                    .reason("Elite plan is currently unavailable for upgrade.")
+                    .currentPlan("PRO")
+                    .build();
+        }
+
+        double targetPrice = elitePlan.getPriceInr();
+        double currentPaid = activeSub.getAmountPaid();
+        double upgradeAmount = Math.max(0.0, targetPrice - currentPaid);
+        long remainingDays = activeSub.getExpiresAt() != null
+                ? Math.max(0, ChronoUnit.DAYS.between(now, activeSub.getExpiresAt()))
+                : 0;
+
+        String formattedAmount = "₹" + ((int) upgradeAmount);
+        String msg = "Upgrade to Elite — pay only " + formattedAmount + " to unlock Elite features for the remaining billing period.";
+
+        return UpgradeQuoteResponse.builder()
+                .eligible(true)
+                .currentPlan("PRO")
+                .targetPlan("ELITE")
+                .currentPaidAmount(currentPaid)
+                .targetPlanPrice(targetPrice)
+                .upgradeAmount(upgradeAmount)
+                .currency(activeSub.getCurrency() != null ? activeSub.getCurrency() : "INR")
+                .originalExpiresAt(activeSub.getExpiresAt())
+                .remainingDays(remainingDays)
+                .notificationMessage(msg)
+                .activeSubscriptionId(activeSub.getId())
+                .build();
     }
 
     @Transactional

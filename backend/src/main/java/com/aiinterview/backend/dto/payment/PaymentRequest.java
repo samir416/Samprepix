@@ -44,4 +44,6 @@ public class PaymentRequest {
 
     @Size(max = 500, message = "Return URL is invalid")
     private String returnUrl;
+
+    private Boolean enableAutoPay;
 }

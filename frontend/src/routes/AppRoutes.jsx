@@ -84,6 +84,7 @@ export default function AppRoutes() {
             <Route path="/legal" element={<Legal />} />
             <Route path="/subscription/policy" element={<RefundPolicy />} />
             <Route path="/billing-history" element={<BillingHistory />} />
+            <Route path="/subscription" element={<Navigate to="/pricing" replace />} />
 
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

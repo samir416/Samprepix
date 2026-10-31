@@ -25,6 +25,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
 import { createOrder } from "../services/paymentService";
+import {
+  getActiveSubscription,
+  getUpgradeQuote,
+  createUpgradeOrder
+} from "../services/subscriptionService";
 import { toast } from "react-toastify";
 
 const loadCashfree = () =>
@@ -114,6 +119,28 @@ export default function Pricing() {
   const [checkoutPlan, setCheckoutPlan] = useState(null);
   const [checkoutError, setCheckoutError] = useState("");
   const [showCheckoutError, setShowCheckoutError] = useState(false);
+  const [activeSubscription, setActiveSubscription] = useState(null);
+  const [upgradeQuote, setUpgradeQuote] = useState(null);
+  const [enableAutoPay, setEnableAutoPay] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    getActiveSubscription()
+      .then((sub) => {
+        if (sub) {
+          setActiveSubscription(sub);
+          const plan = (sub.effectivePlan || sub.plan || "").toUpperCase();
+          if (plan === "PRO") {
+            getUpgradeQuote()
+              .then((quote) => setUpgradeQuote(quote))
+              .catch(() => {});
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
 
 
@@ -305,7 +332,8 @@ export default function Pricing() {
         discountApplied
           ? referralInput.trim().toUpperCase()
           : null,
-        window.location.origin + "/payment/verify"
+        window.location.origin + "/payment/verify",
+        enableAutoPay
       );
 
       if (!order?.paymentSessionId) {
@@ -362,6 +390,99 @@ export default function Pricing() {
       setCheckoutPlan(null);
     }
   };
+
+  const handleUpgradeCheckout = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login", {
+        state: {
+          redirectTo: "/pricing"
+        }
+      });
+      return;
+    }
+
+    if (isAdmin) {
+      toast.info("Admin accounts already have full Pro and Elite access.");
+      return;
+    }
+
+    if (checkoutLoading) {
+      return;
+    }
+
+    setCheckoutPlan("UPGRADE");
+    setCheckoutLoading(true);
+    setCheckoutError("");
+    setShowCheckoutError(false);
+
+    trackEvent("upgrade_checkout_started", {
+      fromPlan: "PRO",
+      toPlan: "ELITE",
+      currency
+    });
+
+    try {
+      const order = await createUpgradeOrder();
+
+      if (!order?.paymentSessionId) {
+        throw new Error(
+          "Payment session was not created for upgrade. Please try again."
+        );
+      }
+
+      const Cashfree = await loadCashfree();
+
+      const cashfree = Cashfree({
+        mode: "production"
+      });
+
+      const checkoutResult = await cashfree.checkout({
+        paymentSessionId: order.paymentSessionId,
+        redirectTarget: "_modal"
+      });
+
+      if (checkoutResult?.error) {
+        throw new Error(
+          checkoutResult.error.message ||
+            "Payment checkout could not be opened."
+        );
+      }
+
+      if (checkoutResult?.redirect) {
+        return;
+      }
+
+      if (order.cashfreeOrderId) {
+        navigate(
+          `/payment/verify?order_id=${encodeURIComponent(
+            order.cashfreeOrderId
+          )}`
+        );
+      }
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Unable to start upgrade payment. Please try again.";
+
+      setCheckoutError(message);
+      setShowCheckoutError(true);
+
+      trackEvent("upgrade_checkout_failed", {
+        currency
+      });
+    } finally {
+      setCheckoutLoading(false);
+      setCheckoutPlan(null);
+    }
+  };
+
+  const userActivePlan = (activeSubscription?.effectivePlan || activeSubscription?.plan || "").toUpperCase();
+  const isProActive = userActivePlan === "PRO";
+  const isEliteActive = userActivePlan === "ELITE";
 
   return (
     <div className="pricing-page">
@@ -502,6 +623,37 @@ export default function Pricing() {
         </div>
       )}
 
+      <div
+        className="autopay-option-box"
+        style={{
+          maxWidth: "860px",
+          margin: "0 auto 28px",
+          padding: "16px 20px",
+          borderRadius: "14px",
+          background: "rgba(99, 102, 241, 0.05)",
+          border: "1px solid rgba(99, 102, 241, 0.2)",
+          display: "flex",
+          alignItems: "center",
+          gap: "14px"
+        }}
+      >
+        <input
+          type="checkbox"
+          id="enableAutoPay"
+          checked={enableAutoPay}
+          onChange={(e) => setEnableAutoPay(e.target.checked)}
+          style={{ width: "18px", height: "18px", cursor: "pointer", accentColor: "#6366f1" }}
+        />
+        <label htmlFor="enableAutoPay" style={{ flex: 1, cursor: "pointer", fontSize: "0.92rem", margin: 0 }}>
+          <strong style={{ color: "var(--text-color, #1e293b)" }}>
+            Enable AutoPay for future renewals (Recommended)
+          </strong>
+          <span style={{ display: "block", fontSize: "0.82rem", color: "var(--text-muted, #64748b)", marginTop: "2px" }}>
+            Convenient automatic renewal every 30 days. You can disable AutoPay anytime under Billing History without losing access for your active paid period.
+          </span>
+        </label>
+      </div>
+
       <section className="pricing-grid">
         <div className="pricing-card">
           <div className="plan-tag">
@@ -575,9 +727,15 @@ export default function Pricing() {
         </div>
 
         <div className="pricing-card pro-card">
-          <div className="popular-badge">
-            RECOMMENDED
-          </div>
+          {isProActive ? (
+            <div className="popular-badge" style={{ background: "#10b981" }}>
+              CURRENT PLAN
+            </div>
+          ) : (
+            <div className="popular-badge">
+              RECOMMENDED
+            </div>
+          )}
 
           <div className="plan-tag pro-tag">
             Pro
@@ -695,43 +853,102 @@ export default function Pricing() {
             </div>
           </div>
 
-          <button
-            className="plan-btn pro-btn"
-            onClick={() => handlePlanCheckout("PRO")}
-            disabled={checkoutLoading}
-            aria-label="Get Pro Monthly Plan"
-          >
-            {checkoutLoading &&
-            checkoutPlan === "PRO" ? (
-              <>
-                <FaSpinner
-                  style={{
-                    animation: "spin 1s linear infinite"
-                  }}
-                />
-                Opening Checkout...
-              </>
-            ) : isAdmin ? (
-              <>
-                <FaCrown />
-                Admin Access Active
-              </>
-            ) : (
-              <>
-                <FaLock />
-                Choose Pro
-              </>
-            )}
-          </button>
+          {isProActive ? (
+            <button
+              className="plan-btn pro-btn"
+              disabled
+              style={{ opacity: 0.9, cursor: "default", background: "#10b981", borderColor: "#10b981", color: "#ffffff" }}
+              aria-label="Current Active Plan"
+            >
+              <FaCheckCircle style={{ marginRight: "6px" }} />
+              Current Plan
+            </button>
+          ) : isEliteActive ? (
+            <button
+              className="plan-btn pro-btn"
+              disabled
+              style={{ opacity: 0.7, cursor: "default" }}
+              aria-label="Included in Elite"
+            >
+              <FaCheckCircle style={{ marginRight: "6px" }} />
+              Included in Elite
+            </button>
+          ) : (
+            <button
+              className="plan-btn pro-btn"
+              onClick={() => handlePlanCheckout("PRO")}
+              disabled={checkoutLoading}
+              aria-label="Get Pro Monthly Plan"
+            >
+              {checkoutLoading &&
+              checkoutPlan === "PRO" ? (
+                <>
+                  <FaSpinner
+                    style={{
+                      animation: "spin 1s linear infinite"
+                    }}
+                  />
+                  Opening Checkout...
+                </>
+              ) : isAdmin ? (
+                <>
+                  <FaCrown />
+                  Admin Access Active
+                </>
+              ) : (
+                <>
+                  <FaLock />
+                  Choose Pro
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         <div className="pricing-card">
+          {isEliteActive ? (
+            <div className="popular-badge" style={{ background: "#10b981" }}>
+              CURRENT PLAN
+            </div>
+          ) : isProActive && upgradeQuote?.eligibleForUpgrade ? (
+            <div className="popular-badge" style={{ background: "#8b5cf6" }}>
+              UPGRADE OPTION
+            </div>
+          ) : null}
           <div className="plan-tag elite-tag">
             Elite
           </div>
 
           <h2 className="pricing-card-headline">
-            {discountApplied ? (
+            {isProActive && upgradeQuote?.eligibleForUpgrade ? (
+              <div className="discounted-price-display">
+                <span className="price-figures-wrap">
+                  <del
+                    className="old-price"
+                    aria-label={`Original price ${currentPrices.elite.regular}`}
+                  >
+                    {currentPrices.elite.regular}
+                  </del>
+                  <ins
+                    className="discounted-price"
+                    aria-label={`Upgrade difference price ₹${upgradeQuote.upgradePriceDifference}`}
+                  >
+                    {currency === "INR" ? `₹${upgradeQuote.upgradePriceDifference}` : `$${upgradeQuote.upgradePriceDifference}`}
+                  </ins>
+                  <span className="price-period frequency-container">
+                    <span className="frequency-slash">
+                      /
+                    </span>
+                    <span className="frequency-unit">
+                      Upgrade Difference
+                    </span>
+                  </span>
+                </span>
+                <span className="discount-badge" style={{ background: "#8b5cf6" }}>
+                  SAVE {currency === "INR" ? "₹399" : "$9"}
+                </span>
+              </div>
+            ) : discountApplied ? (
               <div className="discounted-price-display">
                 <span className="price-figures-wrap">
                   <del
@@ -796,10 +1013,16 @@ export default function Pricing() {
             )}
           </h2>
 
-          <p className="card-subtitle">
-            Maximum placement acceleration with company-focused
-            preparation and priority AI evaluation.
-          </p>
+          {isProActive && upgradeQuote?.eligibleForUpgrade ? (
+            <p className="card-subtitle" style={{ color: "#8b5cf6", fontWeight: "600" }}>
+              Pay only the ₹{upgradeQuote.upgradePriceDifference} difference for your remaining {upgradeQuote.remainingDays} days of Elite access. Retains your original cycle expiry ({upgradeQuote.currentExpiresAt ? new Date(upgradeQuote.currentExpiresAt).toLocaleDateString() : "current cycle"}).
+            </p>
+          ) : (
+            <p className="card-subtitle">
+              Maximum placement acceleration with company-focused
+              preparation and priority AI evaluation.
+            </p>
+          )}
 
           <div className="plan-features">
             <div>
@@ -841,36 +1064,86 @@ export default function Pricing() {
             </div>
           </div>
 
-          <button
-            className="plan-btn elite-btn"
-            onClick={() => handlePlanCheckout("ELITE")}
-            disabled={checkoutLoading}
-            aria-label="Get Elite Monthly Plan"
-          >
-            {checkoutLoading &&
-            checkoutPlan === "ELITE" ? (
-              <>
-                <FaSpinner
-                  style={{
-                    animation: "spin 1s linear infinite"
-                  }}
-                />
-                Opening Checkout...
-              </>
-            ) : isAdmin ? (
-              <>
-                <FaCrown />
-                Admin Access Active
-              </>
-            ) : (
-              <>
-                <FaLock />
-                Choose Elite
-              </>
-            )}
-          </button>
+          {isEliteActive ? (
+            <button
+              className="plan-btn elite-btn"
+              disabled
+              style={{ opacity: 0.9, cursor: "default", background: "#10b981", borderColor: "#10b981", color: "#ffffff" }}
+              aria-label="Current Active Elite Plan"
+            >
+              <FaCrown style={{ marginRight: "6px" }} />
+              Current Plan
+            </button>
+          ) : isProActive && upgradeQuote?.eligibleForUpgrade ? (
+            <button
+              className="plan-btn elite-btn"
+              onClick={handleUpgradeCheckout}
+              disabled={checkoutLoading}
+              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", color: "#fff", border: "none" }}
+              aria-label="Upgrade to Elite Plan"
+            >
+              {checkoutLoading && checkoutPlan === "UPGRADE" ? (
+                <>
+                  <FaSpinner style={{ animation: "spin 1s linear infinite", marginRight: "6px" }} />
+                  Opening Upgrade Checkout...
+                </>
+              ) : (
+                <>
+                  <FaCrown style={{ marginRight: "6px" }} />
+                  Upgrade to Elite — Pay {currency === "INR" ? `₹${upgradeQuote.upgradePriceDifference}` : `$${upgradeQuote.upgradePriceDifference}`}
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              className="plan-btn elite-btn"
+              onClick={() => handlePlanCheckout("ELITE")}
+              disabled={checkoutLoading}
+              aria-label="Get Elite Monthly Plan"
+            >
+              {checkoutLoading &&
+              checkoutPlan === "ELITE" ? (
+                <>
+                  <FaSpinner
+                    style={{
+                      animation: "spin 1s linear infinite"
+                    }}
+                  />
+                  Opening Checkout...
+                </>
+              ) : isAdmin ? (
+                <>
+                  <FaCrown />
+                  Admin Access Active
+                </>
+              ) : (
+                <>
+                  <FaLock />
+                  Choose Elite
+                </>
+              )}
+            </button>
+          )}
         </div>
       </section>
+
+      <div
+        style={{
+          maxWidth: "860px",
+          margin: "24px auto 36px",
+          padding: "16px 20px",
+          borderRadius: "12px",
+          background: "rgba(100, 116, 139, 0.06)",
+          border: "1px solid rgba(100, 116, 139, 0.2)",
+          textAlign: "center",
+          fontSize: "0.86rem",
+          color: "var(--text-muted, #64748b)",
+          lineHeight: "1.5"
+        }}
+      >
+        <FaLock style={{ display: "inline", marginRight: "6px", color: "#6366f1" }} />
+        <strong>Strict Non-Refundable Policy:</strong> All subscription purchases and tier upgrade difference payments are final and non-refundable. Mid-cycle cancellations for refunds are not supported. AutoPay can be disabled anytime under <a href="/billing-history" style={{ color: "#6366f1", textDecoration: "underline", fontWeight: "600" }}>Billing History</a> to prevent future charges while keeping your paid access active until the end of your billing cycle.
+      </div>
 
       <section className="referral-section">
         <div className="referral-left">

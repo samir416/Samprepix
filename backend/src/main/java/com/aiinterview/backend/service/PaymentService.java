@@ -7,12 +7,14 @@ import com.aiinterview.backend.entity.Refund;
 import com.aiinterview.backend.entity.RefundStatus;
 import com.aiinterview.backend.entity.Role;
 import com.aiinterview.backend.entity.Subscription;
+import com.aiinterview.backend.entity.UpgradeTransaction;
 import com.aiinterview.backend.entity.User;
 import com.aiinterview.backend.entity.UserProfile;
 import com.aiinterview.backend.repository.PaymentRepository;
 import com.aiinterview.backend.repository.PlanRepository;
 import com.aiinterview.backend.repository.RefundRepository;
 import com.aiinterview.backend.repository.SubscriptionRepository;
+import com.aiinterview.backend.repository.UpgradeTransactionRepository;
 import com.aiinterview.backend.repository.UserProfileRepository;
 import com.aiinterview.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +56,7 @@ public class PaymentService {
     private final InvoiceService invoiceService;
     private final PlanService planService;
     private final EmailService emailService;
+    private final UpgradeTransactionRepository upgradeTransactionRepository;
 
     @Value("${cashfree.client.id}")
     private String cashfreeClientId;
@@ -253,31 +256,9 @@ public class PaymentService {
                 user.getEmail()
         );
 
-        String validPhone = null;
-        try {
-            Optional<UserProfile> profileOpt = userProfileRepository.findByUser(user);
-            if (profileOpt.isPresent() && profileOpt.get().getPhone() != null) {
-                String rawPhone = profileOpt.get().getPhone().replaceAll("[^0-9]", "");
-                if (rawPhone.length() == 12 && rawPhone.startsWith("91")) {
-                    rawPhone = rawPhone.substring(2);
-                } else if (rawPhone.length() > 10) {
-                    rawPhone = rawPhone.substring(rawPhone.length() - 10);
-                }
-                if (rawPhone.matches("^[6-9][0-9]{9}$")) {
-                    validPhone = rawPhone;
-                }
-            }
-        } catch (Exception ignored) {}
-
-        if (validPhone == null || validPhone.isBlank()) {
-            throw new IllegalArgumentException(
-                    "A valid 10-digit mobile number is required by the payment gateway. Please ensure your mobile number is entered in your profile before checking out."
-            );
-        }
-
         customerDetails.put(
                 "customer_phone",
-                validPhone
+                getValidatedCustomerPhone(user)
         );
 
         JSONObject orderRequest = new JSONObject();
@@ -406,6 +387,8 @@ public class PaymentService {
             );
         }
 
+        boolean autoRenew = request.getEnableAutoPay() != null ? request.getEnableAutoPay() : true;
+
         Payment payment =
                 Payment.builder()
                         .user(user)
@@ -422,6 +405,8 @@ public class PaymentService {
                                         : "cashfree"
                         )
                         .paymentStatus("PENDING")
+                        .paymentType("PURCHASE")
+                        .autoRenew(autoRenew)
                         .testMode(isTestMode)
                         .createdAt(LocalDateTime.now())
                         .build();
@@ -469,8 +454,8 @@ public class PaymentService {
         response.put("testMode", isTestMode);
         response.put("lifetime", false);
         response.put("subscriptionPeriod", "MONTH");
-        response.put("autoRenew", false);
-        response.put("renewalType", "ONE_TIME_MANUAL");
+        response.put("autoRenew", true);
+        response.put("renewalType", "AUTOPAY_RECURRING");
         response.put("referralApplied", referralApplied);
 
         if (referralApplied) {
@@ -478,6 +463,170 @@ public class PaymentService {
         }
 
         return response;
+    }
+
+    @Transactional
+    public Map<String, Object> createUpgradeOrder(
+            User user,
+            boolean isTestMode
+    ) {
+        if (user == null || user.getId() == null) {
+            throw new SecurityException("Authenticated user is required");
+        }
+
+        if (cashfreeClientId == null || cashfreeClientId.isBlank() || "TEST_CLIENT_ID".equals(cashfreeClientId)) {
+            throw new IllegalStateException("PRODUCTION CREDENTIALS: MISSING - Cashfree credentials are not configured. CASHFREE_CLIENT_ID and CASHFREE_CLIENT_SECRET are required in environment variables.");
+        }
+
+        if ("PRODUCTION".equalsIgnoreCase(cashfreeEnvironment)) {
+            if (cashfreeClientId.toUpperCase(Locale.ROOT).startsWith("TEST")) {
+                throw new IllegalStateException("PRODUCTION CREDENTIALS: MISSING - Cashfree is configured for PRODUCTION, but test/sandbox credentials were provided.");
+            }
+            if (isTestMode) {
+                throw new IllegalStateException("Test mode orders are disabled in PRODUCTION mode.");
+            }
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        Subscription activeSub = subscriptionRepository
+                .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE")
+                .stream()
+                .filter(s -> s.getExpiresAt() != null && s.getExpiresAt().isAfter(now))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No active subscription found to upgrade. Only active Pro subscribers can upgrade to Elite."));
+
+        if (activeSub.getPlan() == null || !"PRO".equalsIgnoreCase(activeSub.getPlan().getName())) {
+            throw new IllegalStateException("Upgrade is only available for active PRO subscribers.");
+        }
+
+        Plan elitePlan = planRepository.findByNameIgnoreCaseAndActiveTrue("ELITE")
+                .orElse(null);
+        if (elitePlan == null) {
+            elitePlan = planRepository.findByNameIgnoreCase("ELITE")
+                    .orElseThrow(() -> new IllegalStateException("Elite plan not found."));
+        }
+
+        double targetPrice = isTestMode ? planService.getTestPrice("ELITE") : planService.getProductionPrice("ELITE");
+        double originalPaid = activeSub.getAmountPaid();
+        double upgradeAmount;
+
+        if (isTestMode) {
+            upgradeAmount = 1.0;
+        } else {
+            upgradeAmount = Math.max(0.0, targetPrice - originalPaid);
+        }
+
+        if (upgradeAmount <= 0) {
+            throw new IllegalStateException("Upgrade calculation resulted in non-positive payable amount.");
+        }
+
+        String orderId = "order_upg_" + user.getId() + "_" + System.currentTimeMillis();
+
+        JSONObject customerDetails = new JSONObject();
+        customerDetails.put("customer_id", "user_" + user.getId());
+        customerDetails.put("customer_name", user.getName() != null && !user.getName().isBlank() ? user.getName() : "User");
+        customerDetails.put("customer_email", user.getEmail());
+
+        customerDetails.put("customer_phone", getValidatedCustomerPhone(user));
+
+        JSONObject orderMeta = new JSONObject();
+        String returnUrl = (cashfreeReturnUrl != null && !cashfreeReturnUrl.isBlank())
+                ? cashfreeReturnUrl + "?order_id=" + orderId
+                : "https://samprepix.com/payment/verify?order_id=" + orderId;
+        orderMeta.put("return_url", returnUrl);
+        if (cashfreeWebhookUrl != null && !cashfreeWebhookUrl.isBlank()) {
+            orderMeta.put("notify_url", cashfreeWebhookUrl);
+        }
+
+        JSONObject orderPayload = new JSONObject();
+        orderPayload.put("order_id", orderId);
+        orderPayload.put("order_amount", upgradeAmount);
+        orderPayload.put("order_currency", "INR");
+        orderPayload.put("customer_details", customerDetails);
+        orderPayload.put("order_meta", orderMeta);
+
+        JSONObject orderTags = new JSONObject();
+        orderTags.put("upgrade", "true");
+        orderTags.put("from_plan", "PRO");
+        orderTags.put("to_plan", "ELITE");
+        orderTags.put("subscription_id", String.valueOf(activeSub.getId()));
+        orderPayload.put("order_tags", orderTags);
+
+        HttpRequest httpRequest = cashfreeRequestBuilder(getCashfreeBaseUrl() + "/orders")
+                .POST(HttpRequest.BodyPublishers.ofString(orderPayload.toString(), StandardCharsets.UTF_8))
+                .build();
+
+        String paymentSessionId;
+        try {
+            HttpResponse<String> response = getHttpClient().send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                log.error("Cashfree upgrade order creation failed: HTTP {} body: {}", response.statusCode(), response.body());
+                throw new RuntimeException("Failed to initiate upgrade order with payment gateway: " + response.body());
+            }
+
+            JSONObject responseJson = new JSONObject(response.body());
+            paymentSessionId = responseJson.optString("payment_session_id", "");
+            if (paymentSessionId.isBlank()) {
+                throw new RuntimeException("Cashfree did not return payment_session_id for upgrade");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Cashfree upgrade order creation interrupted", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create Cashfree upgrade order: " + e.getMessage(), e);
+        }
+
+        Payment payment = Payment.builder()
+                .user(user)
+                .plan(elitePlan)
+                .cashfreeOrderId(orderId)
+                .cashfreeSessionId(paymentSessionId)
+                .amount(upgradeAmount)
+                .displayAmount(upgradeAmount)
+                .currency("INR")
+                .paymentMethod("cashfree")
+                .paymentStatus("PENDING")
+                .paymentType("UPGRADE")
+                .upgradeFromPlan("PRO")
+                .upgradeToPlan("ELITE")
+                .originalPaidAmount(originalPaid)
+                .targetPlanPrice(targetPrice)
+                .originalExpiresAt(activeSub.getExpiresAt())
+                .autoRenew(activeSub.isAutoRenew())
+                .testMode(isTestMode)
+                .createdAt(LocalDateTime.now())
+                .build();
+        paymentRepository.save(payment);
+
+        UpgradeTransaction upgradeTx = UpgradeTransaction.builder()
+                .user(user)
+                .subscription(activeSub)
+                .previousPlan("PRO")
+                .targetPlan("ELITE")
+                .originalPaidAmount(originalPaid)
+                .targetPlanPrice(targetPrice)
+                .upgradeAmount(upgradeAmount)
+                .subscriptionExpiry(activeSub.getExpiresAt())
+                .cashfreeOrderId(orderId)
+                .paymentStatus("PENDING")
+                .createdAt(LocalDateTime.now())
+                .build();
+        upgradeTransactionRepository.save(upgradeTx);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("orderId", orderId);
+        result.put("cashfreeOrderId", orderId);
+        result.put("paymentSessionId", paymentSessionId);
+        result.put("amount", upgradeAmount);
+        result.put("currency", "INR");
+        result.put("status", "CREATED");
+        result.put("isUpgrade", true);
+        result.put("previousPlan", "PRO");
+        result.put("targetPlan", "ELITE");
+        result.put("originalExpiresAt", activeSub.getExpiresAt());
+        result.put("remainingDays", Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(LocalDateTime.now(), activeSub.getExpiresAt())));
+        return result;
     }
 
     @Transactional
@@ -810,7 +959,7 @@ public class PaymentService {
         }
     }
 
-    private Map<String, Object> activateEntitlements(
+    public Map<String, Object> activateEntitlements(
             Payment payment,
             String orderId
     ) {
@@ -830,6 +979,10 @@ public class PaymentService {
                     payment,
                     orderId
             );
+        }
+
+        if ("UPGRADE".equalsIgnoreCase(payment.getPaymentType())) {
+            return activateUpgradeEntitlements(payment, orderId);
         }
 
         payment.setPaymentStatus("SUCCESS");
@@ -869,6 +1022,8 @@ public class PaymentService {
 
             LocalDateTime subscribedAt = LocalDateTime.now();
             LocalDateTime expiresAt = subscribedAt.plusMonths(1);
+            boolean autoRenew = payment.getAutoRenew() != null ? payment.getAutoRenew() : true;
+            LocalDateTime nextRenewalDate = autoRenew ? expiresAt : null;
 
             subscription =
                     Subscription.builder()
@@ -894,8 +1049,9 @@ public class PaymentService {
                             .lifetime(false)
                             .subscribedAt(subscribedAt)
                             .expiresAt(expiresAt)
-                            .autoRenew(false)
-                            .refundEligible(true)
+                            .autoRenew(autoRenew)
+                            .nextRenewalDate(nextRenewalDate)
+                            .refundEligible(false)
                             .refundInitiated(false)
                             .build();
 
@@ -999,6 +1155,105 @@ public class PaymentService {
                 payment.getCurrency()
         );
 
+        return response;
+    }
+
+    private Map<String, Object> activateUpgradeEntitlements(
+            Payment payment,
+            String orderId
+    ) {
+        User user = payment.getUser();
+        Plan elitePlan = payment.getPlan();
+
+        payment.setPaymentStatus("SUCCESS");
+        payment.setPaidAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+
+        Subscription subscription = subscriptionRepository
+                .findByUserAndSubscriptionStatusOrderBySubscribedAtDesc(user, "ACTIVE")
+                .stream()
+                .filter(s -> s.getExpiresAt() != null && s.getExpiresAt().isAfter(LocalDateTime.now()))
+                .findFirst()
+                .orElse(null);
+
+        if (subscription == null) {
+            UpgradeTransaction ut = upgradeTransactionRepository.findByCashfreeOrderId(orderId).orElse(null);
+            if (ut != null && ut.getSubscription() != null) {
+                subscription = ut.getSubscription();
+            }
+        }
+
+        if (subscription == null) {
+            throw new IllegalStateException("Active subscription not found for upgrade activation");
+        }
+
+        LocalDateTime preservedExpiresAt = payment.getOriginalExpiresAt() != null
+                ? payment.getOriginalExpiresAt()
+                : subscription.getExpiresAt();
+
+        subscription.setPlan(elitePlan);
+        subscription.setAmountPaid(subscription.getAmountPaid() + payment.getAmount());
+        subscription.setExpiresAt(preservedExpiresAt);
+        if (subscription.isAutoRenew()) {
+            subscription.setNextRenewalDate(preservedExpiresAt);
+        }
+        subscription.setUpgradeCount(subscription.getUpgradeCount() != null ? subscription.getUpgradeCount() + 1 : 1);
+        subscription.setRefundEligible(false);
+        subscription.setUpdatedAt(LocalDateTime.now());
+        subscriptionRepository.save(subscription);
+
+        UpgradeTransaction upgradeTx = upgradeTransactionRepository.findByCashfreeOrderId(orderId).orElse(null);
+        if (upgradeTx != null) {
+            upgradeTx.setPaymentStatus("SUCCESS");
+            upgradeTx.setCashfreePaymentId(payment.getCashfreePaymentId());
+            upgradeTx.setCompletedAt(LocalDateTime.now());
+            upgradeTransactionRepository.save(upgradeTx);
+        }
+
+        try {
+            invoiceService.createInvoice(
+                    user,
+                    elitePlan,
+                    payment,
+                    payment.getAmount(),
+                    payment.getCurrency()
+            );
+        } catch (Exception e) {
+            log.warn("Invoice creation for upgrade failed: {}", e.getMessage());
+        }
+
+        try {
+            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                String customerName = user.getName() != null && !user.getName().isBlank()
+                        ? user.getName()
+                        : (user.getUsername() != null ? user.getUsername() : "Valued Member");
+                emailService.sendPaymentConfirmationEmail(
+                        user.getEmail(),
+                        customerName,
+                        "ELITE (Upgrade)",
+                        payment.getAmount(),
+                        payment.getCurrency(),
+                        orderId,
+                        null
+                );
+            }
+        } catch (Exception mailEx) {
+            log.warn("Upgrade confirmation email dispatch failed: {}", mailEx.getMessage());
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("paymentStatus", "SUCCESS");
+        response.put("cashfreeOrderId", orderId);
+        response.put("cashfreePaymentId", payment.getCashfreePaymentId());
+        response.put("subscriptionId", subscription.getId());
+        response.put("planName", "ELITE");
+        response.put("subscriptionStatus", "ACTIVE");
+        response.put("expiresAt", preservedExpiresAt);
+        response.put("autoRenew", subscription.isAutoRenew());
+        response.put("isUpgrade", true);
+        response.put("upgraded", true);
+        response.put("message", "Upgraded to Elite plan successfully! Elite access remains active until " + preservedExpiresAt);
         return response;
     }
 
@@ -2087,6 +2342,31 @@ public class PaymentService {
         }
 
         return admin;
+    }
+
+    private String getValidatedCustomerPhone(User user) {
+        String validPhone = null;
+        try {
+            Optional<UserProfile> profileOpt = userProfileRepository.findByUser(user);
+            if (profileOpt.isPresent() && profileOpt.get().getPhone() != null) {
+                String rawPhone = profileOpt.get().getPhone().replaceAll("[^0-9]", "");
+                if (rawPhone.length() == 12 && rawPhone.startsWith("91")) {
+                    rawPhone = rawPhone.substring(2);
+                } else if (rawPhone.length() > 10) {
+                    rawPhone = rawPhone.substring(rawPhone.length() - 10);
+                }
+                if (rawPhone.matches("^[6-9][0-9]{9}$")) {
+                    validPhone = rawPhone;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        if (validPhone == null || validPhone.isBlank()) {
+            throw new IllegalArgumentException(
+                    "A valid 10-digit mobile number is required by the payment gateway. Please ensure your mobile number is entered in your profile before checking out."
+            );
+        }
+        return validPhone;
     }
 
     private record CashfreeOrderStatus(

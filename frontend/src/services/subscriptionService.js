@@ -49,6 +49,18 @@ export const checkout = (
         referralCode
     }).then((res) => res.data);
 
+export const getUpgradeQuote = () =>
+    API.get("/upgrade-quote").then((res) => res.data);
+
+export const createUpgradeOrder = () =>
+    API.post("/upgrade-order").then((res) => res.data);
+
+export const createUpgradeTestOrder = () =>
+    API.post("/upgrade-test-order").then((res) => res.data);
+
+export const toggleAutoPay = (autoRenew) =>
+    API.post("/autopay/toggle", { autoRenew }).then((res) => res.data);
+
 export const cancelSubscription = (
     subscriptionId,
     reason = "User requested cancellation"

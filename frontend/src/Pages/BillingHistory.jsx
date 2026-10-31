@@ -18,6 +18,7 @@ import Navbar from "../Components/Common/Navbar";
 import Footer from "../Components/Common/Footer";
 import { API_BASE_URL } from "../config";
 import { getCleanToken } from "../services/profileService";
+import { toggleAutoPay } from "../services/subscriptionService";
 import { toast } from "react-toastify";
 import "../styles/billingHistory.css";
 
@@ -31,6 +32,7 @@ export default function BillingHistory() {
     const [billingStatus, setBillingStatus] = useState("Active");
     const [nextRenewal, setNextRenewal] = useState(null);
     const [currentSub, setCurrentSub] = useState(null);
+    const [togglingAutoPay, setTogglingAutoPay] = useState(false);
 
     const token = getCleanToken();
 
@@ -85,6 +87,26 @@ export default function BillingHistory() {
     useEffect(() => {
         fetchInvoices();
     }, [token]);
+
+    const handleToggleAutoPay = async () => {
+        if (!currentSub || togglingAutoPay) return;
+        const newSetting = !currentSub.autoRenew;
+        setTogglingAutoPay(true);
+        try {
+            const updated = await toggleAutoPay(newSetting);
+            setCurrentSub(updated);
+            if (newSetting) {
+                toast.success("AutoPay enabled. Your subscription will renew automatically at the end of your billing cycle.");
+            } else {
+                toast.info("AutoPay turned off. Your current access remains active until expiration. No future renewals will occur.");
+            }
+        } catch (err) {
+            console.error("Failed to toggle AutoPay:", err);
+            toast.error(err?.response?.data?.message || err?.message || "Could not update AutoPay settings. Please try again.");
+        } finally {
+            setTogglingAutoPay(false);
+        }
+    };
 
     const handleDownloadInvoice = async (invoiceId, invoiceNumber) => {
         const cleanToken = getCleanToken();
@@ -216,7 +238,7 @@ export default function BillingHistory() {
 
                 {token && activePlan.toUpperCase() !== "STARTER" && (
                     <div className="bh-card" style={{ marginBottom: "24px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
                             <div>
                                 <div style={{ fontSize: "12px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", color: "#6366f1" }}>
                                     Current Plan Lifecycle
@@ -224,12 +246,68 @@ export default function BillingHistory() {
                                 <h3 style={{ margin: "4px 0 6px", fontSize: "1.2rem", fontWeight: "800" }}>
                                     {activePlan.toUpperCase()} Membership ({billingStatus})
                                 </h3>
-                                <p style={{ margin: 0, fontSize: "13px", color: "var(--text-muted, #64748b)" }}>
-                                    Renewal Mode: <strong>Manual Renewal</strong> (Cashfree PG one-time payment) · Valid until: <strong>{nextRenewal ? new Date(nextRenewal).toLocaleDateString() : "Active Cycle"}</strong>
+                                <div style={{ display: "flex", gap: "8px", alignItems: "center", margin: "6px 0 8px" }}>
+                                    <span style={{ fontSize: "13px", color: "var(--text-muted, #64748b)" }}>AutoPay:</span>
+                                    {currentSub?.autoRenew ? (
+                                        <span className="bh-badge paid" style={{ fontSize: "12px" }}>
+                                            <FaCheckCircle style={{ fontSize: "10px" }} /> AutoPay Enabled
+                                        </span>
+                                    ) : (
+                                        <span className="bh-badge pending" style={{ fontSize: "12px" }}>
+                                            <FaClock style={{ fontSize: "10px" }} /> AutoPay Disabled
+                                        </span>
+                                    )}
+                                </div>
+                                <p style={{ margin: "4px 0", fontSize: "13px", color: "var(--text-muted, #64748b)" }}>
+                                    Valid until: <strong>{nextRenewal ? new Date(nextRenewal).toLocaleDateString() : "Active Cycle"}</strong> · Next Renewal Date: <strong>{currentSub?.autoRenew && currentSub?.nextRenewalDate ? new Date(currentSub.nextRenewalDate).toLocaleDateString() : "None (AutoPay Disabled)"}</strong>
                                 </p>
                             </div>
 
                             <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                                <button
+                                    type="button"
+                                    onClick={handleToggleAutoPay}
+                                    disabled={togglingAutoPay}
+                                    style={{
+                                        padding: "8px 16px",
+                                        borderRadius: "9px",
+                                        background: currentSub?.autoRenew ? "rgba(239, 68, 68, 0.08)" : "rgba(16, 185, 129, 0.08)",
+                                        border: currentSub?.autoRenew ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
+                                        color: currentSub?.autoRenew ? "#dc2626" : "#059669",
+                                        fontSize: "12.5px",
+                                        fontWeight: "600",
+                                        cursor: togglingAutoPay ? "not-allowed" : "pointer",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "6px"
+                                    }}
+                                >
+                                    {togglingAutoPay ? (
+                                        <>
+                                            <FaSpinner style={{ animation: "spin 1s linear infinite" }} /> Updating...
+                                        </>
+                                    ) : currentSub?.autoRenew ? (
+                                        "Turn Off AutoPay"
+                                    ) : (
+                                        "Enable AutoPay"
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate("/pricing")}
+                                    style={{
+                                        padding: "8px 14px",
+                                        borderRadius: "9px",
+                                        background: "#6366f1",
+                                        border: "none",
+                                        color: "#ffffff",
+                                        fontSize: "12.5px",
+                                        fontWeight: "600",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    {activePlan.toUpperCase() === "PRO" ? "Upgrade to Elite" : "Manage Plan"}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => navigate("/subscription/policy")}
@@ -246,8 +324,20 @@ export default function BillingHistory() {
                                 >
                                     Policy Details
                                 </button>
-
                             </div>
+                        </div>
+
+                        <div style={{
+                            marginTop: "14px",
+                            padding: "10px 14px",
+                            borderRadius: "8px",
+                            background: "rgba(100, 116, 139, 0.05)",
+                            fontSize: "12px",
+                            color: "var(--text-muted, #64748b)",
+                            lineHeight: "1.4"
+                        }}>
+                            <FaLock style={{ display: "inline", marginRight: "6px", color: "#6366f1" }} />
+                            <strong>Strict Non-Refundable Policy & AutoPay Terms:</strong> Disabling AutoPay prevents future automatic renewal charges and does NOT terminate your current paid period or issue any refund. Your premium access remains 100% active until {nextRenewal ? new Date(nextRenewal).toLocaleDateString() : "the scheduled expiry date"}.
                         </div>
                     </div>
                 )}

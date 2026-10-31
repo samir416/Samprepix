@@ -21,7 +21,7 @@ export default function RefundPolicy() {
     useEffect(() => {
         updatePageSEO({
             title: "Refund & Cancellation Policy | SamPrepIX",
-            description: "Read the official Refund & Cancellation Policy for SamPrepIX (Operated by SAMIR KUMAR). Clear policies on subscription duration, cancellation terms, and refund processing in INR.",
+            description: "Read the official Refund & Cancellation Policy for SamPrepIX (Operated by SAMIR KUMAR). All payments are final and non-refundable. Learn about subscription terms, AutoPay management, and upgrade rules in INR.",
             canonicalPath: "/refund-policy"
         });
         trackPageView("/refund-policy", "Refund & Cancellation Policy | SamPrepIX");
@@ -30,33 +30,33 @@ export default function RefundPolicy() {
     const policyCards = [
         {
             icon: <FaFileInvoiceDollar style={{ color: "#4f46e5", fontSize: "1.4rem" }} />,
-            title: "1. Digital Services & Subscriptions",
-            description: "SamPrepIX provides cloud-based digital placement preparation software, including AI mock interviews, ATS resume analysis, coding compilers, and aptitude question banks. We offer monthly paid plans — Pro (₹399/Month) and Elite (₹799/Month) — with all charges billed transparently in Indian Rupees (INR)."
+            title: "1. Digital Services & Transparent INR Pricing",
+            description: "SamPrepIX provides cloud-based digital placement preparation software, including AI mock interviews, ATS resume analysis, coding compilers, and aptitude question banks. We offer monthly paid plans — Pro (₹399/Month) and Elite (₹799/Month) — with all charges billed transparently in Indian Rupees (INR) through authorized payment aggregator Cashfree Payments."
+        },
+        {
+            icon: <FaShieldAlt style={{ color: "#e11d48", fontSize: "1.4rem" }} />,
+            title: "2. Strict Non-Refundable Policy",
+            description: "All payments for subscriptions, renewals, and tier upgrades are final and strictly non-refundable upon successful completion. Due to immediate allocation of dedicated AI compute resources, compiler execution sandboxes, and premium curriculum access, refunds are not provided for change of mind, non-usage, partial usage, or unused days."
         },
         {
             icon: <FaUndoAlt style={{ color: "#2563eb", fontSize: "1.4rem" }} />,
-            title: "2. Cancellation Policy",
-            description: "Paid subscriptions are one-time payments valid for a full 30-day billing cycle. Automatic recurring card debits are not active. You have full freedom to discontinue or not renew at the end of your term. If you request voluntary plan cancellation midway through a cycle, your premium benefits remain available until your active 30-day term concludes."
-        },
-        {
-            icon: <FaShieldAlt style={{ color: "#7c3aed", fontSize: "1.4rem" }} />,
-            title: "3. Refund Eligibility Criteria",
-            description: "Due to the immediate provisioning of AI computing resources, compiler sandboxes, and premium curriculum upon payment, regular utilized plans are non-refundable. However, full refunds are issued under the following verified conditions:\n• Duplicate Charges: If you were charged more than once for a single order due to a payment gateway latency or technical glitch.\n• Unresolved Platform Defect: If a technical system fault on our platform completely prevents access to your paid tier features and cannot be resolved within 48 hours of reporting."
+            title: "3. No Mid-Cycle Cancellation",
+            description: "Once a subscription payment is completed and activated, mid-term or mid-cycle plan cancellations are not supported. Your paid Pro or Elite benefits remain 100% active and accessible for the entire duration of your 30-day billing period until its scheduled expiration date."
         },
         {
             icon: <FaClock style={{ color: "#059669", fontSize: "1.4rem" }} />,
-            title: "4. Refund Processing Timeframe",
-            description: "All authorized refunds are processed through our licensed payment gateway partner (Cashfree Payments). Once initiated, standard banking refunds typically settle within 5 to 7 business days directly to your original payment instrument (UPI ID, Debit Card, Credit Card, or Net Banking account)."
+            title: "4. AutoPay & Future Renewal Management",
+            description: "If AutoPay / recurring renewal is enabled on your account, you have full freedom to turn off AutoPay at any time prior to your next renewal date from your Billing settings. Turning off AutoPay ensures that you will not be billed for subsequent cycles. Disabling AutoPay does not cancel your current paid period, does not terminate active access early, and does not generate a refund."
         },
         {
-            icon: <FaCreditCard style={{ color: "#e11d48", fontSize: "1.4rem" }} />,
-            title: "5. Chargebacks & Disputes",
-            description: "If you notice an unexpected transaction or billing discrepancy, we strongly encourage contacting our support desk before initiating a bank chargeback. We resolve verified billing errors directly and promptly to ensure your account standing remains in good order."
+            icon: <FaCreditCard style={{ color: "#7c3aed", fontSize: "1.4rem" }} />,
+            title: "5. Plan Upgrades (Pro to Elite)",
+            description: "Eligible Pro users may upgrade to Elite mid-cycle by paying only the backend-calculated difference (₹799 - ₹399 = ₹400). Elite access activates immediately upon verified payment and remains active for the remaining duration of your current billing period. Upgrading preserves your existing renewal/expiry date."
         },
         {
             icon: <FaHeadset style={{ color: "#d97706", fontSize: "1.4rem" }} />,
-            title: "6. How to Submit a Refund Request",
-            description: "To request a refund or raise a cancellation inquiry, email our support team at samirprajapat5@gmail.com with your registered email, Cashfree Order ID, payment date, and a brief description of the issue. Requests are acknowledged within 24 business hours."
+            title: "6. Duplicate Payment & Technical Inquiries",
+            description: "If an unexpected technical anomaly or network timeout results in a duplicate transaction deduction for a single order, contact our support team at samirprajapat5@gmail.com with your registered email and Cashfree Order ID. Inquiries are verified against payment gateway records and resolved within 24 business hours."
         }
     ];
 
@@ -68,7 +68,7 @@ export default function RefundPolicy() {
                 <span className="content-page-badge">Compliance & Transparency</span>
                 <h1>Refund & Cancellation Policy</h1>
                 <p>
-                    Clear, honest, and verifiable terms governing subscriptions, cancellations, and payment refunds for SamPrepIX (Operated by SAMIR KUMAR).
+                    Clear, transparent, and binding terms governing subscriptions, cancellations, and payments for SamPrepIX (Operated by SAMIR KUMAR).
                 </p>
                 <div style={{ marginTop: "18px", display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
                     <button
@@ -109,7 +109,7 @@ export default function RefundPolicy() {
                         Merchant & Operator Identification
                     </h3>
                     <p style={{ margin: 0, fontSize: "0.92rem", lineHeight: "1.7", color: "var(--text-muted, #475569)" }}>
-                        This website and platform (<strong>SamPrepIX</strong>) is operated by <strong>SAMIR KUMAR</strong>. All commercial payment transactions, digital subscription checkouts, and customer refunds are processed under this registered merchant entity in compliance with Cashfree Payment Gateway guidelines.
+                        This website and platform (<strong>SamPrepIX</strong>) is operated by <strong>SAMIR KUMAR</strong>. All commercial payment transactions, digital subscription checkouts, and billing inquiries are processed under this registered merchant entity in compliance with Cashfree Payment Gateway guidelines.
                     </p>
                 </div>
 
@@ -140,10 +140,10 @@ export default function RefundPolicy() {
                     }}
                 >
                     <h3 style={{ margin: "0 0 8px 0", fontSize: "1.2rem", fontWeight: 700 }}>
-                        Need Assistance With a Payment or Refund?
+                        Need Assistance With a Payment or Billing Inquiry?
                     </h3>
                     <p style={{ maxWidth: "580px", margin: "0 auto 20px", fontSize: "0.93rem", lineHeight: 1.65, color: "var(--text-muted, #64748b)" }}>
-                        For any queries regarding transaction status, bank clearance timelines, or refund verification, reach out directly to our helpdesk:
+                        For any queries regarding transaction status, invoice downloads, or payment verification, reach out directly to our support desk:
                     </p>
                     <div style={{ display: "flex", gap: "14px", justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
                         <a

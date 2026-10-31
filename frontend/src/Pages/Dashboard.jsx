@@ -19,7 +19,7 @@ import {
 import {
     getAptitudeAttempts
 } from "../services/aptitudeService";
-import { getMySubscription } from "../services/subscriptionService";
+import { getMySubscription, getUpgradeQuote } from "../services/subscriptionService";
 
 import {
     FiTrendingUp,
@@ -69,6 +69,7 @@ export default function Dashboard() {
 
     const [loadingStats, setLoadingStats] = useState(true);
     const [revocationNotice, setRevocationNotice] = useState(null);
+    const [upgradeOffer, setUpgradeOffer] = useState(null);
     useEffect(() => {
 
         const verifyUser = async () => {
@@ -196,7 +197,31 @@ export default function Dashboard() {
 
         checkRevocationNotice();
 
+        const checkUpgradeOffer = async () => {
+            try {
+                const todayKey = "dismissed_upgrade_banner_" + new Date().toISOString().slice(0, 10);
+                if (localStorage.getItem(todayKey)) {
+                    return;
+                }
+
+                const quote = await getUpgradeQuote();
+                if (quote && quote.eligibleForUpgrade) {
+                    setUpgradeOffer(quote);
+                }
+            } catch {
+                // Not eligible or not Pro
+            }
+        };
+
+        checkUpgradeOffer();
+
     }, [navigate]);
+
+    const handleDismissUpgradeOffer = () => {
+        const todayKey = "dismissed_upgrade_banner_" + new Date().toISOString().slice(0, 10);
+        localStorage.setItem(todayKey, "true");
+        setUpgradeOffer(null);
+    };
 
     const bestAptitudeScore = aptitudeAttempts.length > 0
         ? Math.max(...aptitudeAttempts.map((a) => a.percentage || 0))
@@ -257,7 +282,51 @@ export default function Dashboard() {
 
                                                             </div>
 
-            {/* SUBSCRIPTION CANCELLATION & REFUND BANNER */}
+            {/* DAILY UPGRADE OFFER BANNER FOR PRO USERS */}
+            {upgradeOffer && (
+                <div
+                    className="subscription-notice-card"
+                    role="region"
+                    aria-label="Upgrade Offer"
+                    style={{
+                        background: "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.12) 100%)",
+                        borderColor: "rgba(139, 92, 246, 0.3)"
+                    }}
+                >
+                    <div className="sub-notice-content">
+                        <div className="sub-notice-badge" style={{ color: "#7c3aed" }}>
+                            <span className="sub-notice-badge-dot" style={{ background: "#7c3aed" }} />
+                            PRO UPGRADE OFFER
+                        </div>
+                        <h3 className="sub-notice-title" style={{ color: "var(--text-color, #1e293b)" }}>
+                            Upgrade to Elite — Pay Only ₹{upgradeOffer.upgradePriceDifference} for Your Remaining {upgradeOffer.remainingDays} Days
+                        </h3>
+                        <p className="sub-notice-description">
+                            Unlock FAANG & MNC company interview tracks, advanced system design modules, hidden test case verdicts, and priority AI compute for the remaining duration of your current billing period. Retains your original cycle expiry ({upgradeOffer.currentExpiresAt ? new Date(upgradeOffer.currentExpiresAt).toLocaleDateString() : "current period"}).
+                        </p>
+                    </div>
+                    <div className="sub-notice-actions">
+                        <button
+                            type="button"
+                            className="sub-notice-btn sub-notice-btn-pricing"
+                            onClick={() => navigate("/pricing")}
+                            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", color: "#fff", borderColor: "#7c3aed" }}
+                        >
+                            Upgrade Now (₹{upgradeOffer.upgradePriceDifference})
+                        </button>
+                        <button
+                            type="button"
+                            className="sub-notice-btn sub-notice-btn-ok"
+                            onClick={handleDismissUpgradeOffer}
+                            title="Dismiss this offer for today"
+                        >
+                            Dismiss for Today
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* SUBSCRIPTION STATUS NOTICE */}
             {revocationNotice && (
                 <div className="subscription-notice-card" role="region" aria-label="Subscription Notice">
                     <div className="sub-notice-content">
@@ -266,13 +335,11 @@ export default function Dashboard() {
                             SUBSCRIPTION NOTICE
                         </div>
                         <h3 className="sub-notice-title">
-                            Your {revocationNotice.planName || "PRO"} Plan Has Been Cancelled
+                            Your {revocationNotice.planName || "PRO"} Subscription Has Concluded
                         </h3>
                         <p className="sub-notice-description">
-                            Your SamPrepIX premium plan has been cancelled by the platform.
-                            A refund for your eligible payment has been initiated.
-                            The refund will be processed through the original payment method
-                            within the provider's supported processing timeframe.
+                            Your SamPrepIX premium billing period has concluded or been updated by the platform.
+                            You can renew or upgrade your plan anytime from our Pricing Plans to regain full access to all premium interview and coding modules.
                         </p>
                     </div>
                     <div className="sub-notice-actions">
@@ -281,7 +348,7 @@ export default function Dashboard() {
                             className="sub-notice-btn sub-notice-btn-details"
                             onClick={() => navigate("/subscription/policy")}
                         >
-                            Read Details
+                            Read Policy
                         </button>
                         <button
                             type="button"

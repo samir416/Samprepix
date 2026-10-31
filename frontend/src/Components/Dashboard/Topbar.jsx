@@ -422,9 +422,9 @@ export default function Topbar() {
                             AI Roadmap
                         </a>
 
-                        <a href="/subscription">
+                        <a href="/pricing">
                             <FiCreditCard size={18} />
-                            Subscription
+                            Pricing & Plans
                         </a>
 
                         {user?.role === "ADMIN" && (
