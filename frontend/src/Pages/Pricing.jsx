@@ -96,7 +96,7 @@ export default function Pricing() {
       }
     } catch (_) {}
 
-    return "INR";
+    return "USD";
   });
 
   const [discountApplied, setDiscountApplied] = useState(false);
@@ -381,10 +381,6 @@ export default function Pricing() {
           arena with 5,000+ problems, aptitude training
           with 22,000+ questions, and in-depth ATS resume
           optimization.
-        </p>
-
-        <p style={{ marginTop: "10px", fontSize: "13px", color: "var(--text-muted, #64748b)" }}>
-          SamPrepIX · Operated by <strong>SAMIR KUMAR</strong>. All commercial subscription fees are processed in <strong>Indian Rupees (INR)</strong> via Cashfree Payment Gateway.
         </p>
 
         <div
