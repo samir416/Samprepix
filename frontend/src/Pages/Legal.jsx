@@ -25,7 +25,7 @@ export default function Legal() {
                 <span className="content-page-badge">Compliance & Trust</span>
                 <h1>Terms & Privacy Policy</h1>
                 <p>
-                    Clear, transparent commitments detailing how Samprepix safeguards candidate data, maintains platform integrity, and respects user ownership.
+                    Clear, transparent commitments detailing how SamPrepIX (Operated by SAMIR KUMAR) safeguards candidate data, maintains platform integrity, and respects user ownership.
                 </p>
 
                 <div
@@ -107,28 +107,28 @@ export default function Legal() {
                         <div className="legal-section-block">
                             <h2>1. Acceptance of Terms</h2>
                             <p>
-                                By accessing or using the Samprepix platform, you agree to comply with and be bound by these Terms of Service. If you do not agree with these terms, you must discontinue platform use immediately.
+                                By accessing or using the SamPrepIX platform (operated by SAMIR KUMAR), you agree to comply with and be bound by these Terms of Service. If you do not agree with these terms, you must discontinue platform use immediately.
                             </p>
                         </div>
 
                         <div className="legal-section-block">
                             <h2>2. User Accounts & Security</h2>
                             <p>
-                                Candidates must provide accurate profile details upon registration. You are responsible for maintaining the confidentiality of your authentication credentials. Samprepix reserves the right to suspend accounts engaged in abusive automated traffic, scraping, or credential sharing.
+                                Candidates must provide accurate profile details upon registration. You are responsible for maintaining the confidentiality of your authentication credentials. SamPrepIX reserves the right to suspend accounts engaged in abusive automated traffic, scraping, or credential sharing.
                             </p>
                         </div>
 
                         <div className="legal-section-block">
                             <h2>3. Intellectual Property & Code Ownership</h2>
                             <p>
-                                You retain all rights and intellectual property ownership over the original source code, algorithms, and resume text you write or submit on Samprepix. Samprepix retains ownership over problem descriptions, editorial test cases, platform software, and rubric criteria.
+                                You retain all rights and intellectual property ownership over the original source code, algorithms, and resume text you write or submit on SamPrepIX. SamPrepIX retains ownership over problem descriptions, editorial test cases, platform software, and rubric criteria.
                             </p>
                         </div>
 
                         <div className="legal-section-block">
-                            <h2>4. Subscription & Pricing Tiers</h2>
+                            <h2>4. Subscription & Pricing Tiers (INR)</h2>
                             <p>
-                                Platform tier features, quotas, and pricing are displayed on our public Pricing page. Paid plan capabilities are subject to active account status and fair resource utilization limits.
+                                Platform tier features, quotas, and pricing are displayed in Indian Rupees (INR) on our public Pricing page. All paid digital subscriptions and refund requests are governed by our dedicated Refund & Cancellation Policy.
                             </p>
                         </div>
 

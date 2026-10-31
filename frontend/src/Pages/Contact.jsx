@@ -165,8 +165,29 @@ export default function Contact() {
                         </div>
                     </div>
 
+                    {/* MERCHANT & OPERATOR INFORMATION */}
+                    <div
+                        className="content-card"
+                        style={{
+                            marginTop: "28px",
+                            padding: "20px 24px",
+                            background: "rgba(99, 102, 241, 0.05)",
+                            border: "1px solid rgba(99, 102, 241, 0.18)",
+                            borderRadius: "14px",
+                            textAlign: "center"
+                        }}
+                    >
+                        <h3 style={{ margin: "0 0 6px 0", fontSize: "1rem", fontWeight: "700", color: "#4f46e5" }}>
+                            Merchant & Legal Operator Information
+                        </h3>
+                        <p style={{ margin: 0, fontSize: "0.9rem", lineHeight: "1.6", color: "var(--text-muted, #475569)" }}>
+                            <strong>Platform</strong>: SamPrepIX &nbsp;•&nbsp; <strong>Legal Operator</strong>: SAMIR KUMAR<br />
+                            <strong>Operating Country</strong>: India &nbsp;•&nbsp; <strong>Support Desk Hours</strong>: Mon – Sat, 9:00 AM – 6:00 PM IST (Response within 24–48 hours)
+                        </p>
+                    </div>
+
                     {/* TOPIC GUIDANCE */}
-                    <div style={{ marginTop: "40px" }}>
+                    <div style={{ marginTop: "36px" }}>
                         <h3 style={{ fontSize: "1.15rem", fontWeight: "700", marginBottom: "16px", textAlign: "center" }}>
                             How We Can Help
                         </h3>
@@ -175,10 +196,10 @@ export default function Contact() {
                             <div className="content-card">
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                                     <FaComments style={{ color: "#4f46e5", fontSize: "1.1rem" }} />
-                                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "600" }}>Platform & Account Inquiries</h4>
+                                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "600" }}>Platform & Account Support</h4>
                                 </div>
                                 <p style={{ fontSize: "0.88rem", lineHeight: "1.6", color: "var(--text-muted, #64748b)", margin: 0 }}>
-                                    Assistance with coding arena compiler sandboxes, aptitude session history, or settings configuration.
+                                    Assistance with coding arena compilers, aptitude attempts, AI mock interview access, or profile configuration.
                                 </p>
                             </div>
 
@@ -188,7 +209,17 @@ export default function Contact() {
                                     <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "600" }}>Curriculum & Campus Pilots</h4>
                                 </div>
                                 <p style={{ fontSize: "0.88rem", lineHeight: "1.6", color: "var(--text-muted, #64748b)", margin: 0 }}>
-                                    Suggestions for problem sets, edge-case test case feedback, or university placement cell inquiries.
+                                    Suggestions for problem sets, test case feedback, or university placement cell partnerships.
+                                </p>
+                            </div>
+
+                            <div className="content-card" style={{ gridColumn: "1 / -1" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                                    <FaPaperPlane style={{ color: "#2563eb", fontSize: "1.1rem" }} />
+                                    <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "600" }}>Payments, Invoices & Refunds</h4>
+                                </div>
+                                <p style={{ fontSize: "0.88rem", lineHeight: "1.6", color: "var(--text-muted, #64748b)", margin: 0 }}>
+                                    For inquiries regarding Cashfree checkout payments, GST invoices, duplicate charge verifications, or refund requests, please email us directly with your Order ID.
                                 </p>
                             </div>
                         </div>

@@ -44,20 +44,21 @@ export default function Footer() {
                         <Link to="/community">Community</Link>
                     </div>
 
-                    {/* COMPANY */}
+                    {/* COMPANY & LEGAL */}
                     <div className="footer-column">
                         <h4>Company</h4>
                         <Link to="/about">About</Link>
-                        <Link to="/security">Security & Trust</Link>
-                        <Link to="/contact">Contact</Link>
-                        <Link to="/legal">Legal</Link>
+                        <Link to="/contact">Contact Us</Link>
+                        <Link to="/terms-and-conditions">Terms & Conditions</Link>
+                        <Link to="/refund-policy">Refund & Cancellation</Link>
+                        <Link to="/legal">Privacy Policy</Link>
                     </div>
                 </div>
             </div>
 
             {/* BOTTOM BAR */}
             <div className="footer-bottom">
-                <span>© {new Date().getFullYear()} Samprepix Inc. All rights reserved. Platform built for engineering excellence.</span>
+                <span>© {new Date().getFullYear()} SamPrepIX · Operated by SAMIR KUMAR. All rights reserved. Platform built for engineering excellence.</span>
             </div>
         </footer>
     );

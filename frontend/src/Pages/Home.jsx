@@ -3,7 +3,7 @@ import "../styles/home.css";
 import Logo from "../assets/Logo.png";
 import AuthModal from "../Components/Auth/AuthModal";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../Components/Common/Navbar";
 import Footer from "../Components/Common/Footer";
 import { updatePageSEO } from "../utils/seo";
@@ -438,6 +438,119 @@ export default function Home() {
 
         </div>
 
+      </section>
+
+      {/* PUBLIC PRICING / SERVICES SECTION (INR) */}
+      <section className="pricing-preview-section" style={{ width: "100%", background: "transparent", padding: "40px 20px 80px" }}>
+        <div style={{ maxWidth: "1140px", margin: "0 auto", textAlign: "center" }}>
+          <div className="hero-badge" style={{ marginBottom: "16px" }}>
+            ✦ Transparent Pricing in INR
+          </div>
+          <h2 style={{ fontSize: "clamp(2rem, 3.5vw, 2.75rem)", fontWeight: "800", color: "var(--text-color, #0f172a)", marginBottom: "14px", letterSpacing: "-1px" }}>
+            Simple, Transparent Plans in INR
+          </h2>
+          <p style={{ maxWidth: "680px", margin: "0 auto 40px auto", fontSize: "16px", color: "var(--text-muted, #64748b)", lineHeight: "1.7" }}>
+            Get started for free or upgrade to Pro or Elite for unlimited AI mock interviews, ATS resume diagnostics, and compiler problem sets. All subscription plans are priced and charged in Indian Rupees (INR).
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px", textAlign: "left" }}>
+            {/* STARTER */}
+            <div className="feature-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "auto", padding: "32px 28px" }}>
+              <div>
+                <span style={{ display: "inline-block", fontSize: "12px", fontWeight: "700", color: "#6366f1", background: "rgba(99, 102, 241, 0.1)", padding: "4px 12px", borderRadius: "999px", marginBottom: "12px" }}>
+                  Starter Plan
+                </span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "12px" }}>
+                  <span style={{ fontSize: "2.5rem", fontWeight: "800", color: "var(--text-color, #0f172a)" }}>₹0</span>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text-muted, #64748b)" }}>/ Forever</span>
+                </div>
+                <p style={{ fontSize: "14px", color: "var(--text-muted, #64748b)", marginBottom: "20px", lineHeight: "1.6" }}>
+                  Essential placement preparation toolkit to practice algorithms and assess your interview readiness.
+                </p>
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", fontSize: "14px", color: "var(--text-color, #334155)", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>✓ Standard AI mock interview sessions</li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>✓ 5,050+ DSA & SQL coding sandboxes</li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>✓ 5 ATS resume scans & structural score</li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>✓ 22,060 aptitude practice questions</li>
+                </ul>
+              </div>
+              <button
+                onClick={() => navigate("/auth")}
+                style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "1px solid #cbd5e1", background: "var(--card-bg, #ffffff)", color: "var(--text-color, #0f172a)", fontWeight: "700", cursor: "pointer", fontSize: "14px", transition: "all 0.2s" }}
+              >
+                Start Preparing Free →
+              </button>
+            </div>
+
+            {/* PRO */}
+            <div className="feature-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "auto", padding: "32px 28px", border: "2px solid #6366f1", position: "relative" }}>
+              <div style={{ position: "absolute", top: "12px", right: "20px", background: "linear-gradient(135deg, #6366f1, #06b6d4)", color: "#fff", fontSize: "11px", fontWeight: "800", padding: "3px 10px", borderRadius: "999px", letterSpacing: "0.5px" }}>
+                RECOMMENDED
+              </div>
+              <div>
+                <span style={{ display: "inline-block", fontSize: "12px", fontWeight: "700", color: "#6366f1", background: "rgba(99, 102, 241, 0.1)", padding: "4px 12px", borderRadius: "999px", marginBottom: "12px" }}>
+                  Pro Plan
+                </span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "12px" }}>
+                  <span style={{ fontSize: "2.5rem", fontWeight: "800", color: "var(--text-color, #0f172a)" }}>₹399</span>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text-muted, #64748b)" }}>/ Month</span>
+                </div>
+                <p style={{ fontSize: "14px", color: "var(--text-muted, #64748b)", marginBottom: "20px", lineHeight: "1.6" }}>
+                  Advanced placement preparation for students actively targeting software engineering and tech roles.
+                </p>
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", fontSize: "14px", color: "var(--text-color, #334155)", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>⚡ Unlimited AI technical & behavioral interviews</li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>⚡ ATS resume analyzer with role keyword matching</li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>⚡ Multi-level AI code hints & GitHub sync</li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>⚡ In-depth performance & readiness analytics</li>
+                </ul>
+              </div>
+              <button
+                onClick={() => navigate("/pricing")}
+                style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #6366f1, #06b6d4)", color: "#ffffff", fontWeight: "700", cursor: "pointer", fontSize: "14px", transition: "all 0.2s" }}
+              >
+                Choose Pro Plan (₹399) →
+              </button>
+            </div>
+
+            {/* ELITE */}
+            <div className="feature-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "auto", padding: "32px 28px" }}>
+              <div>
+                <span style={{ display: "inline-block", fontSize: "12px", fontWeight: "700", color: "#059669", background: "rgba(5, 150, 105, 0.1)", padding: "4px 12px", borderRadius: "999px", marginBottom: "12px" }}>
+                  Elite Plan
+                </span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "12px" }}>
+                  <span style={{ fontSize: "2.5rem", fontWeight: "800", color: "var(--text-color, #0f172a)" }}>₹799</span>
+                  <span style={{ fontSize: "0.95rem", color: "var(--text-muted, #64748b)" }}>/ Month</span>
+                </div>
+                <p style={{ fontSize: "14px", color: "var(--text-muted, #64748b)", marginBottom: "20px", lineHeight: "1.6" }}>
+                  Maximum placement acceleration with company-focused tracks, priority compute, and custom roadmaps.
+                </p>
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", fontSize: "14px", color: "var(--text-color, #334155)", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>👑 Priority AI inference & audio analysis</li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>👑 Tier-1 company specific placement tracks</li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>👑 Recruiter-ready GitHub profile analyzer</li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>👑 Personalized AI Career Roadmap</li>
+                </ul>
+              </div>
+              <button
+                onClick={() => navigate("/pricing")}
+                style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "1px solid #cbd5e1", background: "var(--card-bg, #ffffff)", color: "var(--text-color, #0f172a)", fontWeight: "700", cursor: "pointer", fontSize: "14px", transition: "all 0.2s" }}
+              >
+                Choose Elite Plan (₹799) →
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: "32px", fontSize: "13px", color: "var(--text-muted, #64748b)" }}>
+            SamPrepIX is operated by <strong>SAMIR KUMAR</strong>. All commercial subscription fees are processed securely in <strong>Indian Rupees (INR)</strong> via Cashfree Payment Gateway.
+            <div style={{ marginTop: "8px" }}>
+              <Link to="/pricing" style={{ color: "#4f46e5", fontWeight: "700", textDecoration: "underline", marginRight: "16px" }}>Compare All Features & Plans</Link>
+              <Link to="/refund-policy" style={{ color: "var(--text-muted, #64748b)", textDecoration: "underline", marginRight: "16px" }}>Refund & Cancellation Policy</Link>
+              <Link to="/terms-and-conditions" style={{ color: "var(--text-muted, #64748b)", textDecoration: "underline" }}>Terms & Conditions</Link>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="cta-section">
